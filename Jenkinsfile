@@ -43,8 +43,6 @@ pipeline {
 
                         sh 'pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
-                        sh 'find  > out.txt'
-                        sh 'cat out.txt | grep  "QtCore" && exit 1'
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
                         sh "pip install --break-system-packages cx_Freeze"
@@ -126,14 +124,12 @@ pipeline {
                             sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
                             echo "Output directories prepared (build output will be in ./build/ by default)."
 
-                            sh 'pyoxidizer build --release'
+                            sh 'pyoxidizer build'
                             echo "PyOxidizer build attempted."
 
-                            sh 'cp -r build/x86_64-unknown-linux-gnu/release/* dist/linux/pyoxidizer/'
-                            sh 'cp -r build/x86_64-pc-windows-gnu/release/* dist/windows/pyoxidizer/'
+                            sh 'cp -r build/x86_64-unknown-linux-gnu/debug/install/* dist/linux/pyoxidizer/'
+                            sh 'cp -r build/x86_64-pc-windows-gnu/debug/install/* dist/windows/pyoxidizer/'
                             echo "PyOxidizer artifacts copied to dist/."
-
-
                         }
                     }
                 }
