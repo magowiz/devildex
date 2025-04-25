@@ -52,15 +52,8 @@ pipeline {
                 }
             }
         }
-
-        // ... Ripeti stage simili per Nuitka e PyOxidizer, adattando i passi 3, 5, 6 ...
-        // Nello stage Nuitka: sh 'pip install nuitka', poi comandi 'nuitka ...'
-        // Nello stage PyOxidizer: sh 'pip install pyoxidizer', poi comandi 'pyoxidizer ...'
-
-        // Lo stage 'Archive Artifacts' archivierà da dist/ nel workspace.
-        // Lo stage 'Build macOS Package' rimarrà come prima sull'agente macOS.
     }
-}
+
 
         stage('Test Nuitka') {
              agent {
