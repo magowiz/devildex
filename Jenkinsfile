@@ -52,7 +52,6 @@ pipeline {
             steps {
                     sh 'rm -fr megalinter-reports'
                     sh '/entrypoint.sh'
-                    cleanWs()
             }
             post {
                 always {
@@ -62,6 +61,7 @@ pipeline {
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
                                  reportDir: 'megalinter-reports/linters_logs', reportFiles: 'WARNING*.log',
                                  reportName: 'Megalinter-Reports'])
+                    cleanWs()
                 }
             }
         }
@@ -98,7 +98,6 @@ pipeline {
                         echo "cx_Freeze Windows build attempted."
                     }
                 }}
-                cleanWs()
             }
             post {
                 success {
@@ -106,6 +105,9 @@ pipeline {
                     archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                }
+                always {
+                    cleanWs()
                 }
             }
         }
@@ -147,7 +149,6 @@ pipeline {
                             sh 'python -m nuitka main.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
                             echo "Nuitka Windows build attempted."
                         }
-                        cleanWs()
                     }
                 }
             post {
@@ -156,6 +157,9 @@ pipeline {
                     archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                }
+                always {
+                    cleanWs()
                 }
             }
             }
@@ -203,7 +207,6 @@ pipeline {
                         }
                     }
                 }
-                cleanWs()
             }
             post {
                 success {
@@ -211,6 +214,9 @@ pipeline {
                     archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                }
+                always {
+                    cleanWs()
                 }
             }
         }
