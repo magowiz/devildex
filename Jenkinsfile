@@ -82,7 +82,6 @@ pipeline {
             }
             steps {
                 script {
-                    echo 'Setting up Python env and testing cx_Freeze build...'
                     withPythonEnv('python3.13') {
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                         sh 'python -m pip install --break-system-packages -r requirements.txt'
@@ -123,8 +122,8 @@ pipeline {
                             sh 'python -m pip install --break-system-packages -r requirements.txt'
                             sh 'python -m pip install --break-system-packages nuitka'
                             sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
-                            sh 'python -m nuitka main.py --standalone --output-dir=dist/linux/nuitka --enable-plugin=pyside6'
-                            sh 'python -m nuitka main.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
+                            sh 'python -m nuitka main.py --standalone --onefile --output-dir=dist/linux/nuitka --enable-plugin=pyside6'
+                            sh 'python -m nuitka main.py --standalone --onefile --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
                             sh 'find'
                         }
                 }
