@@ -84,26 +84,21 @@ pipeline {
                         echo "Python environment activated."
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                         echo "requirements.txt generated."
-
                         sh 'python -m pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
                         sh "python -m pip install --break-system-packages cx_Freeze"
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
-                        echo "cx_Freeze Linux build attempted."
-
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/windows/cxfreeze'
-                        echo "cx_Freeze Windows build attempted."
+                        sh 'find -name "devil*"'
                     }
                 }
             }
             post {
                 success {
                     echo 'Archiving build artifacts...'
-                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
-                    archiveArtifacts artifacts: 'dist/linux/**/*'
-                    archiveArtifacts artifacts: 'dist/windows/**/*'
+                    archiveArtifacts artifacts: 'dist/**/*'
                 }
                 always {
                     cleanWs()
