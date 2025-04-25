@@ -35,7 +35,6 @@ RUN apt-get update && \
     curl \
     git \
     mingw-w64 \
-    mingw-w64-x86-64-gcc && \
     rm -rf /var/lib/apt/lists/* # Clean up immediately
 
 # Install Poetry using the official script
