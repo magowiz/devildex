@@ -41,12 +41,12 @@ pipeline {
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                         echo "requirements.txt generated."
 
-                        sh 'pip install --break-system-packages -r requirements.txt'
+                        sh 'python -m pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
-                        sh "pip install --break-system-packages cx_Freeze"
-                        sh 'python3 setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
+                        sh "python -m pip install --break-system-packages cx_Freeze"
+                        sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
                         echo "cx_Freeze Linux build attempted."
 
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/windows/cxfreeze'
@@ -75,10 +75,10 @@ pipeline {
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                             echo "requirements.txt generated."
 
-                            sh 'pip install --break-system-packages -r requirements.txt'
+                            sh 'python -m pip install --break-system-packages -r requirements.txt'
                             echo "Project dependencies installed with pip."
 
-                            sh 'pip install --break-system-packages nuitka'
+                            sh 'python -m pip install --break-system-packages nuitka'
                             echo "Nuitka installed in venv."
 
                             sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
@@ -115,10 +115,10 @@ pipeline {
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                             echo "requirements.txt generated."
 
-                            sh 'pip install --break-system-packages -r requirements.txt'
+                            sh 'python -m pip install --break-system-packages -r requirements.txt'
                             echo "Project dependencies installed with pip."
 
-                            sh 'pip install --break-system-packages pyoxidizer'
+                            sh 'python -m pip install --break-system-packages pyoxidizer'
                             echo "PyOxidizer installed in venv."
 
                             sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
