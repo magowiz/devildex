@@ -62,7 +62,6 @@ pipeline {
              agent {
                 dockerfile {
                     filename 'Dockerfile'
-                    context '.'
                     args '-u root'
                 }
             }
@@ -103,7 +102,6 @@ pipeline {
              agent {
                 dockerfile {
                      filename 'Dockerfile'
-                     context '.'
                      args '-u root'
                 }
             }
