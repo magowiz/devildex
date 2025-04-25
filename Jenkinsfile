@@ -49,7 +49,7 @@ pipeline {
                         sh 'python3 setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
                         echo "cx_Freeze Linux build attempted."
 
-                        sh 'python setup_cxfreeze.py build_exe --platforms=win64 --build-exe dist/windows/cxfreeze'
+                        sh 'python setup_cxfreeze.py build_exe --build-exe dist/windows/cxfreeze'
                         echo "cx_Freeze Windows build attempted."
 
                     }
