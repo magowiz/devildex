@@ -52,9 +52,6 @@ pipeline {
                 }
             }
         }
-    }
-
-
         stage('Test Nuitka') {
              agent {
                 dockerfile {
