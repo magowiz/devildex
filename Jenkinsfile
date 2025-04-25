@@ -33,6 +33,35 @@ pipeline {
                 }
             }
         }
+                stage('megalinter') {
+            agent {
+                docker {
+                    label 'heracles'
+                    image 'oxsecurity/megalinter-python:v8.4.0'
+                    args "-u root -e VALIDATE_ALL_CODEBASE=true -v \${WORKSPACE}:/tmp/lint --entrypoint=''\
+                  -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket"
+                    reuseNode true
+                }
+            }
+            environment {
+                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                DISABLE_ERRORS = true
+            }
+            steps {
+                    sh 'rm -fr megalinter-reports'
+                    sh '/entrypoint.sh'
+            }
+            post {
+                always {
+                    archiveArtifacts(allowEmptyArchive: true,
+                                     artifacts: 'mega-linter.log,megalinter-reports/**/*',
+                                     defaultExcludes: false, followSymlinks: false)
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
+                                 reportDir: 'megalinter-reports/linters_logs', reportFiles: 'WARNING*.log',
+                                 reportName: 'Megalinter-Reports'])
+                }
+            }
 
         stage('Test cx_Freeze') {
                     environment {
