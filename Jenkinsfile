@@ -44,6 +44,9 @@ pipeline {
                         sh 'pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
 
+                        sh 'export VENV_PATH=$(poetry env info --path) && ldd ${VENV_PATH}/lib/python3.13/site-packages/PySide6/QtCore.so > ldd_QtCore_output.txt 2>&1 || echo "ldd command failed, check output file."'
+                        sh 'cat ldd_QtCore_output.txt'
+
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
                         sh "pip install --break-system-packages cx_Freeze"
