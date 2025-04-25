@@ -196,13 +196,13 @@ def make_exe():
     # python_config.run_module = "<module>"
 
     # Run a Python file when the interpreter starts.
-    # python_config.run_filename = "/path/to/file"
+    python_config.run_filename = "main.py"
 
     # Produce a PythonExecutable from a Python distribution, embedded
     # resources, and other options. The returned object represents the
     # standalone executable that will be built.
     exe = dist.to_python_executable(
-        name=".",
+        name="devildex_app",
 
         # If no argument passed, the default `PythonPackagingPolicy` for the
         # distribution is used.
