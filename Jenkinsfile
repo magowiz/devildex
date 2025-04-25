@@ -62,7 +62,7 @@ pipeline {
                                  reportName: 'Megalinter-Reports'])
                 }
             }
-
+        }
         stage('Test cx_Freeze') {
                     environment {
                 PIP_INDEX_URL = "${env.IP_INDEX_URL}"
