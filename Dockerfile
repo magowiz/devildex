@@ -38,6 +38,7 @@ RUN apt-get update && \
     python-is-python3 \
     python3-dev \
     patchelf \
+    qt6-default \
     pipx && \
     rm -rf /var/lib/apt/lists/* # Clean up immediately
 
