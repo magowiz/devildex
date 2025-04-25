@@ -60,7 +60,7 @@ WORKDIR /app
 # Copy pyproject.toml and poetry.lock first to leverage Docker cache if only code changes
 
 # Install bundling tools using pip within the Poetry environment
-RUN pipx install cx_Freeze nuitka pyoxidizer
+RUN pipx install nuitka pyoxidizer
 
 # No need for CMD or ENTRYPOINT for a build image.
 # The Jenkinsfile will run commands like 'poetry run python ...' or 'poetry run cxfreeze ...'
