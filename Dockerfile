@@ -5,13 +5,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_HOME="/opt/poetry" \
     PATH="$PATH:/opt/poetry/bin"
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    pip install poetry &&\
-    apt-get remove --purge -y curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
+RUN pip install poetry
 WORKDIR /app
 
 COPY . /app
