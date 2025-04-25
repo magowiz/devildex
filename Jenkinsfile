@@ -30,8 +30,11 @@ pipeline {
                 script {
                     echo 'Testing cx_Freeze build for Linux and Windows...'
                     sh 'poetry run pip install cx_Freeze'
-                    sh 'poetry run python setup_cxfreeze.py build_exe --target-dir /app/dist/linux/cxfreeze'
-                    sh 'poetry run python setup_cxfreeze.py build_exe --platforms=win64 --target-dir /app/dist/windows/cxfreeze'
+                     sh 'poetry run python setup_cxfreeze.py build_exe --build-exe /app/dist/linux/cxfreeze'
+
+                    // Eseguire la build Windows con cx_Freeze (Cross-compile)
+                    // --> CORREZIONE: l'opzione corretta è '--build-exe', non '--target-dir'
+                    sh 'poetry run python setup_cxfreeze.py build_exe --platforms=win64 --build-exe /app/dist/windows/cxfreeze'
                 }
             }
         }
