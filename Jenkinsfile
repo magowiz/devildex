@@ -43,7 +43,7 @@ pipeline {
 
                         sh 'pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
-                        sh 'find .venv > out.txt'
+                        sh 'find  > out.txt'
                         sh 'cat out.txt | grep  "QtCore" && exit 1'
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
