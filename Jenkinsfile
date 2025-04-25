@@ -32,6 +32,7 @@ pipeline {
                 script {
                     sh 'docker build -t devil-dex-build:latest .'
                 }
+                cleanWs()
             }
         }
                 stage('megalinter') {
@@ -53,6 +54,7 @@ pipeline {
                     cleanWs()
                     sh 'rm -fr megalinter-reports'
                     sh '/entrypoint.sh'
+                    cleanWs()
             }
             post {
                 always {
@@ -83,8 +85,6 @@ pipeline {
                 cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-
-
                     echo 'Setting up Python env and testing cx_Freeze build...'
 
                     withPythonEnv('python3.13') {
@@ -105,6 +105,7 @@ pipeline {
                         echo "cx_Freeze Windows build attempted."
                     }
                 }}
+                cleanWs()
             }
             post {
                 success {
@@ -154,8 +155,8 @@ pipeline {
 
                             sh 'python -m nuitka main.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
                             echo "Nuitka Windows build attempted."
-
                         }
+                        cleanWs()
                     }
                 }
             post {
@@ -212,6 +213,7 @@ pipeline {
                         }
                     }
                 }
+                cleanWs()
             }
             post {
                 success {
