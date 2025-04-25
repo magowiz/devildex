@@ -51,9 +51,16 @@ pipeline {
 
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/windows/cxfreeze'
                         echo "cx_Freeze Windows build attempted."
-
                     }
                 }}
+            }
+            post {
+                success {
+                    echo 'Archiving build artifacts...'
+                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                }
             }
         }
         stage('Test Nuitka') {
@@ -93,6 +100,14 @@ pipeline {
                         }
                     }
                 }
+            post {
+                success {
+                    echo 'Archiving build artifacts...'
+                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                }
+            }
             }
         }
 
@@ -134,18 +149,12 @@ pipeline {
                     }
                 }
             }
-        }
-
-
-        stage('Archive Artifacts') {
-            agent any
-            steps {
-                script {
+            post {
+                success {
                     echo 'Archiving build artifacts...'
                     archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
                     archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
-                     echo "Artifacts archived from dist/"
                 }
             }
         }
