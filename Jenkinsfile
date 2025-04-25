@@ -91,7 +91,7 @@ pipeline {
                         sh "python -m pip install --break-system-packages cx_Freeze"
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/windows/cxfreeze'
-                        sh 'find -name "devil*"'
+                        sh 'find'
                     }
                 }
             }
