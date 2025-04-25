@@ -41,7 +41,7 @@ RUN apt-get update && \
 # Use the specified POETRY_VERSION build argument
 # Need to make sure the default 'python3' command points to the desired version if multiple are installed.
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
-
+RUN poetry self add poetry-plugin-export
 # Set PATH for mingw-w64 compilers
 # Verify exact path after installation on Ubuntu Noble. Common paths include /usr/bin or /usr/lib/mingw-w64/bin
 # Let's check common install path for x86_64-w64-mingw32-gcc
@@ -54,18 +54,14 @@ WORKDIR /app
 
 # Copy the project files into the container
 # Copy pyproject.toml and poetry.lock first to leverage Docker cache if only code changes
-COPY pyproject.toml poetry.lock* ./
 
-# Install project dependencies using Poetry
-# This should now succeed for PySide6 6.9.0 on ARM64/Ubuntu 24.04
-# because the image base has glibc >= 2.39, compatible with the wheel manylinux_2_39_aarch64.
-RUN poetry install --no-root --sync
+
 
 # Copy the rest of the project code
 COPY . .
 
 # Install bundling tools using pip within the Poetry environment
-RUN poetry run pip install cx_Freeze nuitka pyoxidizer
+RUN pip install cx_Freeze nuitka pyoxidizer
 
 # No need for CMD or ENTRYPOINT for a build image.
 # The Jenkinsfile will run commands like 'poetry run python ...' or 'poetry run cxfreeze ...'

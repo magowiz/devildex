@@ -28,16 +28,39 @@ pipeline {
             }
             steps {
                 script {
-                    echo 'Testing cx_Freeze build for Linux and Windows...'
-                    sh 'poetry run pip install cx_Freeze'
-                     sh 'poetry run python setup_cxfreeze.py build_exe --build-exe /app/dist/linux/cxfreeze'
+                    echo 'Setting up Python env and testing cx_Freeze build...'
 
-                    // Eseguire la build Windows con cx_Freeze (Cross-compile)
-                    // --> CORREZIONE: l'opzione corretta è '--build-exe', non '--target-dir'
-                    sh 'poetry run python setup_cxfreeze.py build_exe --platforms=win64 --build-exe /app/dist/windows/cxfreeze'
+                    withPythonEnv('python3.13') {
+                        echo "Python environment activated."
+
+                        sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                        echo "requirements.txt generated."
+
+                        sh 'pip install -r requirements.txt'
+                        echo "Project dependencies installed with pip."
+
+                        sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
+                        echo "Output directories created."
+
+                        sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
+                        echo "cx_Freeze Linux build attempted."
+
+                        sh 'python setup_cxfreeze.py build_exe --platforms=win64 --build-exe dist/windows/cxfreeze'
+                        echo "cx_Freeze Windows build attempted."
+
+                    }
                 }
             }
         }
+
+        // ... Ripeti stage simili per Nuitka e PyOxidizer, adattando i passi 3, 5, 6 ...
+        // Nello stage Nuitka: sh 'pip install nuitka', poi comandi 'nuitka ...'
+        // Nello stage PyOxidizer: sh 'pip install pyoxidizer', poi comandi 'pyoxidizer ...'
+
+        // Lo stage 'Archive Artifacts' archivierà da dist/ nel workspace.
+        // Lo stage 'Build macOS Package' rimarrà come prima sull'agente macOS.
+    }
+}
 
         stage('Test Nuitka') {
              agent {
