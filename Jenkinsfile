@@ -21,7 +21,7 @@ pipeline {
         }
 
         stage('Test cx_Freeze') {
-        when { always() }
+        when { expression { return true } }
             agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -55,7 +55,7 @@ pipeline {
             }
         }
         stage('Test Nuitka') {
-        when { always() }
+        when { expression { return true } }
              agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -72,7 +72,7 @@ pipeline {
         }
 
          stage('Test PyOxidizer') {
-         when { always() }
+         when { expression { return true } }
              agent {
                 dockerfile {
                      filename 'Dockerfile'
