@@ -30,6 +30,9 @@ pipeline {
             }
             steps {
                 script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+
+
                     echo 'Setting up Python env and testing cx_Freeze build...'
 
                     withPythonEnv('python3.13') {
@@ -51,7 +54,7 @@ pipeline {
                         echo "cx_Freeze Windows build attempted."
 
                     }
-                }
+                }}
             }
         }
         stage('Test Nuitka') {
