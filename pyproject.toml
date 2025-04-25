@@ -21,3 +21,8 @@ cx-freeze = "^8.2.0"
 nuitka = "^2.6.9"
 pyoxidizer = "^0.24.0"
 
+
+[tool.poetry.group.lint.dependencies]
+black = "^25.1.0"
+pylama = {extras = ["all"], version = "^8.4.1"}
+

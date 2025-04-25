@@ -1,28 +1,113 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLineEdit,
+    QLabel,
+    QTableWidget,
+    QTableWidgetItem,
+    QFileDialog,
+)
+from PySide6.QtCore import Qt
 
-def create_minimal_app():
-    # Crea l'istanza dell'applicazione Qt
-    app = QApplication(sys.argv)
+from local_data_parse.common_read import get_explicit_dependencies_from_project_config
+from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
 
-    # Crea una finestra principale (QWidget)
-    window = QWidget()
-    window.setWindowTitle("Minimal PySide6 App") # Imposta il titolo della finestra
-    window.setGeometry(100, 100, 300, 150) # Imposta posizione e dimensioni (x, y, width, height)
 
-    # Aggiunge un layout verticale
-    layout = QVBoxLayout()
-    window.setLayout(layout)
+def scan_current_project():
+    explicit = get_explicit_dependencies_from_project_config()
+    docr = get_installed_packages_with_docs_urls(explicit=explicit)
+    return docr
 
-    # Aggiunge un'etichetta al layout
-    label = QLabel("Hello from PySide6!")
-    layout.addWidget(label)
 
-    # Mostra la finestra
-    window.show()
+class DevilDexMainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-    # Avvia l'esecuzione dell'applicazione (loop degli eventi)
-    sys.exit(app.exec())
+        self.setWindowTitle("DevilDex - Python Documentation ")
+        self.setGeometry(100, 100, 800, 600)
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+
+        main_layout = QVBoxLayout(central_widget)
+
+        folder_layout = QHBoxLayout()
+
+        self.folder_label = QLabel("Project Folder:")
+        self.folder_path_edit = QLineEdit()
+        self.browse_button = QPushButton("Sfoglia...")
+
+        folder_layout.addWidget(self.folder_label)
+        folder_layout.addWidget(self.folder_path_edit)
+        folder_layout.addWidget(self.browse_button)
+
+        main_layout.addLayout(folder_layout)
+
+        self.scan_button = QPushButton("Scan Project")
+        main_layout.addWidget(self.scan_button)
+
+        self.results_table = QTableWidget()
+        self.results_table.setColumnCount(3)
+        self.results_table.setHorizontalHeaderLabels(
+            ["Package Name", "Version", "Documentation URL"]
+        )
+
+        self.results_table.horizontalHeader().setStretchLastSection(True)
+        self.results_table.setSortingEnabled(True)
+
+        main_layout.addWidget(self.results_table)
+
+        self.browse_button.clicked.connect(self.browse_folder)
+        self.scan_button.clicked.connect(self.scan_project)
+
+    def browse_folder(self):
+        """Open a file dialog to select project folder."""
+        folder_selected = QFileDialog.getExistingDirectory(
+            self, "Select Project Folder"
+        )
+        if folder_selected:
+            self.folder_path_edit.setText(folder_selected)
+
+    def scan_project(self):
+        """Scan of project in specified folder or in current env."""
+        project_folder = self.folder_path_edit.text()
+
+        self.results_table.setRowCount(0)
+
+        if not project_folder:
+            res = scan_current_project()
+            self.display_results(res)
+        else:
+            print(f"Scan la project folder: {project_folder}")  # Placeholder
+            pass
+
+    def display_results(self, results_data):
+        """Populates table with results."""
+        self.results_table.setRowCount(len(results_data))
+
+        for row_index, pkg_info in enumerate(results_data):
+            name_item = QTableWidgetItem(pkg_info.get("name", "N/A"))
+            version_item = QTableWidgetItem(pkg_info.get("version", "N/A"))
+            url_item = QTableWidgetItem(pkg_info.get("docs_url", "N/A"))
+
+            name_item.setFlags(name_item.flags() ^ Qt.ItemIsEditable)
+            version_item.setFlags(version_item.flags() ^ Qt.ItemIsEditable)
+            url_item.setFlags(url_item.flags() ^ Qt.ItemIsEditable)
+
+            self.results_table.setItem(row_index, 0, name_item)
+            self.results_table.setItem(row_index, 1, version_item)
+            self.results_table.setItem(row_index, 2, url_item)
+
 
 if __name__ == "__main__":
-    create_minimal_app()
+    app = QApplication(sys.argv)
+
+    main_window = DevilDexMainWindow()
+    main_window.show()
+
+    sys.exit(app.exec())

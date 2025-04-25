@@ -2,16 +2,16 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-build_options = {'packages': [], 'excludes': []}
+build_options = {"packages": [], "excludes": []}
 
-base = 'gui'
+base = "gui"
 
-executables = [
-    Executable('main.py', base=base)
-]
+executables = [Executable("main.py", base=base)]
 
-setup(name='devildex',
-      version = '1.0',
-      description = '',
-      options = {'build_exe': build_options},
-      executables = executables)
+setup(
+    name="devildex",
+    version="1.0",
+    description="",
+    options={"build_exe": build_options},
+    executables=executables,
+)
