@@ -16,7 +16,7 @@ ENV LANG=C.UTF-8 \
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
     POETRY_HOME="/opt/poetry" \
-    PATH="$PATH:/opt/poetry/bin"
+    PATH="/root/.local/bin:/opt/poetry/bin:${PATH}"
 
 # Install necessary OS packages:
 # - python3, python3-venv, python3-pip: Core Python environment (Ubuntu 24.04 default is 3.12)
