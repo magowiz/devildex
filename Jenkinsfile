@@ -65,7 +65,10 @@ pipeline {
                 }
             }
         }
-        stage('Test cx_Freeze') {
+        stage('build packages')
+        {
+            parallel {
+        stage('Build cx_Freeze') {
                     environment {
                 PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                 PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
@@ -101,7 +104,7 @@ pipeline {
                 }
             }
         }
-        stage('Test Nuitka') {
+        stage('Build Nuitka') {
                         environment {
                 PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                 PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
@@ -137,10 +140,8 @@ pipeline {
                 }
             }
         }
-        stage('build packages')
-        {
-            parallel {
-         stage('Test PyOxidizer') {
+
+         stage('Build PyOxidizer') {
                      environment {
                 PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                 PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
