@@ -1,6 +1,20 @@
+@Library('shared-library') _
+
 pipeline {
     agent none
-
+    options {
+        ansiColor('xterm')
+        disableConcurrentBuilds(abortPrevious: true)
+    }
+    environment {
+        VERSION = '0.1'
+        PIP_INDEX_URL = 'http://hephaestus.local:5000/index/'
+        PIP_TRUSTED_HOST = 'hephaestus.local'
+        PROJECT_NAME = 'devildex'
+        IP_TRUSTED_HOST = '192.168.2.11'
+        IP_INDEX_URL = 'http://192.168.2.11:5000/index/'
+        LINT_TAG_REGEX = '.*\\[lint\\].*'
+    }
     stages {
         stage('Checkout') {
             agent any
@@ -21,7 +35,13 @@ pipeline {
         }
 
         stage('Test cx_Freeze') {
-        when { expression { return true } }
+                    environment {
+                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                DISABLE_ERRORS = true
+            }
+
+
             agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -64,7 +84,12 @@ pipeline {
             }
         }
         stage('Test Nuitka') {
-            when { expression { return true } }
+                        environment {
+                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                DISABLE_ERRORS = true
+            }
+
              agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -112,7 +137,12 @@ pipeline {
         }
 
          stage('Test PyOxidizer') {
-         when { expression { return true } }
+                     environment {
+                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                DISABLE_ERRORS = true
+            }
+
              agent {
                 dockerfile {
                      filename 'Dockerfile'
