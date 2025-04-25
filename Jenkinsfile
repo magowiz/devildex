@@ -85,10 +85,10 @@ pipeline {
                             sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
                             echo "Output directories created."
 
-                            sh 'python -m nuitka minimal_app.py --standalone --output-dir=dist/linux/nuitka'
+                            sh 'python -m nuitka main.py --standalone --output-dir=dist/linux/nuitka'
                             echo "Nuitka Linux build attempted."
 
-                            sh 'python -m nuitka minimal_app.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka'
+                            sh 'python -m nuitka main.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka'
                             echo "Nuitka Windows build attempted."
 
                         }
