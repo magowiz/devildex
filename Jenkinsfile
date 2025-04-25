@@ -24,6 +24,7 @@ pipeline {
             agent {
                 dockerfile {
                     filename 'Dockerfile'
+                    args '-u root'
                 }
             }
             steps {
@@ -56,6 +57,7 @@ pipeline {
              agent {
                 dockerfile {
                     filename 'Dockerfile'
+                    args '-u root'
                 }
             }
             steps {
@@ -71,6 +73,7 @@ pipeline {
              agent {
                 dockerfile {
                      filename 'Dockerfile'
+                     args '-u root'
                 }
             }
             steps {
