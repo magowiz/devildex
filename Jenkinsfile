@@ -28,6 +28,7 @@ pipeline {
         stage('Build Docker Image') {
             agent any
             steps {
+                cleanWs()
                 script {
                     sh 'docker build -t devil-dex-build:latest .'
                 }
@@ -49,6 +50,7 @@ pipeline {
                 DISABLE_ERRORS = true
             }
             steps {
+                    cleanWs()
                     sh 'rm -fr megalinter-reports'
                     sh '/entrypoint.sh'
             }
@@ -78,6 +80,7 @@ pipeline {
                 }
             }
             steps {
+                cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
 
@@ -126,6 +129,7 @@ pipeline {
                 }
             }
             steps {
+                cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing Nuitka build...'
@@ -179,6 +183,7 @@ pipeline {
                 }
             }
             steps {
+                cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing PyOxidizer build...'
