@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {
                     echo 'Testing cx_Freeze build for Linux and Windows...'
-                    sh 'poetry run pip install cx_Freeze' // Installa nel venv Poetry del progetto
+                    sh 'poetry run pip install cx_Freeze'
                     sh 'poetry run python path/to/your/cxfreeze_build_script.py build --target-dir /app/dist/linux/cxfreeze'
                     sh 'poetry run python path/to/your/cxfreeze_build_script.py build_exe --platforms=win64 --target-dir /app/dist/windows/cxfreeze'
                 }
@@ -46,7 +46,7 @@ pipeline {
                 script {
                     echo 'Testing Nuitka build for Linux and Windows...'
                     sh 'poetry run pip install nuitka'
-                     sh 'echo "Run Nuitka build here"' # Placeholder
+                     sh 'echo "Run Nuitka build here"'
                 }
             }
         }
