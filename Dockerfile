@@ -34,7 +34,8 @@ RUN apt-get update && \
     build-essential \
     curl \
     git \
-    mingw-w64 && \
+    mingw-w64 \
+    python3-pipx && \
     rm -rf /var/lib/apt/lists/* # Clean up immediately
 
 # Install Poetry using the official script
@@ -61,7 +62,7 @@ WORKDIR /app
 COPY . .
 
 # Install bundling tools using pip within the Poetry environment
-RUN pip install pipx && pipx install cx_Freeze nuitka pyoxidizer
+RUN pipx install cx_Freeze nuitka pyoxidizer
 
 # No need for CMD or ENTRYPOINT for a build image.
 # The Jenkinsfile will run commands like 'poetry run python ...' or 'poetry run cxfreeze ...'
