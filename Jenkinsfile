@@ -136,7 +136,7 @@ pipeline {
                             sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
                             echo "Output directories prepared (build output will be in ./build/ by default)."
 
-                            sh 'pyoxidizer build'
+                            sh 'pyoxidizer build --release'
                             echo "PyOxidizer build attempted."
 
                             sh 'cp -r build/x86_64-unknown-linux-gnu/release/* dist/linux/pyoxidizer/'
