@@ -162,8 +162,8 @@ pipeline {
                             sh 'python -m pip install --break-system-packages pyoxidizer'
                             sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
                             sh 'pyoxidizer build'
-                            sh 'cp -r build/x86_64-unknown-linux-gnu/debug/install/* dist/linux/pyoxidizer/'
-                            sh 'cp -r build/x86_64-pc-windows-gnu/debug/install/* dist/windows/pyoxidizer/'
+                            sh 'find'
+                            //sh 'cp -r build/x86_64-unknown-linux-gnu/debug/install/* .'
                         }
                 }
             }
