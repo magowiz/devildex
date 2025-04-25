@@ -1,8 +1,8 @@
 # Stage 1: Build Environment Setup
-FROM ubuntu:noble AS builder
+FROM ubuntu:plucky AS builder
 
 # Set build arguments for versions
-ARG PYTHON_VERSION=3.13 # Not used directly, but good practice if needed
+ARG PYTHON_VERSION=3.13
 ARG POETRY_VERSION=2.1.0
 
 # Prevent Python from writing .pyc files
