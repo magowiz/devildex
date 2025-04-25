@@ -98,8 +98,9 @@ pipeline {
                 success {
                     echo 'Archiving build artifacts...'
                     archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-cx.bin"
+                    cleanWs()
                 }
-                always {
+                failure {
                     cleanWs()
                 }
             }
