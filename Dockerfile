@@ -6,7 +6,7 @@ ARG PYTHON_VERSION=3.13
 ARG POETRY_VERSION=2.1.0
 
 # Prevent Python from writing .pyc files
-ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Ensure that the locale is set to UTF-8
 ENV LANG=C.UTF-8 \
