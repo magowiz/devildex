@@ -44,7 +44,7 @@ pipeline {
                         sh 'pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
                         sh 'find .venv > out.txt'
-                        sh 'cat out.txt && exit 1'
+                        sh 'cat out.txt grep -E "PySide6|shiboken6|QtCore.so" && exit 1'
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
                         sh "pip install --break-system-packages cx_Freeze"
