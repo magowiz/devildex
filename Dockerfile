@@ -56,11 +56,6 @@ WORKDIR /app
 # Copy the project files into the container
 # Copy pyproject.toml and poetry.lock first to leverage Docker cache if only code changes
 
-
-
-# Copy the rest of the project code
-COPY . .
-
 # Install bundling tools using pip within the Poetry environment
 RUN pipx install cx_Freeze nuitka pyoxidizer
 
