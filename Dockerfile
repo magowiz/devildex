@@ -36,6 +36,7 @@ RUN apt-get update && \
     git \
     mingw-w64 \
     python-is-python3 \
+    python3-dev \
     pipx && \
     rm -rf /var/lib/apt/lists/* # Clean up immediately
 
