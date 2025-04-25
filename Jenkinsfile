@@ -30,7 +30,7 @@ pipeline {
                 script {
                     echo 'Testing cx_Freeze build for Linux and Windows...'
                     sh 'poetry run pip install cx_Freeze'
-                    sh 'poetry run python setup_cxfreeze.py build --target-dir /app/dist/linux/cxfreeze'
+                    sh 'poetry run python setup_cxfreeze.py build_exe --target-dir /app/dist/linux/cxfreeze'
                     sh 'poetry run python setup_cxfreeze.py build_exe --platforms=win64 --target-dir /app/dist/windows/cxfreeze'
                 }
             }
