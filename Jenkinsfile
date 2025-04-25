@@ -81,13 +81,9 @@ pipeline {
                 script {
                     echo 'Setting up Python env and testing cx_Freeze build...'
                     withPythonEnv('python3.13') {
-                        echo "Python environment activated."
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                        echo "requirements.txt generated."
                         sh 'python -m pip install --break-system-packages -r requirements.txt'
-                        echo "Project dependencies installed with pip."
                         sh 'mkdir -p dist/linux/cxfreeze'
-                        echo "Output directories created."
                         sh "python -m pip install --break-system-packages cx_Freeze"
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
                         sh "mv ./dist/linux/cxfreeze/main ${PROJECT_NAME}_${VERSION}-cx.bin"
@@ -119,33 +115,19 @@ pipeline {
             }
             steps {
                 script {
-                    echo 'Setting up Python env and testing Nuitka build...'
-
                         withPythonEnv('python3.13') {
-                            echo "Python environment activated."
-
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                            echo "requirements.txt generated."
-
                             sh 'python -m pip install --break-system-packages -r requirements.txt'
-                            echo "Project dependencies installed with pip."
-
                             sh 'python -m pip install --break-system-packages nuitka'
-                            echo "Nuitka installed in venv."
-
                             sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
-                            echo "Output directories created."
-
                             sh 'python -m nuitka main.py --standalone --output-dir=dist/linux/nuitka --enable-plugin=pyside6'
-                            echo "Nuitka Linux build attempted."
-
                             sh 'python -m nuitka main.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
-                            echo "Nuitka Windows build attempted."
+                            sh 'find'
                         }
                 }
+            }
             post {
                 success {
-                    echo 'Archiving build artifacts...'
                     archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
                     archiveArtifacts artifacts: 'dist/linux/**/*'
                     archiveArtifacts artifacts: 'dist/windows/**/*'
@@ -153,7 +135,6 @@ pipeline {
                 always {
                     cleanWs()
                 }
-            }
             }
         }
         stage('build packages')
@@ -174,35 +155,20 @@ pipeline {
             }
             steps {
                 script {
-                    echo 'Setting up Python env and testing PyOxidizer build...'
 
                         withPythonEnv('python3.13') {
-                            echo "Python environment activated."
-
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                            echo "requirements.txt generated."
-
                             sh 'python -m pip install --break-system-packages -r requirements.txt'
-                            echo "Project dependencies installed with pip."
-
                             sh 'python -m pip install --break-system-packages pyoxidizer'
-                            echo "PyOxidizer installed in venv."
-
                             sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
-                            echo "Output directories prepared (build output will be in ./build/ by default)."
-
                             sh 'pyoxidizer build'
-                            echo "PyOxidizer build attempted."
-
                             sh 'cp -r build/x86_64-unknown-linux-gnu/debug/install/* dist/linux/pyoxidizer/'
                             sh 'cp -r build/x86_64-pc-windows-gnu/debug/install/* dist/windows/pyoxidizer/'
-                            echo "PyOxidizer artifacts copied to dist/."
                         }
                 }
             }
             post {
                 success {
-                    echo 'Archiving build artifacts...'
                     archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
                     archiveArtifacts artifacts: 'dist/linux/**/*'
                     archiveArtifacts artifacts: 'dist/windows/**/*'
