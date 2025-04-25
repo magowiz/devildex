@@ -36,7 +36,7 @@ pipeline {
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                         echo "requirements.txt generated."
 
-                        sh 'pip install -r requirements.txt'
+                        sh 'pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
 
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
