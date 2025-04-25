@@ -35,7 +35,7 @@ RUN apt-get update && \
     curl \
     git \
     mingw-w64 \
-    python3-pipx && \
+    pipx && \
     rm -rf /var/lib/apt/lists/* # Clean up immediately
 
 # Install Poetry using the official script
