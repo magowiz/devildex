@@ -79,7 +79,6 @@ pipeline {
             }
             steps {
                 script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing cx_Freeze build...'
                     withPythonEnv('python3.13') {
                         echo "Python environment activated."
@@ -97,7 +96,7 @@ pipeline {
                         sh 'python setup_cxfreeze.py build_exe --build-exe dist/windows/cxfreeze'
                         echo "cx_Freeze Windows build attempted."
                     }
-                }}
+                }
             }
             post {
                 success {
@@ -125,7 +124,6 @@ pipeline {
             }
             steps {
                 script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing Nuitka build...'
 
                         withPythonEnv('python3.13') {
@@ -149,7 +147,6 @@ pipeline {
                             sh 'python -m nuitka main.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
                             echo "Nuitka Windows build attempted."
                         }
-                    }
                 }
             post {
                 success {
@@ -180,7 +177,6 @@ pipeline {
             }
             steps {
                 script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing PyOxidizer build...'
 
                         withPythonEnv('python3.13') {
@@ -205,7 +201,6 @@ pipeline {
                             sh 'cp -r build/x86_64-pc-windows-gnu/debug/install/* dist/windows/pyoxidizer/'
                             echo "PyOxidizer artifacts copied to dist/."
                         }
-                    }
                 }
             }
             post {
