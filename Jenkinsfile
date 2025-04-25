@@ -44,8 +44,16 @@ pipeline {
                         sh 'pip install --break-system-packages -r requirements.txt'
                         echo "Project dependencies installed with pip."
 
-                        sh 'export VENV_PATH=$(poetry env info --path) && ldd ${VENV_PATH}/lib/python3.13/site-packages/PySide6/QtCore.so > ldd_QtCore_output.txt 2>&1 || echo "ldd command failed, check output file."'
-                        sh 'cat ldd_QtCore_output.txt'
+                        // --- CORREZIONE STEP TEMPORANEI LDD (ricerca globale) ---
+                            // Esegue find su tutto il filesystem per trovare QtCore.so
+                            // Reindirizza gli errori di find a /dev/null, prende solo la prima riga trovata.
+                            sh 'export QT_CORE_SO_PATH=$(find / -name "QtCore.so" 2>/dev/null | head -n 1)'
+                            sh 'echo "Found QtCore.so at: ${QT_CORE_SO_PATH}"' // Mostra il percorso trovato
+
+                            // Esegue ldd sul file trovato, solo se un percorso è stato trovato da find.
+                            sh 'if [ -n "${QT_CORE_SO_PATH}" ]; then ldd "${QT_CORE_SO_PATH}" > ldd_QtCore_output.txt 2>&1 || echo "ldd command failed, check output file."; else echo "QtCore.so not found by find."; fi'
+                            sh 'cat ldd_QtCore_output.txt || echo "Could not cat ldd_QtCore_output.txt (maybe file not found by find?)."'
+                            // --- FINE CORREZIONE STEP TEMPORANEI ---
 
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
