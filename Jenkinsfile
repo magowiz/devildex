@@ -23,7 +23,7 @@ pipeline {
         stage('Test cx_Freeze') {
             agent {
                 dockerfile {
-                    context '.'
+                    filename 'Dockerfile'
                 }
             }
             steps {
@@ -39,7 +39,7 @@ pipeline {
         stage('Test Nuitka') {
              agent {
                 dockerfile {
-                    context '.'
+                    filename 'Dockerfile'
                 }
             }
             steps {
@@ -54,7 +54,7 @@ pipeline {
          stage('Test PyOxidizer') {
              agent {
                 dockerfile {
-                    context '.'
+                     filename 'Dockerfile'
                 }
             }
             steps {
