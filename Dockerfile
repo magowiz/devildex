@@ -7,7 +7,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
-    curl -sSL https://install.python-poetry.org | python3 - --version 1.8.2 && \
+    pip install poetry &&\
     apt-get remove --purge -y curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
