@@ -58,18 +58,42 @@ pipeline {
             }
         }
         stage('Test Nuitka') {
-        when { expression { return true } }
+            when { expression { return true } }
              agent {
                 dockerfile {
                     filename 'Dockerfile'
+                    context '.'
                     args '-u root'
                 }
             }
             steps {
                 script {
-                    echo 'Testing Nuitka build for Linux and Windows...'
-                    sh 'poetry run pip install nuitka'
-                     sh 'echo "Run Nuitka build here"'
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    echo 'Setting up Python env and testing Nuitka build...'
+
+                        withPythonEnv('python3.13') {
+                            echo "Python environment activated."
+
+                            sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                            echo "requirements.txt generated."
+
+                            sh 'pip install --break-system-packages -r requirements.txt'
+                            echo "Project dependencies installed with pip."
+
+                            sh 'pip install --break-system-packages nuitka'
+                            echo "Nuitka installed in venv."
+
+                            sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
+                            echo "Output directories created."
+
+                            sh 'python -m nuitka minimal_app.py --standalone --output-dir=dist/linux/nuitka'
+                            echo "Nuitka Linux build attempted."
+
+                            sh 'python -m nuitka minimal_app.py --standalone --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka'
+                            echo "Nuitka Windows build attempted."
+
+                        }
+                    }
                 }
             }
         }
@@ -79,14 +103,40 @@ pipeline {
              agent {
                 dockerfile {
                      filename 'Dockerfile'
+                     context '.'
                      args '-u root'
                 }
             }
             steps {
                 script {
-                    echo 'Testing PyOxidizer build for Linux and Windows...'
-                    sh 'poetry run pip install pyoxidizer'
-                    sh 'echo "Run PyOxidizer build here"'
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    echo 'Setting up Python env and testing PyOxidizer build...'
+
+                        withPythonEnv('python3.13') {
+                            echo "Python environment activated."
+
+                            sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                            echo "requirements.txt generated."
+
+                            sh 'pip install --break-system-packages -r requirements.txt'
+                            echo "Project dependencies installed with pip."
+
+                            sh 'pip install --break-system-packages pyoxidizer'
+                            echo "PyOxidizer installed in venv."
+
+                            sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
+                            echo "Output directories prepared (build output will be in ./build/ by default)."
+
+                            sh 'python -m pyoxidizer build'
+                            echo "PyOxidizer build attempted."
+
+                            sh 'cp -r build/x86_64-unknown-linux-gnu/release/* dist/linux/pyoxidizer/'
+                            sh 'cp -r build/x86_64-pc-windows-gnu/release/* dist/windows/pyoxidizer/'
+                            echo "PyOxidizer artifacts copied to dist/."
+
+
+                        }
+                    }
                 }
             }
         }
@@ -107,7 +157,7 @@ pipeline {
 
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
-                label 'macos'
+                label 'amd64'
             }
             steps {
                  script {
