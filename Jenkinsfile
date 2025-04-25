@@ -50,7 +50,6 @@ pipeline {
                 DISABLE_ERRORS = true
             }
             steps {
-                    cleanWs()
                     sh 'rm -fr megalinter-reports'
                     sh '/entrypoint.sh'
                     cleanWs()
@@ -72,8 +71,6 @@ pipeline {
                 PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                 DISABLE_ERRORS = true
             }
-
-
             agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -81,14 +78,11 @@ pipeline {
                 }
             }
             steps {
-                cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing cx_Freeze build...'
-
                     withPythonEnv('python3.13') {
                         echo "Python environment activated."
-
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                         echo "requirements.txt generated."
 
@@ -121,7 +115,6 @@ pipeline {
                 PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                 DISABLE_ERRORS = true
             }
-
              agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -129,7 +122,6 @@ pipeline {
                 }
             }
             steps {
-                cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing Nuitka build...'
@@ -183,7 +175,6 @@ pipeline {
                 }
             }
             steps {
-                cleanWs()
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     echo 'Setting up Python env and testing PyOxidizer build...'
