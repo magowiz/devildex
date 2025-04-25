@@ -38,6 +38,7 @@ RUN apt-get update && \
     python-is-python3 \
     python3-dev \
     patchelf \
+    libglib2.0-0 \
     pipx && \
     rm -rf /var/lib/apt/lists/* # Clean up immediately
 
