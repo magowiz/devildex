@@ -43,7 +43,7 @@ pipeline {
                         sh 'mkdir -p dist/linux/cxfreeze dist/windows/cxfreeze'
                         echo "Output directories created."
 
-                        sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
+                        sh 'python3 setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
                         echo "cx_Freeze Linux build attempted."
 
                         sh 'python setup_cxfreeze.py build_exe --platforms=win64 --build-exe dist/windows/cxfreeze'
