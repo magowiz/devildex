@@ -22,8 +22,8 @@ pipeline {
 
         stage('Test cx_Freeze') {
             agent {
-                docker {
-                    image 'devil-dex-build:latest'
+                dockerfile {
+                    context '.'
                 }
             }
             steps {
@@ -38,8 +38,8 @@ pipeline {
 
         stage('Test Nuitka') {
              agent {
-                docker {
-                    image 'devil-dex-build:latest'
+                dockerfile {
+                    context '.'
                 }
             }
             steps {
@@ -53,8 +53,8 @@ pipeline {
 
          stage('Test PyOxidizer') {
              agent {
-                docker {
-                    image 'devil-dex-build:latest'
+                dockerfile {
+                    context '.'
                 }
             }
             steps {
