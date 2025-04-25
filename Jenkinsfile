@@ -101,9 +101,9 @@ pipeline {
             post {
                 success {
                     echo 'Archiving build artifacts...'
-                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
+                    archiveArtifacts artifacts: 'dist/linux/**/*'
+                    archiveArtifacts artifacts: 'dist/windows/**/*'
                 }
                 always {
                     cleanWs()
@@ -151,9 +151,9 @@ pipeline {
             post {
                 success {
                     echo 'Archiving build artifacts...'
-                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
+                    archiveArtifacts artifacts: 'dist/linux/**/*'
+                    archiveArtifacts artifacts: 'dist/windows/**/*'
                 }
                 always {
                     cleanWs()
@@ -206,9 +206,9 @@ pipeline {
             post {
                 success {
                     echo 'Archiving build artifacts...'
-                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'dist/linux/**/*', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'dist/windows/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
+                    archiveArtifacts artifacts: 'dist/linux/**/*'
+                    archiveArtifacts artifacts: 'dist/windows/**/*'
                 }
                 always {
                     cleanWs()
