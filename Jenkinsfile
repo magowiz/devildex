@@ -161,7 +161,9 @@ pipeline {
             }
             }
         }
-
+        stage('build packages')
+        {
+            parallel {
          stage('Test PyOxidizer') {
                      environment {
                 PIP_INDEX_URL = "${env.IP_INDEX_URL}"
@@ -215,7 +217,8 @@ pipeline {
                 }
             }
         }
-
+        }
+        }
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
                 label 'amd64'
