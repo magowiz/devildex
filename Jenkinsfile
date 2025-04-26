@@ -170,7 +170,7 @@ pipeline {
                 success {
                     //archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
 sh 'sleep 1'
-                    cho "Verifico il workspace e il file prima di archiviare nel post block..."
+                    echo "Verifico il workspace e il file prima di archiviare nel post block..."
         sh 'pwd' // Stampa la directory corrente
         sh 'ls -la' // Elenca i contenuti della directory corrente con dettagli
         sh "ls -la ${PROJECT_NAME}_${VERSION}-lin-oxi.bin" // Verifica specificamente il tuo file
