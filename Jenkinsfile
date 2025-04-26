@@ -168,9 +168,7 @@ pipeline {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
-                    archiveArtifacts artifacts: 'dist/linux/**/*'
-                    archiveArtifacts artifacts: 'dist/windows/**/*'
+                    archiveArtifacts artifacts: '${PROJECT_NAME}_${VERSION}-lin-oxi.bin'
                 }
                 always {
                     cleanWs()
