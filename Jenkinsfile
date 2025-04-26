@@ -80,14 +80,14 @@ pipeline {
                             args '-u root'
                         }
             }
-            steps {
-                script {
-                    withPythonEnv('python3.13') {
+                      steps {
+                        script {
+                            withPythonEnv('python3.13') {
                         sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                         sh 'python -m pip install --break-system-packages -r requirements.txt'
                         sh 'mkdir -p dist/linux/cxfreeze'
                         sh "python -m pip install --break-system-packages cx_Freeze"
-                        sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
+                                sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
                         sh "mv ./dist/linux/cxfreeze/main ${PROJECT_NAME}_${VERSION}-cx.bin"
                     }
                 }
@@ -160,21 +160,13 @@ pipeline {
                             sh 'python -m pip install --break-system-packages pyoxidizer'
                             sh 'mkdir -p dist/linux/pyoxidizer'
                             sh 'pyoxidizer build'
-                            sh "sleep 10"
                             sh "cp build/x86_64-unknown-linux-gnu/debug/install/devildex_app ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
-                            sh "sleep 10"
+                            sh "chmod o+r ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
                         }
                 }
             }
             post {
                 success {
-                    //archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
-sh 'sleep 1'
-                    echo "Verifico il workspace e il file prima di archiviare nel post block..."
-        sh 'pwd' // Stampa la directory corrente
-        sh 'ls -la' // Elenca i contenuti della directory corrente con dettagli
-        sh "ls -la ${PROJECT_NAME}_${VERSION}-lin-oxi.bin" // Verifica specificamente il tuo file
-        sh "chmod o+r ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
         archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true // Il tuo step che fallisce
                 }
             }
@@ -187,9 +179,9 @@ sh 'sleep 1'
             }
             steps {
                  script {
-                     echo 'This stage runs on a macOS agent to build the macOS package.'
-                     echo 'Setup and commands for macOS build go here (e.g., using one of the tools).'
-                     echo "macOS build stage - Placeholder"
+                    echo 'This stage runs on a macOS agent to build the macOS package.'
+                    echo 'Setup and commands for macOS build go here (e.g., using one of the tools).'
+                    echo "macOS build stage - Placeholder"
                  }
             }
         }
