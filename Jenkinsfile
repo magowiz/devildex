@@ -160,10 +160,10 @@ pipeline {
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                             sh 'python -m pip install --break-system-packages -r requirements.txt'
                             sh 'python -m pip install --break-system-packages pyoxidizer'
-                            sh 'mkdir -p dist/linux/pyoxidizer dist/windows/pyoxidizer'
+                            sh 'mkdir -p dist/linux/pyoxidizer'
                             sh 'pyoxidizer build'
+                            sh "mv ./build/x86_64-unknown-linux-gnu/debug/install/devildex_app "${PROJECT_NAME}_${VERSION}-lin-oxi.bin""
                             sh 'find'
-                            //sh 'cp -r build/x86_64-unknown-linux-gnu/debug/install/* .'
                         }
                 }
             }
