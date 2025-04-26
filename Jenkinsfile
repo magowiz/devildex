@@ -133,8 +133,9 @@ pipeline {
                 success {
                     archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-nui.bin"
                     archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-win-nui.bin"
+                    cleanWs()
                 }
-                always {
+                failure {
                     cleanWs()
                 }
             }
@@ -169,8 +170,9 @@ pipeline {
             post {
                 success {
                     archiveArtifacts artifacts: '${PROJECT_NAME}_${VERSION}-lin-oxi.bin'
+                    cleanWs()
                 }
-                always {
+                failure {
                     cleanWs()
                 }
             }
