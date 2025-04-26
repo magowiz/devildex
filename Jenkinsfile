@@ -123,16 +123,16 @@ pipeline {
                             sh 'python -m pip install --break-system-packages nuitka'
                             sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
                             sh 'python -m nuitka main.py --standalone --onefile --output-dir=dist/linux/nuitka --enable-plugin=pyside6'
+                            sh "mv dist/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-lin-nui.bin"
                             sh 'python -m nuitka main.py --standalone --onefile --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
-                            sh 'find'
+                            sh "mv dist/windows/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-win-nui.bin"
                         }
                 }
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'dist/linux/**/*.tar.gz, dist/windows/**/*.zip'
-                    archiveArtifacts artifacts: 'dist/linux/**/*'
-                    archiveArtifacts artifacts: 'dist/windows/**/*'
+                    archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-nui.bin"
+                    archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-win-nui.bin"
                 }
                 always {
                     cleanWs()
