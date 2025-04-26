@@ -139,34 +139,33 @@ pipeline {
                 }
             }
         }
-
-         stage('Build PyOxidizer') {
-                     environment {
+                stage('Build PyOxidizer') {
+                    environment {
                         PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                         PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                         DISABLE_ERRORS = true
             }
-             agent {
-                dockerfile {
-                     filename 'Dockerfile'
-                     args '-u root'
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile'
+                            args '-u root'
                 }
             }
-            steps {
-                script {
-                        withPythonEnv('python3.13') {
-                            sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                            sh 'python -m pip install --break-system-packages -r requirements.txt'
-                            sh 'python -m pip install --break-system-packages pyoxidizer'
-                            sh 'mkdir -p dist/linux/pyoxidizer'
-                            sh 'pyoxidizer build'
-                            sh "cp build/x86_64-unknown-linux-gnu/debug/install/devildex_app ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
-                            sh "chmod o+r ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
+                    steps {
+                        script {
+                            withPythonEnv('python3.13') {
+                                sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                                sh 'python -m pip install --break-system-packages -r requirements.txt'
+                                sh 'python -m pip install --break-system-packages pyoxidizer'
+                                sh 'mkdir -p dist/linux/pyoxidizer'
+                                sh 'pyoxidizer build'
+                                sh "cp build/x86_64-unknown-linux-gnu/debug/install/devildex_app ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
+                                sh "chmod o+r ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
                         }
                 }
             }
-            post {
-                success {
+                    post {
+                        success {
                             archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true
                             cleanWs()
                 }
