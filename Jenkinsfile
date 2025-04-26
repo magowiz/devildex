@@ -92,31 +92,31 @@ pipeline {
                     }
                 }
             }
-            post {
-                success {
+                    post {
+                        success {
                             archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-cx.bin"
                             cleanWs()
                 }
-                failure {
-                    cleanWs()
+                        failure {
+                            cleanWs()
                 }
             }
         }
-        stage('Build Nuitka') {
+                stage('Build Nuitka') {
                         environment {
                         PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                         PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                         DISABLE_ERRORS = true
             }
-             agent {
-                dockerfile {
+                    agent {
+                        dockerfile {
                             filename 'Dockerfile'
                             args '-u root'
                 }
             }
-            steps {
-                script {
-                        withPythonEnv('python3.13') {
+                    steps {
+                        script {
+                            withPythonEnv('python3.13') {
                                 sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                 sh 'python -m pip install --break-system-packages -r requirements.txt'
                                 sh 'python -m pip install --break-system-packages nuitka'
@@ -134,17 +134,17 @@ pipeline {
                             archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-win-nui.bin"
                             cleanWs()
                 }
-                failure {
-                    cleanWs()
+                        failure {
+                            cleanWs()
                 }
             }
         }
 
          stage('Build PyOxidizer') {
                      environment {
-                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                DISABLE_ERRORS = true
+                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                        DISABLE_ERRORS = true
             }
              agent {
                 dockerfile {
@@ -167,11 +167,11 @@ pipeline {
             }
             post {
                 success {
-        archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true
-                cleanWs()
+                            archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true
+                            cleanWs()
                 }
-                failure {
-                    cleanWs()
+                        failure {
+                            cleanWs()
                 }
             }
         }
@@ -182,11 +182,11 @@ pipeline {
                 label 'amd64'
             }
             steps {
-                 script {
+                script {
                     echo 'This stage runs on a macOS agent to build the macOS package.'
                     echo 'Setup and commands for macOS build go here (e.g., using one of the tools).'
                     echo "macOS build stage - Placeholder"
-                 }
+                }
             }
         }
     }
