@@ -162,7 +162,7 @@ pipeline {
                             sh 'python -m pip install --break-system-packages pyoxidizer'
                             sh 'mkdir -p dist/linux/pyoxidizer'
                             sh 'pyoxidizer build'
-                            sh "mv ./build/x86_64-unknown-linux-gnu/debug/install/devildex_app "${PROJECT_NAME}_${VERSION}-lin-oxi.bin""
+                            sh "mv ./build/x86_64-unknown-linux-gnu/debug/install/devildex_app ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
                         }
                 }
             }
