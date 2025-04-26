@@ -172,9 +172,6 @@ pipeline {
                 success {
                     archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
                 }
-                failure {
-                    cleanWs()
-                }
             }
         }
         }
