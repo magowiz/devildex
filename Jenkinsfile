@@ -68,17 +68,17 @@ pipeline {
         stage('build packages')
         {
             parallel {
-        stage('Build cx_Freeze') {
+                stage('Build cx_Freeze') {
                     environment {
-                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                DISABLE_ERRORS = true
-            }
-            agent {
-                dockerfile {
-                    filename 'Dockerfile'
-                    args '-u root'
-                }
+                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                        DISABLE_ERRORS = true
+                    }
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile'
+                            args '-u root'
+                        }
             }
             steps {
                 script {
