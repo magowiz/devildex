@@ -83,19 +83,19 @@ pipeline {
                       steps {
                         script {
                             withPythonEnv('python3.13') {
-                        sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                        sh 'python -m pip install --break-system-packages -r requirements.txt'
-                        sh 'mkdir -p dist/linux/cxfreeze'
-                        sh "python -m pip install --break-system-packages cx_Freeze"
+                                sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                                sh 'python -m pip install --break-system-packages -r requirements.txt'
+                                sh 'mkdir -p dist/linux/cxfreeze'
+                                sh "python -m pip install --break-system-packages cx_Freeze"
                                 sh 'python setup_cxfreeze.py build_exe --build-exe dist/linux/cxfreeze'
-                        sh "mv ./dist/linux/cxfreeze/main ${PROJECT_NAME}_${VERSION}-cx.bin"
+                                sh "mv ./dist/linux/cxfreeze/main ${PROJECT_NAME}_${VERSION}-cx.bin"
                     }
                 }
             }
             post {
                 success {
-                    archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-cx.bin"
-                    cleanWs()
+                            archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-cx.bin"
+                            cleanWs()
                 }
                 failure {
                     cleanWs()
@@ -104,35 +104,35 @@ pipeline {
         }
         stage('Build Nuitka') {
                         environment {
-                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                DISABLE_ERRORS = true
+                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                        DISABLE_ERRORS = true
             }
              agent {
                 dockerfile {
-                    filename 'Dockerfile'
-                    args '-u root'
+                            filename 'Dockerfile'
+                            args '-u root'
                 }
             }
             steps {
                 script {
                         withPythonEnv('python3.13') {
-                            sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                            sh 'python -m pip install --break-system-packages -r requirements.txt'
-                            sh 'python -m pip install --break-system-packages nuitka'
-                            sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
-                            sh 'python -m nuitka main.py --standalone --onefile --output-dir=dist/linux/nuitka --enable-plugin=pyside6'
-                            sh "mv dist/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-lin-nui.bin"
-                            sh 'python -m nuitka main.py --standalone --onefile --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
-                            sh "mv dist/windows/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-win-nui.bin"
+                                sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                                sh 'python -m pip install --break-system-packages -r requirements.txt'
+                                sh 'python -m pip install --break-system-packages nuitka'
+                                sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
+                                sh 'python -m nuitka main.py --standalone --onefile --output-dir=dist/linux/nuitka --enable-plugin=pyside6'
+                                sh "mv dist/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-lin-nui.bin"
+                                sh 'python -m nuitka main.py --standalone --onefile --windows-disable-console --mingw64 --output-dir=dist/windows/nuitka --enable-plugin=pyside6'
+                                sh "mv dist/windows/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-win-nui.bin"
                         }
                 }
             }
-            post {
-                success {
-                    archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-nui.bin"
-                    archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-win-nui.bin"
-                    cleanWs()
+                    post {
+                        success {
+                            archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-nui.bin"
+                            archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-win-nui.bin"
+                            cleanWs()
                 }
                 failure {
                     cleanWs()
@@ -167,7 +167,11 @@ pipeline {
             }
             post {
                 success {
-        archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true // Il tuo step che fallisce
+        archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true
+                cleanWs()
+                }
+                failure {
+                    cleanWs()
                 }
             }
         }
