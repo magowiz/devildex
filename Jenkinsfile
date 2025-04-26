@@ -174,6 +174,8 @@ sh 'sleep 1'
         sh 'pwd' // Stampa la directory corrente
         sh 'ls -la' // Elenca i contenuti della directory corrente con dettagli
         sh "ls -la ${PROJECT_NAME}_${VERSION}-lin-oxi.bin" // Verifica specificamente il tuo file
+        sh "chmod o+r ${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
+        archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin", fingerprint: true // Il tuo step che fallisce
                 }
             }
         }
