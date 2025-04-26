@@ -94,7 +94,6 @@ pipeline {
             }
             post {
                 success {
-                    echo 'Archiving build artifacts...'
                     archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-cx.bin"
                     cleanWs()
                 }
@@ -147,7 +146,6 @@ pipeline {
                 PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                 DISABLE_ERRORS = true
             }
-
              agent {
                 dockerfile {
                      filename 'Dockerfile'
@@ -156,7 +154,6 @@ pipeline {
             }
             steps {
                 script {
-
                         withPythonEnv('python3.13') {
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                             sh 'python -m pip install --break-system-packages -r requirements.txt'
@@ -171,7 +168,8 @@ pipeline {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
+                    //archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-lin-oxi.bin"
+sh 'sleep 1'
                 }
             }
         }
