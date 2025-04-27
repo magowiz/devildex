@@ -964,6 +964,19 @@ files = [
 dev = ["build (>=1.0.0)", "pytest (>=7.0.0)"]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+description = "Python Library for Tom's Obvious, Minimal Language"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+groups = ["main"]
+markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
+files = [
+    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
+    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
+]
+
+[[package]]
 name = "tomlkit"
 version = "0.13.2"
 description = "Style preserving TOML library"
@@ -1119,4 +1132,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "8b6a7c151f6a3043561e22cb59a68bdc0e9ac0705c7ec66ac29086810481714c"
+content-hash = "6538eb1b4e42d11be44b4fe89edbafbb69f5c2729b3c0e8e33954d747c1ef9a2"
