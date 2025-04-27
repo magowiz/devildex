@@ -18,6 +18,7 @@ RUN apt-get update && \
     python3 \
     python3-venv \
     python3-pip \
+    libegl1 \
     python-is-python3 &&\
     rm -rf /var/lib/apt/lists/*
 
