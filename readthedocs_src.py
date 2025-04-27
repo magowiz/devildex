@@ -41,9 +41,60 @@ except configparser.Error as e:
     custom_banner = default_banner
 
 
-def apply_devildex_customizations(
-    isolated_source_path, theme_name, banner_text
-):
+def _write_custom_css(custom_css_path, css_content):
+    try:
+        with open(custom_css_path, "w", encoding="utf-8") as f:
+            f.write(css_content)
+        print(
+            f"  - Creato/Aggiornato CSS personalizzato: {os.path.basename(custom_css_path)}"
+        )
+    except Exception as e:
+        print(f"  - Errore scrittura CSS personalizzato {custom_css_path}: {e}")
+
+
+def _write_conf(conf_updated, conf_py_path, new_conf_content):
+    if conf_updated:
+        with open(conf_py_path, "w", encoding="utf-8") as f:
+            f.write(new_conf_content)
+        print("  - Riscritto conf.py con aggiornamenti.")
+    else:
+        print("  - conf.py non necessitava di modifiche per le personalizzazioni.")
+
+
+def _fallback_css(current_list_str, css_file_to_add, new_conf_content, match):
+    new_list_str = current_list_str.rstrip()[:-1].strip()
+    if new_list_str and new_list_str != "[":
+        new_list_str += f", '{css_file_to_add}']"
+    else:
+        new_list_str = f"['{css_file_to_add}']"
+        new_conf_content = new_conf_content.replace(
+            match.group(0), f"html_css_files = {new_list_str}", 1
+        )
+    conf_updated = True
+    return conf_updated
+
+
+def _create_template_static(templates_dir, static_dir):
+    try:
+        os.makedirs(templates_dir, exist_ok=True)
+        os.makedirs(static_dir, exist_ok=True)
+        print("  - Assicurate directory: _templates, _static")
+    except OSError as e:
+        print(f"  - Errore creazione directory _templates/_static: {e}")
+
+
+def _write_override_template(layout_template_path, layout_content):
+    try:
+        with open(layout_template_path, "w", encoding="utf-8") as f:
+            f.write(layout_content)
+        print(
+            f"  - Creato/Aggiornato override template: {os.path.basename(layout_template_path)}"
+        )
+    except Exception as e:
+        print(f"  - Errore scrittura override template {layout_template_path}: {e}")
+
+
+def apply_devildex_customizations(isolated_source_path, theme_name, banner_text):
     """Applica personalizzazioni DevilDex alla configurazione e ai template Sphinx,
     basandosi sui parametri forniti.
 
@@ -54,22 +105,13 @@ def apply_devildex_customizations(
     """
     print(
         f"\nApplying DevilDex customizations (Theme: {theme_name}, Banner: '{banner_text}')..."
-    )  # Log aggiornato
+    )
     conf_py_path = os.path.join(isolated_source_path, "conf.py")
     templates_dir = os.path.join(isolated_source_path, "_templates")
     static_dir = os.path.join(isolated_source_path, "_static")
     layout_template_path = os.path.join(templates_dir, "layout.html")
-    custom_css_path = os.path.join(
-        static_dir, "custom.css"
-    )
-
-    try:
-        os.makedirs(templates_dir, exist_ok=True)
-        os.makedirs(static_dir, exist_ok=True)
-        print("  - Assicurate directory: _templates, _static")
-    except OSError as e:
-        print(f"  - Errore creazione directory _templates/_static: {e}")
-
+    custom_css_path = os.path.join(static_dir, "custom.css")
+    _create_template_static(templates_dir, static_dir)
     layout_content = f"""\
     {{% extends "!layout.html" %}}
     {{% block relbar1 %}}
@@ -79,15 +121,7 @@ def apply_devildex_customizations(
         {{{{ super() }}}}
     {{% endblock %}}
     """
-
-    try:
-        with open(layout_template_path, "w", encoding="utf-8") as f:
-            f.write(layout_content)
-        print(
-            f"  - Creato/Aggiornato override template: {os.path.basename(layout_template_path)}"
-        )
-    except Exception as e:
-        print(f"  - Errore scrittura override template {layout_template_path}: {e}")
+    _write_override_template(layout_template_path, layout_content)
 
     css_content = """\
     /* Stili personalizzati per DevilDex */
@@ -109,16 +143,7 @@ def apply_devildex_customizations(
         padding-top: 0;
     }
     """
-
-    try:
-        with open(custom_css_path, "w", encoding="utf-8") as f:
-            f.write(css_content)
-        print(
-            f"  - Creato/Aggiornato CSS personalizzato: {os.path.basename(custom_css_path)}"
-        )
-    except Exception as e:
-        print(f"  - Errore scrittura CSS personalizzato {custom_css_path}: {e}")
-
+    _write_custom_css(custom_css_path, css_content)
     try:
         with open(conf_py_path, "r", encoding="utf-8") as f:
             original_conf_content = f.read()
@@ -177,7 +202,6 @@ def apply_devildex_customizations(
             print("  - Aggiunto templates_path = ['_templates'] a conf.py")
             conf_updated = True
 
-        # c) Assicura html_static_path (append)
         static_pattern = re.compile(
             r"^\s*html_static_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
@@ -219,7 +243,6 @@ def apply_devildex_customizations(
             print("  - Aggiunto html_static_path = ['_static'] a conf.py")
             conf_updated = True
 
-        # d) Assicura html_css_files (append 'custom.css')
         css_pattern = re.compile(
             r"^\s*html_css_files\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
@@ -251,28 +274,15 @@ def apply_devildex_customizations(
                     print(
                         "  - Avviso: Fallback per html_css_files, uso concatenazione stringhe."
                     )
-                    new_list_str = current_list_str.rstrip()[:-1].strip()
-                    if new_list_str and new_list_str != "[":
-                        new_list_str += f", '{css_file_to_add}']"
-                    else:
-                        new_list_str = f"['{css_file_to_add}']"
-                    new_conf_content = new_conf_content.replace(
-                        match.group(0), f"html_css_files = {new_list_str}", 1
+                    new_conf_content, conf_updated = _fallback_css(
+                        current_list_str, css_file_to_add, new_conf_content, match
                     )
-                    conf_updated = True
+
         else:
             new_conf_content += f"\nhtml_css_files = ['{css_file_to_add}']\n"
             print(f"  - Aggiunto html_css_files = ['{css_file_to_add}'] a conf.py")
             conf_updated = True
-
-        # Riscrivi conf.py solo se è stato modificato
-        if conf_updated:
-            with open(conf_py_path, "w", encoding="utf-8") as f:
-                f.write(new_conf_content)
-            print("  - Riscritto conf.py con aggiornamenti.")
-        else:
-            print("  - conf.py non necessitava di modifiche per le personalizzazioni.")
-
+        _write_conf(conf_updated, conf_py_path, new_conf_content)
     except Exception as e:
         print(f"  - Errore durante la modifica di conf.py {conf_py_path}: {e}")
 
@@ -280,12 +290,10 @@ def apply_devildex_customizations(
 
 
 def patch_include_directives(doc_source_path):
-    """
-    Patches relative include directives in specific Markdown files.
+    """Patches relative include directives in specific Markdown files.
     Changes `{include} ../FILE` to `{include} /FILE` (absolute from source dir).
     """
     print(f"\nPatching include directives in {doc_source_path}...")
-    # Mappa: file da patchare -> percorso include originale da cercare
     files_to_patch = {
         "authors.md": "../AUTHORS.md",
         "change_log.md": "../CHANGES.md",
@@ -299,18 +307,15 @@ def patch_include_directives(doc_source_path):
             try:
                 with open(file_path, "r+", encoding="utf-8") as f:
                     content = f.read()
-                    # Sostituzione semplice della stringa
                     old_directive = f"{{include}} {old_include_path}"
-                    # Il nuovo percorso è assoluto dalla root dei sorgenti Sphinx
                     new_filename = os.path.basename(old_include_path)
-                    # Aggiungi lo slash iniziale
                     new_directive = f"{{include}} /{new_filename}"
 
                     if old_directive in content:
                         new_content = content.replace(old_directive, new_directive)
-                        f.seek(0)  # Torna all'inizio del file
-                        f.write(new_content)  # Sovrascrivi
-                        f.truncate()  # Rimuovi eventuale contenuto residuo se il nuovo è più corto
+                        f.seek(0)
+                        f.write(new_content)
+                        f.truncate()
                         print(
                             f"  - Patchato {md_file}: '{old_directive}' -> '{new_directive}'"
                         )
@@ -337,7 +342,7 @@ def _find_dir(repo_path, potential_doc_dirs):
     for doc_dir_name in potential_doc_dirs:
         current_path = os.path.join(repo_path, doc_dir_name)
         if os.path.isdir(current_path) and os.path.exists(
-                os.path.join(current_path, "conf.py")
+            os.path.join(current_path, "conf.py")
         ):
             found_doc_path = current_path
             print(
@@ -366,8 +371,8 @@ def _clean_isolated_doc_path(isolated_doc_path):
 
 def _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
     if (
-            os.path.exists(os.path.join(found_doc_path, "conf.py"))
-            or found_doc_path == repo_path
+        os.path.exists(os.path.join(found_doc_path, "conf.py"))
+        or found_doc_path == repo_path
     ):
         shutil.copytree(
             found_doc_path, isolated_doc_path, ignore=shutil.ignore_patterns(".git")
@@ -386,9 +391,7 @@ def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
     copied_root_files_count = 0
     for filename in common_root_files:
         src_file = os.path.join(repo_path, filename)
-        dst_file = os.path.join(
-            isolated_doc_path, filename
-        )
+        dst_file = os.path.join(isolated_doc_path, filename)
         if os.path.exists(src_file):
             try:
                 shutil.copy2(src_file, dst_file)
@@ -446,7 +449,8 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
         common_root_files = ["AUTHORS.md", "CHANGES.md", "LICENSE"]
         print("Cerco e copio file comuni dalla root del repository...")
         copied_root_files_count = _copy_common_files(
-            common_root_files, repo_path, isolated_doc_path)
+            common_root_files, repo_path, isolated_doc_path
+        )
         if copied_root_files_count == len(common_root_files):
             print(
                 f"Copiati {copied_root_files_count} file aggiuntivi richiesti dalla root."
@@ -634,7 +638,9 @@ def download_readthedocs_source_and_build(rtd_url):
     api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
     print(f"Chiamo l'API per i dettagli del progetto: {api_project_detail_url}")
 
-    default_branch, repo_url = _extract_repo_url_branch(api_project_detail_url, project_slug)
+    default_branch, repo_url = _extract_repo_url_branch(
+        api_project_detail_url, project_slug
+    )
     base_output_dir = "rtd_source_clones_temp"
     os.makedirs(base_output_dir, exist_ok=True)
     clone_dir_name = f"{project_slug}_repo_{default_branch}"
@@ -712,7 +718,6 @@ def download_readthedocs_source_and_build(rtd_url):
         return None, None
 
 
-# --- Esempio di utilizzo ---
 print("--- Esecuzione Script v3 (Isola Sorgente + Build Sphinx + Pulizia) ---")
 
 isolated_folder, build_folder = download_readthedocs_source_and_build(
