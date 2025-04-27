@@ -44,7 +44,7 @@ RUN apt-get update && \
 
 RUN apt-get install -y --no-install-recommends libglib2.0
 
-RUN apt-get install -y --no-install-recommends libxkbcommon-x11
+RUN apt-get install -y --no-install-recommends libxkbcommon-x11-0
 
 
 CMD  ["python3", "-m", "main"]
