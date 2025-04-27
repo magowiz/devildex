@@ -20,7 +20,7 @@ def download_readthedocs_prebuilt_robust(
     Returns:
         str: Il percorso del file scaricato, o None in caso di fallimento.
     """
-    print(f"--- Processo Download Robusto ---")
+    print("--- Processo Download Robusto ---")
     print(f"Analizzo l'URL: {rtd_url}")
 
     # --- Passo 1: Deducire lo slug del progetto ---
@@ -53,13 +53,15 @@ def download_readthedocs_prebuilt_robust(
 
         versions_list_data = response.json()
         print(
-            f"API lista versioni chiamata con successo. Trovate {versions_list_data.get('count', 'N/A')} versioni."
+            "API lista versioni chiamata con successo. Trovate "
+            f"{versions_list_data.get('count', 'N/A')} versioni."
         )
 
     except requests.exceptions.RequestException as e:
         print(f"Errore chiamando API lista versioni ({api_list_versions_url}): {e}")
         print(
-            "Impossibile ottenere l'elenco delle versioni. Non posso procedere a scegliere la versione."
+            "Impossibile ottenere l'elenco delle versioni. Non posso procedere "
+            "a scegliere la versione."
         )
         return None
     except Exception as e:
@@ -101,7 +103,8 @@ def download_readthedocs_prebuilt_robust(
     # Se nessuna versione preferita trovata, prova a prendere la prima attiva e costruita
     if not chosen_version_slug:
         print(
-            "\nNessuna versione preferita disponibile (attiva e costruita). Provo a prendere la prima versione attiva e costruita trovata."
+            "\nNessuna versione preferita disponibile (attiva e costruita). Provo a prendere "
+            "la prima versione attiva e costruita trovata."
         )
         for version in available_versions:
             if version.get("active") and version.get("built"):
@@ -124,17 +127,16 @@ def download_readthedocs_prebuilt_robust(
     )
 
     print(
-        f"\nChiamo l'API per i dettagli della versione '{chosen_version_slug}': {api_version_detail_url} con project__slug={project_slug}"
+        f"\nChiamo l'API per i dettagli della versione '{chosen_version_slug}': "
+        f"{api_version_detail_url} con project__slug={project_slug}"
     )
 
     version_detail_data = None
     try:
-        # Nota: Qui è dove l'API ha dato 404 precedentemente per 'black'/'stable'/'latest'.
-        # La chiamata è corretta, l'errore indica che la risorsa non è disponibile in quel momento/modo.
         response = requests.get(
             api_version_detail_url, params={"project__slug": project_slug}
         )
-        response.raise_for_status()  # Genera eccezione per errori HTTP (come 404)
+        response.raise_for_status()
 
         version_detail_data = response.json()
         print(
@@ -143,7 +145,8 @@ def download_readthedocs_prebuilt_robust(
 
     except requests.exceptions.RequestException as e:
         print(
-            f"Errore chiamando API dettagli versione ({api_version_detail_url}?project__slug={project_slug}): {e}"
+            f"Errore chiamando API dettagli versione ({api_version_detail_url}?"
+            f"project__slug={project_slug}): {e}"
         )
         print(
             "Impossibile ottenere i dettagli della versione. Non posso ottenere i link di download."
@@ -159,7 +162,8 @@ def download_readthedocs_prebuilt_robust(
     download_urls = version_detail_data.get("downloads")
     if not download_urls:
         print(
-            f"Errore: Campo 'downloads' non trovato nei dettagli per la versione '{chosen_version_slug}'."
+            "Errore: Campo 'downloads' non trovato nei dettagli per la versione "
+            f"'{chosen_version_slug}'."
         )
         print("Assicurati che i formati offline siano abilitati per questa versione.")
         return None
@@ -167,7 +171,8 @@ def download_readthedocs_prebuilt_robust(
     file_url = download_urls.get(download_format)
     if not file_url:
         print(
-            f"Errore: Formato '{download_format}' non disponibile per la versione '{chosen_version_slug}'."
+            f"Errore: Formato '{download_format}' non disponibile per la versione "
+            f"'{chosen_version_slug}'."
         )
         print(f"Formati disponibili: {list(download_urls.keys())}")
         return None
@@ -178,7 +183,8 @@ def download_readthedocs_prebuilt_robust(
     # Avviso se l'URL non sembra un link diretto al file (basato sull'estensione)
     if not file_url.lower().endswith((".zip", ".pdf", ".epub")):
         print(
-            f"Avviso: L'URL trovato '{file_url}' potrebbe non essere un link diretto al file scaricabile (estensione non riconosciuta). Procedo comunque..."
+            f"Avviso: L'URL trovato '{file_url}' potrebbe non essere un link "
+            "diretto al file scaricabile (estensione non riconosciuta). Procedo comunque..."
         )
 
     print(

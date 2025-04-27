@@ -28,24 +28,23 @@ try:
         )
         # custom_css = config.get('customization', 'custom_css_file', fallback=None) # Esempio
         print(
-            f"Configurazione letta da '{config_file}': Tema='{custom_theme}', Banner='{custom_banner}'"
+            f"Configurazione letta da '{config_file}': Tema='{custom_theme}', "
+            f"Banner='{custom_banner}'"
         )
 
 except configparser.Error as e:
     print(
-        f"Errore nella lettura del file di configurazione '{config_file}': {e}. Uso i valori di default."
+        f"Errore nella lettura del file di configurazione '{config_file}': {e}. "
+        "Uso i valori di default."
     )
     custom_theme = default_theme
     custom_banner = default_banner
 
 
-    # custom_css = None
-# --- Fine lettura configurazione ---
 def apply_devildex_customizations(
     isolated_source_path, theme_name, banner_text
-):  # <-- Aggiunti parametri
-    """
-    Applica personalizzazioni DevilDex alla configurazione e ai template Sphinx,
+):
+    """Applica personalizzazioni DevilDex alla configurazione e ai template Sphinx,
     basandosi sui parametri forniti.
 
     Args:
@@ -62,18 +61,15 @@ def apply_devildex_customizations(
     layout_template_path = os.path.join(templates_dir, "layout.html")
     custom_css_path = os.path.join(
         static_dir, "custom.css"
-    )  # Nome fisso per semplicità
+    )
 
-    # --- 1. Assicura che le directory esistano ---
     try:
         os.makedirs(templates_dir, exist_ok=True)
         os.makedirs(static_dir, exist_ok=True)
-        print(f"  - Assicurate directory: _templates, _static")
+        print("  - Assicurate directory: _templates, _static")
     except OSError as e:
         print(f"  - Errore creazione directory _templates/_static: {e}")
 
-    # --- 2. Crea/Sovrascrivi override del template layout.html ---
-    #    Inserisce il banner nel footer (verrà spostato da JS)
     layout_content = f"""\
     {{% extends "!layout.html" %}}
     {{% block relbar1 %}}
@@ -93,7 +89,6 @@ def apply_devildex_customizations(
     except Exception as e:
         print(f"  - Errore scrittura override template {layout_template_path}: {e}")
 
-    # --- 3. Crea/Sovrascrivi custom.css (per stile opzionale) ---
     css_content = """\
     /* Stili personalizzati per DevilDex */
     .devildex-banner {
@@ -124,7 +119,6 @@ def apply_devildex_customizations(
     except Exception as e:
         print(f"  - Errore scrittura CSS personalizzato {custom_css_path}: {e}")
 
-    # --- 4. Modifica conf.py per usare tema e includere personalizzazioni ---
     try:
         with open(conf_py_path, "r", encoding="utf-8") as f:
             original_conf_content = f.read()
@@ -132,9 +126,8 @@ def apply_devildex_customizations(
         new_conf_content = original_conf_content
         conf_updated = False
 
-        # a) Imposta/Forza html_theme usando theme_name passato
         theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
-        target_theme_line = f"html_theme = '{theme_name}'"  # <-- Usa theme_name
+        target_theme_line = f"html_theme = '{theme_name}'"
         if theme_pattern.search(new_conf_content):
             old_theme_line = theme_pattern.search(new_conf_content).group(0)
             if old_theme_line != target_theme_line:
@@ -148,7 +141,6 @@ def apply_devildex_customizations(
             print(f"  - Aggiunto html_theme = '{theme_name}' a conf.py")
             conf_updated = True
 
-        # b) Assicura templates_path (prepend)
         templates_pattern = re.compile(
             r"^\s*templates_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
@@ -156,9 +148,7 @@ def apply_devildex_customizations(
         if match:
             current_list_str = match.group(1)
             if "'_templates'" not in current_list_str:
-                # Prepend '_templates'
                 try:
-                    # Prova a valutare la lista esistente per aggiungerci l'elemento
                     import ast
 
                     current_list = ast.literal_eval(current_list_str)
@@ -168,12 +158,11 @@ def apply_devildex_customizations(
                         new_conf_content = new_conf_content.replace(
                             match.group(0), f"templates_path = {new_list_str_repr}", 1
                         )
-                        print(f"  - Prepend '_templates' a templates_path in conf.py")
+                        print("  - Prepend '_templates' a templates_path in conf.py")
                         conf_updated = True
                     else:
                         raise ValueError("Non è una lista")
                 except (ValueError, SyntaxError):
-                    # Fallback se ast.literal_eval fallisce: concatenazione di stringhe (meno robusta)
                     print(
                         "  - Avviso: Fallback per templates_path, uso concatenazione stringhe."
                     )
@@ -185,7 +174,7 @@ def apply_devildex_customizations(
 
         else:
             new_conf_content += "\ntemplates_path = ['_templates']\n"
-            print(f"  - Aggiunto templates_path = ['_templates'] a conf.py")
+            print("  - Aggiunto templates_path = ['_templates'] a conf.py")
             conf_updated = True
 
         # c) Assicura html_static_path (append)
@@ -206,7 +195,7 @@ def apply_devildex_customizations(
                         new_conf_content = new_conf_content.replace(
                             match.group(0), f"html_static_path = {new_list_str_repr}", 1
                         )
-                        print(f"  - Append '_static' a html_static_path in conf.py")
+                        print("  - Append '_static' a html_static_path in conf.py")
                         conf_updated = True
                     else:
                         raise ValueError("Non è una lista")
@@ -227,7 +216,7 @@ def apply_devildex_customizations(
                     conf_updated = True
         else:
             new_conf_content += "\nhtml_static_path = ['_static']\n"
-            print(f"  - Aggiunto html_static_path = ['_static'] a conf.py")
+            print("  - Aggiunto html_static_path = ['_static'] a conf.py")
             conf_updated = True
 
         # d) Assicura html_css_files (append 'custom.css')
@@ -260,7 +249,7 @@ def apply_devildex_customizations(
                         raise ValueError("Non è una lista")
                 except (ValueError, SyntaxError):
                     print(
-                        f"  - Avviso: Fallback per html_css_files, uso concatenazione stringhe."
+                        "  - Avviso: Fallback per html_css_files, uso concatenazione stringhe."
                     )
                     new_list_str = current_list_str.rstrip()[:-1].strip()
                     if new_list_str and new_list_str != "[":
@@ -280,9 +269,9 @@ def apply_devildex_customizations(
         if conf_updated:
             with open(conf_py_path, "w", encoding="utf-8") as f:
                 f.write(new_conf_content)
-            print(f"  - Riscritto conf.py con aggiornamenti.")
+            print("  - Riscritto conf.py con aggiornamenti.")
         else:
-            print(f"  - conf.py non necessitava di modifiche per le personalizzazioni.")
+            print("  - conf.py non necessitava di modifiche per le personalizzazioni.")
 
     except Exception as e:
         print(f"  - Errore durante la modifica di conf.py {conf_py_path}: {e}")
@@ -328,7 +317,8 @@ def patch_include_directives(doc_source_path):
                         patched_count += 1
                     else:
                         print(
-                            f"  - Direttiva '{old_directive}' non trovata in {md_file}, nessun patch."
+                            f"  - Direttiva '{old_directive}' non trovata in "
+                            f"{md_file}, nessun patch."
                         )
 
             except Exception as patch_err:
@@ -342,28 +332,12 @@ def patch_include_directives(doc_source_path):
         print("Nessun file patchato (o direttive non trovate).")
 
 
-def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
-    """
-    Cerca le directory sorgente della documentazione all'interno di una repository clonata
-    e copia la prima trovata in una cartella di output dedicata, includendo file specifici dalla root.
-
-    Args:
-        repo_path (str): Il percorso locale alla repository clonata.
-        output_base_dir (str): La directory base dove salvare i sorgenti isolati.
-        project_slug (str): Lo slug del progetto, usato per nominare la cartella di output.
-
-    Returns:
-        str: Il percorso alla directory dei sorgenti di documentazione isolati, o None se non trovati/copiati.
-    """
-    print(f"\nRicerca directory sorgente documentazione in: {repo_path}")
-
-    potential_doc_dirs = ["docs", "doc", "Doc"]  # Aggiungi altre se necessario
-
+def _find_dir(repo_path, potential_doc_dirs):
     found_doc_path = None
     for doc_dir_name in potential_doc_dirs:
         current_path = os.path.join(repo_path, doc_dir_name)
         if os.path.isdir(current_path) and os.path.exists(
-            os.path.join(current_path, "conf.py")
+                os.path.join(current_path, "conf.py")
         ):
             found_doc_path = current_path
             print(
@@ -374,10 +348,83 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
             print(
                 f"Trovata directory '{current_path}', ma senza conf.py. Continuo la ricerca..."
             )
+    return found_doc_path
 
-    # Se non trovata nelle sottocartelle, controlla la root del repo
+
+def _clean_isolated_doc_path(isolated_doc_path):
+    if os.path.exists(isolated_doc_path):
+        print(
+            f"Rimuovo la directory dei sorgenti isolati esistente: '{isolated_doc_path}'"
+        )
+        try:
+            shutil.rmtree(isolated_doc_path)
+        except Exception as e:
+            print(f"Errore durante la rimozione della directory esistente: {e}")
+            return None
+    return True
+
+
+def _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
+    if (
+            os.path.exists(os.path.join(found_doc_path, "conf.py"))
+            or found_doc_path == repo_path
+    ):
+        shutil.copytree(
+            found_doc_path, isolated_doc_path, ignore=shutil.ignore_patterns(".git")
+        )
+        print("Copia della directory sorgente principale completata.")
+    else:
+        print(
+            f"Errore: conf.py non trovato nel percorso selezionato '{found_doc_path}' "
+            "durante la copia."
+        )
+        return None
+    return True
+
+
+def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
+    copied_root_files_count = 0
+    for filename in common_root_files:
+        src_file = os.path.join(repo_path, filename)
+        dst_file = os.path.join(
+            isolated_doc_path, filename
+        )
+        if os.path.exists(src_file):
+            try:
+                shutil.copy2(src_file, dst_file)
+                print(f"  - Copiato: {filename}")
+                copied_root_files_count += 1
+            except Exception as copy_err:
+                print(f"  - Errore durante la copia di {filename}: {copy_err}")
+        else:
+            print(
+                f"  - File root '{filename}' non trovato in {repo_path}, non copiato."
+            )
+    return copied_root_files_count
+
+
+def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
+    """Cerca le directory sorgente della documentazione all'interno di una repository clonata
+    e copia la prima trovata in una cartella di output dedicata, includendo file specifici
+    dalla root.
+
+    Args:
+        repo_path (str): Il percorso locale alla repository clonata.
+        output_base_dir (str): La directory base dove salvare i sorgenti isolati.
+        project_slug (str): Lo slug del progetto, usato per nominare la cartella di output.
+
+    Returns:
+        str: Il percorso alla directory dei sorgenti di documentazione isolati,
+            o None se non trovati/copiati.
+    """
+    print(f"\nRicerca directory sorgente documentazione in: {repo_path}")
+
+    potential_doc_dirs = ["docs", "doc", "Doc"]
+
+    found_doc_path = _find_dir(repo_path, potential_doc_dirs)
+
     if not found_doc_path and os.path.exists(os.path.join(repo_path, "conf.py")):
-        found_doc_path = repo_path  # La documentazione è nella root
+        found_doc_path = repo_path
         print(f"Trovato conf.py nella root della repository: {found_doc_path}")
 
     if not found_doc_path:
@@ -387,79 +434,88 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
     isolated_doc_dir_name = f"{project_slug}_doc_source"
     isolated_doc_path = os.path.join(output_base_dir, isolated_doc_dir_name)
 
-    if os.path.exists(isolated_doc_path):
-        print(
-            f"Rimuovo la directory dei sorgenti isolati esistente: '{isolated_doc_path}'"
-        )
-        try:
-            shutil.rmtree(isolated_doc_path)
-        except Exception as e:
-            print(f"Errore durante la rimozione della directory esistente: {e}")
-            return None  # Non possiamo procedere se non possiamo pulire
+    if not _clean_isolated_doc_path(isolated_doc_path):
+        return None
 
     print(
         f"Copio i sorgenti della documentazione da '{found_doc_path}' a '{isolated_doc_path}'"
     )
     try:
-        # Copia la directory principale della documentazione (es. 'docs')
-        # Gestisce sia il caso 'docs/conf.py' sia 'conf.py' nella root
-        if (
-            os.path.exists(os.path.join(found_doc_path, "conf.py"))
-            or found_doc_path == repo_path
-        ):
-            shutil.copytree(
-                found_doc_path, isolated_doc_path, ignore=shutil.ignore_patterns(".git")
-            )
-            print("Copia della directory sorgente principale completata.")
-        else:
-            # Questo caso non dovrebbe verificarsi grazie ai controlli precedenti, ma per sicurezza...
-            print(
-                f"Errore: conf.py non trovato nel percorso selezionato '{found_doc_path}' durante la copia."
-            )
+        if not _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
             return None
-
-        # --- NUOVO: Copia file comuni dalla root del repo ---
-        # Lista dei file specifici richiesti dagli include di Black
         common_root_files = ["AUTHORS.md", "CHANGES.md", "LICENSE"]
         print("Cerco e copio file comuni dalla root del repository...")
-        copied_root_files_count = 0
-        for filename in common_root_files:
-            src_file = os.path.join(repo_path, filename)  # Percorso nel repo clonato
-            dst_file = os.path.join(
-                isolated_doc_path, filename
-            )  # Percorso nella cartella isolata
-            if os.path.exists(src_file):
-                # Non controllare se esiste già, sovrascrivi per sicurezza
-                try:
-                    shutil.copy2(src_file, dst_file)  # copy2 preserva metadata
-                    print(f"  - Copiato: {filename}")
-                    copied_root_files_count += 1
-                except Exception as copy_err:
-                    print(f"  - Errore durante la copia di {filename}: {copy_err}")
-            else:
-                print(
-                    f"  - File root '{filename}' non trovato in {repo_path}, non copiato."
-                )
-
+        copied_root_files_count = _copy_common_files(
+            common_root_files, repo_path, isolated_doc_path)
         if copied_root_files_count == len(common_root_files):
             print(
                 f"Copiati {copied_root_files_count} file aggiuntivi richiesti dalla root."
             )
         elif copied_root_files_count > 0:
             print(
-                f"Copiati {copied_root_files_count}/{len(common_root_files)} file aggiuntivi richiesti dalla root."
+                f"Copiati {copied_root_files_count}/{len(common_root_files)} "
+                "file aggiuntivi richiesti dalla root."
             )
         else:
-            # Potrebbe essere un warning se i file sono effettivamente necessari
             print(
                 "Avviso: Nessun file comune aggiuntivo richiesto trovato o copiato dalla root."
             )
-        # --- Fine NUOVO ---
 
-        return isolated_doc_path  # Restituisci il percorso anche se alcuni file root mancano
+        return isolated_doc_path
 
     except Exception as e:
         print(f"Errore durante la copia dei sorgenti della documentazione: {e}")
+        return None
+
+
+def _sphinx_run(isolated_source_path, final_output_dir):
+    sphinx_build_command = [
+        sys.executable,
+        "-m",
+        "sphinx",
+        "-b",
+        "html",
+        "-W",
+        isolated_source_path,
+        final_output_dir,
+    ]
+
+    print(f"Eseguo Sphinx: {' '.join(sphinx_build_command)}")
+    try:
+        result = subprocess.run(
+            sphinx_build_command,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        print("Build Sphinx completato con successo.")
+        if result.stdout:
+            print("--- Output Sphinx (stdout) ---")
+            print(result.stdout)
+            print("-----------------------------")
+        if result.stderr:
+            print("--- Output Sphinx (stderr) ---")
+            print(result.stderr)
+            print("-----------------------------")
+        return final_output_dir
+
+    except subprocess.CalledProcessError as e:
+        print(f"Errore durante l'esecuzione di sphinx-build (codice {e.returncode}):")
+        print(f"Comando: {' '.join(e.cmd)}")
+        print("--- Output Sphinx (stdout) ---")
+        print(e.stdout)
+        print("--- Output Sphinx (stderr) ---")
+        print(e.stderr)
+        print("-----------------------------")
+        return None
+    except FileNotFoundError:
+        print(f"Errore: Impossibile eseguire '{sys.executable} -m sphinx'.")
+        print("Assicurati che Python sia nel PATH e che Sphinx sia installato")
+        print("per questo interprete Python (`pip install sphinx`).")
+        return None
+    except Exception as e:
+        print(f"Errore imprevisto durante la build Sphinx: {e}")
         return None
 
 
@@ -483,14 +539,10 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
         )
         return None
 
-    # Definisci la directory di output finale per i docset HTML
-    # Usiamo _build/html come output temporaneo per sphinx, poi copiamo/spostiamo?
-    # No, diciamo a sphinx di scrivere direttamente nella cartella finale per semplicità.
     final_output_dir = os.path.join("docset", project_slug, version_identifier)
     print(f"Directory di output per la build Sphinx HTML: {final_output_dir}")
 
     try:
-        # Rimuovi output precedente se esiste per una build pulita
         if os.path.exists(final_output_dir):
             print(f"Rimuovo la directory di output esistente: {final_output_dir}")
             shutil.rmtree(final_output_dir)
@@ -500,79 +552,23 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
             f"Errore nella creazione/pulizia della directory di output {final_output_dir}: {e}"
         )
         return None
-
-    # Comando sphinx-build
-    # Usiamo sys.executable per assicurarci di usare il python corretto se sphinx è installato lì
-    sphinx_build_command = [
-        sys.executable,
-        "-m",
-        "sphinx",  # Esegui come modulo
-        "-b",
-        "html",  # Formato di output: HTML
-        "-W",  # Trasforma warning in errori (opzionale ma consigliato)
-        isolated_source_path,  # Directory sorgente (contiene conf.py)
-        final_output_dir,  # Directory di destinazione per l'HTML generato
-    ]
-
-    print(f"Eseguo Sphinx: {' '.join(sphinx_build_command)}")
-    try:
-        # Esegui il comando
-        result = subprocess.run(
-            sphinx_build_command,
-            check=True,  # Lancia eccezione se il comando fallisce
-            capture_output=True,  # Cattura stdout e stderr
-            text=True,  # Decodifica output come testo
-            encoding="utf-8",  # Specifica encoding per consistenza
-        )
-        print("Build Sphinx completato con successo.")
-        # Stampa l'output standard (utile per vedere i messaggi di Sphinx)
-        if result.stdout:
-            print("--- Output Sphinx (stdout) ---")
-            print(result.stdout)
-            print("-----------------------------")
-        # Stampa eventuali errori/warning standard (anche se -W li rende errori)
-        if result.stderr:
-            print("--- Output Sphinx (stderr) ---")
-            print(result.stderr)
-            print("-----------------------------")
-        return final_output_dir  # Restituisce il percorso dell'output HTML
-
-    except subprocess.CalledProcessError as e:
-        print(f"Errore durante l'esecuzione di sphinx-build (codice {e.returncode}):")
-        print(f"Comando: {' '.join(e.cmd)}")
-        print("--- Output Sphinx (stdout) ---")
-        print(e.stdout)
-        print("--- Output Sphinx (stderr) ---")
-        print(e.stderr)
-        print("-----------------------------")
-        return None  # Fallimento
-    except FileNotFoundError:
-        # Questo errore avviene se 'python' (sys.executable) non è trovato,
-        # o se il modulo 'sphinx' non è installato per quel python.
-        print(f"Errore: Impossibile eseguire '{sys.executable} -m sphinx'.")
-        print("Assicurati che Python sia nel PATH e che Sphinx sia installato")
-        print("per questo interprete Python (`pip install sphinx`).")
-        return None
-    except Exception as e:  # Cattura altri errori imprevisti
-        print(f"Errore imprevisto durante la build Sphinx: {e}")
-        return None
+    result = _sphinx_run(isolated_source_path, final_output_dir)
+    return result
 
 
-def download_readthedocs_source_and_build(rtd_url):
-    """
-    Ottiene sorgente RTD, clona, isola i sorgenti doc, esegue Sphinx, e pulisce.
+def _cleanup(clone_dir_path):
+    if os.path.exists(clone_dir_path):
+        print(f"\nElimino la directory della repository clonata: {clone_dir_path}")
+        try:
+            shutil.rmtree(clone_dir_path)
+            print("Eliminazione completata.")
+        except Exception as e:
+            print(
+                f"Errore durante l'eliminazione della repository clonata '{clone_dir_path}': {e}"
+            )
 
-    Args:
-        rtd_url (str): L'URL base del progetto Read the Docs (es. https://black.readthedocs.io/).
 
-    Returns:
-        tuple(str, str) or tuple(None, None): Percorso sorgenti isolati e percorso build HTML,
-                                              o (None, None) in caso di fallimento.
-    """
-    print(f"--- Processo Download Sorgente, Build e Pulizia ---")
-    print(f"Analizzo l'URL: {rtd_url}")
-
-    # --- Estrazione Slug e Info API (come prima) ---
+def _extract_slug(rtd_url):
     parsed_url = urlparse(rtd_url)
     path_parts = [part for part in parsed_url.path.split("/") if part]
     project_slug = parsed_url.hostname.split(".")[0]
@@ -584,13 +580,12 @@ def download_readthedocs_source_and_build(rtd_url):
         else:
             print("Errore: Impossibile dedurre lo slug del progetto dall'URL.")
             return None, None
+    return project_slug
 
-    print(f"Slug del progetto dedotto: {project_slug}")
-    api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
-    print(f"Chiamo l'API per i dettagli del progetto: {api_project_detail_url}")
 
+def _extract_repo_url_branch(api_project_detail_url, project_slug):
     repo_url = None
-    default_branch = "main"  # Default se API fallisce o non lo specifica
+    default_branch = "main"
 
     try:
         response = requests.get(api_project_detail_url)
@@ -599,7 +594,6 @@ def download_readthedocs_source_and_build(rtd_url):
         repo_data = project_data.get("repository")
         if repo_data:
             repo_url = repo_data.get("url")
-        # Usa il branch di default dall'API se disponibile
         default_branch = project_data.get("default_branch", default_branch)
 
         if not repo_url:
@@ -615,8 +609,32 @@ def download_readthedocs_source_and_build(rtd_url):
     except requests.exceptions.RequestException as e:
         print(f"Avviso: Errore durante la richiesta API: {e}")
         print("Provo a cercare la repository clonata localmente se esiste già.")
+    return default_branch, repo_url
 
-    # --- Gestione Clone o Ricerca Locale (come prima) ---
+
+def download_readthedocs_source_and_build(rtd_url):
+    """
+    Ottiene sorgente RTD, clona, isola i sorgenti doc, esegue Sphinx, e pulisce.
+
+    Args:
+        rtd_url (str): L'URL base del progetto Read the Docs (es. https://black.readthedocs.io/).
+
+    Returns:
+        tuple(str, str) or tuple(None, None): Percorso sorgenti isolati e percorso build HTML,
+                                              o (None, None) in caso di fallimento.
+    """
+    print("--- Processo Download Sorgente, Build e Pulizia ---")
+    print(f"Analizzo l'URL: {rtd_url}")
+
+    project_slug = _extract_slug(rtd_url)
+    if not project_slug:
+        return None, None
+
+    print(f"Slug del progetto dedotto: {project_slug}")
+    api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
+    print(f"Chiamo l'API per i dettagli del progetto: {api_project_detail_url}")
+
+    default_branch, repo_url = _extract_repo_url_branch(api_project_detail_url, project_slug)
     base_output_dir = "rtd_source_clones_temp"
     os.makedirs(base_output_dir, exist_ok=True)
     clone_dir_name = f"{project_slug}_repo_{default_branch}"
@@ -653,13 +671,13 @@ def download_readthedocs_source_and_build(rtd_url):
             return None, None
     elif not cloned_repo_exists_before:
         print(
-            f"Impossibile clonare (URL non disponibile o errore) e la directory attesa '{clone_dir_path}' non esiste."
+            f"Impossibile clonare (URL non disponibile o errore) e "
+            f"la directory attesa '{clone_dir_path}' non esiste."
         )
         return None, None
     else:
         print(f"Directory di clonazione attesa '{clone_dir_path}' trovata localmente.")
 
-    # --- Ricerca e Copia Sorgenti Documentazione (come prima) ---
     isolated_docs_output_dir = "rtd_isolated_doc_sources"
     os.makedirs(isolated_docs_output_dir, exist_ok=True)
     isolated_source_path = find_and_copy_doc_source(
@@ -668,13 +686,10 @@ def download_readthedocs_source_and_build(rtd_url):
 
     build_output_path = None
     if isolated_source_path:
-        # --- NUOVO: Build Sphinx ---
-        # Usa default_branch come identificatore di versione per la cartella
         patch_include_directives(isolated_source_path)
         apply_devildex_customizations(
             isolated_source_path, theme_name=custom_theme, banner_text=custom_banner
         )
-        # --- >>> Fine CORREZIONE <<< ---
 
         build_output_path = build_sphinx_docs(
             isolated_source_path, project_slug, default_branch
@@ -682,18 +697,8 @@ def download_readthedocs_source_and_build(rtd_url):
     else:
         print("Isolamento sorgenti fallito, salto la build Sphinx.")
 
-    # --- Pulizia (Elimina la repository clonata) ---
-    if os.path.exists(clone_dir_path):
-        print(f"\nElimino la directory della repository clonata: {clone_dir_path}")
-        try:
-            shutil.rmtree(clone_dir_path)
-            print("Eliminazione completata.")
-        except Exception as e:
-            print(
-                f"Errore durante l'eliminazione della repository clonata '{clone_dir_path}': {e}"
-            )
+    _cleanup(clone_dir_path)
 
-    # --- Risultato Finale ---
     if isolated_source_path and build_output_path:
         print(f"\nSorgenti documentazione isolati in: {isolated_source_path}")
         print(f"Build HTML Sphinx generata in:    {build_output_path}")
@@ -709,23 +714,19 @@ def download_readthedocs_source_and_build(rtd_url):
 
 # --- Esempio di utilizzo ---
 print("--- Esecuzione Script v3 (Isola Sorgente + Build Sphinx + Pulizia) ---")
-# Assicurati di avere Git e Sphinx installati!
+
 isolated_folder, build_folder = download_readthedocs_source_and_build(
     "https://black.readthedocs.io/"
 )
 
 if build_folder:
-    print(f"\nProcesso completato con successo!")
+    print("\nProcesso completato con successo!")
     print(f"  Sorgenti isolati: {isolated_folder}")
     print(f"  Build HTML:       {build_folder}")
 elif isolated_folder:
-    print(f"\nProcesso parzialmente completato.")
+    print("\nProcesso parzialmente completato.")
     print(f"  Sorgenti isolati: {isolated_folder}")
-    print(f"  Build HTML fallita.")
+    print("  Build HTML fallita.")
 else:
     print("\nProcesso fallito.")
 print("-" * 30)
-
-# Puoi aggiungere altri URL qui
-# isolated_folder, build_folder = download_readthedocs_source_and_build('https://docs.python-requests.org/en/latest/')
-# ...
