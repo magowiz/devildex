@@ -2,20 +2,20 @@ import sys
 
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
+    QFileDialog,
     QHBoxLayout,
-    QPushButton,
-    QLineEdit,
     QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
     QTableWidget,
     QTableWidgetItem,
-    QFileDialog,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt
 
 from local_data_parse.common_read import get_explicit_dependencies_from_project_config
 from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls

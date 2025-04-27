@@ -1,12 +1,12 @@
-import requests
+import configparser  # <-- Importa configparser
 import os
-import subprocess
+import re  # Assicurati sia importato all'inizio del file
 import shutil
+import subprocess
 import sys
 from urllib.parse import urlparse
 
-import re  # Assicurati sia importato all'inizio del file
-import configparser  # <-- Importa configparser
+import requests
 
 # --- Leggi la configurazione ---
 config = configparser.ConfigParser()
