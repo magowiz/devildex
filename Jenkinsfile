@@ -84,6 +84,10 @@ pipeline {
                         script {
                             withPythonEnv('python3.13') {
                                 sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+
+                                sh 'sed -i /^packaging/d requirements.txt'
+                                sh 'grep packaging requirements.txt || true'
+
                                 sh 'python -m pip install --break-system-packages -r requirements.txt'
                                 sh 'mkdir -p dist/linux/cxfreeze'
                                 sh "python -m pip install --break-system-packages cx_Freeze"
