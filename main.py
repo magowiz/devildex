@@ -1,4 +1,6 @@
 import sys
+
+from PyQt6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -12,7 +14,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QFileDialog,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
 
 from local_data_parse.common_read import get_explicit_dependencies_from_project_config
 from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
@@ -64,6 +66,7 @@ class DevilDexMainWindow(QMainWindow):
 
         self.browse_button.clicked.connect(self.browse_folder)
         self.scan_button.clicked.connect(self.scan_project)
+        self.results_table.cellClicked.connect(self.open_url_from_table)
 
     def browse_folder(self):
         """Open a file dialog to select project folder."""
@@ -103,6 +106,19 @@ class DevilDexMainWindow(QMainWindow):
             self.results_table.setItem(row_index, 1, version_item)
             self.results_table.setItem(row_index, 2, url_item)
 
+    def open_url_from_table(self, row, column):
+        """Opens the URL in the documentation URL column if clicked."""
+        # Trova l'indice della colonna "Documentation URL"
+        # Potrebbe essere necessario renderlo più robusto cercando per etichetta
+        doc_url_column_index = 2  # Assumendo che la colonna URL sia la terza (indice 2)
+
+        if column == doc_url_column_index:
+            item = self.results_table.item(row, column)
+            if item is not None:
+                url_text = item.text()
+                if url_text and url_text != "N/A":  # Controlla che l'URL esista e non sia "N/A"
+                    url = QUrl(url_text)
+                    # QDesktopServices.openUrl(url)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
