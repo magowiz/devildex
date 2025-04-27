@@ -86,7 +86,6 @@ pipeline {
                                 sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
 
                                 sh 'sed -i /^packaging/d requirements.txt'
-                                sh 'grep packaging requirements.txt || true'
 
                                 sh 'python -m pip install --break-system-packages -r requirements.txt'
                                 sh 'mkdir -p dist/linux/cxfreeze'
@@ -122,6 +121,9 @@ pipeline {
                         script {
                             withPythonEnv('python3.13') {
                                 sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+
+                                sh 'sed -i /^packaging/d requirements.txt'
+
                                 sh 'python -m pip install --break-system-packages -r requirements.txt'
                                 sh 'python -m pip install --break-system-packages nuitka'
                                 sh 'mkdir -p dist/linux/nuitka dist/windows/nuitka'
@@ -159,6 +161,9 @@ pipeline {
                         script {
                             withPythonEnv('python3.13') {
                                 sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+
+                                sh 'sed -i /^packaging/d requirements.txt'
+
                                 sh 'python -m pip install --break-system-packages -r requirements.txt'
                                 sh 'python -m pip install --break-system-packages pyoxidizer'
                                 sh 'mkdir -p dist/linux/pyoxidizer'
