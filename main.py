@@ -109,9 +109,7 @@ class DevilDexMainWindow(QMainWindow):
 
     def open_url_from_table(self, row, column):
         """Opens the URL in the documentation URL column if clicked."""
-        # Trova l'indice della colonna "Documentation URL"
-        # Potrebbe essere necessario renderlo più robusto cercando per etichetta
-        doc_url_column_index = 2  # Assumendo che la colonna URL sia la terza (indice 2)
+        doc_url_column_index = 2
 
         if column == doc_url_column_index:
             item = self.results_table.item(row, column)
