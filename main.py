@@ -1,5 +1,6 @@
 import sys
 
+from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
@@ -14,7 +15,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QFileDialog,
 )
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt
 
 from local_data_parse.common_read import get_explicit_dependencies_from_project_config
 from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
@@ -118,7 +119,7 @@ class DevilDexMainWindow(QMainWindow):
                 url_text = item.text()
                 if url_text and url_text != "N/A":  # Controlla che l'URL esista e non sia "N/A"
                     url = QUrl(url_text)
-                    # QDesktopServices.openUrl(url)
+                    QDesktopServices.openUrl(url)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
