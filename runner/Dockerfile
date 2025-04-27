@@ -38,4 +38,13 @@ COPY main.py /app/
 COPY local_data_parse /app/
 COPY scan_project_env.py /app/
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libfontconfig1
+
+RUN apt-get install -y --no-install-recommends libglib2.0
+
+RUN apt-get install -y --no-install-recommends libxkbcommon-x11
+
+
 CMD  ["python3", "-m", "main"]
