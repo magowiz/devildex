@@ -734,7 +734,8 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
 
         if not repo_url:
             print(
-                f"Avviso: URL del repository sorgente non trovato per '{project_slug}' tramite API."
+                "Avviso: URL del repository sorgente non trovato per "
+                f"'{project_slug}' tramite API."
             )
         else:
             print(f"Trovato URL repository: {repo_url}")
@@ -753,11 +754,12 @@ def download_readthedocs_source_and_build(rtd_url):
     Ottiene sorgente RTD, clona, isola i sorgenti doc, esegue Sphinx, e pulisce.
 
     Args:
-        rtd_url (str): L'URL base del progetto Read the Docs (es. https://black.readthedocs.io/).
+        rtd_url (str): L'URL base del progetto Read the Docs
+            (es. https://black.readthedocs.io/).
 
     Returns:
-        tuple(str, str) or tuple(None, None): Percorso sorgenti isolati e percorso build HTML,
-                                              o (None, None) in caso di fallimento.
+        tuple(str, str) or tuple(None, None): Percorso sorgenti isolati e percorso
+                                              della build HTML, o (None, None) in caso di fallimento.
     """
     print("--- Processo Download Sorgente, Build e Pulizia ---")
     print(f"Analizzo l'URL: {rtd_url}")
