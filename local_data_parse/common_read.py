@@ -52,7 +52,8 @@ def get_explicit_poetry_dependencies(pyproject_path):
         return explicit_deps
     except toml.TomlDecodeError:
         print(
-            f"Warning: Invalid TOML in {pyproject_path}. Cannot read explicit dependencies.",
+            f"Warning: Invalid TOML in {pyproject_path}. "
+            "Cannot read explicit dependencies.",
             file=sys.stderr,
         )
         return explicit_deps

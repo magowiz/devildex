@@ -50,9 +50,7 @@ def _fetch_available_versions(project_slug):
 def _choose_best_version(available_versions, preferred_versions):
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
     if not available_versions:
-        print(
-            "Error: Nessuna versione disponibile fornita per la scelta."
-        )
+        print("Error: Nessuna versione disponibile fornita per la scelta.")
         return None
 
     print("Versioni disponibili (slug, attivo, costruito):")
@@ -68,9 +66,7 @@ def _choose_best_version(available_versions, preferred_versions):
                 and version.get("active")
                 and version.get("built")
             ):
-                print(
-                    f"\nScelta versione preferita e disponibile: '{preferred}'"
-                )
+                print(f"\nScelta versione preferita e disponibile: '{preferred}'")
                 return preferred
 
     print(
@@ -80,9 +76,7 @@ def _choose_best_version(available_versions, preferred_versions):
     for version in available_versions:
         if version.get("active") and version.get("built"):
             chosen_slug = version.get("slug")
-            print(
-                f"Scelta prima versione attiva e costruita: '{chosen_slug}'"
-            )
+            print(f"Scelta prima versione attiva e costruita: '{chosen_slug}'")
             return chosen_slug
 
     print(
@@ -93,9 +87,7 @@ def _choose_best_version(available_versions, preferred_versions):
 
 def _fetch_version_details(project_slug, version_slug):
     """Recupera i dettagli di una specifica versione dall'API RTD."""
-    api_version_detail_url = (
-        f"https://readthedocs.org/api/v3/versions/{version_slug}/"
-    )
+    api_version_detail_url = f"https://readthedocs.org/api/v3/versions/{version_slug}/"
     print(
         f"\nChiamo l'API per i dettagli della versione '{version_slug}': "
         f"{api_version_detail_url} con project__slug={project_slug}"
@@ -106,9 +98,7 @@ def _fetch_version_details(project_slug, version_slug):
         )
         response.raise_for_status()
         version_detail_data = response.json()
-        print(
-            f"API dettagli versione chiamata con successo per '{version_slug}'."
-        )
+        print(f"API dettagli versione chiamata con successo per '{version_slug}'.")
         return version_detail_data
     except requests.exceptions.RequestException as e:
         print(
@@ -126,12 +116,14 @@ def _fetch_version_details(project_slug, version_slug):
 def _get_download_url(version_details, download_format):
     """Estrae l'URL di download per il formato specificato dai dettagli della versione."""
     if not version_details:
-        print("Error: Dettagli versione non disponibili per trovare the URL di download.")
+        print(
+            "Error: Dettagli versione non disponibili per trovare the URL di download."
+        )
         return None
 
     download_urls = version_details.get("downloads")
     if not download_urls:
-        version_slug = version_details.get('slug', 'sconosciuta')
+        version_slug = version_details.get("slug", "sconosciuta")
         print(
             f"Error: Campo 'downloads' non trovato nei dettagli per la versione "
             f"'{version_slug}'."
@@ -141,7 +133,7 @@ def _get_download_url(version_details, download_format):
 
     file_url = download_urls.get(download_format)
     if not file_url:
-        version_slug = version_details.get('slug', 'sconosciuta')
+        version_slug = version_details.get("slug", "sconosciuta")
         print(
             f"Errore: Formato '{download_format}' non disponibile per la versione "
             f"'{version_slug}'."
@@ -165,7 +157,9 @@ def _get_download_url(version_details, download_format):
     return file_url
 
 
-def _determine_local_filename(project_slug, version_slug, download_url, download_format):
+def _determine_local_filename(
+    project_slug, version_slug, download_url, download_format
+):
     """Determina un nome file locale sensato per il download."""
     file_extension = download_format.replace("htmlzip", "zip")
     filename_from_url = download_url.split("/")[-1]
@@ -187,7 +181,7 @@ def _download_file(file_url, local_filepath):
             with open(local_filepath, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        print(f"Download completato: {local_filepath}")
+        print(f"Download completed: {local_filepath}")
         return True
     except requests.exceptions.RequestException as e:
         print(f"Error durante il download del file ({file_url}): {e}")
@@ -241,7 +235,8 @@ def download_readthedocs_prebuilt_robust(
         return None
 
     local_filename = _determine_local_filename(
-        project_slug, chosen_version_slug, file_url, download_format)
+        project_slug, chosen_version_slug, file_url, download_format
+    )
     output_dir = "rtd_prebuilt_downloads_robust"
     os.makedirs(output_dir, exist_ok=True)
     local_filepath = os.path.join(output_dir, local_filename)

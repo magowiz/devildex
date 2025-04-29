@@ -183,7 +183,9 @@ def _update_static_path_in_conf(new_conf_content, match):
                 print("  - Append '_static' a html_static_path in conf.py")
                 conf_updated = True
             else:
-                raise ValueError("Il valore parsato per html_static_path non è una lista")
+                raise ValueError(
+                    "Il valore parsato per html_static_path non è una lista"
+                )
         except (ValueError, SyntaxError, ImportError):
             print(
                 "  - Avviso: Fallback per html_static_path, uso concatenazione stringhe."
@@ -354,7 +356,9 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
 
         conf_updated = False
 
-        new_conf_content, theme_updated = _update_theme_in_conf(new_conf_content, theme_name)
+        new_conf_content, theme_updated = _update_theme_in_conf(
+            new_conf_content, theme_name
+        )
         if theme_updated:
             conf_updated = True
 
@@ -364,7 +368,8 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         match = templates_pattern.search(new_conf_content)
         if match:
             new_conf_content, updated_by_template = _update_templates_path_in_conf(
-                new_conf_content, match)
+                new_conf_content, match
+            )
             if updated_by_template:
                 conf_updated = True
 
