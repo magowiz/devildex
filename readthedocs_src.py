@@ -657,8 +657,8 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
             conf.py e i sorgenti.
         project_slug (str): Slug del progetto per la struttura della directory
             di output.
-        version_identifier (str): Identificativo della versione (es. nome branch)
-            per la struttura.
+        version_identifier (str): Identificativo della versione
+            (es. nome branch) per la struttura.
 
     Returns:
         str: Il percorso alla directory di output della build HTML, o
