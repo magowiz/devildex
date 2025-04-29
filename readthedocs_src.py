@@ -653,8 +653,10 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
     Esegue sphinx-build sulla directory dei sorgenti isolati.
 
     Args:
-        isolated_source_path (str): Percorso alla directory contenente conf.py e i sorgenti.
-        project_slug (str): Slug del progetto per la struttura della directory di output.
+        isolated_source_path (str): Percorso alla directory contenente
+            conf.py e i sorgenti.
+        project_slug (str): Slug del progetto per la struttura della directory
+            di output.
         version_identifier (str): Identificativo della versione (es. nome branch) per la struttura.
 
     Returns:
@@ -797,7 +799,8 @@ def download_readthedocs_source_and_build(rtd_url):
             return None, None
         except FileNotFoundError:
             print(
-                "Errore: Il comando 'git' non è stato trovato. Assicurati che Git sia installato."
+                "Errore: Il comando 'git' non è stato trovato. Assicurati"
+                " che Git sia installato."
             )
             return None, None
     elif not cloned_repo_exists_before:
