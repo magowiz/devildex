@@ -657,16 +657,19 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
             conf.py e i sorgenti.
         project_slug (str): Slug del progetto per la struttura della directory
             di output.
-        version_identifier (str): Identificativo della versione (es. nome branch) per la struttura.
+        version_identifier (str): Identificativo della versione (es. nome branch)
+            per la struttura.
 
     Returns:
-        str: Il percorso alla directory di output della build HTML, o None in caso di fallimento.
+        str: Il percorso alla directory di output della build HTML, o
+            None in caso di fallimento.
     """
     print("\n--- Avvio Build Sphinx ---")
     conf_py_path = os.path.join(isolated_source_path, "conf.py")
     if not os.path.exists(conf_py_path):
         print(
-            f"Errore critico: conf.py non trovato in {isolated_source_path} dopo la copia."
+            "Errore critico: conf.py non trovato in "
+            f"{isolated_source_path} dopo la copia."
         )
         return None
 
@@ -680,7 +683,8 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
         os.makedirs(final_output_dir, exist_ok=True)
     except OSError as e:
         print(
-            f"Errore nella creazione/pulizia della directory di output {final_output_dir}: {e}"
+            "Errore nella creazione/pulizia della directory di output "
+            f"{final_output_dir}: {e}"
         )
         return None
     result = _sphinx_run(isolated_source_path, final_output_dir)
@@ -695,7 +699,8 @@ def _cleanup(clone_dir_path):
             print("Eliminazione completata.")
         except Exception as e:
             print(
-                f"Errore durante l'eliminazione della repository clonata '{clone_dir_path}': {e}"
+                "Errore durante l'eliminazione della repository clonata "
+                f"'{clone_dir_path}': {e}"
             )
 
 
