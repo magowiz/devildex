@@ -5,7 +5,7 @@ import requests
 
 
 def _get_project_slug(rtd_url):
-    """Estrae lo slug del progetto Read the Docs da un URL."""
+    """Extract Read the Docs project slug from an URL."""
     print(f"Analizzo l'URL: {rtd_url}")
     parsed_url = urlparse(rtd_url)
     path_parts = [part for part in parsed_url.path.split("/") if part]
@@ -17,7 +17,7 @@ def _get_project_slug(rtd_url):
         if path_parts:
             project_slug = path_parts[0]
         else:
-            print("Errore: Impossibile dedurre lo slug del progetto dall'URL.")
+            print("Error: Impossibile dedurre lo slug del progetto dall'URL.")
             return None
 
     print(f"Slug del progetto dedotto: {project_slug}")
@@ -51,7 +51,7 @@ def _choose_best_version(available_versions, preferred_versions):
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
     if not available_versions:
         print(
-            "Errore: Nessuna versione disponibile fornita per la scelta."
+            "Error: Nessuna versione disponibile fornita per la scelta."
         )
         return None
 
@@ -74,7 +74,7 @@ def _choose_best_version(available_versions, preferred_versions):
                 return preferred
 
     print(
-        "\nNessuna versione preferita disponibile (attiva e costruita). Provo a prendere "
+        "\nNo version preferita disponibile (attiva e costruita). Provo a prendere "
         "la prima versione attiva e costruita trovata."
     )
     for version in available_versions:
@@ -112,13 +112,13 @@ def _fetch_version_details(project_slug, version_slug):
         return version_detail_data
     except requests.exceptions.RequestException as e:
         print(
-            f"Errore chiamando API dettagli versione ({api_version_detail_url}?"
+            f"Error chiamando API dettagli versione ({api_version_detail_url}?"
             f"project__slug={project_slug}): {e}"
         )
         return None
     except Exception as e:
         print(
-            f"Si è verificato un errore inatteso ottenendo i dettagli della versione: {e}"
+            f"Si è verificato un errore inatteso ottenendo i dettagli della version: {e}"
         )
         return None
 
@@ -126,14 +126,14 @@ def _fetch_version_details(project_slug, version_slug):
 def _get_download_url(version_details, download_format):
     """Estrae l'URL di download per il formato specificato dai dettagli della versione."""
     if not version_details:
-        print("Errore: Dettagli versione non disponibili per trovare l'URL di download.")
+        print("Error: Dettagli versione non disponibili per trovare the URL di download.")
         return None
 
     download_urls = version_details.get("downloads")
     if not download_urls:
         version_slug = version_details.get('slug', 'sconosciuta')
         print(
-            f"Errore: Campo 'downloads' non trovato nei dettagli per la versione "
+            f"Error: Campo 'downloads' non trovato nei dettagli per la versione "
             f"'{version_slug}'."
         )
         print("Assicurati che i formati offline siano abilitati per questa versione.")
@@ -159,7 +159,7 @@ def _get_download_url(version_details, download_format):
         )
 
     print(
-        f"\nTrovato URL per {download_format} versione "
+        f"\nTrovato URL per {download_format} version "
         f"'{version_details.get('slug', 'sconosciuta')}': {file_url}"
     )
     return file_url
@@ -179,7 +179,7 @@ def _determine_local_filename(project_slug, version_slug, download_url, download
 
 
 def _download_file(file_url, local_filepath):
-    """Scarica un file da un URL in un percorso locale."""
+    """Scarica un file da un URL in un local path."""
     print(f"Scarico il file in: {local_filepath}")
     try:
         with requests.get(file_url, stream=True) as r:
@@ -190,13 +190,13 @@ def _download_file(file_url, local_filepath):
         print(f"Download completato: {local_filepath}")
         return True
     except requests.exceptions.RequestException as e:
-        print(f"Errore durante il download del file ({file_url}): {e}")
+        print(f"Error durante il download del file ({file_url}): {e}")
         if os.path.exists(local_filepath):
             try:
                 os.remove(local_filepath)
                 print(f"File parziale rimosso: {local_filepath}")
             except OSError as remove_err:
-                print(f"Errore durante la rimozione del file parziale: {remove_err}")
+                print(f"Error durante la rimozione del file parziale: {remove_err}")
         return False
     except Exception as e:
         print(f"Si è verificato un errore inatteso durante il download del file: {e}")
@@ -241,8 +241,7 @@ def download_readthedocs_prebuilt_robust(
         return None
 
     local_filename = _determine_local_filename(
-        project_slug, chosen_version_slug, file_url, download_format
-    )
+        project_slug, chosen_version_slug, file_url, download_format)
     output_dir = "rtd_prebuilt_downloads_robust"
     os.makedirs(output_dir, exist_ok=True)
     local_filepath = os.path.join(output_dir, local_filename)
