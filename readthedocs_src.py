@@ -7,7 +7,7 @@ import sys
 from urllib.parse import urlparse
 
 import requests
-
+from info import VERSION
 # --- Leggi la configurazione ---
 config = configparser.ConfigParser()
 config_file = "devildex_config.ini"
@@ -112,11 +112,12 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
     layout_template_path = os.path.join(templates_dir, "layout.html")
     custom_css_path = os.path.join(static_dir, "custom.css")
     _create_template_static(templates_dir, static_dir)
+    final_banner = banner_text.format(version=VERSION)
     layout_content = f"""\
     {{% extends "!layout.html" %}}
     {{% block relbar1 %}}
         <div class="devildex-banner">
-            {banner_text}
+            {final_banner}
         </div>
         {{{{ super() }}}}
     {{% endblock %}}
