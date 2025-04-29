@@ -469,7 +469,8 @@ def _find_dir(repo_path, potential_doc_dirs):
             break
         elif os.path.isdir(current_path):
             print(
-                f"Trovata directory '{current_path}', ma senza conf.py. Continuo la ricerca..."
+                f"Trovata directory '{current_path}', ma senza conf.py. "
+                "Continuo la ricerca..."
             )
     return found_doc_path
 
@@ -477,7 +478,8 @@ def _find_dir(repo_path, potential_doc_dirs):
 def _clean_isolated_doc_path(isolated_doc_path):
     if os.path.exists(isolated_doc_path):
         print(
-            f"Rimuovo la directory dei sorgenti isolati esistente: '{isolated_doc_path}'"
+            "Rimuovo la directory dei sorgenti isolati "
+            f"esistente: '{isolated_doc_path}'"
         )
         try:
             shutil.rmtree(isolated_doc_path)
