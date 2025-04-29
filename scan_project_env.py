@@ -1,24 +1,12 @@
-# scan_project_env.py
-# Questo script è destinato a essere eseguito come subprocess
-# nell'ambiente Python di un progetto esterno scansionato da DevilDex.
-
 import os
 import sys
 
-try:
-    import toml
-except ImportError:
-    print(
-        "Error: Il pacchetto 'toml' non è installabile o non presente "
-        "nell'ambiente scansionato.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+import toml
 
 
 def find_pyproject_toml(start_path="."):
-    """Cerca pyproject.toml nella directory corrente o nelle directory genitore.
-    Restituisce il percorso assoluto o None se non trovato.
+    """Cerca pyproject.toml nella current directory or nelle parent directory.
+    Returns il absolute path or None se non trovato.
     """
     current_path = os.path.abspath(start_path)
     while True:
@@ -37,13 +25,13 @@ def _read_project_data_toml(pyproject_path):
             pyproject_data = toml.load(f)
     except FileNotFoundError:
         print(
-            f"Errore: File pyproject.toml non trovato a {pyproject_path}.",
+            f"Error: File pyproject.toml non trovato a {pyproject_path}.",
             file=sys.stderr,
         )
         return set()
     except toml.TomlDecodeError:
         print(
-            f"Errore: Impossibile decodificare il file TOML a {pyproject_path}.",
+            f"Error: Unable to decode TOML file: {pyproject_path}.",
             file=sys.stderr,
         )
         return set()
@@ -51,8 +39,8 @@ def _read_project_data_toml(pyproject_path):
 
 
 def get_explicit_poetry_dependencies(pyproject_path):
-    """Legge pyproject.toml e restituisce un set con i nomi delle dipendenze dirette
-    (dalle sezioni tool.poetry.dependencies e tool.poetry.group.*.dependencies).
+    """Read pyproject.toml e returns un set con i nomi delle direct dependencies
+    (from tool.poetry.dependencies and tool.poetry.group.*.dependencies sections).
     """
 
     pyproject_data = _read_project_data_toml(pyproject_path)
@@ -90,7 +78,7 @@ if __name__ == "__main__":
     if not pyproject_path1:
         print(
             "Error: pyproject.toml non trovato. "
-            "Impossibile determinare dipendenze esplicite.",
+            "Unable to determine explicit dependencies.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -99,8 +87,8 @@ if __name__ == "__main__":
 
     if not explicit_package_names:
         print(
-            "Avviso: Nessuna dipendenza esplicita trovata in "
-            "pyproject.toml (oltre a python).",
+            "Warning: No explicit dependencies found in "
+            "pyproject.toml (other than python).",
             file=sys.stderr,
         )
         pass
