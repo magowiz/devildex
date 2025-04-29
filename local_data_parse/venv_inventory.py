@@ -2,8 +2,8 @@ import importlib.metadata
 
 
 def get_installed_packages_with_docs_urls(explicit=None):
-    """Restituisce una lista di tuple (nome_pacchetto, versione, docs_url)
-    per tutti i pacchetti installati che dichiarano un URL di documentazione.
+    """Return a list of tuple (package_name, version, docs_url)
+    for all packages installed that declares a documentation URL.
     """
     package_list = []
     for dist in importlib.metadata.distributions():
@@ -33,10 +33,10 @@ if __name__ == "__main__":
 
     installed_docs_info = get_installed_packages_with_docs_urls()
 
-    print("Pacchetti Python installati con URL di documentazione:")
+    print("Packages Python installed con URL di documentation:")
     for pkg_info in installed_docs_info:
         print(
             f"  - {pkg_info['name']} ({pkg_info['version']}): "
             f"{pkg_info['docs_url'] if pkg_info['docs_url'] else
-               'URL documentazione non trovato'}"
+               'URL documentation non trovato'}"
         )

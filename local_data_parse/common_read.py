@@ -6,8 +6,8 @@ from packaging.requirements import Requirement
 
 
 def find_pyproject_toml(start_path="."):
-    """Cerca pyproject.toml nella directory start_path e nelle sue directory genitore.
-    Restituisce il percorso assoluto o None se non trovato.
+    """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
+    Returns il absolute path o None se non trovato.
     """
     current_path = os.path.abspath(start_path)
     while True:
@@ -29,17 +29,17 @@ def add_deps_from_section(section_data, explicit_deps):
 
 
 def get_explicit_poetry_dependencies(pyproject_path):
-    """Read pyproject.toml and returns a set con i nomi delle dipendenze dirette
-    (dalle sezioni tool.poetry.dependencies e tool.poetry.group.*.dependencies).
-    Richiede che 'toml' sia importabile.
+    """Read pyproject.toml and returns a set con i nomi delle direct dependencies
+    (from sections tool.poetry.dependencies e tool.poetry.group.*.dependencies).
+    Requires that 'toml' is importable.
 
     Args:
-        pyproject_path (str): Il percorso al file pyproject.toml.
+        pyproject_path (str): Il path al file pyproject.toml.
 
     Returns:
-        set: Un set di stringhe contenente i nomi delle dipendenze esplicite.
-             Ritorna un set vuoto se il file non esiste, non è leggibile,
-             non è un progetto Poetry valido, o non ha dipendenze esplicite.
+        set: A set di strings containing explicit dependencies names.
+             Returns un empty set if file not exist, not readable,
+             not a valid Poetry project, or haven't got explicit dependencies.
     """
     explicit_deps = set()
     if not pyproject_path:
@@ -83,8 +83,8 @@ def get_explicit_poetry_dependencies(pyproject_path):
 
 
 def find_requirements_txt(start_path="."):
-    """Cerca requirements.txt nella directory start_path e nelle sue directory genitore.
-    Restituisce il percorso assoluto o None se non trovato.
+    """Cerca requirements.txt nella directory start_path e nelle sue parent directories.
+    Returns il absolute path or None if not found.
     (Simile a find_pyproject_toml)
     """
     current_path = os.path.abspath(start_path)
@@ -99,18 +99,18 @@ def find_requirements_txt(start_path="."):
 
 
 def get_explicit_package_names_from_requirements(requirements_filepath):
-    """Legge un file requirements.txt e restituisce un set con i nomi dei
-    pacchetti espliciti.
-    Usa packaging.requirements per un parsing robusto.
-    Richiede che 'packaging' sia importabile.
+    """Read a requirements.txt file and return a set with explicit packages names.
+
+    Use packaging.requirements for a robust parsing.
+    Requires che 'packaging' sia importable.
 
     Args:
-        requirements_filepath (str): Il percorso al file requirements.txt.
+        requirements_filepath (str): Il path al file requirements.txt.
 
     Returns:
-        set: Un set di stringhe contenente i nomi dei pacchetti espliciti.
-             Ritorna un set vuoto se il file non esiste o ci sono
-                errori di lettura/parsing.
+        set: A set of strings containing explicit packages names.
+             Returns un empty set if file exist or there are
+                 read/parsing errors.
     """
     explicit_package_names = set()
 
@@ -155,17 +155,17 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
 
 
 def get_explicit_dependencies_from_project_config(start_path="."):
-    """Cerca i file di configurazione del progetto (pyproject.toml o requirements.txt)
-    a partire da start_path e restituisce un set con i nomi delle dipendenze esplicite.
-    Dà priorità a pyproject.toml.
+    """Cerca i file di configuration del project (pyproject.toml o requirements.txt)
+    a starting from start_path e returns un set con i nomi delle explicit dependencies.
+    Dà priority a pyproject.toml.
 
     Args:
-        start_path (str): La directory da cui iniziare la ricerca (es. '.' per la CWD).
+        start_path (str): La directory da cui start the search (es. '.' per la CWD).
 
     Returns:
-        set: Un set di stringhe con i nomi delle dipendenze esplicite.
-             Ritorna un set vuoto se nessun file di configurazione valido viene trovato
-             o se ci sono errori di lettura/parsing.
+        set: Un set di strings con i nomi delle dependencies explicit.
+             Returns an empty set if no valid configuration file is found
+             o if there are read/parsing errors.
              Stampa warning/error su stderr.
     """
     pyproject_path = find_pyproject_toml(start_path)
@@ -194,8 +194,8 @@ if __name__ == "__main__":
 
     if explicit_names:
         print("\n--- Explicit Dependency Names Found ---", file=sys.stderr)
-        for name in sorted(list(explicit_names)):
-            print(f"- {name}", file=sys.stderr)
+        for ex_name in sorted(list(explicit_names)):
+            print(f"- {ex_name}", file=sys.stderr)
         print("--- End Explicit Dependency Names ---", file=sys.stderr)
         sys.exit(0)
     else:
