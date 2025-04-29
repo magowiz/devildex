@@ -47,7 +47,8 @@ def _write_custom_css(custom_css_path, css_content):
         with open(custom_css_path, "w", encoding="utf-8") as f:
             f.write(css_content)
         print(
-            f"  - Creato/Aggiornato CSS personalizzato: {os.path.basename(custom_css_path)}"
+            "  - Creato/Aggiornato CSS personalizzato: "
+            f"{os.path.basename(custom_css_path)}"
         )
     except Exception as e:
         print(f"  - Errore scrittura CSS personalizzato {custom_css_path}: {e}")

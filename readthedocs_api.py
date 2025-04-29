@@ -116,7 +116,8 @@ def _fetch_version_details(project_slug, version_slug):
 
 
 def _get_download_url(version_details, download_format):
-    """Estrae l'URL di download per il formato specificato dai dettagli della versione."""
+    """Estrae l'URL di download per il formato specificato dai dettagli
+    della versione."""
     if not version_details:
         print(
             "Error: Dettagli versione non disponibili per trovare the URL di download."
@@ -149,7 +150,8 @@ def _get_download_url(version_details, download_format):
     if not file_url.lower().endswith((".zip", ".pdf", ".epub")):
         print(
             f"Avviso: L'URL trovato '{file_url}' potrebbe non essere un link "
-            "diretto al file scaricabile (estensione non riconosciuta). Procedo comunque..."
+            "diretto al file scaricabile (estensione non riconosciuta). "
+            "Procedo comunque..."
         )
 
     print(
@@ -207,7 +209,8 @@ def download_readthedocs_prebuilt_robust(
     utilizzando funzioni helper per maggiore chiarezza e manutenibilità.
 
     Args:
-        rtd_url (str): L'URL base del progetto Read the Docs (es. https://black.readthedocs.io/).
+        rtd_url (str): L'URL base del progetto Read the Docs
+            (es. https://black.readthedocs.io/).
         preferred_versions (list): Elenco di slug di versioni da privilegiare (in ordine).
         download_format (str): Il formato da scaricare (es. 'htmlzip', 'pdf', 'epub').
 
