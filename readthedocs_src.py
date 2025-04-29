@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 import requests
 from info import VERSION
+
 # --- Leggi la configurazione ---
 config = configparser.ConfigParser()
 config_file = "devildex_config.ini"
@@ -94,6 +95,207 @@ def _write_override_template(layout_template_path, layout_content):
         print(f"  - Errore scrittura override template {layout_template_path}: {e}")
 
 
+def _update_templates_path_in_conf(new_conf_content, match):
+    """Aggiorna la variabile templates_path nel contenuto di conf.py.
+
+    Tenta di aggiungere '_templates' all'inizio della lista esistente
+    usando ast.literal_eval, con fallback a concatenazione di stringhe.
+
+    Args:
+        new_conf_content (str): Il contenuto attuale (potenzialmente già modificato)
+                                del file conf.py.
+        match (re.Match): L'oggetto match risultato dalla ricerca del pattern
+                          per templates_path.
+
+    Returns:
+        tuple(str, bool): Una tupla contenente il contenuto aggiornato di
+                          new_conf_content e un booleano che indica se
+                          è stata apportata una modifica (True) o meno (False).
+    """
+    conf_updated = False
+    current_list_str = match.group(1)
+    if "'_templates'" not in current_list_str:
+        try:
+            import ast  # Import locale o spostato all'inizio del file se usato altrove
+
+            current_list = ast.literal_eval(current_list_str)
+            if isinstance(current_list, list):
+                new_list = ["_templates"] + current_list
+                new_list_str_repr = repr(new_list)
+                # Sostituisce l'intera riga trovata dal match
+                new_conf_content = new_conf_content.replace(
+                    match.group(0), f"templates_path = {new_list_str_repr}", 1
+                )
+                print("  - Prepend '_templates' a templates_path in conf.py")
+                conf_updated = True
+            else:
+                # Questo caso è meno probabile se il regex è corretto,
+                # ma gestisce il caso in cui literal_eval non restituisce una lista
+                raise ValueError("Il valore parsato per templates_path non è una lista")
+        except (ValueError, SyntaxError, ImportError):
+            print(
+                "  - Avviso: Fallback per templates_path, uso concatenazione stringhe."
+            )
+            # Fallback più robusto: aggiunge '_templates' e poi concatena la lista originale
+            new_list_str = "['_templates'] + " + current_list_str
+            # Sostituisce l'intera riga trovata dal match
+            new_conf_content = new_conf_content.replace(
+                match.group(0), f"templates_path = {new_list_str}", 1
+            )
+            conf_updated = True
+            # Nota: l'import di ast potrebbe fallire se non è disponibile,
+            # anche se è nella libreria standard.
+
+    return new_conf_content, conf_updated
+
+
+def _update_static_path_in_conf(new_conf_content, match):
+    """Aggiorna la variabile html_static_path nel contenuto di conf.py.
+
+    Tenta di aggiungere '_static' alla fine della lista esistente
+    usando ast.literal_eval, con fallback a concatenazione di stringhe.
+
+    Args:
+        new_conf_content (str): Il contenuto attuale (potenzialmente già modificato)
+                                del file conf.py.
+        match (re.Match): L'oggetto match risultato dalla ricerca del pattern
+                          per html_static_path.
+
+    Returns:
+        tuple(str, bool): Una tupla contenente il contenuto aggiornato di
+                          new_conf_content e un booleano che indica se
+                          è stata apportata una modifica (True) o meno (False).
+    """
+    conf_updated = False
+    current_list_str = match.group(1)
+    if "'_static'" not in current_list_str:
+        try:
+            import ast  # Import locale o spostato all'inizio del file
+
+            current_list = ast.literal_eval(current_list_str)
+            if isinstance(current_list, list):
+                current_list.append("_static")
+                new_list_str_repr = repr(current_list)
+                # Sostituisce l'intera riga trovata dal match
+                new_conf_content = new_conf_content.replace(
+                    match.group(0), f"html_static_path = {new_list_str_repr}", 1
+                )
+                print("  - Append '_static' a html_static_path in conf.py")
+                conf_updated = True
+            else:
+                raise ValueError("Il valore parsato per html_static_path non è una lista")
+        except (ValueError, SyntaxError, ImportError):
+            print(
+                "  - Avviso: Fallback per html_static_path, uso concatenazione stringhe."
+            )
+            # Fallback: rimuove ']', aggiunge ', '_static']'
+            new_list_str = current_list_str.rstrip()[:-1].strip()
+            if new_list_str and new_list_str != "[":  # Se la lista non era vuota
+                new_list_str += ", '_static']"
+            else:  # Se la lista era vuota '[]'
+                new_list_str = "['_static']"
+            # Sostituisce l'intera riga trovata dal match
+            new_conf_content = new_conf_content.replace(
+                match.group(0), f"html_static_path = {new_list_str}", 1
+            )
+            conf_updated = True
+
+    return new_conf_content, conf_updated
+
+
+def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
+    """Aggiorna la variabile html_css_files nel contenuto di conf.py.
+
+    Tenta di aggiungere il file CSS specificato alla lista esistente
+    usando ast.literal_eval, con fallback a concatenazione di stringhe.
+
+    Args:
+        new_conf_content (str): Il contenuto attuale (potenzialmente già modificato)
+                                del file conf.py.
+        match (re.Match): L'oggetto match risultato dalla ricerca del pattern
+                          per html_css_files.
+        css_file_to_add (str): Il nome del file CSS da aggiungere (es. 'custom.css').
+
+    Returns:
+        tuple(str, bool): Una tupla contenente il contenuto aggiornato di
+                          new_conf_content e un booleano che indica se
+                          è stata apportata una modifica (True) o meno (False).
+    """
+    conf_updated = False
+    current_list_str = match.group(1)
+    # Usa repr per confrontare correttamente la stringa con le virgolette
+    if repr(css_file_to_add) not in current_list_str:
+        try:
+            import ast  # Import locale o spostato all'inizio del file
+
+            current_list = ast.literal_eval(current_list_str)
+            if isinstance(current_list, list):
+                current_list.append(css_file_to_add)
+                new_list_str_repr = repr(current_list)
+                # Sostituisce l'intera riga trovata dal match
+                new_conf_content = new_conf_content.replace(
+                    match.group(0), f"html_css_files = {new_list_str_repr}", 1
+                )
+                print(f"  - Append '{css_file_to_add}' a html_css_files in conf.py")
+                conf_updated = True
+            else:
+                raise ValueError("Il valore parsato per html_css_files non è una lista")
+        except (ValueError, SyntaxError, ImportError):
+            print(
+                "  - Avviso: Fallback per html_css_files, uso concatenazione stringhe."
+            )
+            # Fallback: rimuove ']', aggiunge ', 'nomefile.css']'
+            new_list_str = current_list_str.rstrip()[:-1].strip()
+            if new_list_str and new_list_str != "[":  # Se la lista non era vuota
+                new_list_str += f", '{css_file_to_add}']"
+            else:  # Se la lista era vuota '[]'
+                new_list_str = f"['{css_file_to_add}']"
+            # Sostituisce l'intera riga trovata dal match
+            new_conf_content = new_conf_content.replace(
+                match.group(0), f"html_css_files = {new_list_str}", 1
+            )
+            conf_updated = True
+
+    return new_conf_content, conf_updated
+
+
+def _update_theme_in_conf(conf_content, theme_name):
+    """Aggiorna o aggiunge la variabile html_theme nel contenuto di conf.py.
+
+    Args:
+        conf_content (str): Il contenuto attuale del file conf.py.
+        theme_name (str): Il nome del tema Sphinx desiderato.
+
+    Returns:
+        tuple(str, bool): Una tupla contenente il nuovo contenuto di conf.py
+                          e un booleano che indica se è stata apportata
+                          una modifica (True) o meno (False).
+    """
+    conf_updated = False
+    new_conf_content = conf_content  # Lavora su una copia o passa la stringa
+    theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
+    target_theme_line = f"html_theme = '{theme_name}'"
+
+    match = theme_pattern.search(new_conf_content)
+    if match:
+        old_theme_line = match.group(0)
+        if old_theme_line != target_theme_line:
+            new_conf_content = theme_pattern.sub(
+                target_theme_line, new_conf_content, count=1
+            )
+            print(f"  - Aggiornato html_theme -> '{theme_name}' in conf.py")
+            conf_updated = True
+    else:
+        # Aggiunge la riga alla fine se non trovata
+        # Potrebbe essere migliorato per aggiungerla in una posizione più logica,
+        # ma per ora va bene alla fine.
+        new_conf_content += f"\n{target_theme_line}\n"
+        print(f"  - Aggiunto html_theme = '{theme_name}' a conf.py")
+        conf_updated = True
+
+    return new_conf_content, conf_updated
+
+
 def apply_devildex_customizations(isolated_source_path, theme_name, banner_text):
     """Applica personalizzazioni DevilDex alla configurazione e ai template Sphinx,
     basandosi sui parametri forniti.
@@ -148,23 +350,12 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
     try:
         with open(conf_py_path, "r", encoding="utf-8") as f:
             original_conf_content = f.read()
-
         new_conf_content = original_conf_content
+
         conf_updated = False
 
-        theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
-        target_theme_line = f"html_theme = '{theme_name}'"
-        if theme_pattern.search(new_conf_content):
-            old_theme_line = theme_pattern.search(new_conf_content).group(0)
-            if old_theme_line != target_theme_line:
-                new_conf_content = theme_pattern.sub(
-                    target_theme_line, new_conf_content, count=1
-                )
-                print(f"  - Aggiornato html_theme -> '{theme_name}' in conf.py")
-                conf_updated = True
-        else:
-            new_conf_content += f"\n{target_theme_line}\n"
-            print(f"  - Aggiunto html_theme = '{theme_name}' a conf.py")
+        new_conf_content, theme_updated = _update_theme_in_conf(new_conf_content, theme_name)
+        if theme_updated:
             conf_updated = True
 
         templates_pattern = re.compile(
@@ -172,31 +363,10 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         )
         match = templates_pattern.search(new_conf_content)
         if match:
-            current_list_str = match.group(1)
-            if "'_templates'" not in current_list_str:
-                try:
-                    import ast
-
-                    current_list = ast.literal_eval(current_list_str)
-                    if isinstance(current_list, list):
-                        new_list = ["_templates"] + current_list
-                        new_list_str_repr = repr(new_list)
-                        new_conf_content = new_conf_content.replace(
-                            match.group(0), f"templates_path = {new_list_str_repr}", 1
-                        )
-                        print("  - Prepend '_templates' a templates_path in conf.py")
-                        conf_updated = True
-                    else:
-                        raise ValueError("Non è una lista")
-                except (ValueError, SyntaxError):
-                    print(
-                        "  - Avviso: Fallback per templates_path, uso concatenazione stringhe."
-                    )
-                    new_list_str = "['_templates'] + " + current_list_str
-                    new_conf_content = new_conf_content.replace(
-                        match.group(0), f"templates_path = {new_list_str}", 1
-                    )
-                    conf_updated = True
+            new_conf_content, updated_by_template = _update_templates_path_in_conf(
+                new_conf_content, match)
+            if updated_by_template:
+                conf_updated = True
 
         else:
             new_conf_content += "\ntemplates_path = ['_templates']\n"
@@ -208,37 +378,11 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         )
         match = static_pattern.search(new_conf_content)
         if match:
-            current_list_str = match.group(1)
-            if "'_static'" not in current_list_str:
-                try:
-                    import ast
-
-                    current_list = ast.literal_eval(current_list_str)
-                    if isinstance(current_list, list):
-                        current_list.append("_static")
-                        new_list_str_repr = repr(current_list)
-                        new_conf_content = new_conf_content.replace(
-                            match.group(0), f"html_static_path = {new_list_str_repr}", 1
-                        )
-                        print("  - Append '_static' a html_static_path in conf.py")
-                        conf_updated = True
-                    else:
-                        raise ValueError("Non è una lista")
-                except (ValueError, SyntaxError):
-                    print(
-                        "  - Avviso: Fallback per html_static_path, uso concatenazione stringhe."
-                    )
-                    new_list_str = current_list_str.rstrip()[:-1].strip()
-                    if (
-                        new_list_str and new_list_str != "["
-                    ):  # Se la lista non era vuota
-                        new_list_str += ", '_static']"
-                    else:  # Se la lista era vuota '[]'
-                        new_list_str = "['_static']"
-                    new_conf_content = new_conf_content.replace(
-                        match.group(0), f"html_static_path = {new_list_str}", 1
-                    )
-                    conf_updated = True
+            new_conf_content, updated_by_static = _update_static_path_in_conf(
+                new_conf_content, match
+            )
+            if updated_by_static:
+                conf_updated = True
         else:
             new_conf_content += "\nhtml_static_path = ['_static']\n"
             print("  - Aggiunto html_static_path = ['_static'] a conf.py")
@@ -250,35 +394,11 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         match = css_pattern.search(new_conf_content)
         css_file_to_add = "custom.css"  # Nome fisso
         if match:
-            current_list_str = match.group(1)
-            if (
-                f"'{css_file_to_add}'" not in current_list_str
-                and f'"{css_file_to_add}"' not in current_list_str
-            ):
-                try:
-                    import ast
-
-                    current_list = ast.literal_eval(current_list_str)
-                    if isinstance(current_list, list):
-                        current_list.append(css_file_to_add)
-                        new_list_str_repr = repr(current_list)
-                        new_conf_content = new_conf_content.replace(
-                            match.group(0), f"html_css_files = {new_list_str_repr}", 1
-                        )
-                        print(
-                            f"  - Append '{css_file_to_add}' a html_css_files in conf.py"
-                        )
-                        conf_updated = True
-                    else:
-                        raise ValueError("Non è una lista")
-                except (ValueError, SyntaxError):
-                    print(
-                        "  - Avviso: Fallback per html_css_files, uso concatenazione stringhe."
-                    )
-                    new_conf_content, conf_updated = _fallback_css(
-                        current_list_str, css_file_to_add, new_conf_content, match
-                    )
-
+            new_conf_content, updated_by_static = _update_static_path_in_conf(
+                new_conf_content, match
+            )
+            if updated_by_static:
+                conf_updated = True
         else:
             new_conf_content += f"\nhtml_css_files = ['{css_file_to_add}']\n"
             print(f"  - Aggiunto html_css_files = ['{css_file_to_add}'] a conf.py")
