@@ -185,7 +185,8 @@ def _update_static_path_in_conf(new_conf_content, match):
                 )
         except (ValueError, SyntaxError, ImportError):
             print(
-                "  - Avviso: Fallback per html_static_path, uso concatenazione stringhe."
+                "  - Avviso: Fallback per html_static_path, uso "
+                "concatenazione stringhe."
             )
             new_list_str = current_list_str.rstrip()[:-1].strip()
             if new_list_str and new_list_str != "[":  # Se la lista non era vuota
@@ -296,7 +297,8 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         banner_text (str): Testo da visualizzare nel banner.
     """
     print(
-        f"\nApplying DevilDex customizations (Theme: {theme_name}, Banner: '{banner_text}')..."
+        "\nApplying DevilDex customizations (Theme: "
+        f"{theme_name}, Banner: '{banner_text}')..."
     )
     conf_py_path = os.path.join(isolated_source_path, "conf.py")
     templates_dir = os.path.join(isolated_source_path, "_templates")
@@ -431,7 +433,8 @@ def patch_include_directives(doc_source_path):
                         f.write(new_content)
                         f.truncate()
                         print(
-                            f"  - Patchato {md_file}: '{old_directive}' -> '{new_directive}'"
+                            f"  - Patchato {md_file}: '{old_directive}' -> "
+                            f"'{new_directive}'"
                         )
                         patched_count += 1
                     else:
@@ -460,7 +463,8 @@ def _find_dir(repo_path, potential_doc_dirs):
         ):
             found_doc_path = current_path
             print(
-                f"Trovata directory sorgente documentazione con conf.py: {found_doc_path}"
+                "Trovata directory sorgente documentazione con conf.py: "
+                f"{found_doc_path}"
             )
             break
         elif os.path.isdir(current_path):
