@@ -56,7 +56,8 @@ def _choose_best_version(available_versions, preferred_versions):
     print("Versioni disponibili (slug, attivo, costruito):")
     for version in available_versions:
         print(
-            f"- {version.get('slug')}: Active={version.get('active')}, Built={version.get('built')}"
+            f"- {version.get('slug')}: Active={version.get('active')}, "
+            f"Built={version.get('built')}"
         )
 
     for preferred in preferred_versions:
@@ -108,7 +109,8 @@ def _fetch_version_details(project_slug, version_slug):
         return None
     except Exception as e:
         print(
-            f"Si è verificato un errore inatteso ottenendo i dettagli della version: {e}"
+            "Si è verificato un error inatteso ottenendo i dettagli "
+            f"della version: {e}"
         )
         return None
 

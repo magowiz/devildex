@@ -142,7 +142,8 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
                     explicit_package_names.add(req.name)
                 except Exception as e:
                     print(
-                        f"Warning: Error parsing line in {requirements_filepath}: '{line}' - {e}",
+                        "Warning: Error parsing line in "
+                        f"{requirements_filepath}: '{line}' - {e}",
                         file=sys.stderr,
                     )
 
@@ -178,8 +179,9 @@ def get_explicit_dependencies_from_project_config(start_path="."):
         return get_explicit_package_names_from_requirements(reqs_path)
 
     print(
-        f"Warning: No pyproject.toml or requirements.txt found starting from {start_path}. "
-        f"Cannot determine explicit dependencies.",
+        "Warning: No pyproject.toml or requirements.txt "
+        f"found starting from {start_path}. "
+        "Cannot determine explicit dependencies.",
         file=sys.stderr,
     )
     return set()
