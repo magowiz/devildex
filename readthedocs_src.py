@@ -527,9 +527,10 @@ def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
 
 
 def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
-    """Cerca le directory sorgente della documentazione all'interno di una repository clonata
-    e copia la prima trovata in una cartella di output dedicata, includendo file specifici
-    dalla root.
+    """Cerca le directory sorgente della documentazione all'interno di una
+    repository clonata
+    e copia la prima trovata in una cartella di output dedicata, includendo
+    file specifici dalla root.
 
     Args:
         repo_path (str): Il percorso locale alla repository clonata.
@@ -561,7 +562,8 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
         return None
 
     print(
-        f"Copio i sorgenti della documentazione da '{found_doc_path}' a '{isolated_doc_path}'"
+        f"Copio i sorgenti della documentazione da '{found_doc_path}' a "
+        f"'{isolated_doc_path}'"
     )
     try:
         if not _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
@@ -573,7 +575,8 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
         )
         if copied_root_files_count == len(common_root_files):
             print(
-                f"Copiati {copied_root_files_count} file aggiuntivi richiesti dalla root."
+                f"Copiati {copied_root_files_count} file "
+                "aggiuntivi richiesti dalla root."
             )
         elif copied_root_files_count > 0:
             print(
