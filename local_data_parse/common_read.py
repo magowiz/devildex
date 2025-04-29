@@ -99,7 +99,8 @@ def find_requirements_txt(start_path="."):
 
 
 def get_explicit_package_names_from_requirements(requirements_filepath):
-    """Legge un file requirements.txt e restituisce un set con i nomi dei pacchetti espliciti.
+    """Legge un file requirements.txt e restituisce un set con i nomi dei
+    pacchetti espliciti.
     Usa packaging.requirements per un parsing robusto.
     Richiede che 'packaging' sia importabile.
 
@@ -108,7 +109,8 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
 
     Returns:
         set: Un set di stringhe contenente i nomi dei pacchetti espliciti.
-             Ritorna un set vuoto se il file non esiste o ci sono errori di lettura/parsing.
+             Ritorna un set vuoto se il file non esiste o ci sono
+                errori di lettura/parsing.
     """
     explicit_package_names = set()
 

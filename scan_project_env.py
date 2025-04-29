@@ -9,7 +9,8 @@ try:
     import toml
 except ImportError:
     print(
-        "Errore: Il pacchetto 'toml' non è installabile o non presente nell'ambiente scansionato.",
+        "Error: Il pacchetto 'toml' non è installabile o non presente "
+        "nell'ambiente scansionato.",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -88,7 +89,8 @@ if __name__ == "__main__":
 
     if not pyproject_path1:
         print(
-            "Errore: pyproject.toml non trovato. Impossibile determinare dipendenze esplicite.",
+            "Error: pyproject.toml non trovato. "
+            "Impossibile determinare dipendenze esplicite.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -97,7 +99,8 @@ if __name__ == "__main__":
 
     if not explicit_package_names:
         print(
-            "Avviso: Nessuna dipendenza esplicita trovata in pyproject.toml (oltre a python).",
+            "Avviso: Nessuna dipendenza esplicita trovata in "
+            "pyproject.toml (oltre a python).",
             file=sys.stderr,
         )
         pass
