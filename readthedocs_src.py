@@ -535,7 +535,8 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
     Args:
         repo_path (str): Il percorso locale alla repository clonata.
         output_base_dir (str): La directory base dove salvare i sorgenti isolati.
-        project_slug (str): Lo slug del progetto, usato per nominare la cartella di output.
+        project_slug (str): Lo slug del progetto, usato per nominare
+            la cartella di output.
 
     Returns:
         str: Il percorso alla directory dei sorgenti di documentazione isolati,
@@ -585,7 +586,8 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
             )
         else:
             print(
-                "Avviso: Nessun file comune aggiuntivo richiesto trovato o copiato dalla root."
+                "Avviso: Nessun file comune aggiuntivo richiesto trovato "
+                "o copiato dalla root."
             )
 
         return isolated_doc_path
