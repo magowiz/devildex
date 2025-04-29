@@ -211,7 +211,8 @@ def download_readthedocs_prebuilt_robust(
     Args:
         rtd_url (str): L'URL base del progetto Read the Docs
             (es. https://black.readthedocs.io/).
-        preferred_versions (list): Elenco di slug di versioni da privilegiare (in ordine).
+        preferred_versions (list): Elenco di slug di versioni da
+            privilegiare (in ordine).
         download_format (str): Il formato da scaricare (es. 'htmlzip', 'pdf', 'epub').
 
     Returns:

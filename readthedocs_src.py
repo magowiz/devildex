@@ -90,7 +90,8 @@ def _write_override_template(layout_template_path, layout_content):
         with open(layout_template_path, "w", encoding="utf-8") as f:
             f.write(layout_content)
         print(
-            f"  - Creato/Aggiornato override template: {os.path.basename(layout_template_path)}"
+            "  - Creato/Aggiornato override template: "
+            f"{os.path.basename(layout_template_path)}"
         )
     except Exception as e:
         print(f"  - Errore scrittura override template {layout_template_path}: {e}")
@@ -137,15 +138,11 @@ def _update_templates_path_in_conf(new_conf_content, match):
             print(
                 "  - Avviso: Fallback per templates_path, uso concatenazione stringhe."
             )
-            # Fallback più robusto: aggiunge '_templates' e poi concatena la lista originale
             new_list_str = "['_templates'] + " + current_list_str
-            # Sostituisce l'intera riga trovata dal match
             new_conf_content = new_conf_content.replace(
                 match.group(0), f"templates_path = {new_list_str}", 1
             )
             conf_updated = True
-            # Nota: l'import di ast potrebbe fallire se non è disponibile,
-            # anche se è nella libreria standard.
 
     return new_conf_content, conf_updated
 
@@ -171,13 +168,12 @@ def _update_static_path_in_conf(new_conf_content, match):
     current_list_str = match.group(1)
     if "'_static'" not in current_list_str:
         try:
-            import ast  # Import locale o spostato all'inizio del file
+            import ast
 
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
                 current_list.append("_static")
                 new_list_str_repr = repr(current_list)
-                # Sostituisce l'intera riga trovata dal match
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"html_static_path = {new_list_str_repr}", 1
                 )
@@ -191,13 +187,11 @@ def _update_static_path_in_conf(new_conf_content, match):
             print(
                 "  - Avviso: Fallback per html_static_path, uso concatenazione stringhe."
             )
-            # Fallback: rimuove ']', aggiunge ', '_static']'
             new_list_str = current_list_str.rstrip()[:-1].strip()
             if new_list_str and new_list_str != "[":  # Se la lista non era vuota
                 new_list_str += ", '_static']"
-            else:  # Se la lista era vuota '[]'
+            else:
                 new_list_str = "['_static']"
-            # Sostituisce l'intera riga trovata dal match
             new_conf_content = new_conf_content.replace(
                 match.group(0), f"html_static_path = {new_list_str}", 1
             )
@@ -226,16 +220,14 @@ def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
     """
     conf_updated = False
     current_list_str = match.group(1)
-    # Usa repr per confrontare correttamente la stringa con le virgolette
     if repr(css_file_to_add) not in current_list_str:
         try:
-            import ast  # Import locale o spostato all'inizio del file
+            import ast
 
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
                 current_list.append(css_file_to_add)
                 new_list_str_repr = repr(current_list)
-                # Sostituisce l'intera riga trovata dal match
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"html_css_files = {new_list_str_repr}", 1
                 )
@@ -247,13 +239,11 @@ def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
             print(
                 "  - Avviso: Fallback per html_css_files, uso concatenazione stringhe."
             )
-            # Fallback: rimuove ']', aggiunge ', 'nomefile.css']'
             new_list_str = current_list_str.rstrip()[:-1].strip()
             if new_list_str and new_list_str != "[":  # Se la lista non era vuota
                 new_list_str += f", '{css_file_to_add}']"
-            else:  # Se la lista era vuota '[]'
+            else:
                 new_list_str = f"['{css_file_to_add}']"
-            # Sostituisce l'intera riga trovata dal match
             new_conf_content = new_conf_content.replace(
                 match.group(0), f"html_css_files = {new_list_str}", 1
             )
@@ -275,7 +265,7 @@ def _update_theme_in_conf(conf_content, theme_name):
                           una modifica (True) o meno (False).
     """
     conf_updated = False
-    new_conf_content = conf_content  # Lavora su una copia o passa la stringa
+    new_conf_content = conf_content
     theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
     target_theme_line = f"html_theme = '{theme_name}'"
 
@@ -289,9 +279,6 @@ def _update_theme_in_conf(conf_content, theme_name):
             print(f"  - Aggiornato html_theme -> '{theme_name}' in conf.py")
             conf_updated = True
     else:
-        # Aggiunge la riga alla fine se non trovata
-        # Potrebbe essere migliorato per aggiungerla in una posizione più logica,
-        # ma per ora va bene alla fine.
         new_conf_content += f"\n{target_theme_line}\n"
         print(f"  - Aggiunto html_theme = '{theme_name}' a conf.py")
         conf_updated = True
