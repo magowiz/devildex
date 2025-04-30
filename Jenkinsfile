@@ -279,7 +279,7 @@ pipeline {
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
                 // Assicurati che esista un nodo macOS con questa label in Jenkins
-                label 'macos-amd64' // Esempio di label; adattala alla tua configurazione
+                label 'amd64' // Esempio di label; adattala alla tua configurazione
             }
             environment {
                  // Definisci ARCH anche qui se serve per la build macOS
