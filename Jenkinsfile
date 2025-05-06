@@ -140,16 +140,12 @@ pipeline {
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh "python -m pip install --break-system-packages -r requirements.txt"
                                     sh "python -m pip install --break-system-packages nuitka"
-                                    // Crea directory specifiche
+
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
 
                                     echo "Avvio Nuitka per Linux su host ${env.ARCH}"
                                     sh "python -m nuitka src/devildex/main.py --standalone --onefile --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
                                     sh "mv dist/${env.ARCH}/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
-
-                                    echo "Avvio Nuitka per Windows (cross-compile) su host ${env.ARCH}"
-                                    sh "python -m nuitka main.py --standalone --onefile --windows-disable-console --mingw64 --output-dir=dist/${env.ARCH}/windows/nuitka --enable-plugin=pyside6"
-                                    sh "mv dist/${env.ARCH}/windows/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-win-nui.bin"
                                 }
                                 echo "--- Fine Build Nuitka per ${env.ARCH} ---"
                             }
@@ -157,7 +153,6 @@ pipeline {
                         post {
                             success {
                                 archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
-                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-win-nui.bin", allowEmptyArchive: true
                                 cleanWs()
                             }
                             failure {
