@@ -6,7 +6,7 @@ build_options = {"packages": [], "excludes": []}
 
 base = "gui"
 
-executables = [Executable("main.py", base=base)]
+executables = [Executable("src/devildex/main.py", base=base)]
 
 setup(
     name="devildex",
