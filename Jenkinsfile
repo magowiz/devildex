@@ -139,14 +139,16 @@ pipeline {
                                 withPythonEnv('python3.13') {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
-                                    sh "python -m pip install --break-system-packages -r requirements.txt"
-                                    sh "python -m pip install --break-system-packages nuitka"
+                                    sh 'python -m pip install --break-system-packages -r requirements.txt'
+                                    sh 'python -m pip install --break-system-packages nuitka'
 
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
 
                                     echo "Starting Nuitka build for Linux on host ${env.ARCH}"
-                                    sh "python -m nuitka src/devildex/main.py --standalone --onefile --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
-                                    sh "mv dist/${env.ARCH}/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
+                                    sh "python -m nuitka src/devildex/main.py --standalone --onefile \
+                                        --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
+                                    sh "mv dist/${env.ARCH}/linux/nuitka/main.bin \
+                                        ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
                                 }
                                 echo "--- Build Nuitka finished for ${env.ARCH} ---"
                             }
@@ -184,8 +186,8 @@ pipeline {
                                 withPythonEnv('python3.13') {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
-                                    sh "python -m pip install --break-system-packages -r requirements.txt"
-                                    sh "python -m pip install --break-system-packages pyoxidizer"
+                                    sh 'python -m pip install --break-system-packages -r requirements.txt'
+                                    sh 'python -m pip install --break-system-packages pyoxidizer'
                                     sh "mkdir -p dist/${env.ARCH}/pyoxidizer"
 
                                     sh 'pyoxidizer build'
