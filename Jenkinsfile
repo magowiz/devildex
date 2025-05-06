@@ -229,14 +229,14 @@ pipeline {
                 label 'amd64'
             }
             environment {
-                 ARCH = "amd64"
+                ARCH = 'amd64'
             }
             steps {
                 script {
                     echo "--- Start Build macOS Package on ${env.ARCH} ---"
 
-                    echo "Configuring macOS environment..."
-                    echo "Executing macOS build commands ..."
+                    echo 'Configuring macOS environment...'
+                    echo 'Executing macOS build commands ...'
 
                     echo 'Placeholder: build macOS Commands completed.'
                     echo "--- End Build macOS Package on ${env.ARCH} ---"
