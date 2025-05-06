@@ -111,7 +111,7 @@ pipeline {
                                 cleanWs()
                             }
                             failure {
-                                echo "Build cx_Freeze fallita per ${env.ARCH}"
+                                echo "Failed Build cx_Freeze for ${env.ARCH}"
                                 cleanWs()
                             }
                         }
@@ -134,7 +134,7 @@ pipeline {
                         }
                         steps {
                             script {
-                                echo "--- Inizio Build Nuitka per ${env.ARCH} ---"
+                                echo "--- Starting Build Nuitka for ${env.ARCH} ---"
                                 withPythonEnv('python3.13') {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
@@ -143,11 +143,11 @@ pipeline {
 
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
 
-                                    echo "Avvio Nuitka per Linux su host ${env.ARCH}"
+                                    echo "Starting Nuitka build for Linux on host ${env.ARCH}"
                                     sh "python -m nuitka src/devildex/main.py --standalone --onefile --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
                                     sh "mv dist/${env.ARCH}/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
                                 }
-                                echo "--- Fine Build Nuitka per ${env.ARCH} ---"
+                                echo "--- Build Nuitka finished for ${env.ARCH} ---"
                             }
                         }
                         post {
@@ -156,7 +156,7 @@ pipeline {
                                 cleanWs()
                             }
                             failure {
-                                echo "Build Nuitka fallita per ${env.ARCH}"
+                                echo "Build Nuitka failed for ${env.ARCH}"
                                 cleanWs()
                             }
                         }
@@ -193,17 +193,17 @@ pipeline {
                                     if (env.ARCH == 'arm64') {
                                         sourceBuildPath = "build/aarch64-unknown-linux-gnu/debug/install/${PROJECT_NAME}_app"
                                     } else if (env.ARCH != 'amd64') {
-                                        error("Architettura ${env.ARCH} non supportata per determinare il path di PyOxidizer")
+                                        error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
                                     }
 
-                                    echo "Cerco artefatto PyOxidizer in: ${sourceBuildPath}"
+                                    echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
                                     sh "ls -l ${sourceBuildPath}"
 
                                     def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
                                     sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
                                     sh "chmod +r '${finalArtifactName}'"
                                 }
-                                echo "--- Fine Build PyOxidizer per ${env.ARCH} ---"
+                                echo "--- End Build PyOxidizer for ${env.ARCH} ---"
                             }
                         }
                         post {
@@ -212,7 +212,7 @@ pipeline {
                                 cleanWs()
                             }
                             failure {
-                                echo "Build PyOxidizer fallita per ${env.ARCH}"
+                                echo "Failed Build PyOxidizer for ${env.ARCH}"
                                 cleanWs()
                             }
                         }
@@ -234,11 +234,11 @@ pipeline {
                 script {
                     echo "--- Inizio Build macOS Package su ${env.ARCH} ---"
 
-                    echo "Configurazione ambiente macOS..."
-                    echo "Esecuzione comandi di build macOS..."
+                    echo "Configuring macOS environment..."
+                    echo "Executing macOS build commands ..."
 
-                    echo "Placeholder: Comandi build macOS completati."
-                    echo "--- Fine Build macOS Package su ${env.ARCH} ---"
+                    echo "Placeholder: build macOS Commands completed."
+                    echo "--- End Build macOS Package on ${env.ARCH} ---"
                 }
             }
              post {
