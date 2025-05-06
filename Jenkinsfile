@@ -237,11 +237,11 @@ pipeline {
                     echo "Configuring macOS environment..."
                     echo "Executing macOS build commands ..."
 
-                    echo "Placeholder: build macOS Commands completed."
+                    echo 'Placeholder: build macOS Commands completed.'
                     echo "--- End Build macOS Package on ${env.ARCH} ---"
                 }
             }
-             post {
+            post {
                 always {
                     cleanWs()
                 }
