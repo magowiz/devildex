@@ -175,9 +175,7 @@ def _update_static_path_in_conf(new_conf_content, match):
                 print("  - Append '_static' a html_static_path in conf.py")
                 conf_updated = True
             else:
-                raise ValueError(
-                    "parsed value for html_static_path is not a list"
-                )
+                raise ValueError("parsed value for html_static_path is not a list")
         except (ValueError, SyntaxError, ImportError):
             print(
                 "  - Warning: Fallback per html_static_path, uso "
@@ -472,10 +470,7 @@ def _find_dir(repo_path, potential_doc_dirs):
 
 def _clean_isolated_doc_path(isolated_doc_path):
     if os.path.exists(isolated_doc_path):
-        print(
-            "Remove existing isolated sources directory  "
-            f": '{isolated_doc_path}'"
-        )
+        print("Remove existing isolated sources directory  " f": '{isolated_doc_path}'")
         try:
             shutil.rmtree(isolated_doc_path)
         except Exception as e:
@@ -515,9 +510,7 @@ def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
             except Exception as copy_err:
                 print(f"  - Error durante la copia di {filename}: {copy_err}")
         else:
-            print(
-                f"  - File root '{filename}' non trovato in {repo_path}, non copied."
-            )
+            print(f"  - File root '{filename}' non trovato in {repo_path}, non copied.")
     return copied_root_files_count
 
 
@@ -734,9 +727,7 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
             )
         else:
             print(f"Trovato URL repository: {repo_url}")
-            print(
-                f"Branch di default (used come version identifier): {default_branch}"
-            )
+            print(f"Branch di default (used come version identifier): {default_branch}")
 
     except requests.exceptions.RequestException as e:
         print(f"Warning: Error durante la richiesta API: {e}")
@@ -800,10 +791,7 @@ def download_readthedocs_source_and_build(rtd_url):
             print(f"Error during execution of git clone command:\n{e.stderr}")
             return None, None
         except FileNotFoundError:
-            print(
-                "Error: 'git' command not found. Be sure"
-                " that Git is installed."
-            )
+            print("Error: 'git' command not found. Be sure" " that Git is installed.")
             return None, None
     elif not cloned_repo_exists_before:
         print(

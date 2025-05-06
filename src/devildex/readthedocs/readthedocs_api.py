@@ -6,7 +6,7 @@ import requests
 
 def _get_project_slug(rtd_url):
     """Extract Read the Docs project slug from an URL."""
-    print(f"Analizzo the URL: {rtd_url}")
+    print(f"Analyzing the URL: {rtd_url}")
     parsed_url = urlparse(rtd_url)
     path_parts = [part for part in parsed_url.path.split("/") if part]
     project_slug = parsed_url.hostname.split(".")[0]
@@ -20,12 +20,12 @@ def _get_project_slug(rtd_url):
             print("Error: Impossibile dedurre lo slug del progetto dall'URL.")
             return None
 
-    print(f"Slug del progetto dedotto: {project_slug}")
+    print(f"Slug del project dedotto: {project_slug}")
     return project_slug
 
 
 def _fetch_available_versions(project_slug):
-    """Fetch le version disponibili per un progetto dall'API RTD."""
+    """Fetch le version disponibili per un project dall'API RTD."""
     api_list_versions_url = (
         f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
     )
@@ -50,7 +50,7 @@ def _fetch_available_versions(project_slug):
 def _choose_best_version(available_versions, preferred_versions):
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
     if not available_versions:
-        print("Error: Nessuna versione disponibile fornita per la scelta.")
+        print("Error: Nessuna version disponibile fornita per la scelta.")
         return None
 
     print("Versions disponibili (slug, attivo, costruito):")
@@ -99,28 +99,27 @@ def _fetch_version_details(project_slug, version_slug):
         )
         response.raise_for_status()
         version_detail_data = response.json()
-        print(f"API dettagli versione chiamata con successo per '{version_slug}'.")
+        print(f"API details version called successfully for '{version_slug}'.")
         return version_detail_data
     except requests.exceptions.RequestException as e:
         print(
-            f"Error chiamando API dettagli versione ({api_version_detail_url}?"
+            f"Error calling API details version ({api_version_detail_url}?"
             f"project__slug={project_slug}): {e}"
         )
         return None
     except Exception as e:
         print(
-            "Si è verificato un error inatteso ottenendo i dettagli "
-            f"della version: {e}"
+            "An unexpected error occurred getting details "
+            f"of version: {e}"
         )
         return None
 
 
 def _get_download_url(version_details, download_format):
-    """Estrae l'URL di download per il formato specificato dai dettagli
-    della versione."""
+    """Extract download URL for specific format from version details."""
     if not version_details:
         print(
-            "Error: Dettagli versione non disponibili per trovare the URL di download."
+            "Error: version details non disponibili per trovare the URL di download."
         )
         return None
 
@@ -131,17 +130,17 @@ def _get_download_url(version_details, download_format):
             f"Error: Campo 'downloads' non trovato nei dettagli per la versione "
             f"'{version_slug}'."
         )
-        print("Assicurati che i formati offline siano abilitati per questa versione.")
+        print("Assicurati che i formats offline siano abilitati per questa versione.")
         return None
 
     file_url = download_urls.get(download_format)
     if not file_url:
-        version_slug = version_details.get("slug", "sconosciuta")
+        version_slug = version_details.get("slug", "unknown")
         print(
-            f"Error: Formato '{download_format}' non disponibile per la versione "
+            f"Error: Format '{download_format}' non disponibile per la version "
             f"'{version_slug}'."
         )
-        print(f"Formati disponibili: {list(download_urls.keys())}")
+        print(f"Formats available: {list(download_urls.keys())}")
         return None
 
     if file_url.startswith("//"):
@@ -149,14 +148,14 @@ def _get_download_url(version_details, download_format):
 
     if not file_url.lower().endswith((".zip", ".pdf", ".epub")):
         print(
-            f"Avviso: L'URL trovato '{file_url}' potrebbe non essere un link "
+            f"Warning: L'URL trovato '{file_url}' potrebbe non essere un link "
             "diretto al file scaricabile (estensione non riconosciuta). "
             "Procedo comunque..."
         )
 
     print(
         f"\nTrovato URL per {download_format} version "
-        f"'{version_details.get('slug', 'sconosciuta')}': {file_url}"
+        f"'{version_details.get('slug', 'unknown')}': {file_url}"
     )
     return file_url
 
@@ -177,7 +176,7 @@ def _determine_local_filename(
 
 
 def _download_file(file_url, local_filepath):
-    """Scarica un file da un URL in un local path."""
+    """Download file from URL into a local path."""
     print(f"Download file in: {local_filepath}")
     try:
         with requests.get(file_url, stream=True) as r:
@@ -192,9 +191,9 @@ def _download_file(file_url, local_filepath):
         if os.path.exists(local_filepath):
             try:
                 os.remove(local_filepath)
-                print(f"File parziale rimosso: {local_filepath}")
+                print(f"partial File removed: {local_filepath}")
             except OSError as remove_err:
-                print(f"Error durante la rimozione del file parziale: {remove_err}")
+                print(f"Error during la rimozione del file parziale: {remove_err}")
         return False
     except Exception as e:
         print(f"Si è verificato un error inatteso durante il download del file: {e}")
@@ -253,15 +252,15 @@ def download_readthedocs_prebuilt_robust(
 
 print("--- Esecuzione Script 1 (Versione 3: Robusta - Rifattorizzata) ---")
 
-print("Provando con: https://black.readthedocs.io/")
+print("Trying with: https://black.readthedocs.io/")
 downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
 if downloaded_file:
-    print(f"Download successo per Black: {downloaded_file}")
+    print(f"successfully Downloaded for Black: {downloaded_file}")
 else:
-    print("Download fallito per Black.")
+    print("failed Download for Black.")
 print("-" * 30)
 
-print("Provando con: https://requests.readthedocs.io/")
+print("Trying with: https://requests.readthedocs.io/")
 downloaded_file = download_readthedocs_prebuilt_robust(
     "https://requests.readthedocs.io/"
 )
@@ -279,14 +278,14 @@ else:
     print("Failed Download per Sphinx.")
 print("-" * 30)
 
-print("--- Esecuzione Script 1 (Versione 3: Robusta) ---")
+print("--- Esecuzione Script 1 (Version 3: Robusta) ---")
 
 print("Trying with: https://black.readthedocs.io/")
 downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
 if downloaded_file:
     print(f"Download successo per Black: {downloaded_file}")
 else:
-    print("Download fallito per Black.")
+    print("Download failed for Black.")
 print("-" * 30)
 
 print("Trying with: https://requests.readthedocs.io/")
@@ -296,7 +295,7 @@ downloaded_file = download_readthedocs_prebuilt_robust(
 if downloaded_file:
     print(f"Download successo per Requests: {downloaded_file}")
 else:
-    print("Download fallito per Requests.")
+    print("Download failed per Requests.")
 print("-" * 30)
 
 print("Trying with: https://sphinx.readthedocs.io/")

@@ -165,9 +165,8 @@ pipeline {
                                     // Crea directory specifiche
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
 
-                                    // Build Linux (eseguita su host nativo ARCH)
                                     echo "Avvio Nuitka per Linux su host ${env.ARCH}"
-                                    sh "python -m nuitka main.py --standalone --onefile --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
+                                    sh "python -m nuitka src/devildex/main.py --standalone --onefile --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
                                     // Rinomina artefatto Linux includendo l'architettura HOST
                                     sh "mv dist/${env.ARCH}/linux/nuitka/main.bin ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
 
@@ -185,9 +184,7 @@ pipeline {
                         }
                         post {
                             success {
-                                // Archivia entrambi gli artefatti con nomi specifici per architettura HOST
                                 archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
-                                // Archivia l'artefatto windows solo se esiste (potrebbe fallire su arm64)
                                 archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-win-nui.bin", allowEmptyArchive: true
                                 cleanWs()
                             }
@@ -196,7 +193,7 @@ pipeline {
                                 cleanWs()
                             }
                         }
-                    } // Fine stage Build Nuitka per questa architettura
+                    }
 
                     // --- Stage PyOxidizer eseguito per amd64 e arm64 ---
                     stage('Build PyOxidizer') {
