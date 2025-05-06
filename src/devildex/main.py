@@ -1,5 +1,6 @@
 import sys
-
+from local_data_parse.common_read import get_explicit_dependencies_from_project_config
+from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 from PySide6.QtCore import Qt
@@ -16,9 +17,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from local_data_parse.common_read import get_explicit_dependencies_from_project_config
-from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
 
 
 def scan_current_project():
