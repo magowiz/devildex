@@ -30,7 +30,8 @@ COPY pyproject.toml /app/
 COPY poetry.lock /app/
 
 ENV PIP_DEFAULT_TIMEOUT=1000
-RUN poetry export -f requirements.txt --without-hashes > requirements.txt && \
+RUN poetry export -f requirements.txt --without-hashes > requirements.txt.tmp && \
+    mv requirements.txt.tmp requirements.txt && \
     pip install --no-cache-dir --break-system-packages -r requirements.txt
 
 COPY __init__.py /app/
