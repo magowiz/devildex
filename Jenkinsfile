@@ -98,9 +98,10 @@ pipeline {
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh "mkdir -p dist/${env.ARCH}/cxfreeze"
-                                    sh "python -m pip install --break-system-packages cx_Freeze"
+                                    sh 'python -m pip install --break-system-packages cx_Freeze'
                                     sh "python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze"
-                                    sh "mv ./dist/${env.ARCH}/cxfreeze/main ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+                                    sh "mv ./dist/${env.ARCH}/cxfreeze/main \
+                                        ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
                                 }
                                 echo "--- End Build cx_Freeze for ${env.ARCH} ---"
                             }
