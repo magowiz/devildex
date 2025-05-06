@@ -108,19 +108,14 @@ def _fetch_version_details(project_slug, version_slug):
         )
         return None
     except Exception as e:
-        print(
-            "An unexpected error occurred getting details "
-            f"of version: {e}"
-        )
+        print("An unexpected error occurred getting details " f"of version: {e}")
         return None
 
 
 def _get_download_url(version_details, download_format):
     """Extract download URL for specific format from version details."""
     if not version_details:
-        print(
-            "Error: version details non disponibili per trovare the URL di download."
-        )
+        print("Error: version details non disponibili per trovare the URL di download.")
         return None
 
     download_urls = version_details.get("downloads")
