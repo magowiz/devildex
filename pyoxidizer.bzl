@@ -196,7 +196,7 @@ def make_exe():
     # python_config.run_module = "<module>"
 
     # Run a Python file when the interpreter starts.
-    python_config.run_filename = "main.py"
+    python_config.run_filename = "src/devildex/main.py"
 
     # Produce a PythonExecutable from a Python distribution, embedded
     # resources, and other options. The returned object represents the
