@@ -190,7 +190,7 @@ def get_explicit_dependencies_from_project_config(start_path="."):
 if __name__ == "__main__":
     print("--- Testing project_config.py directly ---", file=sys.stderr)
 
-    explicit_names = get_explicit_dependencies_from_project_config(".")
+    explicit_names = get_explicit_dependencies_from_project_config("")
 
     if explicit_names:
         print("\n--- Explicit Dependency Names Found ---", file=sys.stderr)
