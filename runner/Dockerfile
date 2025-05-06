@@ -51,7 +51,9 @@ libx11-6 \
 libgl1 \
 libxkbcommon-x11-0 \
 libglib2.0 \
-libfontconfig1
+libfontconfig1 \
+&& apt-get clean \
+&& rm -rf /var/lib/apt/lists/*
 
 
 ENV PYTHONPATH="/app:${PYTHONPATH}"
