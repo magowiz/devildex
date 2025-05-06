@@ -50,8 +50,8 @@ RUN poetry self add poetry-plugin-export
 # Set PATH for mingw-w64 compilers
 # Verify exact path after installation on Ubuntu Noble. Common paths include /usr/bin or /usr/lib/mingw-w64/bin
 # Let's check common install path for x86_64-w64-mingw32-gcc
-RUN if [ -d "/usr/bin/x86_64-w64-mingw32" ]; then export PATH="/usr/bin/x86_64-w64-mingw32:${PATH}"; fi
-RUN if [ -d "/usr/lib/mingw-w64/bin" ]; then export PATH="/usr/lib/mingw-w64/bin:${PATH}"; fi
+RUN if [ -d "/usr/bin/x86_64-w64-mingw32" ]; then export PATH="/usr/bin/x86_64-w64-mingw32:${PATH}"; fi ; \
+    if [ -d "/usr/lib/mingw-w64/bin" ]; then export PATH="/usr/lib/mingw-w64/bin:${PATH}"; fi
 
 
 # Set the working directory inside the container

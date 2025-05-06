@@ -22,7 +22,7 @@ RUN apt-get update && \
     python-is-python3 &&\
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --break-system-packages poetry
+RUN pip install --no-cache-dir --break-system-packages poetry
 RUN poetry self add poetry-plugin-export
 
 
@@ -31,8 +31,8 @@ COPY pyproject.toml /app/
 COPY poetry.lock /app/
 
 ENV PIP_DEFAULT_TIMEOUT=1000
-RUN poetry export -f requirements.txt --without-hashes > requirements.txt
-RUN pip install --break-system-packages -r requirements.txt
+RUN poetry export -f requirements.txt --without-hashes > requirements.txt && \
+    pip install --no-cache-dir --break-system-packages -r requirements.txt
 
 COPY __init__.py /app/
 COPY main.py /app/
