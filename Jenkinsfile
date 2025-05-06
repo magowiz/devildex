@@ -96,7 +96,7 @@ pipeline {
                                 withPythonEnv('python3.13') {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
-                                    sh "python -m pip install --break-system-packages -r requirements.txt"
+                                    sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh "mkdir -p dist/${env.ARCH}/cxfreeze"
                                     sh "python -m pip install --break-system-packages cx_Freeze"
                                     sh "python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze"
