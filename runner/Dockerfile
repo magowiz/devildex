@@ -22,8 +22,7 @@ RUN apt-get update && \
     python-is-python3 &&\
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --break-system-packages poetry
-RUN poetry self add poetry-plugin-export
+RUN pip install --no-cache-dir --break-system-packages poetry && poetry self add poetry-plugin-export
 
 
 WORKDIR /app
