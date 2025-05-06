@@ -192,9 +192,11 @@ pipeline {
 
                                     sh 'pyoxidizer build'
 
-                                    def sourceBuildPath = "build/x86_64-unknown-linux-gnu/debug/install/${PROJECT_NAME}_app"
+                                    def sourceBuildPath = "build/x86_64-unknown-linux-gnu\
+                                                           /debug/install/${PROJECT_NAME}_app"
                                     if (env.ARCH == 'arm64') {
-                                        sourceBuildPath = "build/aarch64-unknown-linux-gnu/debug/install/${PROJECT_NAME}_app"
+                                        sourceBuildPath = "build/aarch64-unknown-linux-gnu\
+                                                           /debug/install/${PROJECT_NAME}_app"
                                     } else if (env.ARCH != 'amd64') {
                                         error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
                                     }
@@ -211,7 +213,8 @@ pipeline {
                         }
                         post {
                             success {
-                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin", fingerprint: true
+                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin",
+                                                 fingerprint: true
                                 cleanWs()
                             }
                             failure {
@@ -223,9 +226,7 @@ pipeline {
 
                 }
             }
-
         }
-
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
                 label 'amd64'
