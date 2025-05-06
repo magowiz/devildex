@@ -92,7 +92,7 @@ pipeline {
                         }
                         steps {
                             script {
-                                echo "--- Inizio Build cx_Freeze per ${env.ARCH} ---"
+                                echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
                                 withPythonEnv('python3.13') {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
@@ -102,7 +102,7 @@ pipeline {
                                     sh "python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze"
                                     sh "mv ./dist/${env.ARCH}/cxfreeze/main ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
                                 }
-                                echo "--- Fine Build cx_Freeze per ${env.ARCH} ---"
+                                echo "--- End Build cx_Freeze for ${env.ARCH} ---"
                             }
                         }
                         post {
@@ -179,7 +179,7 @@ pipeline {
                         }
                         steps {
                             script {
-                                echo "--- Inizio Build PyOxidizer per ${env.ARCH} ---"
+                                echo "--- Start Build PyOxidizer for ${env.ARCH} ---"
                                 withPythonEnv('python3.13') {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
@@ -232,7 +232,7 @@ pipeline {
             }
             steps {
                 script {
-                    echo "--- Inizio Build macOS Package su ${env.ARCH} ---"
+                    echo "--- Start Build macOS Package on ${env.ARCH} ---"
 
                     echo "Configuring macOS environment..."
                     echo "Executing macOS build commands ..."
