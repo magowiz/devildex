@@ -10,6 +10,7 @@ import venv
 from pathlib import Path
 
 import pdoc
+from types import ModuleType
 
 CONFIG_FILE = "../../../devildex_config.ini"
 class DocStringsSrc:
@@ -25,6 +26,109 @@ class DocStringsSrc:
         self.docset_dir = project_root / "docset"
         self.docset_dir.mkdir(parents=True, exist_ok=True)
 
+    def _try_process_module(
+            self,
+            module_name_to_process: str,
+            context: pdoc.Context,
+            venv_python_interpreter: str | None
+    ) -> list[pdoc.Module]:
+        processed_pdoc_modules: list[pdoc.Module] = []
+        module_obj: ModuleType | None = None
+        pdoc_module_instance: pdoc.Module | None = None
+
+        for attempt in range(2):
+            try:
+                current_module_obj_candidate = pdoc.import_module(
+                    module_name_to_process, reload=True, skip_errors=True
+                )
+
+                is_dummy = not hasattr(current_module_obj_candidate, "__file__") and \
+                           not hasattr(current_module_obj_candidate, "__path__") and \
+                           (not hasattr(current_module_obj_candidate, "__name__") or \
+                            current_module_obj_candidate.__name__ != module_name_to_process)
+
+                if is_dummy:
+                    if attempt == 0 and venv_python_interpreter:
+                        raise ModuleNotFoundError(
+                            f"No module named '{module_name_to_process}' (pdoc returned dummy object)"
+                        )
+                    else:
+                        # print(
+                        #     f"WARNING: Import of '{module_name_to_process}' (attempt {attempt + 1}) "
+                        #     "with pdoc returned a dummy object. Skipping."
+                        # )
+                        module_obj = None
+                        break
+
+                module_obj = current_module_obj_candidate
+                pdoc_module_instance = pdoc.Module(module_obj, context=context)
+                break
+
+            except (ModuleNotFoundError, ImportError) as import_err:
+                module_obj = None
+                pdoc_module_instance = None
+                if attempt == 0 and venv_python_interpreter:
+                    missing_module_name = self._extract_missing_module_name(str(import_err))
+                    if missing_module_name and missing_module_name.strip() and missing_module_name != module_name_to_process:
+                        try:
+                            pip_install_cmd = [str(venv_python_interpreter), "-m", "pip", "install",
+                                               missing_module_name]
+                            install_result = subprocess.run(
+                                pip_install_cmd, check=False, capture_output=True, text=True, encoding="utf-8"
+                            )
+                            if install_result.returncode == 0:
+                                print(
+                                    f"Installazione di '{missing_module_name}' completata. Riprovo l'importazione di '{module_name_to_process}'.")
+                                if missing_module_name in sys.modules:
+                                    del sys.modules[missing_module_name]
+                                importlib.invalidate_caches()
+                            else:
+                                print(f"ERRORE: Fallita installazione di '{missing_module_name}':")
+                                print(f"  Stdout: {install_result.stdout.strip()}")
+                                print(f"  Stderr: {install_result.stderr.strip()}")
+                                break
+                        except Exception as pip_exec_err:
+                            print(
+                                f"ERRORE: Eccezione durante il tentativo di installare '{missing_module_name}': {pip_exec_err}")
+                            break
+                    else:
+                        break
+                else:
+                    break
+            except Exception as e_other:
+                pdoc_module_instance = None
+                break
+
+        if pdoc_module_instance and module_obj:
+            processed_pdoc_modules.append(pdoc_module_instance)
+            print(f"INFO: Modulo principale '{module_name_to_process}' wrappato con successo.")
+        elif module_obj and isinstance(module_obj, ModuleType) and hasattr(module_obj, '__path__'):
+            print(f"INFO: Modulo principale '{module_name_to_process}' non wrappato. Tentativo recupero sottomoduli...")
+            found_salvageable_submodule = False
+            for submodule_info in pdoc.iter_submodules(module_obj):
+                submodule_qualname = submodule_info.name
+                try:
+                    submodule_actual_obj = pdoc.import_module(submodule_qualname, reload=True, skip_errors=False)
+                    if not submodule_actual_obj:
+                        continue
+                    sub_pdoc_instance = pdoc.Module(submodule_actual_obj, context=context)
+                    processed_pdoc_modules.append(sub_pdoc_instance)
+                    print(f"  SUCCESS: Recuperato e wrappato sottomodulo '{submodule_qualname}'.")
+                    found_salvageable_submodule = True
+                except ImportError as sub_import_err:
+                    print(
+                        f"  FAILED IMPORT (sottomodulo): Impossibile importare '{submodule_qualname}': {sub_import_err}")
+                except Exception as sub_wrap_err:
+                    print(
+                        f"  FAILED WRAP (sottomodulo): Errore durante il wrapping di '{submodule_qualname}': {sub_wrap_err.__class__.__name__}: {sub_wrap_err}")
+            if not found_salvageable_submodule:
+                print(f"INFO: Nessun sottomodulo di '{module_name_to_process}' recuperato con successo.")
+        elif module_obj:
+            print(
+                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e non è un package. Nessun sottomodulo da recuperare.")
+        else:
+            print(f"INFO: Modulo '{module_name_to_process}' non importato. Nessun sottomodulo da recuperare.")
+        return processed_pdoc_modules
     def get_docset_dir(self):
         return self.docset_dir
 
@@ -100,95 +204,13 @@ class DocStringsSrc:
             files_generated_count = 0
             try:
                 for name in names_to_import:
-                    module_obj = None
-                    pdoc_module_instance = None
+                    pdoc_instances_for_name = self._try_process_module(
+                        name, context, venv_python_interpreter
+                    )
+                    if pdoc_instances_for_name:
+                        wrapped_modules.extend(pdoc_instances_for_name)
+                    # --- FINE MODIFICA ---
 
-                    for attempt in range(2):
-                        try:
-                            use_skip_errors = True
-
-                            module_obj_candidate = pdoc.import_module(
-                                name, reload=True, skip_errors=use_skip_errors
-                            )
-
-                            if use_skip_errors and (
-                                    not hasattr(module_obj_candidate, "__file__") and not hasattr(module_obj_candidate,
-                                                                                                  "__name__")):
-                                if attempt == 0 and venv_python_interpreter:
-                                    raise ModuleNotFoundError(
-                                        f"No module named '{name}' (dedotto da import dummy con pdoc)")
-                                else:
-                                    print(
-                                        f"WARNING: L'importazione di '{name}' è failed "
-                                        "(import_module con skip_errors=True "
-                                        "ha returned un dummy). Saltato."
-                                    )
-                                    module_obj = None
-                                    break
-
-                            module_obj = module_obj_candidate
-                            pdoc_module_instance = pdoc.Module(module_obj, context=context)
-                            print(f"Importato e wrapped: {name}")
-                            break
-
-                        except (ModuleNotFoundError, ImportError) as import_err:
-                            if attempt == 0 and venv_python_interpreter:  # Solo al primo tentativo e se abbiamo come installare
-                                missing_module_name = self._extract_missing_module_name(str(import_err))
-
-                                if missing_module_name and missing_module_name.strip() and missing_module_name != name:
-                                    print(
-                                        f"WARNING: Importazione di '{name}' fallita. Modulo dipendente mancante: '{missing_module_name}'.")
-                                    print(
-                                        f"Tentativo di installare '{missing_module_name}' nel venv: {venv_python_interpreter}")
-                                    try:
-                                        pip_install_cmd = [str(venv_python_interpreter), "-m", "pip", "install",
-                                                           missing_module_name]
-                                        install_result = subprocess.run(
-                                            pip_install_cmd,
-                                            check=False, capture_output=True, text=True, encoding="utf-8"
-                                        )
-                                        if install_result.returncode == 0:
-                                            print(
-                                                f"Installazione di '{missing_module_name}' completata. Riprovo l'importazione di '{name}'.")
-                                            if missing_module_name in sys.modules:
-                                                del sys.modules[missing_module_name]
-                                            importlib.invalidate_caches()
-                                        else:
-                                            print(f"ERRORE: Fallita installazione di '{missing_module_name}':")
-                                            print(f"  Stdout: {install_result.stdout.strip()}")
-                                            print(f"  Stderr: {install_result.stderr.strip()}")
-                                            module_obj = None
-                                            break
-                                    except Exception as pip_exec_err:
-                                        print(
-                                            f"ERRORE: Eccezione durante il tentativo di installare '{missing_module_name}': {pip_exec_err}")
-                                        module_obj = None
-                                        break
-                                else:
-                                    if attempt == 1:
-                                        print(
-                                            f"WARNING: Fallito import/wrap di '{name}' (errore: {import_err}) anche dopo tentativo di recupero o perché il modulo mancante è '{name}' stesso.")
-                                    else:
-                                        print(
-                                            f"WARNING: Errore di importazione per '{name}': {import_err}. Non si tenta l'installazione (modulo mancante non identificato come dipendenza o è '{name}' stesso).")
-                                    module_obj = None
-                                    break
-                            else:
-                                print(
-                                    f"WARNING: {'Fallito ultimo tentativo di importare' if attempt == 1 else 'Errore durante limportazione di'} '{name}': {import_err}")
-                                module_obj = None
-                                break
-
-                        except Exception as e_other:
-                            print(
-                                f"WARNING: Errore imprevisto (non di importazione) durante il wrapping di '{name}' al tentativo {attempt + 1}: {e_other}")
-                            module_obj = None
-                            break
-
-                    if pdoc_module_instance and module_obj:
-                        wrapped_modules.append(pdoc_module_instance)
-                    else:
-                        print(f"INFO: Non è stato possibile wrappare il modulo '{name}' dopo tutti i tentativi.")
                 def recursive_htmls(mod: pdoc.Module):
                     """Ricorsivamente genera l'HTML per un modulo e i suoi sottomoduli."""
                     yield mod
