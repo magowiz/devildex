@@ -34,3 +34,7 @@ black = "^25.1.0"
 pylama = {extras = ["all"], version = "^8.4.1"}
 isort = "^6.0.1"
 
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.5"
+
