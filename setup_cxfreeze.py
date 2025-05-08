@@ -1,12 +1,14 @@
+"""setup for cx_freeze."""
+
 from cx_Freeze import Executable, setup
 
 # Dependencies are automatically detected, but it might need
 
 build_options = {"packages": [], "excludes": []}
 
-base = "gui"
+BASE = "gui"
 
-executables = [Executable("src/devildex/main.py", base=base)]
+executables = [Executable("src/devildex/main.py", base=BASE)]
 
 setup(
     name="devildex",

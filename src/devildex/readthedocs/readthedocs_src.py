@@ -1,3 +1,4 @@
+import ast
 import configparser
 import os
 import re
@@ -7,6 +8,7 @@ import sys
 from urllib.parse import urlparse
 
 import requests
+
 from src.devildex.info import VERSION
 
 config = configparser.ConfigParser()
@@ -36,7 +38,7 @@ except configparser.Error as exc:
         f"Error reading configuration file '{config_file}': {exc}. "
         "Using default values."
     )
-    custom_theme = default_theme
+    CUSTOM_THEME = default_theme
     custom_banner = default_banner
 
 
@@ -116,7 +118,6 @@ def _update_templates_path_in_conf(new_conf_content, match):
     current_list_str = match.group(1)
     if "'_templates'" not in current_list_str:
         try:
-            import ast
 
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
@@ -163,7 +164,6 @@ def _update_static_path_in_conf(new_conf_content, match):
     current_list_str = match.group(1)
     if "'_static'" not in current_list_str:
         try:
-            import ast
 
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
@@ -216,7 +216,6 @@ def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
     current_list_str = match.group(1)
     if repr(css_file_to_add) not in current_list_str:
         try:
-            import ast
 
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
@@ -400,6 +399,7 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
 
 def patch_include_directives(doc_source_path):
     """Patches relative include directives in specific Markdown files.
+
     Changes `{include} ../FILE` to `{include} /FILE` (absolute from source dir).
     """
     print(f"\nPatching include directives in {doc_source_path}...")
@@ -460,7 +460,7 @@ def _find_dir(repo_path, potential_doc_dirs):
                 f"{found_doc_path}"
             )
             break
-        elif os.path.isdir(current_path):
+        if os.path.isdir(current_path):
             print(
                 f"Found directory '{current_path}', ma senza conf.py. "
                 "Continuo la ricerca..."
@@ -516,7 +516,8 @@ def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
 
 def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
     """Cerca le directory sources della documentation inside di una
-    repository cloned
+    repository cloned.
+
     e copia la prima found in una folder di output dedicated, including
     specified files in root.
 
@@ -712,7 +713,7 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
     default_branch = "main"
 
     try:
-        response = requests.get(api_project_detail_url)
+        response = requests.get(api_project_detail_url, timeout=60)
         response.raise_for_status()
         project_data = response.json()
         repo_data = project_data.get("repository")
@@ -827,13 +828,12 @@ def download_readthedocs_source_and_build(rtd_url):
         print(f"\nIsolated source documentation in: {isolated_source_path}")
         print(f"Build HTML Sphinx generata in:    {build_output_path}")
         return isolated_source_path, build_output_path
-    elif isolated_source_path:
+    if isolated_source_path:
         print(f"\nIsolated Sources documentation in: {isolated_source_path}")
         print("Failed Build Sphinx.")
         return isolated_source_path, None
-    else:
-        print("\nFailed Isolating sources and build Sphinx.")
-        return None, None
+    print("\nFailed Isolating sources and build Sphinx.")
+    return None, None
 
 
 print("--- Executing Script v3 (Isolating sources + Build Sphinx + Cleaning) ---")

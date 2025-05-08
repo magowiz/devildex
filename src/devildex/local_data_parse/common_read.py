@@ -1,3 +1,5 @@
+"""common read module."""
+
 import os
 import sys
 
@@ -7,6 +9,7 @@ from packaging.requirements import Requirement
 
 def find_pyproject_toml(start_path="."):
     """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
+
     Returns il absolute path o None se non trovato.
     """
     current_path = os.path.abspath(start_path)

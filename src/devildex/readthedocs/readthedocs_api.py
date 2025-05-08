@@ -1,3 +1,5 @@
+"""readthedocs api module."""
+
 import os
 from urllib.parse import urlparse
 
@@ -80,9 +82,7 @@ def _choose_best_version(available_versions, preferred_versions):
             print(f"Chosen first version active and built: '{chosen_slug}'")
             return chosen_slug
 
-    print(
-        "\nError: No active and built version found between available ones."
-    )
+    print("\nError: No active and built version found between available ones.")
     return None
 
 
@@ -95,7 +95,7 @@ def _fetch_version_details(project_slug, version_slug):
     )
     try:
         response = requests.get(
-            api_version_detail_url, params={"project__slug": project_slug}
+            api_version_detail_url, params={"project__slug": project_slug}, timeout=60
         )
         response.raise_for_status()
         version_detail_data = response.json()
@@ -198,8 +198,7 @@ def _download_file(file_url, local_filepath):
 def download_readthedocs_prebuilt_robust(
     rtd_url, preferred_versions=["stable", "latest"], download_format="htmlzip"
 ):
-    """
-    Download a pre-packaged documentation version from Read the Docs
+    """Download a pre-packaged documentation version from Read the Docs
     using functions helpers for better clarity and maintainability.
 
     Args:
@@ -241,8 +240,7 @@ def download_readthedocs_prebuilt_robust(
 
     if _download_file(file_url, local_filepath):
         return local_filepath
-    else:
-        return None
+    return None
 
 
 print("--- Executing Script 1 (Version 3: Robusta - Refactored) ---")

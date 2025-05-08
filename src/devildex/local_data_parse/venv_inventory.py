@@ -1,3 +1,5 @@
+"""venv inventory module."""
+
 import importlib.metadata
 
 

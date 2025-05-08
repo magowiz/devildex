@@ -1,4 +1,7 @@
+"""main application module."""
+
 import sys
+
 from local_data_parse.common_read import get_explicit_dependencies_from_project_config
 from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
 from PyQt6.QtCore import QUrl
@@ -86,7 +89,6 @@ class DevilDexMainWindow(QMainWindow):
             self.display_results(res)
         else:
             print(f"Scan la project folder: {project_folder}")  # Placeholder
-            pass
 
     def display_results(self, results_data):
         """Populates table with results."""

@@ -21,7 +21,7 @@ def find_pyproject_toml(start_path="."):
 
 def _read_project_data_toml(pyproject_path):
     try:
-        with open(pyproject_path, "r") as f:
+        with open(pyproject_path, "r", encoding="utf-8") as f:
             pyproject_data = toml.load(f)
     except FileNotFoundError:
         print(
@@ -91,6 +91,5 @@ if __name__ == "__main__":
             "pyproject.toml (other than python).",
             file=sys.stderr,
         )
-        pass
 
     sys.exit(0)
