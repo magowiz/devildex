@@ -120,10 +120,6 @@ def test_documentation_generation_for_package(package_info, tmp_path):
         pytest.fail(f"L'esecuzione di doc_pipeline.run per {project_name} ha fallito con un'eccezione: {e}\n"
                     f"Controlla i log precedenti per dettagli.")
 
-    version_str_in_path = version_tag if version_tag else "latest"
-    # La struttura finale attesa è: TEST_DOCS_OUTPUT_BASE / project_name / version_str_in_path / [struttura_pdoc]
-    # Quindi, la directory che contiene la documentazione specifica del progetto (es. black/index.html) è:
-    # final_project_version_docs_dir = TEST_DOCS_OUTPUT_BASE / project_name / version_str_in_path
     final_project_version_docs_dir = TEST_DOCS_OUTPUT_BASE / project_name
 
     assert final_project_version_docs_dir.exists(), \
