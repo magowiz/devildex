@@ -191,7 +191,7 @@ pipeline {
                                     sh "mkdir -p dist/${env.ARCH}/pyoxidizer"
 
                                     sh 'pyoxidizer build'
-                                    def sourceFolder = "-unknown-linux-gnu/debug/install/"
+                                    def sourceFolder = '-unknown-linux-gnu/debug/install/'
                                     def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
                                     if (env.ARCH == 'arm64') {
                                         sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
