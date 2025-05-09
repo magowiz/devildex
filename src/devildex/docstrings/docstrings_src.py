@@ -333,8 +333,7 @@ class DocStringsSrc:
             sys.path = original_sys_path
 
     def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
-        """
-        Pulisce una singola cartella/file o una lista di cartelle/file.
+        """Pulisce una singola cartella/file o una lista di cartelle/file.
         Gestisce sia stringhe che oggetti pathlib.Path.
         """
         items_to_clean = []
@@ -393,8 +392,8 @@ class DocStringsSrc:
             )
 
     def _extract_missing_module_name(self, error_message: str) -> str | None:
-        """
-        Estrae il nome del modulo da un messaggio di ModuleNotFoundError.
+        """Estrae il nome del modulo da un messaggio di ModuleNotFoundError.
+
         Es. "No module named 'X'" -> "X"
         """
         match = re.search(r"No module named '([^']*)'", error_message)
@@ -403,6 +402,7 @@ class DocStringsSrc:
         return None
 
     def run(self, url, project_name, version=""):
+        """Run logic."""
         cloned_repo_path: Path | None = None
         temp_venv_path: Path | None = None
         try:
