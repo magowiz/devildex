@@ -18,13 +18,7 @@ CONFIG_FILE = "../../../devildex_config.ini"
 
 class DocStringsSrc:
     def __init__(self):
-        """
-        Inizializza il DocStringsSrc.
-
-        Args:
-            base_output_path: Il percorso base dove verrà creata la documentazione finale
-                              (es. 'PROJECT_ROOT/docset').
-        """
+        """Initialize il DocStringsSrc."""
         project_root = Path(__file__).resolve().parent.parent.parent.parent
         self.docset_dir = project_root / "docset"
         self.docset_dir.mkdir(parents=True, exist_ok=True)
