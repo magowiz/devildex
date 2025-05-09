@@ -245,7 +245,8 @@ class DocStringsSrc:
 
         if modules_to_document is not None:
             print(
-                f"Utilizzo moduli specificati: {modules_to_document} dalla cartella: {input_folder}"
+                f"Utilizzo moduli specificati: {modules_to_document} dalla "
+                f"cartella: {input_folder}"
             )
             names_to_import = modules_to_document
         else:
@@ -254,7 +255,8 @@ class DocStringsSrc:
 
         if not names_to_import:
             print(
-                f"Nessun modulo o package Python trovato/specificato in '{input_folder}'. "
+                "Nessun modulo o package Python trovato/specificato in "
+                f"'{input_folder}'. "
                 "Nessuna documentation generata."
             )
             return False
@@ -311,7 +313,8 @@ class DocStringsSrc:
                     except Exception as html_gen_err:
                         print(
                             "  ERROR: Errore durante la generazione HTML o il "
-                            f"salvataggio per {current_pdoc_module.qualname}: {html_gen_err}"
+                            f"salvataggio per {current_pdoc_module.qualname}: "
+                            f"{html_gen_err}"
                         )
 
             if not wrapped_modules:
