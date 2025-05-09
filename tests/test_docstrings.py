@@ -1,7 +1,7 @@
-import pytest
 import shutil
 from pathlib import Path
-import os
+
+import pytest
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 
@@ -85,18 +85,16 @@ TEST_DOCS_OUTPUT_BASE = Path("docset")
 
 @pytest.fixture(scope="session", autouse=True)
 def manage_test_output_directory():
+    """Fixture to handle output directory."""
     if TEST_DOCS_OUTPUT_BASE.exists():
         shutil.rmtree(TEST_DOCS_OUTPUT_BASE)
     TEST_DOCS_OUTPUT_BASE.mkdir(parents=True, exist_ok=True)
     yield
-    # Per ispezionare l'output dopo i test, commenta la pulizia sottostante
-    # print(f"Test session finished. Test outputs are in: {TEST_DOCS_OUTPUT_BASE.resolve()}")
-    # if TEST_DOCS_OUTPUT_BASE.exists():
-    #     shutil.rmtree(TEST_DOCS_OUTPUT_BASE)
 
 
 @pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)
 def test_documentation_generation_for_package(package_info, tmp_path):
+    """Test documentation generation for a package."""
     repo_url = package_info["repo_url"]
     project_name = package_info["project_name"]
     version_tag = package_info.get("version_tag")
@@ -118,18 +116,21 @@ def test_documentation_generation_for_package(package_info, tmp_path):
         doc_generator.run(url=repo_url, project_name=project_name)
     except Exception as e:
         pytest.fail(
-            f"L'esecuzione di doc_pipeline.run per {project_name} ha fallito con un'eccezione: {e}\n"
+            f"L'esecuzione di doc_pipeline.run per {project_name} ha fallito con "
+            f"un'eccezione: {e}\n"
             f"Controlla i log precedenti per dettagli."
         )
 
     final_project_version_docs_dir = TEST_DOCS_OUTPUT_BASE / project_name
 
-    assert (
-        final_project_version_docs_dir.exists()
-    ), f"La directory finale della documentazione versionata non esiste: {final_project_version_docs_dir}"
-    assert (
-        final_project_version_docs_dir.is_dir()
-    ), f"Il percorso della documentazione versionata non è una directory: {final_project_version_docs_dir}"
+    assert final_project_version_docs_dir.exists(), (
+        "La directory finale della documentazione versionata non esiste: "
+        f"{final_project_version_docs_dir}"
+    )
+    assert final_project_version_docs_dir.is_dir(), (
+        "Il percorso della documentazione versionata non è una directory: "
+        f"{final_project_version_docs_dir}"
+    )
 
     html_files = list(final_project_version_docs_dir.rglob("*.html"))
     assert (

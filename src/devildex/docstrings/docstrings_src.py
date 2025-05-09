@@ -9,9 +9,9 @@ import sys
 import traceback
 import venv
 from pathlib import Path
+from types import ModuleType
 
 import pdoc
-from types import ModuleType
 
 CONFIG_FILE = "../../../devildex_config.ini"
 
