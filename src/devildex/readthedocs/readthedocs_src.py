@@ -280,8 +280,7 @@ def _update_theme_in_conf(conf_content, theme_name):
 
 
 def apply_devildex_customizations(isolated_source_path, theme_name, banner_text):
-    """Apply DevilDex customizations to configuration and Sphinx template,
-    basing sui given parameters.
+    """Apply DevilDex customizations to configuration and Sphinx template, basing on given parameters.
 
     Args:
         isolated_source_path (str): Path to isolated sources doc directory.
@@ -515,8 +514,7 @@ def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
 
 
 def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
-    """Cerca le directory sources della documentation inside di una
-    repository cloned.
+    """Search documentation directory sources inside a cloned repository.
 
     e copia la prima found in una folder di output dedicated, including
     specified files in root.
@@ -638,8 +636,7 @@ def _sphinx_run(isolated_source_path, final_output_dir):
 
 
 def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
-    """
-    Execute sphinx-build in isolated sources directory.
+    """Execute sphinx-build in isolated sources directory.
 
     Args:
         isolated_source_path (str): Path alla directory containing
@@ -737,8 +734,7 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
 
 
 def download_readthedocs_source_and_build(rtd_url):
-    """
-    Get RTD sources, clone, isolate sources doc, executes Sphinx, and cleans-up.
+    """Get RTD sources, clone, isolate sources doc, executes Sphinx, and cleans-up.
 
     Args:
         rtd_url (str): the URL base del project Read the Docs
@@ -792,7 +788,7 @@ def download_readthedocs_source_and_build(rtd_url):
             print(f"Error during execution of git clone command:\n{e.stderr}")
             return None, None
         except FileNotFoundError:
-            print("Error: 'git' command not found. Be sure" " that Git is installed.")
+            print("Error: 'git' command not found. Be sure that Git is installed.")
             return None, None
     elif not cloned_repo_exists_before:
         print(

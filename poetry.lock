@@ -1190,22 +1190,22 @@ files = [
 
 [[package]]
 name = "pydocstyle"
-version = "6.3.0"
+version = "6.1.1"
 description = "Python docstring style checker"
 optional = false
 python-versions = ">=3.6"
 groups = ["lint"]
 markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
-    {file = "pydocstyle-6.3.0-py3-none-any.whl", hash = "sha256:118762d452a49d6b05e194ef344a55822987a462831ade91ec5c06fd2169d019"},
-    {file = "pydocstyle-6.3.0.tar.gz", hash = "sha256:7ce43f0c0ac87b07494eb9c0b462c0b73e6ff276807f204d6b53edc72b7e44e1"},
+    {file = "pydocstyle-6.1.1-py3-none-any.whl", hash = "sha256:6987826d6775056839940041beef5c08cc7e3d71d63149b48e36727f70144dc4"},
+    {file = "pydocstyle-6.1.1.tar.gz", hash = "sha256:1d41b7c459ba0ee6c345f2eb9ae827cab14a7533a88c5c6f7e94923f72df92dc"},
 ]
 
 [package.dependencies]
-snowballstemmer = ">=2.2.0"
+snowballstemmer = "*"
 
 [package.extras]
-toml = ["tomli (>=1.2.3) ; python_version < \"3.11\""]
+toml = ["toml"]
 
 [[package]]
 name = "pyflakes"
@@ -2004,4 +2004,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "fa23bb9507ac5ed78e04d04d49814647aa57cb3a55d0688ce5bfdc9fe02518a3"
+content-hash = "0145dd9e611e8cbcc6b864373046b6159f247ce57f9803f2326f9626705e1363"
