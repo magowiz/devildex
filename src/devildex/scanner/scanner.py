@@ -119,7 +119,7 @@ html_theme = 'alabaster'
     if is_sphinx_project(str(test_sphinx_dir_docs)):
         print(f"Result finale: {test_sphinx_dir_docs.name} è un project Sphinx.")
     else:
-        print(f"Result finale: {test_sphinx_dir_docs.name} NON è un project Sphinx.")
+        print(f"final Result: {test_sphinx_dir_docs.name} is NOT a Sphinx project.")
 
     print("\n--- Test su una directory che NON è Sphinx (simulation) ---")
 
@@ -137,15 +137,15 @@ LOG_LEVEL = "INFO"
 
     print(f"\nScanning {test_non_sphinx_dir.name}/:")
     if is_sphinx_project(str(test_non_sphinx_dir)):
-        print(f"Result finale: {test_non_sphinx_dir.name} è un project Sphinx.")
+        print(f"final Result: {test_non_sphinx_dir.name} è un project Sphinx.")
     else:
-        print(f"Result finale: {test_non_sphinx_dir.name} NON è un project Sphinx.")
+        print(f"final Result: {test_non_sphinx_dir.name} NON è un project Sphinx.")
 
     print(f"\nScanning {test_non_sphinx_dir_no_conf.name}/:")
     if is_sphinx_project(str(test_non_sphinx_dir_no_conf)):
-        print(f"Result finale: {test_non_sphinx_dir_no_conf.name} è un project Sphinx.")
+        print(f"final Result: {test_non_sphinx_dir_no_conf.name} è un project Sphinx.")
     else:
-        print(f"Result finale: {test_non_sphinx_dir_no_conf.name} NON è un project Sphinx.")
+        print(f"final Result: {test_non_sphinx_dir_no_conf.name} NON è un project Sphinx.")
 
     print("\nCleaning directory di test...")
     shutil.rmtree(test_sphinx_dir, ignore_errors=True)
