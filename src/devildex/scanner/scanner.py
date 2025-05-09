@@ -12,8 +12,7 @@ from src.devildex.scanner_utils.scanner_utils import (
 
 
 def is_sphinx_project(project_path: str) -> bool:
-    """
-    Scan project path to determine if it is a Sphinx project.
+    """Scan project path to determine if it is a Sphinx project.
 
     Args:
         project_path: root directory path of project to scan.

@@ -52,7 +52,8 @@ class DocStringsSrc:
                 if is_dummy:
                     if attempt == 0 and venv_python_interpreter:
                         raise ModuleNotFoundError(
-                            f"No module named '{module_name_to_process}' (pdoc returned dummy object)"
+                            f"No module named '{module_name_to_process}' "
+                            "(pdoc returned dummy object)"
                         )
                     else:
                         module_obj = None
@@ -166,8 +167,8 @@ class DocStringsSrc:
                 )
         elif module_obj:
             print(
-                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e non è un package. "
-                f"Nessun sottomodulo da recuperare."
+                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e "
+                f"non è un package. Nessun sottomodulo da recuperare."
             )
         else:
             print(
@@ -205,7 +206,7 @@ class DocStringsSrc:
         modules_to_document: list[str] | None = None,
         venv_python_interpreter=None,
     ) -> bool:
-        """Genera la documentazione HTML per i moduli Python specificati o trovati in input_folder e li salva in output_folder.
+        """Generate HTML documentation Python modules and saves them in output_folder.
 
         Adatta l'importazione a versioni di pdoc.import_module
         che non supportano l'argomento 'path' usando sys.path.
@@ -350,6 +351,7 @@ class DocStringsSrc:
                     pass
 
     def git_clone(self, repo_url, clone_dir_path, default_branch="master"):
+        """Clone a git repository."""
         try:
             subprocess.run(
                 [

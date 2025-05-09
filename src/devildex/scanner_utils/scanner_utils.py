@@ -4,8 +4,7 @@ from pathlib import Path
 
 
 def read_file_content_robustly(filepath: Path) -> str | None:
-    """
-    Read file content in a robust way, handling common errors.
+    """Read file content in a robust way, handling common errors.
 
     Args:
         filepath: path of file to read.
