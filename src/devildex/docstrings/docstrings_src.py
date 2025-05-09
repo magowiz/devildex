@@ -223,11 +223,13 @@ class DocStringsSrc:
             output_folder: Il percorso della cartella dove salvare l'HTML generato.
             modules_to_document: Una lista di nomi di moduli/pacchetti
                                  (es. ['my_module', 'my_package']). Se None, la funzione
-                                 tenterà di scoprire i moduli di alto livello in input_folder.
+                                 tenterà di scoprire i modules di alto livello in
+                                 input_folder.
 
         Returns:
-            True se la documentazione è stata generata con successo per almeno un modulo,
-            False altrimenti (es. cartella non trovata, nessun modulo trovato,
+            True se la documentazione è stata generata con successo per
+                almeno un modulo, False altrimenti (es. cartella non
+                trovata, nessun modulo trovato,
                 importazione fallita per tutti).
         """
         if not os.path.isdir(input_folder):
