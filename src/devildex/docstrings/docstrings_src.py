@@ -92,8 +92,10 @@ class DocStringsSrc:
                             )
                             if install_result.returncode == 0:
                                 print(
-                                    f"Installazione di '{missing_module_name}' completata. "
-                                    f"Riprovo l'importazione di '{module_name_to_process}'."
+                                    f"Installazione di '{missing_module_name}' "
+                                    f"completata. "
+                                    f"Riprovo l'importazione di "
+                                    f"'{module_name_to_process}'."
                                 )
                                 if missing_module_name in sys.modules:
                                     del sys.modules[missing_module_name]
