@@ -92,9 +92,9 @@ class DocStringsSrc:
                             )
                             if install_result.returncode == 0:
                                 print(
-                                    f"Installazione di '{missing_module_name}' "
-                                    f"completata. "
-                                    f"Retrying l'importazione di "
+                                    f"Installation of '{missing_module_name}' "
+                                    f"completed. "
+                                    f"Retrying importing of "
                                     f"'{module_name_to_process}'."
                                 )
                                 if missing_module_name in sys.modules:
@@ -102,7 +102,7 @@ class DocStringsSrc:
                                 importlib.invalidate_caches()
                             else:
                                 print(
-                                    "ERROR: Fallita installazione di "
+                                    "ERROR: Failed installation of "
                                     f"'{missing_module_name}':"
                                 )
                                 print(f"  Stdout: {install_result.stdout.strip()}")
@@ -125,8 +125,8 @@ class DocStringsSrc:
         if pdoc_module_instance and module_obj:
             processed_pdoc_modules.append(pdoc_module_instance)
             print(
-                f"INFO: Modulo principale '{module_name_to_process}' "
-                "wrappato con successo."
+                f"INFO: main Modulo '{module_name_to_process}' "
+                "successfully wrapped."
             )
         elif (
             module_obj
@@ -151,7 +151,7 @@ class DocStringsSrc:
                     )
                     processed_pdoc_modules.append(sub_pdoc_instance)
                     print(
-                        "  SUCCESS: Recuperato e wrapped submodule "
+                        "  SUCCESS: Recovered and wrapped submodule "
                         f"'{submodule_qualname}'."
                     )
                     found_salvageable_submodule = True
@@ -168,8 +168,8 @@ class DocStringsSrc:
                     )
             if not found_salvageable_submodule:
                 print(
-                    f"INFO: Nessun sottomodulo di '{module_name_to_process}' "
-                    "recuperato con successfully."
+                    f"INFO: No submodule di '{module_name_to_process}' "
+                    "successfully recovered."
                 )
         elif module_obj:
             print(
@@ -187,7 +187,7 @@ class DocStringsSrc:
         return self.docset_dir
 
     def _discover_modules_in_folder(self, input_folder_path: Path) -> list[str]:
-        """Scopre i moduli e Python packages di primo livello in una data folder."""
+        """Discover Python modules and packages di first level in una data folder."""
         discovered_names = []
         for item_name in os.listdir(input_folder_path):
             item_path = input_folder_path / item_name
@@ -214,26 +214,26 @@ class DocStringsSrc:
     ) -> bool:
         """Generate HTML documentation Python modules and saves them in output_folder.
 
-        Adatta l'importazione a versions di pdoc.import_module
-        che non supportano l'argomento 'path' using sys.path.
+        Adapt importing a versions di pdoc.import_module
+        che doesn't support arguments 'path' using sys.path.
 
         Args:
-            input_folder: path della folder base contenente i moduli/pacchetti.
-                          Questa cartella verrà temporaneamente aggiunta a sys.path.
-            output_folder: Il percorso della cartella dove salvare l'HTML generato.
-            modules_to_document: Una lista di nomi di moduli/pacchetti
+            input_folder: path della folder base containing i moduli/packages.
+                          Questa folder will be temporarily added a sys.path.
+            output_folder: path of folder where to save generated HTML.
+            modules_to_document: Una lista di nomi di moduli/packages
                                  (es. ['my_module', 'my_package']). Se None, la function
-                                 tenterà di scoprire i modules di alto level in
+                                 will try to discover modules di alto level in
                                  input_folder.
 
         Returns:
-            True se la documentation è stata generata con successo per
-                at least un modulo, False altrimenti (es. cartella non
-                trovata, nessun modulo trovato,
-                importazione fallita per tutti).
+            True se la documentation è stata successfully generated
+                for at least a module, False otherwise (es. folder not
+                found, no module found,
+                importing failed for every module).
         """
         if not os.path.isdir(input_folder):
-            print(f"Error: La folder di input '{input_folder}' non esiste.")
+            print(f"Error: input folder '{input_folder}' doesn't exist.")
             return False
 
         os.makedirs(output_folder, exist_ok=True)
@@ -245,19 +245,19 @@ class DocStringsSrc:
 
         if modules_to_document is not None:
             print(
-                f"Utilizzo moduli specificati: {modules_to_document} dalla "
-                f"cartella: {input_folder}"
+                f"Utilizing specified modules: {modules_to_document} from "
+                f"folder: {input_folder}"
             )
             names_to_import = modules_to_document
         else:
-            print(f"Scansione della cartella per scoprire moduli: {input_folder}")
+            print(f"Scanning folder to discover modules: {input_folder}")
             names_to_import = self._discover_modules_in_folder(input_path_obj)
 
         if not names_to_import:
             print(
-                "Nessun modulo o package Python trovato/specificato in "
+                "No Python module or package found/specified in "
                 f"'{input_folder}'. "
-                "Nessuna documentation generata."
+                "No generated documentation."
             )
             return False
 
@@ -271,10 +271,9 @@ class DocStringsSrc:
                 )
                 if pdoc_instances_for_name:
                     wrapped_modules.extend(pdoc_instances_for_name)
-                # --- FINE MODIFICA ---
 
             def recursive_htmls(mod: pdoc.Module):
-                """Ricorsivamente genera l'HTML per un modulo e i suoi submodules."""
+                """Generate Recursively HTML for a module and its submodules."""
                 yield mod
                 for submod in mod.submodules():
                     yield from recursive_htmls(submod)
@@ -286,8 +285,8 @@ class DocStringsSrc:
                         html_content = current_pdoc_module.html()
                         if not html_content.strip():
                             print(
-                                f"  WARNING: Contenuto HTML vuoto generato per "
-                                f"{current_pdoc_module.qualname}. Saltato."
+                                f"  WARNING: empty HTML Content generated for "
+                                f"{current_pdoc_module.qualname}. Skipped."
                             )
                             continue
 
@@ -312,27 +311,27 @@ class DocStringsSrc:
                         )
                     except Exception as html_gen_err:
                         print(
-                            "  ERROR: Errore durante la generazione HTML o il "
-                            f"salvataggio per {current_pdoc_module.qualname}: "
+                            "  ERROR: Error during HTML generation or "
+                            f"saving for {current_pdoc_module.qualname}: "
                             f"{html_gen_err}"
                         )
 
             if not wrapped_modules:
-                print("Nessun modulo è stato importato e wrappato correttamente.")
+                print("No module has been imported and wrapped correctly.")
                 return False
 
             if files_generated_count > 0:
                 print(
-                    f"Generazione documentazione completata. {files_generated_count} "
-                    f"file HTML salvati in {output_folder}."
+                    f"documentation generation completed. {files_generated_count} "
+                    f"file HTML saved in {output_folder}."
                 )
                 return True
 
             else:
                 print(
-                    "ATTENZIONE: Nessun file HTML è stato generato in"
+                    "WARNING: No file HTML has been generated in"
                     f" {output_folder}, "
-                    "sebbene alcuni moduli fossero stati wrapped."
+                    "even if some modules were wrapped."
                 )
                 return False
 
@@ -401,7 +400,7 @@ class DocStringsSrc:
             )
 
     def _extract_missing_module_name(self, error_message: str) -> str | None:
-        """Estrae il nome del modulo da un messaggio di ModuleNotFoundError.
+        """Extract il nome del modulo da un messaggio di ModuleNotFoundError.
 
         Es. "No module named 'X'" -> "X"
         """
@@ -487,8 +486,8 @@ class DocStringsSrc:
                     shutil.move(tmp_output_dir, final_output_dir)
                 else:
                     print(
-                        "Generazione documentation failed o nessun modulo documentato "
-                        f"per {project_name}"
+                        "documentation Generation failed or no documented module "
+                        f"for {project_name}"
                     )
 
             finally:
@@ -497,14 +496,14 @@ class DocStringsSrc:
                 if tmp_output_dir.exists():
                     self.cleanup_folder(tmp_output_dir)
         except subprocess.CalledProcessError as cpe:
-            print(f"\nERROR durante l'esecuzione di un comando pip: {cpe.cmd}")
+            print(f"\nERROR during execution of pip command: {cpe.cmd}")
             print(f"exit Code: {cpe.returncode}")
             print(f"Output del comando (stdout):\n---\n{cpe.stdout}\n---")
             print(f"Errors del comando (stderr):\n---\n{cpe.stderr}\n---")
         except RuntimeError as e:
-            print(f"\nERROR durante la fase di preparazione (es. cloning): {e}")
+            print(f"\nERROR during preparing phase (es. cloning): {e}")
         except Exception as e:
-            print(f"\nUnexpected ERROR durante il process di {project_name}: {e}")
+            print(f"\nUnexpected ERROR during il process di {project_name}: {e}")
             print("--- TRACEBACK ---")
             traceback.print_exc()
             print("--- FINE DETAIL ERROR UNEXPECTED ---")
