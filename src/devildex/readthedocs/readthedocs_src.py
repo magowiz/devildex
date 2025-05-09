@@ -8,7 +8,6 @@ import sys
 from urllib.parse import urlparse
 
 import requests
-
 from src.devildex.info import VERSION
 
 config = configparser.ConfigParser()

@@ -1,4 +1,5 @@
 """scanner utils module."""
+
 import re
 from pathlib import Path
 
