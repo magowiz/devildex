@@ -61,10 +61,6 @@ class DocStringsSrc:
                             f"No module named '{module_name_to_process}' (pdoc returned dummy object)"
                         )
                     else:
-                        # print(
-                        #     f"WARNING: Import of '{module_name_to_process}' (attempt {attempt + 1}) "
-                        #     "with pdoc returned a dummy object. Skipping."
-                        # )
                         module_obj = None
                         break
 
@@ -101,7 +97,8 @@ class DocStringsSrc:
                             )
                             if install_result.returncode == 0:
                                 print(
-                                    f"Installazione di '{missing_module_name}' completata. Riprovo l'importazione di '{module_name_to_process}'."
+                                    f"Installazione di '{missing_module_name}' completata. "
+                                    f"Riprovo l'importazione di '{module_name_to_process}'."
                                 )
                                 if missing_module_name in sys.modules:
                                     del sys.modules[missing_module_name]
@@ -115,14 +112,15 @@ class DocStringsSrc:
                                 break
                         except Exception as pip_exec_err:
                             print(
-                                f"ERRORE: Eccezione durante il tentativo di installare '{missing_module_name}': {pip_exec_err}"
+                                "ERRORE: Eccezione durante il tentativo di installare "
+                                f"'{missing_module_name}': {pip_exec_err}"
                             )
                             break
                     else:
                         break
                 else:
                     break
-            except Exception as e_other:
+            except Exception:
                 pdoc_module_instance = None
                 break
 
@@ -137,7 +135,8 @@ class DocStringsSrc:
             and hasattr(module_obj, "__path__")
         ):
             print(
-                f"INFO: Modulo principale '{module_name_to_process}' non wrappato. Tentativo recupero sottomoduli..."
+                f"INFO: Modulo principale '{module_name_to_process}' non wrappato. "
+                "Tentativo recupero sottomoduli..."
             )
             found_salvageable_submodule = False
             for submodule_info in pdoc.iter_submodules(module_obj):
@@ -158,23 +157,28 @@ class DocStringsSrc:
                     found_salvageable_submodule = True
                 except ImportError as sub_import_err:
                     print(
-                        f"  FAILED IMPORT (sottomodulo): Impossibile importare '{submodule_qualname}': {sub_import_err}"
+                        "  FAILED IMPORT (sottomodulo): Impossibile importare "
+                        f"'{submodule_qualname}': {sub_import_err}"
                     )
                 except Exception as sub_wrap_err:
                     print(
-                        f"  FAILED WRAP (sottomodulo): Errore durante il wrapping di '{submodule_qualname}': {sub_wrap_err.__class__.__name__}: {sub_wrap_err}"
+                        "  FAILED WRAP (sottomodulo): Errore durante il wrapping di "
+                        f"'{submodule_qualname}': {sub_wrap_err.__class__.__name__}: {sub_wrap_err}"
                     )
             if not found_salvageable_submodule:
                 print(
-                    f"INFO: Nessun sottomodulo di '{module_name_to_process}' recuperato con successo."
+                    f"INFO: Nessun sottomodulo di '{module_name_to_process}' "
+                    "recuperato con successo."
                 )
         elif module_obj:
             print(
-                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e non è un package. Nessun sottomodulo da recuperare."
+                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e non è un package. "
+                f"Nessun sottomodulo da recuperare."
             )
         else:
             print(
-                f"INFO: Modulo '{module_name_to_process}' non importato. Nessun sottomodulo da recuperare."
+                f"INFO: Modulo '{module_name_to_process}' non importato. "
+                "Nessun sottomodulo da recuperare."
             )
         return processed_pdoc_modules
 
@@ -207,8 +211,9 @@ class DocStringsSrc:
         modules_to_document: list[str] | None = None,
         venv_python_interpreter=None,
     ) -> bool:
-        """Genera la documentazione HTML per i moduli Python specificati o trovati in input_folder
-        e li salva in output_folder. Adatta l'importazione a versioni di pdoc.import_module
+        """Genera la documentazione HTML per i moduli Python specificati o trovati in input_folder e li salva in output_folder.
+
+        Adatta l'importazione a versioni di pdoc.import_module
         che non supportano l'argomento 'path' usando sys.path.
 
         Args:
@@ -276,7 +281,8 @@ class DocStringsSrc:
                         html_content = current_pdoc_module.html()
                         if not html_content.strip():
                             print(
-                                f"  WARNING: Contenuto HTML vuoto generato per {current_pdoc_module.qualname}. Saltato."
+                                f"  WARNING: Contenuto HTML vuoto generato per "
+                                f"{current_pdoc_module.qualname}. Saltato."
                             )
                             continue
 
@@ -295,12 +301,14 @@ class DocStringsSrc:
                             f.write(html_content)
                         files_generated_count += 1
                         print(
-                            f"Saved: {full_output_file_path} (Module: {current_pdoc_module.qualname}, "
+                            f"Saved: {full_output_file_path} "
+                            f"(Module: {current_pdoc_module.qualname}, "
                             f"URL from pdoc: {relative_url_path})"
                         )
                     except Exception as html_gen_err:
                         print(
-                            f"  ERROR: Errore durante la generazione HTML o il salvataggio per {current_pdoc_module.qualname}: {html_gen_err}"
+                            "  ERROR: Errore durante la generazione HTML o il "
+                            f"salvataggio per {current_pdoc_module.qualname}: {html_gen_err}"
                         )
 
             if not wrapped_modules:
@@ -309,13 +317,15 @@ class DocStringsSrc:
 
             if files_generated_count > 0:
                 print(
-                    f"Generazione documentazione completata. {files_generated_count} file HTML salvati in {output_folder}."
+                    f"Generazione documentazione completata. {files_generated_count} "
+                    f"file HTML salvati in {output_folder}."
                 )
                 return True
 
             else:
                 print(
-                    f"ATTENZIONE: Nessun file HTML è stato generato in {output_folder}, sebbene alcuni moduli fossero stati wrappati."
+                    f"ATTENZIONE: Nessun file HTML è stato generato in {output_folder}, "
+                    "sebbene alcuni moduli fossero stati wrappati."
                 )
                 return False
 
@@ -499,6 +509,6 @@ class DocStringsSrc:
 
 if __name__ == "__main__":
     P_URL = "https://github.com/psf/black"
-    p_name = P_URL.split("/")[-1]
+    p_name = P_URL.rsplit("/", maxsplit=1)[-1]
     d_src = DocStringsSrc()
     d_src.run(P_URL, p_name)

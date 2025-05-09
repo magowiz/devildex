@@ -6,7 +6,9 @@ import toml
 
 def find_pyproject_toml(start_path="."):
     """Cerca pyproject.toml nella current directory or nelle parent directory.
-    Returns il absolute path or None se non trovato.
+
+    Returns:
+        absolute path or None se non trovato.
     """
     current_path = os.path.abspath(start_path)
     while True:

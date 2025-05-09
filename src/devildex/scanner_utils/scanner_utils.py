@@ -17,7 +17,8 @@ def read_file_content_robustly(filepath: Path) -> str | None:
             return f.read()
     except UnicodeDecodeError:
         print(
-            f"    ⚠️ Unable to read file {filepath} con encoding UTF-8. Could not be a valid text file."
+            f"    ⚠️ Unable to read file {filepath} con encoding UTF-8. "
+            "Could not be a valid text file."
         )
         return None
     except Exception as e:
@@ -26,8 +27,7 @@ def read_file_content_robustly(filepath: Path) -> str | None:
 
 
 def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
-    """
-    Search a specific configuration file in a list of base directories.
+    """Search a specific configuration file in a list of base directories.
 
     Args:
         base_dirs: a list of Path objects of directories to search.
@@ -47,8 +47,7 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
 def check_content_patterns(
     content: str, checks: list[tuple[str, str]], re_flags=0
 ) -> str | None:
-    """
-    Verify if a string content matches one of given pattern regex.
+    """Verify if a string content matches one of given pattern regex.
 
     Args:
         content: string (ex. file content) da analyze.
@@ -65,8 +64,7 @@ def check_content_patterns(
 
 
 def count_matching_strings(content: str, search_strings: list[str]) -> int:
-    """
-    Count how many given strings are into content.
+    """Count how many given strings are into content.
 
     Args:
         content: the string to analyze.

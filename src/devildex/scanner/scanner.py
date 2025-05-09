@@ -41,7 +41,8 @@ def is_sphinx_project(project_path: str) -> bool:
 
         high_priority_sphinx_checks = [
             (
-                r"extensions\s*=\s*\[.*?['\"]sphinx\.ext\.(autodoc|napoleon|intersphinx|viewcode|todo|coverage)['\"].*?\]",
+                r"extensions\s*=\s*\[.*?['\"]sphinx\.ext\."
+                r"(autodoc|napoleon|intersphinx|viewcode|todo|coverage)['\"].*?\]",
                 "Found extension 'sphinx.ext.*' key in 'extensions'. Very probably Sphinx.",
             ),
             (

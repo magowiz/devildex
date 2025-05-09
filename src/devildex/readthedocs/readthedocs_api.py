@@ -198,7 +198,7 @@ def _download_file(file_url, local_filepath):
 def download_readthedocs_prebuilt_robust(
     rtd_url, preferred_versions=["stable", "latest"], download_format="htmlzip"
 ):
-    """Download a pre-packaged documentation version from Read the Docs using functions helpers for better clarity and maintainability.
+    """Download a pre-packaged documentation from Read the Docs.
 
     Args:
         rtd_url (str): project base URL of Read the Docs
