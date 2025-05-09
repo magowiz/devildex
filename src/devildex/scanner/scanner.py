@@ -1,3 +1,10 @@
+import re
+import shutil
+from pathlib import Path
+
+from src.devildex.scanner_utils.scanner_utils import check_content_patterns, count_matching_strings, find_config_files, \
+    read_file_content_robustly
+
 
 def is_sphinx_project(project_path: str) -> bool:
     """
@@ -11,7 +18,6 @@ def is_sphinx_project(project_path: str) -> bool:
     """
     project_dir = Path(project_path)
 
-    # Definisci le directory comuni dove cercare il conf.py
     potential_conf_dirs = [
         project_dir,
         project_dir / 'docs',

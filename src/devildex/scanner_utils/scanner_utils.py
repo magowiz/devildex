@@ -1,6 +1,4 @@
-import os
 import re
-import shutil
 from pathlib import Path
 
 def read_file_content_robustly(filepath: Path) -> str | None:
