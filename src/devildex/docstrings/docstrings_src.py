@@ -102,7 +102,8 @@ class DocStringsSrc:
                                 importlib.invalidate_caches()
                             else:
                                 print(
-                                    f"ERRORE: Fallita installazione di '{missing_module_name}':"
+                                    "ERRORE: Fallita installazione di "
+                                    f"'{missing_module_name}':"
                                 )
                                 print(f"  Stdout: {install_result.stdout.strip()}")
                                 print(f"  Stderr: {install_result.stderr.strip()}")
@@ -124,7 +125,8 @@ class DocStringsSrc:
         if pdoc_module_instance and module_obj:
             processed_pdoc_modules.append(pdoc_module_instance)
             print(
-                f"INFO: Modulo principale '{module_name_to_process}' wrappato con successo."
+                f"INFO: Modulo principale '{module_name_to_process}' "
+                "wrappato con successo."
             )
         elif (
             module_obj
@@ -149,7 +151,8 @@ class DocStringsSrc:
                     )
                     processed_pdoc_modules.append(sub_pdoc_instance)
                     print(
-                        f"  SUCCESS: Recuperato e wrappato sottomodulo '{submodule_qualname}'."
+                        "  SUCCESS: Recuperato e wrappato sottomodulo "
+                        f"'{submodule_qualname}'."
                     )
                     found_salvageable_submodule = True
                 except ImportError as sub_import_err:
@@ -160,7 +163,8 @@ class DocStringsSrc:
                 except Exception as sub_wrap_err:
                     print(
                         "  FAILED WRAP (sottomodulo): Errore durante il wrapping di "
-                        f"'{submodule_qualname}': {sub_wrap_err.__class__.__name__}: {sub_wrap_err}"
+                        f"'{submodule_qualname}': {sub_wrap_err.__class__.__name__}: "
+                        f"{sub_wrap_err}"
                     )
             if not found_salvageable_submodule:
                 print(
@@ -214,7 +218,7 @@ class DocStringsSrc:
         che non supportano l'argomento 'path' usando sys.path.
 
         Args:
-            input_folder: Il percorso della cartella base contenente i moduli/pacchetti.
+            input_folder: path della cartella base contenente i moduli/pacchetti.
                           Questa cartella verrà temporaneamente aggiunta a sys.path.
             output_folder: Il percorso della cartella dove salvare l'HTML generato.
             modules_to_document: Una lista di nomi di moduli/pacchetti
