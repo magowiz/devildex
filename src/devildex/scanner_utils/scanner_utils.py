@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 
+
 def read_file_content_robustly(filepath: Path) -> str | None:
     """
     Read file content in a robust way, handling common errors.
@@ -12,14 +13,17 @@ def read_file_content_robustly(filepath: Path) -> str | None:
         file content as a string, or None in case of error.
     """
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
     except UnicodeDecodeError:
-        print(f"    ⚠️ Unable to read file {filepath} con encoding UTF-8. Could not be a valid text file.")
+        print(
+            f"    ⚠️ Unable to read file {filepath} con encoding UTF-8. Could not be a valid text file."
+        )
         return None
     except Exception as e:
         print(f"    ❌ Error during reading {filepath}: {e}")
         return None
+
 
 def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
     """
@@ -39,7 +43,10 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
             found_files.append(conf_path)
     return found_files
 
-def check_content_patterns(content: str, checks: list[tuple[str, str]], re_flags=0) -> str | None:
+
+def check_content_patterns(
+    content: str, checks: list[tuple[str, str]], re_flags=0
+) -> str | None:
     """
     Verify if a string content matches one of given pattern regex.
 
@@ -55,6 +62,7 @@ def check_content_patterns(content: str, checks: list[tuple[str, str]], re_flags
         if re.search(pattern, content, re_flags):
             return message
     return None
+
 
 def count_matching_strings(content: str, search_strings: list[str]) -> int:
     """
@@ -72,4 +80,3 @@ def count_matching_strings(content: str, search_strings: list[str]) -> int:
         if s in content:
             count += 1
     return count
-

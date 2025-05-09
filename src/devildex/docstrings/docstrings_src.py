@@ -1,4 +1,5 @@
 """docstrings pdoc3 module."""
+
 import importlib
 import os
 import re
@@ -13,6 +14,8 @@ import pdoc
 from types import ModuleType
 
 CONFIG_FILE = "../../../devildex_config.ini"
+
+
 class DocStringsSrc:
     def __init__(self):
         """
@@ -27,10 +30,10 @@ class DocStringsSrc:
         self.docset_dir.mkdir(parents=True, exist_ok=True)
 
     def _try_process_module(
-            self,
-            module_name_to_process: str,
-            context: pdoc.Context,
-            venv_python_interpreter: str | None
+        self,
+        module_name_to_process: str,
+        context: pdoc.Context,
+        venv_python_interpreter: str | None,
     ) -> list[pdoc.Module]:
         processed_pdoc_modules: list[pdoc.Module] = []
         module_obj: ModuleType | None = None
@@ -42,10 +45,15 @@ class DocStringsSrc:
                     module_name_to_process, reload=True, skip_errors=True
                 )
 
-                is_dummy = not hasattr(current_module_obj_candidate, "__file__") and \
-                           not hasattr(current_module_obj_candidate, "__path__") and \
-                           (not hasattr(current_module_obj_candidate, "__name__") or \
-                            current_module_obj_candidate.__name__ != module_name_to_process)
+                is_dummy = (
+                    not hasattr(current_module_obj_candidate, "__file__")
+                    and not hasattr(current_module_obj_candidate, "__path__")
+                    and (
+                        not hasattr(current_module_obj_candidate, "__name__")
+                        or current_module_obj_candidate.__name__
+                        != module_name_to_process
+                    )
+                )
 
                 if is_dummy:
                     if attempt == 0 and venv_python_interpreter:
@@ -68,28 +76,47 @@ class DocStringsSrc:
                 module_obj = None
                 pdoc_module_instance = None
                 if attempt == 0 and venv_python_interpreter:
-                    missing_module_name = self._extract_missing_module_name(str(import_err))
-                    if missing_module_name and missing_module_name.strip() and missing_module_name != module_name_to_process:
+                    missing_module_name = self._extract_missing_module_name(
+                        str(import_err)
+                    )
+                    if (
+                        missing_module_name
+                        and missing_module_name.strip()
+                        and missing_module_name != module_name_to_process
+                    ):
                         try:
-                            pip_install_cmd = [str(venv_python_interpreter), "-m", "pip", "install",
-                                               missing_module_name]
+                            pip_install_cmd = [
+                                str(venv_python_interpreter),
+                                "-m",
+                                "pip",
+                                "install",
+                                missing_module_name,
+                            ]
                             install_result = subprocess.run(
-                                pip_install_cmd, check=False, capture_output=True, text=True, encoding="utf-8"
+                                pip_install_cmd,
+                                check=False,
+                                capture_output=True,
+                                text=True,
+                                encoding="utf-8",
                             )
                             if install_result.returncode == 0:
                                 print(
-                                    f"Installazione di '{missing_module_name}' completata. Riprovo l'importazione di '{module_name_to_process}'.")
+                                    f"Installazione di '{missing_module_name}' completata. Riprovo l'importazione di '{module_name_to_process}'."
+                                )
                                 if missing_module_name in sys.modules:
                                     del sys.modules[missing_module_name]
                                 importlib.invalidate_caches()
                             else:
-                                print(f"ERRORE: Fallita installazione di '{missing_module_name}':")
+                                print(
+                                    f"ERRORE: Fallita installazione di '{missing_module_name}':"
+                                )
                                 print(f"  Stdout: {install_result.stdout.strip()}")
                                 print(f"  Stderr: {install_result.stderr.strip()}")
                                 break
                         except Exception as pip_exec_err:
                             print(
-                                f"ERRORE: Eccezione durante il tentativo di installare '{missing_module_name}': {pip_exec_err}")
+                                f"ERRORE: Eccezione durante il tentativo di installare '{missing_module_name}': {pip_exec_err}"
+                            )
                             break
                     else:
                         break
@@ -101,34 +128,56 @@ class DocStringsSrc:
 
         if pdoc_module_instance and module_obj:
             processed_pdoc_modules.append(pdoc_module_instance)
-            print(f"INFO: Modulo principale '{module_name_to_process}' wrappato con successo.")
-        elif module_obj and isinstance(module_obj, ModuleType) and hasattr(module_obj, '__path__'):
-            print(f"INFO: Modulo principale '{module_name_to_process}' non wrappato. Tentativo recupero sottomoduli...")
+            print(
+                f"INFO: Modulo principale '{module_name_to_process}' wrappato con successo."
+            )
+        elif (
+            module_obj
+            and isinstance(module_obj, ModuleType)
+            and hasattr(module_obj, "__path__")
+        ):
+            print(
+                f"INFO: Modulo principale '{module_name_to_process}' non wrappato. Tentativo recupero sottomoduli..."
+            )
             found_salvageable_submodule = False
             for submodule_info in pdoc.iter_submodules(module_obj):
                 submodule_qualname = submodule_info.name
                 try:
-                    submodule_actual_obj = pdoc.import_module(submodule_qualname, reload=True, skip_errors=False)
+                    submodule_actual_obj = pdoc.import_module(
+                        submodule_qualname, reload=True, skip_errors=False
+                    )
                     if not submodule_actual_obj:
                         continue
-                    sub_pdoc_instance = pdoc.Module(submodule_actual_obj, context=context)
+                    sub_pdoc_instance = pdoc.Module(
+                        submodule_actual_obj, context=context
+                    )
                     processed_pdoc_modules.append(sub_pdoc_instance)
-                    print(f"  SUCCESS: Recuperato e wrappato sottomodulo '{submodule_qualname}'.")
+                    print(
+                        f"  SUCCESS: Recuperato e wrappato sottomodulo '{submodule_qualname}'."
+                    )
                     found_salvageable_submodule = True
                 except ImportError as sub_import_err:
                     print(
-                        f"  FAILED IMPORT (sottomodulo): Impossibile importare '{submodule_qualname}': {sub_import_err}")
+                        f"  FAILED IMPORT (sottomodulo): Impossibile importare '{submodule_qualname}': {sub_import_err}"
+                    )
                 except Exception as sub_wrap_err:
                     print(
-                        f"  FAILED WRAP (sottomodulo): Errore durante il wrapping di '{submodule_qualname}': {sub_wrap_err.__class__.__name__}: {sub_wrap_err}")
+                        f"  FAILED WRAP (sottomodulo): Errore durante il wrapping di '{submodule_qualname}': {sub_wrap_err.__class__.__name__}: {sub_wrap_err}"
+                    )
             if not found_salvageable_submodule:
-                print(f"INFO: Nessun sottomodulo di '{module_name_to_process}' recuperato con successo.")
+                print(
+                    f"INFO: Nessun sottomodulo di '{module_name_to_process}' recuperato con successo."
+                )
         elif module_obj:
             print(
-                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e non è un package. Nessun sottomodulo da recuperare.")
+                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e non è un package. Nessun sottomodulo da recuperare."
+            )
         else:
-            print(f"INFO: Modulo '{module_name_to_process}' non importato. Nessun sottomodulo da recuperare.")
+            print(
+                f"INFO: Modulo '{module_name_to_process}' non importato. Nessun sottomodulo da recuperare."
+            )
         return processed_pdoc_modules
+
     def get_docset_dir(self):
         return self.docset_dir
 
@@ -152,119 +201,126 @@ class DocStringsSrc:
         return discovered_names
 
     def generate_docs_from_folder(
-            self, input_folder: str, output_folder: str, modules_to_document: list[str] | None = None,
-            venv_python_interpreter=None
-        ) -> bool:
-            """Genera la documentazione HTML per i moduli Python specificati o trovati in input_folder
-            e li salva in output_folder. Adatta l'importazione a versioni di pdoc.import_module
-            che non supportano l'argomento 'path' usando sys.path.
+        self,
+        input_folder: str,
+        output_folder: str,
+        modules_to_document: list[str] | None = None,
+        venv_python_interpreter=None,
+    ) -> bool:
+        """Genera la documentazione HTML per i moduli Python specificati o trovati in input_folder
+        e li salva in output_folder. Adatta l'importazione a versioni di pdoc.import_module
+        che non supportano l'argomento 'path' usando sys.path.
 
-            Args:
-                input_folder: Il percorso della cartella base contenente i moduli/pacchetti.
-                              Questa cartella verrà temporaneamente aggiunta a sys.path.
-                output_folder: Il percorso della cartella dove salvare l'HTML generato.
-                modules_to_document: Una lista di nomi di moduli/pacchetti
-                                     (es. ['my_module', 'my_package']). Se None, la funzione
-                                     tenterà di scoprire i moduli di alto livello in input_folder.
+        Args:
+            input_folder: Il percorso della cartella base contenente i moduli/pacchetti.
+                          Questa cartella verrà temporaneamente aggiunta a sys.path.
+            output_folder: Il percorso della cartella dove salvare l'HTML generato.
+            modules_to_document: Una lista di nomi di moduli/pacchetti
+                                 (es. ['my_module', 'my_package']). Se None, la funzione
+                                 tenterà di scoprire i moduli di alto livello in input_folder.
 
-            Returns:
-                True se la documentazione è stata generata con successo per almeno un modulo,
-                False altrimenti (es. cartella non trovata, nessun modulo trovato,
-                    importazione fallita per tutti).
-            """
-            if not os.path.isdir(input_folder):
-                print(f"Errore: La folder di input '{input_folder}' non esiste.")
-                return False
+        Returns:
+            True se la documentazione è stata generata con successo per almeno un modulo,
+            False altrimenti (es. cartella non trovata, nessun modulo trovato,
+                importazione fallita per tutti).
+        """
+        if not os.path.isdir(input_folder):
+            print(f"Errore: La folder di input '{input_folder}' non esiste.")
+            return False
 
-            os.makedirs(output_folder, exist_ok=True)
+        os.makedirs(output_folder, exist_ok=True)
 
-            context = pdoc.Context()
-            wrapped_modules: list[pdoc.Module] = []
-            names_to_import: list[str] = []
-            input_path_obj = Path(input_folder)
+        context = pdoc.Context()
+        wrapped_modules: list[pdoc.Module] = []
+        names_to_import: list[str] = []
+        input_path_obj = Path(input_folder)
 
-            if modules_to_document is not None:
-                print(
-                    f"Utilizzo moduli specificati: {modules_to_document} dalla cartella: {input_folder}"
+        if modules_to_document is not None:
+            print(
+                f"Utilizzo moduli specificati: {modules_to_document} dalla cartella: {input_folder}"
+            )
+            names_to_import = modules_to_document
+        else:
+            print(f"Scansione della cartella per scoprire moduli: {input_folder}")
+            names_to_import = self._discover_modules_in_folder(input_path_obj)
+
+        if not names_to_import:
+            print(
+                f"Nessun modulo o package Python trovato/specificato in '{input_folder}'. "
+                "Nessuna documentation generata."
+            )
+            return False
+
+        original_sys_path = list(sys.path)
+        sys.path.insert(0, input_folder)
+        files_generated_count = 0
+        try:
+            for name in names_to_import:
+                pdoc_instances_for_name = self._try_process_module(
+                    name, context, venv_python_interpreter
                 )
-                names_to_import = modules_to_document
-            else:
-                print(f"Scansione della cartella per scoprire moduli: {input_folder}")
-                names_to_import = self._discover_modules_in_folder(input_path_obj)
+                if pdoc_instances_for_name:
+                    wrapped_modules.extend(pdoc_instances_for_name)
+                # --- FINE MODIFICA ---
 
-            if not names_to_import:
-                print(
-                    f"Nessun modulo o package Python trovato/specificato in '{input_folder}'. "
-                    "Nessuna documentation generata."
-                )
-                return False
+            def recursive_htmls(mod: pdoc.Module):
+                """Ricorsivamente genera l'HTML per un modulo e i suoi sottomoduli."""
+                yield mod
+                for submod in mod.submodules():
+                    yield from recursive_htmls(submod)
 
-            original_sys_path = list(sys.path)
-            sys.path.insert(0, input_folder)
-            files_generated_count = 0
-            try:
-                for name in names_to_import:
-                    pdoc_instances_for_name = self._try_process_module(
-                        name, context, venv_python_interpreter
-                    )
-                    if pdoc_instances_for_name:
-                        wrapped_modules.extend(pdoc_instances_for_name)
-                    # --- FINE MODIFICA ---
-
-                def recursive_htmls(mod: pdoc.Module):
-                    """Ricorsivamente genera l'HTML per un modulo e i suoi sottomoduli."""
-                    yield mod
-                    for submod in mod.submodules():
-                        yield from recursive_htmls(submod)
-
-                print(f"Generating HTML nella folder: {output_folder}")
-                for root_module_obj in wrapped_modules:
-                    for current_pdoc_module in recursive_htmls(root_module_obj):
-                        try:
-                            html_content = current_pdoc_module.html()
-                            if not html_content.strip():
-                                print(
-                                    f"  WARNING: Contenuto HTML vuoto generato per {current_pdoc_module.qualname}. Saltato.")
-                                continue
-
-                            relative_url_path = current_pdoc_module.url()
-                            if relative_url_path.startswith("/"):
-                                relative_url_path = relative_url_path[1:]
-
-                            output_path_obj = Path(output_folder)
-                            full_output_file_path = output_path_obj / Path(relative_url_path)
-
-                            full_output_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-                            with open(full_output_file_path, "w", encoding="utf-8") as f:
-                                f.write(html_content)
-                            files_generated_count += 1
+            print(f"Generating HTML nella folder: {output_folder}")
+            for root_module_obj in wrapped_modules:
+                for current_pdoc_module in recursive_htmls(root_module_obj):
+                    try:
+                        html_content = current_pdoc_module.html()
+                        if not html_content.strip():
                             print(
-                                f"Saved: {full_output_file_path} (Module: {current_pdoc_module.qualname}, "
-                                f"URL from pdoc: {relative_url_path})"
+                                f"  WARNING: Contenuto HTML vuoto generato per {current_pdoc_module.qualname}. Saltato."
                             )
-                        except Exception as html_gen_err:
-                            print(
-                                f"  ERROR: Errore durante la generazione HTML o il salvataggio per {current_pdoc_module.qualname}: {html_gen_err}")
+                            continue
 
-                if not wrapped_modules:
-                    print(
-                        "Nessun modulo è stato importato e wrappato correttamente."
-                    )
-                    return False
+                        relative_url_path = current_pdoc_module.url()
+                        if relative_url_path.startswith("/"):
+                            relative_url_path = relative_url_path[1:]
 
-                if files_generated_count > 0:
-                    print(
-                        f"Generazione documentazione completata. {files_generated_count} file HTML salvati in {output_folder}.")
-                    return True
+                        output_path_obj = Path(output_folder)
+                        full_output_file_path = output_path_obj / Path(
+                            relative_url_path
+                        )
 
-                else:
-                    print(
-                        f"ATTENZIONE: Nessun file HTML è stato generato in {output_folder}, sebbene alcuni moduli fossero stati wrappati.")
-                    return False
+                        full_output_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-            finally:
-               sys.path = original_sys_path
+                        with open(full_output_file_path, "w", encoding="utf-8") as f:
+                            f.write(html_content)
+                        files_generated_count += 1
+                        print(
+                            f"Saved: {full_output_file_path} (Module: {current_pdoc_module.qualname}, "
+                            f"URL from pdoc: {relative_url_path})"
+                        )
+                    except Exception as html_gen_err:
+                        print(
+                            f"  ERROR: Errore durante la generazione HTML o il salvataggio per {current_pdoc_module.qualname}: {html_gen_err}"
+                        )
+
+            if not wrapped_modules:
+                print("Nessun modulo è stato importato e wrappato correttamente.")
+                return False
+
+            if files_generated_count > 0:
+                print(
+                    f"Generazione documentazione completata. {files_generated_count} file HTML salvati in {output_folder}."
+                )
+                return True
+
+            else:
+                print(
+                    f"ATTENZIONE: Nessun file HTML è stato generato in {output_folder}, sebbene alcuni moduli fossero stati wrappati."
+                )
+                return False
+
+        finally:
+            sys.path = original_sys_path
 
     def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
         """
@@ -289,7 +345,6 @@ class DocStringsSrc:
                     item_path.unlink(missing_ok=True)
                 except FileNotFoundError:
                     pass
-
 
     def git_clone(self, repo_url, clone_dir_path, default_branch="master"):
         try:
@@ -347,7 +402,9 @@ class DocStringsSrc:
             final_output_dir = self.docset_dir / project_name / version
             tmp_output_dir = self.docset_dir / f"tmp_{project_name}" / version
 
-            self.cleanup_folder([cloned_repo_path, temp_venv_path, final_output_dir, tmp_output_dir])
+            self.cleanup_folder(
+                [cloned_repo_path, temp_venv_path, final_output_dir, tmp_output_dir]
+            )
 
             self.git_clone(url, cloned_repo_path)
 
@@ -358,7 +415,6 @@ class DocStringsSrc:
             else:
                 _venv_python_rel = temp_venv_path / "bin" / "python"
             venv_python_interpreter = str(_venv_python_rel.resolve())
-
 
             get_site_packages_command = [
                 venv_python_interpreter,
@@ -399,7 +455,7 @@ class DocStringsSrc:
                     str(cloned_repo_path),
                     str(tmp_output_dir),
                     modules_to_document=[project_name],
-                    venv_python_interpreter=venv_python_interpreter
+                    venv_python_interpreter=venv_python_interpreter,
                 )
 
                 if success:
@@ -435,9 +491,9 @@ class DocStringsSrc:
         finally:
             print(f"Pulizia delle temporary folders per {project_name}...")
             if cloned_repo_path:
-                 self.cleanup_folder(cloned_repo_path)
+                self.cleanup_folder(cloned_repo_path)
             if temp_venv_path:
-                 self.cleanup_folder(temp_venv_path)
+                self.cleanup_folder(temp_venv_path)
             print(f"Pulizia delle temporanee folders per {project_name} completed.")
 
 
