@@ -141,10 +141,6 @@ def test_documentation_generation_for_package(package_info, tmp_path):
     print(f"Trovati {len(html_files)} file HTML in {final_project_version_docs_dir}.")
 
     if expected_entry_point:
-        # expected_entry_point è relativo alla directory della versione del progetto
-        # Esempio: se final_project_version_docs_dir è 'test_generated_docs/black/24.4.2'
-        # e expected_entry_point è 'black/index.html',
-        # il file completo sarà 'test_generated_docs/black/24.4.2/black/index.html'
         entry_point_file = final_project_version_docs_dir / expected_entry_point
         assert (
             entry_point_file.exists()

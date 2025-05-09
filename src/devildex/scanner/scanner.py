@@ -43,10 +43,12 @@ def is_sphinx_project(project_path: str) -> bool:
             (
                 r"extensions\s*=\s*\[.*?['\"]sphinx\.ext\."
                 r"(autodoc|napoleon|intersphinx|viewcode|todo|coverage)['\"].*?\]",
-                "Found extension 'sphinx.ext.*' key in 'extensions'. Very probably Sphinx.",
+                "Found extension 'sphinx.ext.*' key in 'extensions'. "
+                "Very probably Sphinx.",
             ),
             (
-                r"html_theme\s*=\s*['\"](alabaster|sphinx_rtd_theme|furo|pydata_sphinx_theme)['\"]",
+                r"html_theme\s*=\s*['\"]"
+                r"(alabaster|sphinx_rtd_theme|furo|pydata_sphinx_theme)['\"]",
                 "Trovato 'html_theme' con known theme Sphinx. Very probably Sphinx.",
             ),
             (
@@ -54,7 +56,8 @@ def is_sphinx_project(project_path: str) -> bool:
                 "Trovato link alla official documentation Sphinx. Probably Sphinx.",
             ),
             (
-                r"import os\s*;\s*import sys\s*;\s*sys\.path\.insert\(0,\s*os\.path\.abspath\(",
+                r"import os\s*;\s*import sys\s*;\s*sys\.path\.insert"
+                r"\(0,\s*os\.path\.abspath\(",
                 "Trovato setup comune del sys.path per autodoc. Forte indication.",
             ),
         ]
@@ -82,7 +85,8 @@ def is_sphinx_project(project_path: str) -> bool:
 
         if score >= 3:
             print(
-                f"    ✅ Found {score} common configuration Sphinx variables. Good indication."
+                f"    ✅ Found {score} common configuration Sphinx variables."
+                " Good indication."
             )
             return True
 

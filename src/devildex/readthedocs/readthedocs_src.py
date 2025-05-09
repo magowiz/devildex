@@ -278,7 +278,7 @@ def _update_theme_in_conf(conf_content, theme_name):
 
 
 def apply_devildex_customizations(isolated_source_path, theme_name, banner_text):
-    """Apply DevilDex customizations to configuration and template, basing on given parameters.
+    """Apply DevilDex customizations to conf and template, basing on given parameters.
 
     Args:
         isolated_source_path (str): Path to isolated sources doc directory.

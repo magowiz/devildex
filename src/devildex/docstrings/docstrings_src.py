@@ -330,7 +330,8 @@ class DocStringsSrc:
 
             else:
                 print(
-                    f"ATTENZIONE: Nessun file HTML è stato generato in {output_folder}, "
+                    "ATTENZIONE: Nessun file HTML è stato generato in"
+                    f" {output_folder}, "
                     "sebbene alcuni moduli fossero stati wrappati."
                 )
                 return False
@@ -477,7 +478,8 @@ class DocStringsSrc:
 
                 if success:
                     print(
-                        f"Generazione documentazione completata con successo per {project_name}"
+                        "Generazione documentazione completata con successo per"
+                        f" {project_name}"
                     )
                     if final_output_dir.exists():
                         self.cleanup_folder(final_output_dir)
