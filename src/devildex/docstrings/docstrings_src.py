@@ -94,7 +94,7 @@ class DocStringsSrc:
                                 print(
                                     f"Installazione di '{missing_module_name}' "
                                     f"completata. "
-                                    f"Riprovo l'importazione di "
+                                    f"Retrying l'importazione di "
                                     f"'{module_name_to_process}'."
                                 )
                                 if missing_module_name in sys.modules:
@@ -102,7 +102,7 @@ class DocStringsSrc:
                                 importlib.invalidate_caches()
                             else:
                                 print(
-                                    "ERRORE: Fallita installazione di "
+                                    "ERROR: Fallita installazione di "
                                     f"'{missing_module_name}':"
                                 )
                                 print(f"  Stdout: {install_result.stdout.strip()}")
@@ -110,7 +110,7 @@ class DocStringsSrc:
                                 break
                         except Exception as pip_exec_err:
                             print(
-                                "ERRORE: Eccezione durante il tentativo di installare "
+                                "ERROR: Exception during try to install "
                                 f"'{missing_module_name}': {pip_exec_err}"
                             )
                             break
@@ -134,8 +134,8 @@ class DocStringsSrc:
             and hasattr(module_obj, "__path__")
         ):
             print(
-                f"INFO: Modulo principale '{module_name_to_process}' non wrappato. "
-                "Tentativo recupero sottomoduli..."
+                f"INFO: main Module '{module_name_to_process}' not wrapped. "
+                "Try to recover submodules..."
             )
             found_salvageable_submodule = False
             for submodule_info in pdoc.iter_submodules(module_obj):
@@ -151,35 +151,35 @@ class DocStringsSrc:
                     )
                     processed_pdoc_modules.append(sub_pdoc_instance)
                     print(
-                        "  SUCCESS: Recuperato e wrappato sottomodulo "
+                        "  SUCCESS: Recuperato e wrapped submodule "
                         f"'{submodule_qualname}'."
                     )
                     found_salvageable_submodule = True
                 except ImportError as sub_import_err:
                     print(
-                        "  FAILED IMPORT (sottomodulo): Impossibile importare "
+                        "  FAILED IMPORT (submodule): unable to import "
                         f"'{submodule_qualname}': {sub_import_err}"
                     )
                 except Exception as sub_wrap_err:
                     print(
-                        "  FAILED WRAP (sottomodulo): Errore durante il wrapping di "
+                        "  FAILED WRAP (submodule): Error durante il wrapping di "
                         f"'{submodule_qualname}': {sub_wrap_err.__class__.__name__}: "
                         f"{sub_wrap_err}"
                     )
             if not found_salvageable_submodule:
                 print(
                     f"INFO: Nessun sottomodulo di '{module_name_to_process}' "
-                    "recuperato con successo."
+                    "recuperato con successfully."
                 )
         elif module_obj:
             print(
-                f"INFO: Modulo '{module_name_to_process}' importato ma non wrappato e "
-                f"non è un package. Nessun sottomodulo da recuperare."
+                f"INFO: Modulo '{module_name_to_process}' imported ma non wrapped e "
+                f"non è un package. No submodule to recover."
             )
         else:
             print(
-                f"INFO: Modulo '{module_name_to_process}' non importato. "
-                "Nessun sottomodulo da recuperare."
+                f"INFO: Modulo '{module_name_to_process}' not imported. "
+                "No submodule to recover."
             )
         return processed_pdoc_modules
 
@@ -187,7 +187,7 @@ class DocStringsSrc:
         return self.docset_dir
 
     def _discover_modules_in_folder(self, input_folder_path: Path) -> list[str]:
-        """Scopre i moduli e pacchetti Python di primo livello in una data cartella."""
+        """Scopre i moduli e Python packages di primo livello in una data folder."""
         discovered_names = []
         for item_name in os.listdir(input_folder_path):
             item_path = input_folder_path / item_name
@@ -214,26 +214,26 @@ class DocStringsSrc:
     ) -> bool:
         """Generate HTML documentation Python modules and saves them in output_folder.
 
-        Adatta l'importazione a versioni di pdoc.import_module
-        che non supportano l'argomento 'path' usando sys.path.
+        Adatta l'importazione a versions di pdoc.import_module
+        che non supportano l'argomento 'path' using sys.path.
 
         Args:
-            input_folder: path della cartella base contenente i moduli/pacchetti.
+            input_folder: path della folder base contenente i moduli/pacchetti.
                           Questa cartella verrà temporaneamente aggiunta a sys.path.
             output_folder: Il percorso della cartella dove salvare l'HTML generato.
             modules_to_document: Una lista di nomi di moduli/pacchetti
-                                 (es. ['my_module', 'my_package']). Se None, la funzione
-                                 tenterà di scoprire i modules di alto livello in
+                                 (es. ['my_module', 'my_package']). Se None, la function
+                                 tenterà di scoprire i modules di alto level in
                                  input_folder.
 
         Returns:
-            True se la documentazione è stata generata con successo per
-                almeno un modulo, False altrimenti (es. cartella non
+            True se la documentation è stata generata con successo per
+                at least un modulo, False altrimenti (es. cartella non
                 trovata, nessun modulo trovato,
                 importazione fallita per tutti).
         """
         if not os.path.isdir(input_folder):
-            print(f"Errore: La folder di input '{input_folder}' non esiste.")
+            print(f"Error: La folder di input '{input_folder}' non esiste.")
             return False
 
         os.makedirs(output_folder, exist_ok=True)
@@ -274,7 +274,7 @@ class DocStringsSrc:
                 # --- FINE MODIFICA ---
 
             def recursive_htmls(mod: pdoc.Module):
-                """Ricorsivamente genera l'HTML per un modulo e i suoi sottomoduli."""
+                """Ricorsivamente genera l'HTML per un modulo e i suoi submodules."""
                 yield mod
                 for submod in mod.submodules():
                     yield from recursive_htmls(submod)
@@ -332,7 +332,7 @@ class DocStringsSrc:
                 print(
                     "ATTENZIONE: Nessun file HTML è stato generato in"
                     f" {output_folder}, "
-                    "sebbene alcuni moduli fossero stati wrappati."
+                    "sebbene alcuni moduli fossero stati wrapped."
                 )
                 return False
 
@@ -340,8 +340,9 @@ class DocStringsSrc:
             sys.path = original_sys_path
 
     def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
-        """Pulisce una singola cartella/file o una lista di cartelle/file.
-        Gestisce sia stringhe che oggetti pathlib.Path.
+        """Clean una single folder/file o una lista di folders/files.
+
+        Handles sia strings che objects pathlib.Path.
         """
         items_to_clean = []
         if isinstance(folder_or_list, list):
@@ -468,7 +469,7 @@ class DocStringsSrc:
             sys.path.insert(0, venv_site_packages)
             print(f"Added {venv_site_packages} a sys.path")
             try:
-                print("Esecuzione generate_docs_from_folder con venv sys.path...")
+                print("Executing generate_docs_from_folder con venv sys.path...")
                 success = self.generate_docs_from_folder(
                     str(cloned_repo_path),
                     str(tmp_output_dir),
@@ -478,7 +479,7 @@ class DocStringsSrc:
 
                 if success:
                     print(
-                        "Generazione documentazione completata con successo per"
+                        "Generating documentation completed successfully for"
                         f" {project_name}"
                     )
                     if final_output_dir.exists():
@@ -486,7 +487,7 @@ class DocStringsSrc:
                     shutil.move(tmp_output_dir, final_output_dir)
                 else:
                     print(
-                        "Generazione documentazione failed o nessun modulo documentato "
+                        "Generazione documentation failed o nessun modulo documentato "
                         f"per {project_name}"
                     )
 
@@ -497,23 +498,23 @@ class DocStringsSrc:
                     self.cleanup_folder(tmp_output_dir)
         except subprocess.CalledProcessError as cpe:
             print(f"\nERROR durante l'esecuzione di un comando pip: {cpe.cmd}")
-            print(f"Codice di uscita: {cpe.returncode}")
+            print(f"exit Code: {cpe.returncode}")
             print(f"Output del comando (stdout):\n---\n{cpe.stdout}\n---")
             print(f"Errors del comando (stderr):\n---\n{cpe.stderr}\n---")
         except RuntimeError as e:
-            print(f"\nERROR durante la fase di preparazione (es. clonazione): {e}")
+            print(f"\nERROR durante la fase di preparazione (es. cloning): {e}")
         except Exception as e:
             print(f"\nUnexpected ERROR durante il process di {project_name}: {e}")
             print("--- TRACEBACK ---")
             traceback.print_exc()
-            print("--- FINE DETTAGLIO ERROR IMPREVISTO ---")
+            print("--- FINE DETAIL ERROR UNEXPECTED ---")
         finally:
-            print(f"Pulizia delle temporary folders per {project_name}...")
+            print(f"Cleaning temporary folders for {project_name}...")
             if cloned_repo_path:
                 self.cleanup_folder(cloned_repo_path)
             if temp_venv_path:
                 self.cleanup_folder(temp_venv_path)
-            print(f"Pulizia delle temporanee folders per {project_name} completed.")
+            print(f"Cleaning temporary folders for {project_name} completed.")
 
 
 if __name__ == "__main__":
