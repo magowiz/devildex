@@ -10,80 +10,132 @@ def _get_project_slug(rtd_url):
     """Extract Read the Docs project slug from an URL."""
     print(f"Analyzing the URL: {rtd_url}")
     parsed_url = urlparse(rtd_url)
+    hostname_parts = parsed_url.hostname.split(".")
     path_parts = [part for part in parsed_url.path.split("/") if part]
-    project_slug = parsed_url.hostname.split(".")[0]
 
-    if project_slug == "readthedocs" and path_parts:
-        project_slug = path_parts[0]
-    elif not project_slug or project_slug == "www" or project_slug == "readthedocs":
-        if path_parts:
-            project_slug = path_parts[0]
-        else:
-            print("Error: Unable to deduct slug del project from URL.")
-            return None
+    project_slug = None
 
-    print(f"project Slug deduct: {project_slug}")
+    # Priorità 1: Sottodominio (es. project.readthedocs.io o project.rtfd.io)
+    if len(hostname_parts) >= 3 and hostname_parts[-2] in ("readthedocs", "rtfd") and hostname_parts[-1] == "io":
+        project_slug = hostname_parts[0]
+        # Se lo slug è 'docs' o 'www', potrebbe essere un URL generico di RTD,
+        # quindi proviamo a cercarlo nel percorso.
+        if project_slug in ("docs", "www") and path_parts:
+            # Spesso il formato è /<lang>/<slug>/ o /projects/<slug>/
+            if path_parts[0] == "projects" and len(path_parts) > 1:
+                project_slug = path_parts[1]
+            elif len(path_parts) > 1 and path_parts[0] not in ("builds", "downloads", "proxito"): # Evita percorsi non di progetto
+                 # Se il primo elemento del percorso è una lingua (es. 'en'), prendi il secondo
+                if len(path_parts[0]) == 2 or path_parts[0] in ("latest", "stable"): # Heuristica per la lingua o versione
+                    if len(path_parts) > 1:
+                        project_slug = path_parts[1]
+                    else: # Non c'è uno slug dopo la lingua/versione
+                        project_slug = None # Resetta per evitare 'en' come slug
+                elif path_parts[0] != project_slug: # Se il primo elemento del percorso non è lo stesso slug già trovato
+                    project_slug = path_parts[0]
+
+    # Priorità 2: Se non trovato dal sottodominio, prova dal percorso (per URL come readthedocs.org/projects/slug/)
+    elif not project_slug and path_parts:
+        if path_parts[0] == "projects" and len(path_parts) > 1:
+            project_slug = path_parts[1]
+        elif path_parts[0] not in ("builds", "downloads", "proxito", "dashboard", "profiles", "accounts", "organizations"):
+            project_slug = path_parts[0] # Caso generico, primo elemento del percorso
+
+    if not project_slug or project_slug in ("www", "readthedocs", "docs"): # Controllo finale
+        print(f"Error: Unable to reliably deduct project slug from URL: {rtd_url}")
+        return None
+
+    print(f"Project Slug deducted: {project_slug}")
     return project_slug
 
 
 def _fetch_available_versions(project_slug):
-    """Fetch available versions for a project from RTD API."""
-    api_list_versions_url = (
+    """Fetch ALL available versions for a project from RTD API, handling pagination."""
+    all_versions_results = []
+    next_page_url = (
         f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
     )
-    print(f"\nCalling API to list versions: {api_list_versions_url}")
-    try:
-        response = requests.get(api_list_versions_url)
-        response.raise_for_status()
-        versions_list_data = response.json()
-        print(
-            "API list versions called successfully. Found "
-            f"{versions_list_data.get('count', 'N/A')} versions."
-        )
-        return versions_list_data.get("results", [])
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling API list versions ({api_list_versions_url}): {e}")
-        return None
-    except Exception as e:
-        print(f"An unexpected error occurred while listing versions: {e}")
-        return None
+    print(f"\nCalling API to list versions (starting with): {next_page_url}")
+
+    page_num = 1
+    while next_page_url:
+        try:
+            print(f"Fetching page {page_num} from: {next_page_url}")
+            response = requests.get(next_page_url, timeout=30)  # Timeout per richiesta
+            response.raise_for_status()
+            data = response.json()
+
+            current_page_versions = data.get("results", [])
+            all_versions_results.extend(current_page_versions)
+
+            total_count = data.get('count', len(all_versions_results))  # Usa il count totale se disponibile
+
+            print(
+                f"Page {page_num}: Fetched {len(current_page_versions)} versions. "
+                f"Total fetched so far: {len(all_versions_results)} out of {total_count}."
+            )
+
+            next_page_url = data.get("next")  # Get URL for the next page
+            page_num += 1
+            if next_page_url:
+                # Opzionale: piccolo ritardo per essere gentili con l'API
+                # time.sleep(0.2)
+                pass
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error calling API list versions ({next_page_url}): {e}")
+            # Potresti decidere di restituire ciò che hai raccolto finora o None
+            return None  # O all_versions_results se vuoi provare con dati parziali
+        except Exception as e:
+            print(f"An unexpected error occurred while listing versions: {e}")
+            return None
+
+    print(
+        f"API list versions: All pages fetched. Total versions found: {len(all_versions_results)}."
+    )
+    return all_versions_results
 
 
 def _choose_best_version(available_versions, preferred_versions):
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
-    if not available_versions:
-        print("Error: No version available given for choice.")
+    if not available_versions: # available_versions potrebbe essere una lista vuota
+        print("Error: No versions available for choice (list is empty or None).")
         return None
 
-    print("Available Versions (slug, active, built):")
-    for version in available_versions:
-        print(
-            f"- {version.get('slug')}: Active={version.get('active')}, "
-            f"Built={version.get('built')}"
-        )
+    print(f"\nAnalyzing {len(available_versions)} available versions to choose the best:")
+    # Stampare tutte le versioni potrebbe essere troppo verboso se sono molte.
+    # Considera di stamparne solo alcune o di rimuovere questo loop se non necessario per il debug.
+    # for version in available_versions:
+    #     print(
+    #         f"- {version.get('slug')}: Active={version.get('active')}, "
+    #         f"Built={version.get('built')}"
+    #     )
 
-    for preferred in preferred_versions:
+    # 1. Cerca versioni preferite (attive e buildate)
+    for preferred_slug in preferred_versions:
         for version in available_versions:
             if (
-                version.get("slug") == preferred
-                and version.get("active")
-                and version.get("built")
+                version.get("slug") == preferred_slug
+                and version.get("active") is True # Controllo esplicito con True
+                and version.get("built") is True  # Controllo esplicito con True
             ):
-                print(f"\nChosen favourite version and available: '{preferred}'")
-                return preferred
+                print(f"\nChosen favourite version (active and built): '{preferred_slug}'")
+                return preferred_slug
 
     print(
-        "\nNo favourite version available (active and built). Trying to download "
-        "first available active and built found."
+        "\nNo favourite version found (active and built). "
+        "Searching for the first available active and built version..."
     )
+    # 2. Fallback: cerca la prima versione qualsiasi che sia attiva e buildata
     for version in available_versions:
-        if version.get("active") and version.get("built"):
+        if version.get("active") is True and version.get("built") is True:
             chosen_slug = version.get("slug")
-            print(f"Chosen first version active and built: '{chosen_slug}'")
+            print(f"Chosen first available (active and built) version: '{chosen_slug}'")
             return chosen_slug
 
-    print("\nError: No active and built version found between available ones.")
+    print("\nError: No active and built version found among all available ones.")
     return None
+
 
 
 def _fetch_version_details(project_slug, version_slug):
@@ -173,15 +225,20 @@ def _determine_local_filename(
 def _download_file(file_url, local_filepath):
     """Download file from URL into a local path."""
     print(f"Download file in: {local_filepath}")
+    download_successful = False
     try:
-        with requests.get(file_url, stream=True) as r:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        with requests.get(file_url, stream=True, timeout=300) as r:
             r.raise_for_status()
             with open(local_filepath, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
         print(f"Download completed: {local_filepath}")
+        download_successful = True
         return True
-    except requests.exceptions.RequestException as e:
+    except (requests.exceptions.RequestException, IOError) as e:
         print(f"Error during file download ({file_url}): {e}")
         if os.path.exists(local_filepath):
             try:
@@ -193,10 +250,18 @@ def _download_file(file_url, local_filepath):
     except Exception as e:
         print(f"An unexpected error occurred during file download: {e}")
         return False
+    finally:
+        if not download_successful and os.path.exists(local_filepath):
+            try:
+                os.remove(local_filepath)
+                print(f"partial File removed: {local_filepath}")
+            except OSError as remove_err:
+                print(f"Error while removing partial file: {remove_err}")
 
 
 def download_readthedocs_prebuilt_robust(
-    rtd_url, preferred_versions=["stable", "latest"], download_format="htmlzip"
+    rtd_url, download_folder="rtd_prebuilt_downloads",
+        preferred_versions=("stable", "latest"), download_format="htmlzip"
 ):
     """Download a pre-packaged documentation from Read the Docs.
 
@@ -233,7 +298,7 @@ def download_readthedocs_prebuilt_robust(
     local_filename = _determine_local_filename(
         project_slug, chosen_version_slug, file_url, download_format
     )
-    output_dir = "rtd_prebuilt_downloads_robust"
+    output_dir = download_folder
     os.makedirs(output_dir, exist_ok=True)
     local_filepath = os.path.join(output_dir, local_filename)
 
@@ -241,59 +306,59 @@ def download_readthedocs_prebuilt_robust(
         return local_filepath
     return None
 
+if __name__ == "__main__":
+    print("--- Executing Script 1 (Version 3: Robusta - Refactored) ---")
 
-print("--- Executing Script 1 (Version 3: Robusta - Refactored) ---")
+    print("Trying with: https://black.readthedocs.io/")
+    downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
+    if downloaded_file:
+        print(f"successfully Downloaded for Black: {downloaded_file}")
+    else:
+        print("failed Download for Black.")
+    print("-" * 30)
 
-print("Trying with: https://black.readthedocs.io/")
-downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
-if downloaded_file:
-    print(f"successfully Downloaded for Black: {downloaded_file}")
-else:
-    print("failed Download for Black.")
-print("-" * 30)
+    print("Trying with: https://requests.readthedocs.io/")
+    downloaded_file = download_readthedocs_prebuilt_robust(
+        "https://requests.readthedocs.io/"
+    )
+    if downloaded_file:
+        print(f"Download successfully for Requests: {downloaded_file}")
+    else:
+        print("Failed Download per Requests.")
+    print("-" * 30)
 
-print("Trying with: https://requests.readthedocs.io/")
-downloaded_file = download_readthedocs_prebuilt_robust(
-    "https://requests.readthedocs.io/"
-)
-if downloaded_file:
-    print(f"Download successfully for Requests: {downloaded_file}")
-else:
-    print("Failed Download per Requests.")
-print("-" * 30)
+    print("Trying with: https://sphinx.readthedocs.io/")
+    downloaded_file = download_readthedocs_prebuilt_robust("https://sphinx.readthedocs.io/")
+    if downloaded_file:
+        print(f"Download successfully for Sphinx: {downloaded_file}")
+    else:
+        print("Failed Download for Sphinx.")
+    print("-" * 30)
 
-print("Trying with: https://sphinx.readthedocs.io/")
-downloaded_file = download_readthedocs_prebuilt_robust("https://sphinx.readthedocs.io/")
-if downloaded_file:
-    print(f"Download successfully for Sphinx: {downloaded_file}")
-else:
-    print("Failed Download for Sphinx.")
-print("-" * 30)
+    print("--- Executing Script 1 (Version 3: Robusta) ---")
 
-print("--- Executing Script 1 (Version 3: Robusta) ---")
+    print("Trying with: https://black.readthedocs.io/")
+    downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
+    if downloaded_file:
+        print(f"Download successo per Black: {downloaded_file}")
+    else:
+        print("Download failed for Black.")
+    print("-" * 30)
 
-print("Trying with: https://black.readthedocs.io/")
-downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
-if downloaded_file:
-    print(f"Download successo per Black: {downloaded_file}")
-else:
-    print("Download failed for Black.")
-print("-" * 30)
+    print("Trying with: https://requests.readthedocs.io/")
+    downloaded_file = download_readthedocs_prebuilt_robust(
+        "https://requests.readthedocs.io/"
+    )
+    if downloaded_file:
+        print(f"Download successfully for Requests: {downloaded_file}")
+    else:
+        print("Download failed for Requests.")
+    print("-" * 30)
 
-print("Trying with: https://requests.readthedocs.io/")
-downloaded_file = download_readthedocs_prebuilt_robust(
-    "https://requests.readthedocs.io/"
-)
-if downloaded_file:
-    print(f"Download successfully for Requests: {downloaded_file}")
-else:
-    print("Download failed for Requests.")
-print("-" * 30)
-
-print("Trying with: https://sphinx.readthedocs.io/")
-downloaded_file = download_readthedocs_prebuilt_robust("https://sphinx.readthedocs.io/")
-if downloaded_file:
-    print(f"Download successfully for Sphinx: {downloaded_file}")
-else:
-    print("Failed Download for Sphinx.")
-print("-" * 30)
+    print("Trying with: https://sphinx.readthedocs.io/")
+    downloaded_file = download_readthedocs_prebuilt_robust("https://sphinx.readthedocs.io/")
+    if downloaded_file:
+        print(f"Download successfully for Sphinx: {downloaded_file}")
+    else:
+        print("Failed Download for Sphinx.")
+    print("-" * 30)

@@ -8,7 +8,7 @@ import sys
 from urllib.parse import urlparse
 
 import requests
-from src.devildex.info import VERSION
+from devildex.info import VERSION
 
 config = configparser.ConfigParser()
 config_file = "../../../devildex_config.ini"
@@ -553,7 +553,7 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
     try:
         if not _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
             return None
-        common_root_files = ["AUTHORS.md", "CHANGES.md", "LICENSE"]
+        common_root_files = ["AUTHORS.md", "CHANGES.md", "LICENSE", "AUTHORS.rst", "CHANGES.rst", "LICENSE.txt"]
         print("Cerco e copying file comuni dalla root del repository...")
         copied_root_files_count = _copy_common_files(
             common_root_files, repo_path, isolated_doc_path
@@ -573,6 +573,35 @@ def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
                 "Warning: No additive common file required found "
                 "or copied from root."
             )
+        source_package_dir_path = os.path.join(repo_path, project_slug)  # Es. .../pipenv_repo_main/pipenv
+        # La destinazione è la directory base di output + il nome del pacchetto
+        # Es. ../../../rtd_isolated_doc_sources/pipenv
+        destination_package_dir_path = os.path.join(output_base_dir, project_slug)
+
+        if os.path.isdir(source_package_dir_path) and \
+                os.path.exists(os.path.join(source_package_dir_path, "__init__.py")):
+
+            # Assicuriamoci che non sia la stessa della cartella dei sorgenti doc principali
+            # (improbabile per pipenv, ma è una buona pratica)
+            if os.path.abspath(source_package_dir_path) != os.path.abspath(
+                    isolated_doc_path):  # Confronta con isolated_doc_path
+                print(
+                    f"  Copiando il pacchetto del progetto '{project_slug}' da '{source_package_dir_path}' "
+                    f"a '{destination_package_dir_path}' per l'accesso da conf.py."
+                )
+                try:
+                    # Rimuovi la destinazione se esiste già per assicurare una copia pulita
+                    # e per evitare errori con shutil.copytree se la cartella esiste già
+                    # (anche se dirs_exist_ok=True potrebbe essere un'alternativa, rmtree è più esplicito qui)
+                    if os.path.exists(destination_package_dir_path):
+                        print(
+                            f"    Rimuovendo la directory del pacchetto di destinazione esistente: {destination_package_dir_path}")
+                        shutil.rmtree(destination_package_dir_path)
+                    shutil.copytree(source_package_dir_path, destination_package_dir_path)
+                    print(f"    Pacchetto del progetto '{project_slug}' copiato con successo.")
+                except Exception as e_pkg_copy:
+                    print(f"    Errore durante la copia del pacchetto del progetto '{project_slug}': {e_pkg_copy}")
+        # --- FINE DEL NUOVO CODICE DA AGGIUNGERE ---
 
         return isolated_doc_path
 
@@ -632,7 +661,7 @@ def _sphinx_run(isolated_source_path, final_output_dir):
         return None
 
 
-def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
+def build_sphinx_docs(isolated_source_path, project_slug, version_identifier, original_clone_dir_path):
     """Execute sphinx-build in isolated sources directory.
 
     Args:
@@ -642,7 +671,7 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
             di output.
         version_identifier (str): version identifier
             (es. nome branch) per la structure.
-
+        original_clone_dir_path (str): Path alla root del repository
     Returns:
         str: Il path alla directory di output della build HTML, o
             None in caso di failure.
@@ -655,6 +684,49 @@ def build_sphinx_docs(isolated_source_path, project_slug, version_identifier):
             f"{isolated_source_path} dopo la copia."
         )
         return None
+    if os.path.exists(os.path.join(original_clone_dir_path, "pyproject.toml")) or \
+            os.path.exists(os.path.join(original_clone_dir_path, "setup.py")):
+        print(
+            f"  DEVILDEX INFO: Tentativo di installazione del progetto '{project_slug}' da '{original_clone_dir_path}' in modalità editabile...")
+        cmd_install_project = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check",
+                               "--no-python-version-warning", "-e", original_clone_dir_path]
+        proc_project = subprocess.run(cmd_install_project, capture_output=True, text=True, check=False,
+                                      encoding="utf-8")
+        if proc_project.returncode != 0:
+            print(
+                f"    DEVILDEX WARNING: Installazione del progetto '{project_slug}' fallita. Sphinx potrebbe non funzionare correttamente.")
+            print(f"      Comando: {' '.join(cmd_install_project)}")
+            if proc_project.stdout.strip(): print(f"      Pip STDOUT:\n{proc_project.stdout.strip()}")
+            if proc_project.stderr.strip(): print(f"      Pip STDERR:\n{proc_project.stderr.strip()}")
+            # Potresti decidere di restituire None qui se questa installazione è critica per TUTTI i progetti
+            # return None
+        else:
+            print(f"    DEVILDEX INFO: Progetto '{project_slug}' installato con successo (o già presente).")
+            if proc_project.stdout.strip(): print(f"      Pip STDOUT:\n{proc_project.stdout.strip()}")
+    else:
+        print(
+            f"  DEVILDEX INFO: Nessun pyproject.toml o setup.py trovato in '{original_clone_dir_path}'. Salto installazione progetto in modalità editabile.")
+    doc_specific_req_file = os.path.join(isolated_source_path, "requirements.txt")
+    if os.path.exists(doc_specific_req_file):
+        print(
+            f"  DEVILDEX INFO: Tentativo di installazione delle dipendenze specifiche della documentazione da '{doc_specific_req_file}'...")
+        cmd_install_doc_reqs = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check",
+                                "--no-python-version-warning", "-r", doc_specific_req_file]
+        proc_doc_reqs = subprocess.run(cmd_install_doc_reqs, capture_output=True, text=True, check=False,
+                                       encoding="utf-8")
+        if proc_doc_reqs.returncode != 0:
+            print(f"    DEVILDEX WARNING: Installazione delle dipendenze da '{doc_specific_req_file}' fallita.")
+            print(f"      Comando: {' '.join(cmd_install_doc_reqs)}")
+            if proc_doc_reqs.stdout.strip(): print(f"      Pip STDOUT:\n{proc_doc_reqs.stdout.strip()}")
+            if proc_doc_reqs.stderr.strip(): print(f"      Pip STDERR:\n{proc_doc_reqs.stderr.strip()}")
+        else:
+            print(
+                f"    DEVILDEX INFO: Dipendenze da '{doc_specific_req_file}' installate con successo (o già presenti).")
+            if proc_doc_reqs.stdout.strip(): print(f"      Pip STDOUT:\n{proc_doc_reqs.stdout.strip()}")
+    else:
+        print(
+            f"  DEVILDEX INFO: Nessun 'requirements.txt' trovato in '{isolated_source_path}'. Salto installazione dipendenze specifiche della documentazione.")
+    #
 
     final_output_dir = os.path.join("../../../docset", project_slug, version_identifier)
     print(f"Directory di output per la build Sphinx HTML: {final_output_dir}")
@@ -730,12 +802,16 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
     return default_branch, repo_url
 
 
-def download_readthedocs_source_and_build(rtd_url):
+def download_readthedocs_source_and_build(rtd_url, existing_clone_path=None):
     """Get RTD sources, clone, isolate sources doc, executes Sphinx, and cleans-up.
 
     Args:
         rtd_url (str): the URL base del project Read the Docs
             (es. https://black.readthedocs.io/).
+        existing_clone_path (str, optional): Percorso a un repository già clonato.
+                                             Se fornito, la clonazione viene saltata.
+                                             Default a None.
+
 
     Returns:
         tuple(str, str) or tuple(None, None): Path isolated sources and build HTML path
@@ -810,7 +886,7 @@ def download_readthedocs_source_and_build(rtd_url):
         )
 
         build_output_path = build_sphinx_docs(
-            isolated_source_path, project_slug, default_branch
+            isolated_source_path, project_slug, default_branch, clone_dir_path
         )
     else:
         print("Isolate sources Failed, skipping Sphinx build.")
@@ -828,21 +904,21 @@ def download_readthedocs_source_and_build(rtd_url):
     print("\nFailed Isolating sources and build Sphinx.")
     return None, None
 
+if __name__ == "__main__":
+    print("--- Executing Script v3 (Isolating sources + Build Sphinx + Cleaning) ---")
 
-print("--- Executing Script v3 (Isolating sources + Build Sphinx + Cleaning) ---")
+    isolated_folder, build_folder = download_readthedocs_source_and_build(
+        "https://black.readthedocs.io/"
+    )
 
-isolated_folder, build_folder = download_readthedocs_source_and_build(
-    "https://black.readthedocs.io/"
-)
-
-if build_folder:
-    print("\nProcess completed successfully!")
-    print(f"  Isolated Sources: {isolated_folder}")
-    print(f"  Build HTML:       {build_folder}")
-elif isolated_folder:
-    print("\nProcess partially completed.")
-    print(f"  Sources isolated: {isolated_folder}")
-    print("  Failed Build HTML.")
-else:
-    print("\nFailed Process.")
-print("-" * 30)
+    if build_folder:
+        print("\nProcess completed successfully!")
+        print(f"  Isolated Sources: {isolated_folder}")
+        print(f"  Build HTML:       {build_folder}")
+    elif isolated_folder:
+        print("\nProcess partially completed.")
+        print(f"  Sources isolated: {isolated_folder}")
+        print("  Failed Build HTML.")
+    else:
+        print("\nFailed Process.")
+    print("-" * 30)

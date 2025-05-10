@@ -1,10 +1,10 @@
 """scanner module."""
-
+import os
 import re
 import shutil
 from pathlib import Path
 
-from src.devildex.scanner_utils.scanner_utils import (
+from devildex.scanner_utils.scanner_utils import (
     check_content_patterns,
     count_matching_strings,
     find_config_files,
@@ -189,3 +189,29 @@ LOG_LEVEL = "INFO"
     shutil.rmtree(test_non_sphinx_dir, ignore_errors=True)
     shutil.rmtree(test_non_sphinx_dir_no_conf, ignore_errors=True)
     print("Done.")
+import ast
+
+def has_docstrings(project_path: str) -> bool:
+    project_dir = Path(project_path)
+    found_docstring_indicator = False
+
+    for root, _, files in os.walk(project_dir):
+        for file_name in files:
+            if file_name.endswith(".py"):
+                file_path = Path(root) / file_name
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        source_code = f.read()
+                    tree = ast.parse(source_code, filename=str(file_path))
+                    if ast.get_docstring(tree):
+                        return True
+                    for node in ast.walk(tree):
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                            if ast.get_docstring(node):
+                                return True
+                except SyntaxError:
+                    pass
+                except Exception:
+                    pass
+
+    return found_docstring_indicator
