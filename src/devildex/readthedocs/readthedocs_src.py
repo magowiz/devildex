@@ -254,6 +254,7 @@ def _update_theme_in_conf(conf_content, theme_name):
                           and a bool that tells if
                           a modification was made (True) or not (False).
     """
+    return conf_content, True
     conf_updated = False
     new_conf_content = conf_content
     theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
@@ -508,6 +509,55 @@ def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
         else:
             print(f"  - File root '{filename}' non trovato in {repo_path}, non copied.")
     return copied_root_files_count
+
+def patch_rst_include_directives(doc_source_path):
+    """
+    Patches relative '.. include:: ../FILE' or '../DIR/FILE' directives in .rst files.
+    Changes them to '.. include:: /FILE' or '.. include:: /DIR/FILE' which Sphinx
+    interprets as relative to the source directory root (doc_source_path).
+    """
+    print(f"\nPatching RST include directives in {doc_source_path}...")
+    patched_files_count = 0
+    # Regex per trovare '.. include:: ../Qualcosa' o '.. include:: ../../Qualcosa'
+    # Questo pattern gestisce uno o due livelli di '../'
+    # e cattura il percorso relativo dopo '../' o '../../'
+    include_pattern = re.compile(r"(\.\.\s+include::\s+)(\.\./(?:(?:\.\./)?))([\w./-]+)")
+
+    for root, _, files in os.walk(doc_source_path):
+        for filename in files:
+            if filename.endswith(".rst"):
+                file_path = os.path.join(root, filename)
+                try:
+                    with open(file_path, "r+", encoding="utf-8") as f:
+                        content = f.read()
+                        original_content = content
+
+                        def replace_include(match):
+                            prefix = match.group(1)  # ".. include:: "
+                            # old_relative_path_prefix = match.group(2) # "../" o "../../"
+                            target_path_after_dots = match.group(3)  # "FILE.rst" o "DIR/FILE.rst"
+
+                            # La nuova direttiva punta alla radice della documentazione sorgente
+                            # usando il prefisso '/' che Sphinx interpreta correttamente.
+                            new_directive = f"{prefix}/{target_path_after_dots}"
+                            print(f"    In {filename}: Replaced '{match.group(0)}' with '{new_directive}'")
+                            return new_directive
+
+                        content = include_pattern.sub(replace_include, content)
+
+                        if content != original_content:
+                            f.seek(0)
+                            f.write(content)
+                            f.truncate()
+                            print(f"  - Patched {filename}")
+                            patched_files_count += 1
+                except Exception as patch_err:
+                    print(f"  - Error during patching of {filename}: {patch_err}")
+
+    if patched_files_count > 0:
+        print(f"RST Patching completed for {patched_files_count} directive(s).")
+    else:
+        print("No RST include directives found/patched matching the pattern '../FILE' or '../../FILE'.")
 
 
 def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
@@ -881,6 +931,7 @@ def download_readthedocs_source_and_build(rtd_url, existing_clone_path=None):
     build_output_path = None
     if isolated_source_path:
         patch_include_directives(isolated_source_path)
+        patch_rst_include_directives(isolated_source_path)
         apply_devildex_customizations(
             isolated_source_path, theme_name=custom_theme, banner_text=custom_banner
         )
