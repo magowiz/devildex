@@ -133,7 +133,7 @@ pipeline {
                         sh 'mkdir -p extra && echo "$ONEDRIVE_TOKEN" | base64 --decode > extra/onedrive_token.txt'
                         sh 'echo "$GDRIVE_TOKEN2" | base64 --decode > secrets/token.json'
                         pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
-                               skipMarkers: 'lib or app')
+                               )
                         script {
                             def exists = fileExists 'core'
                             if (exists) {
