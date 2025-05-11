@@ -33,7 +33,39 @@ pipeline {
                 }
             }
         }
-
+        stage('generate documentation') {
+                    when {
+                        not {
+                            changelog "$LINT_TAG_REGEX"
+                    }
+                }
+                    environment {
+                        JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
+                        JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
+                        JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
+                }
+                    agent {
+                        dockerfile {
+                            label 'general'
+                            reuseNode true
+                            args '-u root -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group \
+                                  -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket'
+                            filename 'Dockerfile'
+                            dir 'ci_dockerfiles/generate_doc'
+                    }
+                }
+                    steps {
+                        pythonGenerateDocsSphinx(packager: 'poetry')
+                }
+                    post {
+                        always {
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'build/html', reportFiles: 'index.html',
+                                         reportName: 'Documentation', reportTitles: '',
+                                         useWrapperFileDirectly: true])
+                    }
+                }
+            }
         stage('megalinter') {
             agent {
                 docker {
@@ -65,7 +97,95 @@ pipeline {
                 }
             }
         }
-
+        stage('test code') {
+                    when {
+                        not {
+                            changelog "$LINT_TAG_REGEX"
+                        }
+                    }
+                    agent {
+                        dockerfile {
+                            reuseNode true
+                            args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
+                            filename 'Dockerfile'
+                            dir 'ci_dockerfiles/pytest_x11'
+                    }
+                }
+                    environment {
+                        DROPBOX_TOKEN = credentials('dropbox_token')
+                        GDRIVE_TOKEN = credentials('google_drive_token')
+                        GDRIVE_TOKEN2 = credentials('google_drive_token_2')
+                        ONEDRIVE_TOKEN = credentials('onedrive_token')
+                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                    }
+                    options {
+                        throttle(['pytest_telenium'])
+                    }
+                    steps {
+                        sh 'touch app.log'
+                        sh 'echo $PWD > pwd.log'
+                        sh 'mkdir -p secrets && echo $GDRIVE_TOKEN | base64 --decode > secrets/credentials.json'
+                        sh 'jq -c . secrets/credentials.json > tmp.txt'
+                        sh 'mv tmp.txt secrets/credentials.json'
+                        sh 'echo "$DROPBOX_TOKEN" > secrets/dropbox-token.txt'
+                        sh 'mkdir -p extra && echo "$ONEDRIVE_TOKEN" | base64 --decode > extra/onedrive_token.txt'
+                        sh 'echo "$GDRIVE_TOKEN2" | base64 --decode > secrets/token.json'
+                        pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
+                               skipMarkers: 'lib or app')
+                        script {
+                            def exists = fileExists 'core'
+                            if (exists) {
+                                    echo 'core found'
+                                    sh 'pip install pystack'
+                                    sh 'pystack core core /usr/local/bin/python'
+                                    sh 'mv core oldcore'
+                                    sh 'pip list | grep pytest'
+                            }
+                            stash includes: 'coverage_report_xml/coverage.xml', name: 'coverageReportXML', allowEmpty: true
+                        }
+                    }
+                    post {
+                        always {
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'test_report', reportFiles: 'index.html',
+                                         reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'coverage_report', reportFiles: 'index.html',
+                                         reportName: 'Coverage Report', reportTitles: '',
+                                         useWrapperFileDirectly: true])
+                            archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
+        stage('SonarQube analysis') {
+            environment {
+                SONAR_SCANNER_OPTS = '--add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+                                      --add-opens java.base/java.io=ALL-UNNAMED'
+            }
+            agent {
+                docker {
+                    label 'amd64'
+                    image 'sonarsource/sonar-scanner-cli'
+                    reuseNode true
+                    args "-u root"
+                }
+            }
+            steps {
+                sh 'rm  *.html || true'
+                script {
+                    unstash 'coverageReportXML'
+                    withSonarQubeEnv('sonarqube') {
+                        sh 'sonar-scanner'
+                    }
+                }
+            }
+        }
         stage('Build Packages Multi-Arch') {
             matrix {
                 axes {
@@ -224,128 +344,8 @@ pipeline {
                 }
             }
         }
-        stage('test code') {
-                    when {
-                        not {
-                            changelog "$LINT_TAG_REGEX"
-                        }
-                    }
-                    agent {
-                        dockerfile {
-                            reuseNode true
-                            args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
-                            filename 'Dockerfile'
-                            dir 'ci_dockerfiles/pytest_x11'
-                    }
-                }
-                    environment {
-                        DROPBOX_TOKEN = credentials('dropbox_token')
-                        GDRIVE_TOKEN = credentials('google_drive_token')
-                        GDRIVE_TOKEN2 = credentials('google_drive_token_2')
-                        ONEDRIVE_TOKEN = credentials('onedrive_token')
-                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                    }
-                    options {
-                        throttle(['pytest_telenium'])
-                    }
-                    steps {
-                        sh 'touch app.log'
-                        sh 'echo $PWD > pwd.log'
-                        sh 'mkdir -p secrets && echo $GDRIVE_TOKEN | base64 --decode > secrets/credentials.json'
-                        sh 'jq -c . secrets/credentials.json > tmp.txt'
-                        sh 'mv tmp.txt secrets/credentials.json'
-                        sh 'echo "$DROPBOX_TOKEN" > secrets/dropbox-token.txt'
-                        sh 'mkdir -p extra && echo "$ONEDRIVE_TOKEN" | base64 --decode > extra/onedrive_token.txt'
-                        sh 'echo "$GDRIVE_TOKEN2" | base64 --decode > secrets/token.json'
-                        pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
-                               skipMarkers: 'lib or app')
-                        script {
-                            def exists = fileExists 'core'
-                            if (exists) {
-                                    echo 'core found'
-                                    sh 'pip install pystack'
-                                    sh 'pystack core core /usr/local/bin/python'
-                                    sh 'mv core oldcore'
-                                    sh 'pip list | grep pytest'
-                            }
-                            stash includes: 'coverage_report_xml/coverage.xml', name: 'coverageReportXML', allowEmpty: true
-                        }
-                    }
-                    post {
-                        always {
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'test_report', reportFiles: 'index.html',
-                                         reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'coverage_report', reportFiles: 'index.html',
-                                         reportName: 'Coverage Report', reportTitles: '',
-                                         useWrapperFileDirectly: true])
-                            archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
-                        }
-                    }
-                }
-            }
-        }
-        stage('SonarQube analysis') {
-            environment {
-                SONAR_SCANNER_OPTS = '--add-opens java.base/sun.nio.ch=ALL-UNNAMED \
-                                      --add-opens java.base/java.io=ALL-UNNAMED'
-            }
-            agent {
-                docker {
-                    label 'amd64'
-                    image 'sonarsource/sonar-scanner-cli'
-                    reuseNode true
-                    args "-u root"
-                }
-            }
-            steps {
-                sh 'rm  *.html || true'
-                script {
-                    unstash 'coverageReportXML'
-                    withSonarQubeEnv('sonarqube') {
-                        sh 'sonar-scanner'
-                    }
-                }
-            }
-        }
-        stage('generate documentation') {
-                    when {
-                        not {
-                            changelog "$LINT_TAG_REGEX"
-                    }
-                }
-                    environment {
-                        JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
-                        JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
-                        JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
-                }
-                    agent {
-                        dockerfile {
-                            label 'general'
-                            reuseNode true
-                            args '-u root -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group \
-                                  -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket'
-                            filename 'Dockerfile'
-                            dir 'ci_dockerfiles/generate_doc'
-                    }
-                }
-                    steps {
-                        pythonGenerateDocsSphinx(packager: 'poetry')
-                }
-                    post {
-                        always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'build/html', reportFiles: 'index.html',
-                                         reportName: 'Documentation', reportTitles: '',
-                                         useWrapperFileDirectly: true])
-                    }
-                }
-            }
+
+
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
                 label 'amd64'
