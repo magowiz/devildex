@@ -313,6 +313,39 @@ pipeline {
                 }
             }
         }
+        stage('generate documentation') {
+                    when {
+                        not {
+                            changelog "$LINT_TAG_REGEX"
+                    }
+                }
+                    environment {
+                        JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
+                        JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
+                        JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
+                }
+                    agent {
+                        dockerfile {
+                            label 'general'
+                            reuseNode true
+                            args '-u root -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group \
+                                  -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket'
+                            filename 'Dockerfile'
+                            dir 'ci_dockerfiles/generate_doc'
+                    }
+                }
+                    steps {
+                        pythonGenerateDocsSphinx(packager: 'poetry')
+                }
+                    post {
+                        always {
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'build/html', reportFiles: 'index.html',
+                                         reportName: 'Documentation', reportTitles: '',
+                                         useWrapperFileDirectly: true])
+                    }
+                }
+            }
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
                 label 'amd64'
