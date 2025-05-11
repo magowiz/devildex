@@ -57,7 +57,16 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
             )
             for line in invalid_lines_found:
                 logger.debug(f"  Riga scartata: {line.strip()}")
+        final_valid_lines: list[str] = []
+        lines_to_explicitly_remove = {"-e .", "-e."}
 
+        for line in valid_lines:
+            stripped_line = line.strip()
+            if stripped_line in lines_to_explicitly_remove:
+                logger.info(f"Rimozione esplicita della riga '{stripped_line}' da '{file_path}'")
+            else:
+                final_valid_lines.append(line)
+        valid_lines = final_valid_lines
         logger.debug(f"Numero di righe valide estratte da '{file_path}': {len(valid_lines)}")
         return valid_lines
 

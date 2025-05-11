@@ -4,14 +4,7 @@ import subprocess
 import shutil
 
 """
-    {
-        "repo_url": "https://github.com/boto/boto3.git",
-        "project_name": "boto3",
-        "project_url": "https://github.com/boto/boto3.git",
-        "rtd_url": "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html",
-        "expected_preferred_type": "sphinx",
-        "expected_entry_point": "index.html",
-    },
+    
 """
 
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
@@ -110,7 +103,7 @@ PACKAGES_TO_TEST = [
         "rtd_url": "https://pipenv.pypa.io/",
         "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
-    },
+    }
 ]
 
 @pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)

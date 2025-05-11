@@ -3,5 +3,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/tmp/flask" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tmp/pipenv" vcs="Git" />
   </component>
 </project>
