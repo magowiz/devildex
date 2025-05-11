@@ -152,6 +152,28 @@ pipeline {
                     }
 
         }
+        stage('SonarQube analysis') {
+            environment {
+                SONAR_SCANNER_OPTS = '--add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED'
+            }
+            agent {
+                docker {
+                    label 'amd64'
+                    image 'sonarsource/sonar-scanner-cli'
+                    reuseNode true
+                    args "-u root"
+                }
+            }
+            steps {
+                sh 'rm  *.html || true'
+                script {
+                    unstash 'coverageReportXML'
+                    withSonarQubeEnv('sonarqube') {
+                        sh 'sonar-scanner'
+                    }
+                }
+            }
+        }
 
     }
 }
