@@ -20,31 +20,28 @@ def _fetch_available_versions(project_slug):
     while next_page_url:
         try:
             print(f"Fetching page {page_num} from: {next_page_url}")
-            response = requests.get(next_page_url, timeout=30)  # Timeout per richiesta
+            response = requests.get(next_page_url, timeout=30)
             response.raise_for_status()
             data = response.json()
 
             current_page_versions = data.get("results", [])
             all_versions_results.extend(current_page_versions)
 
-            total_count = data.get('count', len(all_versions_results))  # Usa il count totale se disponibile
+            total_count = data.get('count', len(all_versions_results))
 
             print(
                 f"Page {page_num}: Fetched {len(current_page_versions)} versions. "
                 f"Total fetched so far: {len(all_versions_results)} out of {total_count}."
             )
 
-            next_page_url = data.get("next")  # Get URL for the next page
+            next_page_url = data.get("next")
             page_num += 1
             if next_page_url:
-                # Opzionale: piccolo ritardo per essere gentili con l'API
-                # time.sleep(0.2)
                 pass
 
         except requests.exceptions.RequestException as e:
             print(f"Error calling API list versions ({next_page_url}): {e}")
-            # Potresti decidere di restituire ciò che hai raccolto finora o None
-            return None  # O all_versions_results se vuoi provare con dati parziali
+            return None
         except Exception as e:
             print(f"An unexpected error occurred while listing versions: {e}")
             return None
@@ -57,26 +54,18 @@ def _fetch_available_versions(project_slug):
 
 def _choose_best_version(available_versions, preferred_versions):
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
-    if not available_versions: # available_versions potrebbe essere una lista vuota
+    if not available_versions:
         print("Error: No versions available for choice (list is empty or None).")
         return None
 
     print(f"\nAnalyzing {len(available_versions)} available versions to choose the best:")
-    # Stampare tutte le versioni potrebbe essere troppo verboso se sono molte.
-    # Considera di stamparne solo alcune o di rimuovere questo loop se non necessario per il debug.
-    # for version in available_versions:
-    #     print(
-    #         f"- {version.get('slug')}: Active={version.get('active')}, "
-    #         f"Built={version.get('built')}"
-    #     )
 
-    # 1. Cerca versioni preferite (attive e buildate)
     for preferred_slug in preferred_versions:
         for version in available_versions:
             if (
                 version.get("slug") == preferred_slug
-                and version.get("active") is True # Controllo esplicito con True
-                and version.get("built") is True  # Controllo esplicito con True
+                and version.get("active") is True
+                and version.get("built") is True
             ):
                 print(f"\nChosen favourite version (active and built): '{preferred_slug}'")
                 return preferred_slug
@@ -85,7 +74,6 @@ def _choose_best_version(available_versions, preferred_versions):
         "\nNo favourite version found (active and built). "
         "Searching for the first available active and built version..."
     )
-    # 2. Fallback: cerca la prima versione qualsiasi che sia attiva e buildata
     for version in available_versions:
         if version.get("active") is True and version.get("built") is True:
             chosen_slug = version.get("slug")
@@ -269,10 +257,9 @@ def download_readthedocs_prebuilt_robust(project_name,
 if __name__ == "__main__":
     print("--- Executing Script: Download Prebuilt Docs (Robust) ---") # Titolo più generico
 
-    # Esempio per Black
     print("\nTrying with: Black (https://black.readthedocs.io/)")
     downloaded_file_black = download_readthedocs_prebuilt_robust(
-        project_name="black",  # Passa lo slug qui
+        project_name="black",
         rtd_url="https://black.readthedocs.io/"
     )
     if downloaded_file_black:
@@ -281,10 +268,9 @@ if __name__ == "__main__":
         print("  FAILURE: Download failed for Black.")
     print("-" * 30)
 
-    # Esempio per Requests
     print("\nTrying with: Requests (https://requests.readthedocs.io/)")
     downloaded_file_requests = download_readthedocs_prebuilt_robust(
-        project_name="requests", # Passa lo slug qui
+        project_name="requests",
         rtd_url="https://requests.readthedocs.io/"
     )
     if downloaded_file_requests:
@@ -293,17 +279,13 @@ if __name__ == "__main__":
         print("  FAILURE: Download failed for Requests.")
     print("-" * 30)
 
-    # Esempio per Sphinx
     print("\nTrying with: Sphinx (https://sphinx.readthedocs.io/)")
     downloaded_file_sphinx = download_readthedocs_prebuilt_robust(
-        project_name="sphinx-doc", # Lo slug per Sphinx è "sphinx-doc" su RTD
-        rtd_url="https://sphinx.readthedocs.io/" # L'URL pubblico può essere diverso dallo slug
-                                                 # ma l'API RTD usa lo slug "sphinx-doc"
+        project_name="sphinx-doc",
+        rtd_url="https://sphinx.readthedocs.io/"
     )
     if downloaded_file_sphinx:
         print(f"  SUCCESS: Downloaded for Sphinx: {downloaded_file_sphinx}")
     else:
         print("  FAILURE: Download failed for Sphinx.")
     print("-" * 30)
-
-    # Nota: Ho rimosso la duplicazione del blocco di test.

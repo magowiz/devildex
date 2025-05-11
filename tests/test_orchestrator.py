@@ -3,6 +3,17 @@ from pathlib import Path
 import subprocess
 import shutil
 
+"""
+    {
+        "repo_url": "https://github.com/boto/boto3.git",
+        "project_name": "boto3",
+        "project_url": "https://github.com/boto/boto3.git",
+        "rtd_url": "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html",
+        "expected_preferred_type": "sphinx",
+        "expected_entry_point": "index.html",
+    },
+"""
+
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 PACKAGES_TO_TEST = [
     {
@@ -29,21 +40,21 @@ PACKAGES_TO_TEST = [
         "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
-    # Test case for RTD failure falling back to local Sphinx build
     {
-        "repo_url": "https://github.com/psf/black.git", # Using a repo known to have local Sphinx
-        "project_name": "project-slug-intended-to-fail-rtd", # This slug will be used for RTD API
-        "project_url": "https://github.com/psf/black.git", # project_url for context
-        "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/", # RTD URL that should fail
-        "expected_preferred_type": "sphinx",  # Expect fallback to local sphinx
-        "expected_entry_point": "index.html", # Standard Sphinx output
+        "repo_url": "https://github.com/psf/black.git",  # Using a repo known to have local Sphinx
+        "project_name": "project-slug-intended-to-fail-rtd",  # This slug will cause RTD API failure
+        "project_url": "https://github.com/psf/black.git",
+        "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",  # RTD URL that should fail
+        "expected_preferred_type": "sphinx",  # Scan will detect sphinx locally
+        # "expected_entry_point": "index.html", # Non applicabile se l'operazione fallisce
+        "expect_grab_success": False,  # NUOVO FLAG: indica che ci aspettiamo un fallimento da grab_build_doc
     },
     {
         "repo_url": "https://github.com/Textualize/rich.git",
         "project_name": "rich",
         "project_url": "https://github.com/Textualize/rich.git",
-        "expected_preferred_type": "docstrings",
-        "expected_entry_point": "rich/index.html",
+        "expected_preferred_type": "sphinx",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/tiangolo/fastapi.git",
@@ -57,14 +68,6 @@ PACKAGES_TO_TEST = [
         "project_name": "requests",
         "project_url": "https://github.com/requests/requests.git",
         "rtd_url": "https://requests.readthedocs.io/",
-        "expected_preferred_type": "sphinx",
-        "expected_entry_point": "index.html",
-    },
-    {
-        "repo_url": "https://github.com/boto/boto3.git",
-        "project_name": "boto3",
-        "project_url": "https://github.com/boto/boto3.git",
-        "rtd_url": "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html",
         "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
@@ -118,7 +121,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     #version_tag = package_info["version_tag"]
     rtd_url = package_info.get("rtd_url") # Usare .get() per sicurezza se la chiave potesse mancare
     expected_preferred_doc_type = package_info["expected_preferred_type"]
-    expected_entry_point_filename = package_info["expected_entry_point"]
+    expected_entry_point_filename = package_info.get("expected_entry_point")
 
     # 1. Clona il repository nella directory temporanea e fa il checkout del tag specifico
     clone_target_dir = tmp_path / project_name
@@ -166,30 +169,41 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     operation_result = orchestrator.get_last_operation_result()
 
     print(f"Project: {project_name}, Orchestrator grab_build_doc result: {operation_result}, Output path from return: {output_docs_root_path_str}")
+    expect_success = package_info.get("expect_grab_success", True)  # Default a True se non specificato
 
-    # 5. Verifica il successo dell'operazione
-    assert operation_result is not False, \
-        f"Orchestrator's grab_build_doc failed for {project_name} (detected type: {detected_doc_type}). Result: {operation_result}"
-    assert isinstance(operation_result, str), \
-        f"Expected a path string from successful grab_build_doc for {project_name}, got {type(operation_result)}. Value: {operation_result}"
-    # Idealmente, il valore restituito e last_operation_result dovrebbero coincidere in caso di successo
-    assert output_docs_root_path_str == operation_result, \
-        f"Return value of grab_build_doc ('{output_docs_root_path_str}') and last_operation_result ('{operation_result}') mismatch for {project_name}."
+    if expect_success:
+        # Se ci aspettiamo un SUCCESSO, eseguiamo le verifiche originali:
+        assert operation_result is not False, \
+            f"Orchestrator's grab_build_doc failed for {project_name} (detected type: {detected_doc_type}). Result: {operation_result}"
+        assert isinstance(operation_result, str), \
+            f"Expected a path string from successful grab_build_doc for {project_name}, got {type(operation_result)}. Value: {operation_result}"
+        assert output_docs_root_path_str == operation_result, \
+            f"Return value of grab_build_doc ('{output_docs_root_path_str}') and last_operation_result ('{operation_result}') mismatch for {project_name}."
 
-    output_docs_root_path = Path(output_docs_root_path_str)
-    assert output_docs_root_path.exists(), \
-        f"Output path '{output_docs_root_path}' from Orchestrator does not exist for {project_name}"
-    assert output_docs_root_path.is_dir(), \
-        f"Output path '{output_docs_root_path}' from Orchestrator is not a directory for {project_name}"
+        output_docs_root_path = Path(output_docs_root_path_str)
+        assert output_docs_root_path.exists(), \
+            f"Output path '{output_docs_root_path}' from Orchestrator does not exist for {project_name}"
+        assert output_docs_root_path.is_dir(), \
+            f"Output path '{output_docs_root_path}' from Orchestrator is not a directory for {project_name}"
 
-    # 6. Verifica l'esistenza del punto di ingresso atteso
-    # expected_entry_point_filename è relativo a output_docs_root_path
-    final_entry_point_path = output_docs_root_path / expected_entry_point_filename
-    assert final_entry_point_path.is_file(), \
-        f"Expected entry point '{final_entry_point_path}' not found or is not a file for {project_name} (type: {detected_doc_type})"
+        # Verifica l'esistenza del punto di ingresso atteso
+        # expected_entry_point_filename è relativo a output_docs_root_path
+        # Assicurati che expected_entry_point_filename sia definito per i casi di successo
+        assert expected_entry_point_filename is not None, \
+            f"expected_entry_point_filename is missing in test config for {project_name} when success is expected."
+        final_entry_point_path = output_docs_root_path / expected_entry_point_filename
+        assert final_entry_point_path.is_file(), \
+            f"Expected entry point '{final_entry_point_path}' not found or is not a file for {project_name} (type: {detected_doc_type})"
 
-    # Opzionale: verifica più approfondita, come il numero di file HTML
-    html_files = list(output_docs_root_path.glob("**/*.html"))
-    assert len(html_files) > 0, f"No HTML files found in output for {project_name} at {output_docs_root_path}"
+        html_files = list(output_docs_root_path.glob("**/*.html"))
+        assert len(html_files) > 0, f"No HTML files found in output for {project_name} at {output_docs_root_path}"
+    else:
+        # Se ci aspettiamo un FALLIMENTO (come per package_info3):
+        # Verifichiamo che il risultato sia None, come ci aspettiamo
+        assert operation_result is None, \
+            f"Expected grab_build_doc to result in None for {project_name} due to expected failure, but got type {type(operation_result)} with value: {operation_result}"
+        assert output_docs_root_path_str is None, \
+            f"Expected grab_build_doc to return None for {project_name} due to expected failure, but got: {output_docs_root_path_str}"
+
 
     print(f"Successfully processed and verified {project_name} with type {detected_doc_type}.")

@@ -24,8 +24,11 @@ class IsolatedVenvManager:
         """Creates the virtual environment."""
         # Creare una sottocartella unica per questo venv
         # Usare tempfile.mkdtemp per una directory temporanea sicura
+
         self.venv_path = Path(tempfile.mkdtemp(prefix=f"devildex_venv_{self.project_name}_", dir=self.base_temp_dir))
         logger.info(f"Creating temporary venv for '{self.project_name}' at: {self.venv_path}")
+        print(f"DEBUG VENV_CM: Attempting to create venv at: {self.venv_path}")
+
         try:
             subprocess.run([sys.executable, "-m", "venv", str(self.venv_path)], check=True, capture_output=True,
                            text=True)
@@ -36,6 +39,11 @@ class IsolatedVenvManager:
             bin_dir = self.venv_path / ("Scripts" if sys.platform == "win32" else "bin")
             self.python_executable = str(bin_dir / ("python.exe" if sys.platform == "win32" else "python"))
             self.pip_executable = str(bin_dir / ("pip.exe" if sys.platform == "win32" else "pip"))
+            print(f"DEBUG VENV_CM: VENV CREATED. Python executable: {self.python_executable}")
+            print(f"DEBUG VENV_CM: VENV CREATED. Pip executable: {self.pip_executable}")
+            print(f"DEBUG VENV_CM: VENV CREATED. Does python exist? {Path(self.python_executable).exists()}")
+            print(f"DEBUG VENV_CM: VENV CREATED. Does pip exist? {Path(self.pip_executable).exists()}")
+
 
             logger.info(f"Venv for '{self.project_name}' created successfully.")
             logger.info(f"  Python executable: {self.python_executable}")

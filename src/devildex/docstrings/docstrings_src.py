@@ -1,6 +1,7 @@
 """docstrings pdoc3 module."""
 
 import importlib
+import logging
 import os
 import re
 import shutil
@@ -12,7 +13,7 @@ from pathlib import Path
 from types import ModuleType
 
 import pdoc
-
+logger = logging.getLogger(__name__)
 CONFIG_FILE = "../../../devildex_config.ini"
 
 
@@ -206,139 +207,148 @@ class DocStringsSrc:
         return discovered_names
 
     def generate_docs_from_folder(
-        self,
-        project_name: str,
-        input_folder: str,
-        output_folder: str,
-        modules_to_document: list[str] | None = None,
-        venv_python_interpreter=None,
-    ) -> bool:
-        """Generate HTML documentation Python modules and saves them in output_folder.
-
-        Adapt importing a versions di pdoc.import_module
-        che doesn't support arguments 'path' using sys.path.
-
-        Args:
-            input_folder: path della folder base containing i moduli/packages.
-                          Questa folder will be temporarily added a sys.path.
-            output_folder: path of folder where to save generated HTML.
-            modules_to_document: Una lista di nomi di moduli/packages
-                                 (es. ['my_module', 'my_package']). Se None, la function
-                                 will try to discover modules di alto level in
-                                 input_folder.
-
-        Returns:
-            True se la documentation è stata successfully generated
-                for at least a module, False otherwise (es. folder not
-                found, no module found,
-                importing failed for every module).
+            self,
+            project_name: str,  # Nome del progetto/modulo principale da documentare (es. "fastapi")
+            input_folder: str,  # Path alla radice del clone del progetto (es. "/tmp/clone_di_fastapi")
+            output_folder: str,
+            # Path alla directory base dove TUTTI i docset pdoc vengono salvati (es. "PROJECT_ROOT/docset")
+            # Questo 'output_folder' è self.pdoc_base_output_dir
+            # L'argomento 'modules_to_document' non è più necessario se documentiamo 'project_name'.
+            # L'argomento 'venv_python_interpreter' non è più necessario.
+    ) -> str | bool:  # Restituisce il percorso alla documentazione specifica del progetto (es. "docset/fastapi") o False
         """
-        if not os.path.isdir(input_folder):
-            print(f"Error: input folder '{input_folder}' doesn't exist.")
-            return False
+        Genera documentazione HTML per un progetto Python usando pdoc in un ambiente isolato.
+        """
+        source_project_path = Path(input_folder)  # Radice del clone del progetto
+        # output_folder passato dall'Orchestrator è già la base, es. "PROJECT_ROOT/docset"
+        # quindi base_output_dir_for_pdoc è output_folder.
+        base_output_dir_for_pdoc = Path(output_folder)
 
-        os.makedirs(output_folder, exist_ok=True)
+        final_project_pdoc_output_dir = base_output_dir_for_pdoc / project_name
 
-        context = pdoc.Context()
-        wrapped_modules: list[pdoc.Module] = []
-        names_to_import: list[str] = []
-        input_path_obj = Path(input_folder)
+        logger.info(f"--- Starting Isolated pdoc Build for {project_name} ---")
+        logger.info(f"DocStringsSrc: Project root (cloned input): {source_project_path}")
+        logger.info(f"DocStringsSrc: Module to document with pdoc: {project_name}")
+        logger.info(f"DocStringsSrc: Base output directory for pdoc outputs: {base_output_dir_for_pdoc}")
+        logger.info(f"DocStringsSrc: Final output directory for this project: {final_project_pdoc_output_dir}")
 
-        if modules_to_document is not None:
-            print(
-                f"Utilizing specified modules: {modules_to_document} from "
-                f"folder: {input_folder}"
-            )
-            names_to_import = modules_to_document
-        else:
-            print(f"Scanning folder to discover modules: {input_folder}")
-            names_to_import = self._discover_modules_in_folder(input_path_obj)
+        # 1. Pulizia della directory di output specifica per questo progetto, se esiste
+        if final_project_pdoc_output_dir.exists():
+            logger.info(f"DocStringsSrc: Removing existing pdoc output directory: {final_project_pdoc_output_dir}")
+            try:
+                shutil.rmtree(final_project_pdoc_output_dir)
+            except OSError as e:
+                logger.error(f"DocStringsSrc: Error removing {final_project_pdoc_output_dir}: {e}")
+                return False  # Non possiamo procedere se non possiamo pulire
 
-        if not names_to_import:
-            print(
-                "No Python module or package found/specified in "
-                f"'{input_folder}'. "
-                "No generated documentation."
-            )
-            return False
+        # Non creiamo final_project_pdoc_output_dir qui, pdoc lo farà.
+        # Assicuriamoci che la directory base (base_output_dir_for_pdoc) esista.
+        base_output_dir_for_pdoc.mkdir(parents=True, exist_ok=True)
 
-        original_sys_path = list(sys.path)
-        sys.path.insert(0, input_folder)
-        files_generated_count = 0
+        # 2. Trova un file requirements.txt (opzionale) nella radice del progetto clonato
+        requirements_file_to_install: Path | None = None
+        candidate_req_paths = [
+            source_project_path / "requirements.txt",
+            source_project_path / "dev-requirements.txt",  # Alcuni progetti usano questo
+            source_project_path / "requirements-dev.txt",
+            # Aggiungi altri percorsi candidati se il progetto ha requirements specifici per i docs
+            # in posti non standard, ma per pdoc, i requirements generali del progetto sono più importanti.
+            source_project_path / "docs" / "requirements.txt",  # Meno probabile per pdoc, più per Sphinx
+        ]
+        for req_path_candidate in candidate_req_paths:
+            if req_path_candidate.exists() and req_path_candidate.is_file():
+                requirements_file_to_install = req_path_candidate
+                logger.info(f"DocStringsSrc: Found requirements file for dependencies: {requirements_file_to_install}")
+                break
+        if not requirements_file_to_install:
+            logger.info(f"DocStringsSrc: No general 'requirements.txt' found for {project_name} in common locations. "
+                        "Will rely on project's setup (e.g., setup.py, pyproject.toml).")
+
+        build_successful = False
         try:
-            for name in names_to_import:
-                pdoc_instances_for_name = self._try_process_module(
-                    name, context, venv_python_interpreter
+            # 3. Usa IsolatedVenvManager
+            with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as venv:
+                logger.info(f"DocStringsSrc: Created temporary venv for pdoc at {venv.venv_path}")
+
+                # 4. Installa pdoc e le dipendenze del progetto nel venv
+                install_deps_success = install_project_and_dependencies_in_venv(
+                    pip_executable=venv.pip_executable,
+                    project_name=project_name,
+                    project_root_for_install=source_project_path,  # Per `pip install -e .`
+                    doc_requirements_path=requirements_file_to_install,
+                    base_packages_to_install=["pdoc>=14.0"]  # Installa pdoc nel venv
                 )
-                if pdoc_instances_for_name:
-                    wrapped_modules.extend(pdoc_instances_for_name)
 
-            def recursive_htmls(mod: pdoc.Module):
-                """Generate Recursively HTML for a module and its submodules."""
-                yield mod
-                for submod in mod.submodules():
-                    yield from recursive_htmls(submod)
+                if not install_deps_success:
+                    # install_project_and_dependencies_in_venv restituisce False
+                    # solo se l'installazione dei pacchetti base (pdoc qui) fallisce.
+                    logger.error(f"DocStringsSrc: CRITICAL: Failed to install pdoc "
+                                 f"for {project_name} in venv. Aborting pdoc build.")
+                    return False  # Fallimento critico
 
-            print(f"Generating HTML nella folder: {output_folder}")
-            for root_module_obj in wrapped_modules:
-                for current_pdoc_module in recursive_htmls(root_module_obj):
-                    try:
-                        html_content = current_pdoc_module.html()
-                        if not html_content.strip():
-                            print(
-                                f"  WARNING: empty HTML Content generated for "
-                                f"{current_pdoc_module.qualname}. Skipped."
-                            )
-                            continue
+                # 5. Esegui pdoc usando execute_command
+                # Comando: python -m pdoc <module_name> --html -o <output_base_dir>
+                # pdoc creerà <output_base_dir>/<module_name>/index.html
+                pdoc_command = [
+                    venv.python_executable,  # Python del venv
+                    "-m", "pdoc",
+                    project_name,  # Il modulo/package principale da documentare
+                    "--html",  # Forza output HTML
+                    "-o", str(base_output_dir_for_pdoc.resolve())  # Directory base per l'output di pdoc
+                ]
 
-                        relative_url_path = current_pdoc_module.url()
-                        if relative_url_path.startswith("/"):
-                            relative_url_path = relative_url_path[1:]
-
-                        output_path_obj = Path(output_folder)
-                        full_output_file_path = output_path_obj / Path(
-                            relative_url_path
-                        )
-
-                        full_output_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-                        with open(full_output_file_path, "w", encoding="utf-8") as f:
-                            f.write(html_content)
-                        files_generated_count += 1
-                        print(
-                            f"Saved: {full_output_file_path} "
-                            f"(Module: {current_pdoc_module.qualname}, "
-                            f"URL from pdoc: {relative_url_path})"
-                        )
-                    except Exception as html_gen_err:
-                        print(
-                            "  ERROR: Error during HTML generation or "
-                            f"saving for {current_pdoc_module.qualname}: "
-                            f"{html_gen_err}"
-                        )
-
-            if not wrapped_modules:
-                print("No module has been imported and wrapped correctly.")
-                return False
-
-            if files_generated_count > 0:
-                print(
-                    f"documentation generation completed. {files_generated_count} "
-                    f"file HTML saved in {output_folder}."
+                logger.info(f"DocStringsSrc: Executing pdoc: {' '.join(pdoc_command)}")
+                # Esegui pdoc dalla radice del progetto clonato (input_folder)
+                # così che pdoc possa risolvere import relativi se il progetto li usa.
+                stdout, stderr, returncode = execute_command(
+                    pdoc_command,
+                    f"pdoc HTML generation for {project_name}",
+                    cwd=source_project_path  # Esegui dalla radice del progetto clonato
                 )
-                return True
 
-            else:
-                print(
-                    "WARNING: No file HTML has been generated in"
-                    f" {output_folder}, "
-                    "even if some modules were wrapped."
-                )
-                return False
+                if returncode == 0:
+                    # Verifica che l'output atteso (es. docset/fastapi/index.html) sia stato creato
+                    if final_project_pdoc_output_dir.exists() and \
+                            (final_project_pdoc_output_dir / "index.html").exists():
+                        logger.info(f"DocStringsSrc: pdoc build for {project_name} completed successfully. "
+                                    f"Output: {final_project_pdoc_output_dir}")
+                        build_successful = True
+                    else:
+                        logger.error(f"DocStringsSrc: pdoc command for {project_name} seemed to succeed (exit 0) "
+                                     "but expected output directory/file not found at "
+                                     f"{final_project_pdoc_output_dir / 'index.html'}.")
+                        logger.debug(f"pdoc stdout:\n{stdout}")
+                        logger.debug(f"pdoc stderr:\n{stderr}")
+                        # build_successful rimane False
+                else:
+                    logger.error(f"DocStringsSrc: pdoc build for {project_name} FAILED. Return code: {returncode}")
+                    logger.debug(f"pdoc stdout:\n{stdout}")  # Logga sempre stdout/stderr per il debug di pdoc
+                    logger.debug(f"pdoc stderr:\n{stderr}")
+                    # build_successful rimane False
 
+        except RuntimeError as e:  # Errore dalla creazione del venv
+            logger.error(f"DocStringsSrc: Critical error during isolated pdoc build setup for {project_name}: {e}")
+            # build_successful rimane False
+        except Exception as e:  # Altre eccezioni impreviste
+            logger.exception(f"DocStringsSrc: Unexpected exception during isolated pdoc build for {project_name}")
+            # build_successful rimane False
         finally:
-            sys.path = original_sys_path
+            logger.info(f"--- Finished Isolated pdoc Build for {project_name} ---")
 
+        if build_successful:
+            # Restituisce il percorso alla directory specifica del progetto (es. "docset/fastapi")
+            return str(final_project_pdoc_output_dir)
+        else:
+            # Se la build fallisce, assicurati che la directory di output parziale venga rimossa
+            if final_project_pdoc_output_dir.exists():
+                logger.info(
+                    f"DocStringsSrc: Cleaning up partially created/failed pdoc output at {final_project_pdoc_output_dir}")
+                try:
+                    shutil.rmtree(final_project_pdoc_output_dir)
+                except OSError as e_clean:
+                    logger.error(
+                        f"DocStringsSrc: Error cleaning up failed pdoc output directory {final_project_pdoc_output_dir}: {e_clean}")
+            return False
     def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
         """Clean una single folder/file o una lista di folders/files.
 

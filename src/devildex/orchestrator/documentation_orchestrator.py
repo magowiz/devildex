@@ -1,4 +1,5 @@
 from devildex.docstrings.docstrings_src import DocStringsSrc
+from devildex.info import PROJECT_ROOT
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.scanner.scanner import has_docstrings, is_sphinx_project
@@ -7,6 +8,8 @@ from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 class Orchestrator:
 
     def __init__(self, project_name, project_path, project_url=None, rtd_url=None):
+        docstrings_output_base = PROJECT_ROOT / "docset"  # o simile
+        docstrings_output_base.mkdir(parents=True, exist_ok=True)
         self.detected_doc_type = None
         self.project_name = project_name
         self.project_path = project_path
@@ -18,7 +21,8 @@ class Orchestrator:
                     "readthedocs": {"function": download_readthedocs_prebuilt_robust,
                                     "args": {"rtd_url": self.rtd_url, "project_name": self.project_name}},
                     "docstrings": {"function": self.doc_strings.generate_docs_from_folder,
-                                   "args": {"input_folder": self.project_path, "project_name": self.project_name}}}
+                                   "args": {"input_folder": self.project_path, "project_name": self.project_name
+                                            ,"output_folder": str(docstrings_output_base)}}}
         self.last_operation_result = None
 
     def _interpret_tuple_res(self, value):
