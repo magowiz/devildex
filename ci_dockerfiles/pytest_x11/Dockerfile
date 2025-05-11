@@ -3,4 +3,4 @@ RUN apt-get update && apt-get install --no-install-recommends -y lftp curl xvfb 
      ffmpeg libavcodec-dev libavfilter-dev libavdevice-dev libmtdev-dev xclip xauth  libxcb-xinerama0 \
     && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir --upgrade pip && pip install poetry
