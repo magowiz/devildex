@@ -45,4 +45,7 @@ pytest-html = "^4.1.1"
 
 [tool.poetry.group.doc.dependencies]
 sphinx = "^8.2.3"
+myst-parser = "^4.0.1"
+sphinxcontrib-programoutput = "^0.18"
+sphinx-copybutton = "^0.5.2"
 
