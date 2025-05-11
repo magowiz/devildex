@@ -43,3 +43,7 @@ pydocstyle = "==6.1.*"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
 
+
+[tool.poetry.group.doc.dependencies]
+sphinx = "^8.2.3"
+
