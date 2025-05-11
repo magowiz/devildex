@@ -4,3 +4,4 @@ RUN apt-get update && apt-get install --no-install-recommends -y lftp curl xvfb 
     && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir --upgrade pip && pip install poetry
+RUN poetry self add poetry-plugin-export
