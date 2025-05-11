@@ -375,13 +375,13 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         css_pattern = re.compile(
             r"^\s*html_css_files\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
-        match = css_pattern.search(new_conf_content)
+        match_css = css_pattern.search(new_conf_content)
         css_file_to_add = "custom.css"
-        if match:
-            new_conf_content, updated_by_static = _update_static_path_in_conf(
-                new_conf_content, match
+        if match_css:
+            new_conf_content, updated_by_css_add = _update_css_files_in_conf(
+                new_conf_content, match_css, css_file_to_add
             )
-            if updated_by_static:
+            if updated_by_css_add:
                 conf_updated = True
         else:
             new_conf_content += f"\nhtml_css_files = ['{css_file_to_add}']\n"
@@ -394,270 +394,93 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
     print("DevilDex customizations applied.")
 
 
-def patch_include_directives(doc_source_path):
-    """Patches relative include directives in specific Markdown files.
 
-    Changes `{include} ../FILE` to `{include} /FILE` (absolute from source dir).
+
+
+
+
+
+
+
+
+
+def find_doc_source_in_clone(repo_path):
     """
-    print(f"\nPatching include directives in {doc_source_path}...")
-    files_to_patch = {
-        "authors.md": "../AUTHORS.md",
-        "change_log.md": "../CHANGES.md",
-        "license.md": "../LICENSE",
-    }
-    patched_count = 0
+    Identifies the documentation source directory within a cloned repository.
+    It does NOT copy any files.
 
-    for md_file, old_include_path in files_to_patch.items():
-        file_path = os.path.join(doc_source_path, md_file)
-        if os.path.exists(file_path):
-            try:
-                with open(file_path, "r+", encoding="utf-8") as f:
-                    content = f.read()
-                    old_directive = f"{{include}} {old_include_path}"
-                    new_filename = os.path.basename(old_include_path)
-                    new_directive = f"{{include}} /{new_filename}"
+    Args:
+        repo_path (str): The local path to the cloned repository.
 
-                    if old_directive in content:
-                        new_content = content.replace(old_directive, new_directive)
-                        f.seek(0)
-                        f.write(new_content)
-                        f.truncate()
-                        print(
-                            f"  - Patched {md_file}: '{old_directive}' -> "
-                            f"'{new_directive}'"
-                        )
-                        patched_count += 1
-                    else:
-                        print(
-                            f"  - Directive '{old_directive}' not found in "
-                            f"{md_file}, no patch."
-                        )
+    Returns:
+        str: The path to the documentation source directory (containing conf.py),
+             or None if not found.
+    """
+    print(f"\nSearching for documentation source directory in: {repo_path}")
+    potential_doc_dirs = ["docs", "doc", "Doc"]  # Puoi personalizzare questa lista
 
-            except Exception as patch_err:
-                print(f"  - Error during patching of {md_file}: {patch_err}")
-        else:
-            print(f"  - File {md_file} not found in {doc_source_path}, skipping patch.")
+    doc_source_path = _find_doc_dir_in_repo(repo_path, potential_doc_dirs)
 
-    if patched_count > 0:
-        print("Patching completed.")
-    else:
-        print("No file patched (or directive not found).")
+    if not doc_source_path:
+        print("No documentation source directory with conf.py found in the clone.")
+        return None
+
+    print(f"Documentation source directory identified at: {doc_source_path}")
+    return doc_source_path
 
 
-def _find_dir(repo_path, potential_doc_dirs):
-    found_doc_path = None
+def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
+    """
+    Finds the first potential documentation directory that contains a conf.py file.
+    Also checks the repository root if no specific doc directory is found.
+
+    Args:
+        repo_path (str): The local path to the cloned repository.
+        potential_doc_dirs (list): A list of potential directory names
+                                   for documentation (e.g., ["docs", "doc"]).
+
+    Returns:
+        str: The path to the documentation source directory (containing conf.py),
+             or None if not found.
+    """
     for doc_dir_name in potential_doc_dirs:
         current_path = os.path.join(repo_path, doc_dir_name)
         if os.path.isdir(current_path) and os.path.exists(
-            os.path.join(current_path, "conf.py")
+                os.path.join(current_path, "conf.py")
         ):
-            found_doc_path = current_path
             print(
-                "Found directory sources documentation con conf.py: "
-                f"{found_doc_path}"
+                "Found documentation source directory with conf.py: "
+                f"{current_path}"
             )
-            break
+            return current_path
         if os.path.isdir(current_path):
             print(
-                f"Found directory '{current_path}', ma senza conf.py. "
-                "Continuo la ricerca..."
+                f"Found directory '{current_path}', but no conf.py. "
+                "Continuing search..."
             )
-    return found_doc_path
+    # Fallback: check if conf.py is in the root of the repository
+    if os.path.exists(os.path.join(repo_path, "conf.py")):
+        print(f"Found conf.py in the repository root: {repo_path}")
+        return repo_path
 
-
-def _clean_isolated_doc_path(isolated_doc_path):
-    if os.path.exists(isolated_doc_path):
-        print("Remove existing isolated sources directory  " f": '{isolated_doc_path}'")
-        try:
-            shutil.rmtree(isolated_doc_path)
-        except Exception as e:
-            print(f"Error during removing existing directory : {e}")
-            return None
-    return True
-
-
-def _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
-    if (
-        os.path.exists(os.path.join(found_doc_path, "conf.py"))
-        or found_doc_path == repo_path
-    ):
-        shutil.copytree(
-            found_doc_path, isolated_doc_path, ignore=shutil.ignore_patterns(".git")
-        )
-        print("Copy of main sources directory completed.")
-    else:
-        print(
-            f"Error: conf.py non trovato nel selected path '{found_doc_path}' "
-            "durante la copia."
-        )
-        return None
-    return True
-
-
-def _copy_common_files(common_root_files, repo_path, isolated_doc_path):
-    copied_root_files_count = 0
-    for filename in common_root_files:
-        src_file = os.path.join(repo_path, filename)
-        dst_file = os.path.join(isolated_doc_path, filename)
-        if os.path.exists(src_file):
-            try:
-                shutil.copy2(src_file, dst_file)
-                print(f"  - Copied: {filename}")
-                copied_root_files_count += 1
-            except Exception as copy_err:
-                print(f"  - Error durante la copia di {filename}: {copy_err}")
-        else:
-            print(f"  - File root '{filename}' non trovato in {repo_path}, non copied.")
-    return copied_root_files_count
-
-def patch_rst_include_directives(doc_source_path):
-    """
-    Patches relative '.. include:: ../FILE' or '../DIR/FILE' directives in .rst files.
-    Changes them to '.. include:: /FILE' or '.. include:: /DIR/FILE' which Sphinx
-    interprets as relative to the source directory root (doc_source_path).
-    """
-    print(f"\nPatching RST include directives in {doc_source_path}...")
-    patched_files_count = 0
-    # Regex per trovare '.. include:: ../Qualcosa' o '.. include:: ../../Qualcosa'
-    # Questo pattern gestisce uno o due livelli di '../'
-    # e cattura il percorso relativo dopo '../' o '../../'
-    include_pattern = re.compile(r"(\.\.\s+include::\s+)(\.\./(?:(?:\.\./)?))([\w./-]+)")
-
-    for root, _, files in os.walk(doc_source_path):
-        for filename in files:
-            if filename.endswith(".rst"):
-                file_path = os.path.join(root, filename)
-                try:
-                    with open(file_path, "r+", encoding="utf-8") as f:
-                        content = f.read()
-                        original_content = content
-
-                        def replace_include(match):
-                            prefix = match.group(1)  # ".. include:: "
-                            # old_relative_path_prefix = match.group(2) # "../" o "../../"
-                            target_path_after_dots = match.group(3)  # "FILE.rst" o "DIR/FILE.rst"
-
-                            # La nuova direttiva punta alla radice della documentazione sorgente
-                            # usando il prefisso '/' che Sphinx interpreta correttamente.
-                            new_directive = f"{prefix}/{target_path_after_dots}"
-                            print(f"    In {filename}: Replaced '{match.group(0)}' with '{new_directive}'")
-                            return new_directive
-
-                        content = include_pattern.sub(replace_include, content)
-
-                        if content != original_content:
-                            f.seek(0)
-                            f.write(content)
-                            f.truncate()
-                            print(f"  - Patched {filename}")
-                            patched_files_count += 1
-                except Exception as patch_err:
-                    print(f"  - Error during patching of {filename}: {patch_err}")
-
-    if patched_files_count > 0:
-        print(f"RST Patching completed for {patched_files_count} directive(s).")
-    else:
-        print("No RST include directives found/patched matching the pattern '../FILE' or '../../FILE'.")
-
-
-def find_and_copy_doc_source(repo_path, output_base_dir, project_slug):
-    """Search documentation directory sources inside a cloned repository.
-
-    e copia la prima found in una folder di output dedicated, including
-    specified files in root.
-
-    Args:
-        repo_path (str): Il path locale alla repository cloned.
-        output_base_dir (str): La directory base dove save i isolated sources.
-        project_slug (str): Lo slug del project, used per name
-            output folder.
-
-    Returns:
-        str: Il path alla directory dei sources di documentation isolated,
-            o None se non found/copied.
-    """
-    print(f"\nSearching directory documentation sources in: {repo_path}")
-
-    potential_doc_dirs = ["docs", "doc", "Doc"]
-
-    found_doc_path = _find_dir(repo_path, potential_doc_dirs)
-
-    if not found_doc_path and os.path.exists(os.path.join(repo_path, "conf.py")):
-        found_doc_path = repo_path
-        print(f"Trovato conf.py nella root della repository: {found_doc_path}")
-
-    if not found_doc_path:
-        print("No sources documentation directory with conf.py found.")
-        return None
-
-    isolated_doc_dir_name = f"{project_slug}_doc_source"
-    isolated_doc_path = os.path.join(output_base_dir, isolated_doc_dir_name)
-
-    if not _clean_isolated_doc_path(isolated_doc_path):
-        return None
-
-    print(
-        f"Copying i sources della documentation da '{found_doc_path}' a "
-        f"'{isolated_doc_path}'"
-    )
-    try:
-        if not _copy_src_doc(repo_path, isolated_doc_path, found_doc_path):
-            return None
-        common_root_files = ["AUTHORS.md", "CHANGES.md", "LICENSE", "AUTHORS.rst", "CHANGES.rst", "LICENSE.txt"]
-        print("Cerco e copying file comuni dalla root del repository...")
-        copied_root_files_count = _copy_common_files(
-            common_root_files, repo_path, isolated_doc_path
-        )
-        if copied_root_files_count == len(common_root_files):
+    print(f"Fallback: Searching for conf.py recursively in the entire repository: {repo_path}...")
+    for root, dirs, files in os.walk(repo_path):
+        # Escludi directory comuni per velocizzare e ridurre rumore
+        dirs[:] = [d for d in dirs if d not in [
+            '.git', '.hg', '.svn', 'venv', '.venv', 'env', '__pycache__',
+            'node_modules', 'build', 'dist', 'docs/_build', 'site'
+            # Aggiungi altre directory da escludere se necessario
+        ]]
+        if "conf.py" in files:
+            conf_file_path = os.path.join(root, "conf.py")
+            doc_source_dir = root
             print(
-                f"Copied {copied_root_files_count}  required additives "
-                "files from root."
+                "Found conf.py via full recursive search at: "
+                f"{conf_file_path} (source directory: {doc_source_dir})"
             )
-        elif copied_root_files_count > 0:
-            print(
-                f"Copied {copied_root_files_count}/{len(common_root_files)} "
-                "additional files required dalla root."
-            )
-        else:
-            print(
-                "Warning: No additive common file required found "
-                "or copied from root."
-            )
-        source_package_dir_path = os.path.join(repo_path, project_slug)  # Es. .../pipenv_repo_main/pipenv
-        # La destinazione è la directory base di output + il nome del pacchetto
-        # Es. ../../../rtd_isolated_doc_sources/pipenv
-        destination_package_dir_path = os.path.join(output_base_dir, project_slug)
+            return doc_source_dir
 
-        if os.path.isdir(source_package_dir_path) and \
-                os.path.exists(os.path.join(source_package_dir_path, "__init__.py")):
-
-            # Assicuriamoci che non sia la stessa della cartella dei sorgenti doc principali
-            # (improbabile per pipenv, ma è una buona pratica)
-            if os.path.abspath(source_package_dir_path) != os.path.abspath(
-                    isolated_doc_path):  # Confronta con isolated_doc_path
-                print(
-                    f"  Copiando il pacchetto del progetto '{project_slug}' da '{source_package_dir_path}' "
-                    f"a '{destination_package_dir_path}' per l'accesso da conf.py."
-                )
-                try:
-                    # Rimuovi la destinazione se esiste già per assicurare una copia pulita
-                    # e per evitare errori con shutil.copytree se la cartella esiste già
-                    # (anche se dirs_exist_ok=True potrebbe essere un'alternativa, rmtree è più esplicito qui)
-                    if os.path.exists(destination_package_dir_path):
-                        print(
-                            f"    Rimuovendo la directory del pacchetto di destinazione esistente: {destination_package_dir_path}")
-                        shutil.rmtree(destination_package_dir_path)
-                    shutil.copytree(source_package_dir_path, destination_package_dir_path)
-                    print(f"    Pacchetto del progetto '{project_slug}' copiato con successo.")
-                except Exception as e_pkg_copy:
-                    print(f"    Errore durante la copia del pacchetto del progetto '{project_slug}': {e_pkg_copy}")
-        # --- FINE DEL NUOVO CODICE DA AGGIUNGERE ---
-
-        return isolated_doc_path
-
-    except Exception as e:
-        print(f"Error during copying sources documentation: {e}")
-        return None
+    return None
 
 
 def _sphinx_run(isolated_source_path, final_output_dir):
@@ -809,21 +632,6 @@ def _cleanup(clone_dir_path):
             )
 
 
-def _extract_slug(rtd_url):
-    parsed_url = urlparse(rtd_url)
-    path_parts = [part for part in parsed_url.path.split("/") if part]
-    project_slug = parsed_url.hostname.split(".")[0]
-    if project_slug == "readthedocs" and path_parts:
-        project_slug = path_parts[0]
-    elif not project_slug or project_slug == "readthedocs":
-        if path_parts:
-            project_slug = path_parts[0]
-        else:
-            print("Error: Unable to get project slug project from URL.")
-            return None, None
-    return project_slug
-
-
 def _extract_repo_url_branch(api_project_detail_url, project_slug):
     repo_url = None
     default_branch = "main"
@@ -852,13 +660,13 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
     return default_branch, repo_url
 
 
-def download_readthedocs_source_and_build(rtd_url, existing_clone_path=None):
+def download_readthedocs_source_and_build(project_name, project_url, existing_clone_path=None):
     """Get RTD sources, clone, isolate sources doc, executes Sphinx, and cleans-up.
 
     Args:
-        rtd_url (str): the URL base del project Read the Docs
-            (es. https://black.readthedocs.io/).
-        existing_clone_path (str, optional): Percorso a un repository già clonato.
+        project_name (str): the name of the project.
+        project_url (str): the URL of repository of the project.
+        existing_clone_path (str, optional): Percorso to a repository già clonato.
                                              Se fornito, la clonazione viene saltata.
                                              Default a None.
 
@@ -868,9 +676,9 @@ def download_readthedocs_source_and_build(rtd_url, existing_clone_path=None):
                                               o (None, None) in case of failure.
     """
     print("--- Process Source Download, Build e Clean-up ---")
-    print(f"Analyzing the URL: {rtd_url}")
+    print(f"Analyzing the URL: {project_url}")
 
-    project_slug = _extract_slug(rtd_url)
+    project_slug = project_name
     if not project_slug:
         return None, None
 
@@ -924,14 +732,12 @@ def download_readthedocs_source_and_build(rtd_url, existing_clone_path=None):
 
     isolated_docs_output_dir = "../../../rtd_isolated_doc_sources"
     os.makedirs(isolated_docs_output_dir, exist_ok=True)
-    isolated_source_path = find_and_copy_doc_source(
-        clone_dir_path, isolated_docs_output_dir, project_slug
+    isolated_source_path = find_doc_source_in_clone(
+        clone_dir_path
     )
 
     build_output_path = None
     if isolated_source_path:
-        patch_include_directives(isolated_source_path)
-        patch_rst_include_directives(isolated_source_path)
         apply_devildex_customizations(
             isolated_source_path, theme_name=custom_theme, banner_text=custom_banner
         )

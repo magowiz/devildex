@@ -6,47 +6,6 @@ from urllib.parse import urlparse
 import requests
 
 
-def _get_project_slug(rtd_url):
-    """Extract Read the Docs project slug from an URL."""
-    print(f"Analyzing the URL: {rtd_url}")
-    parsed_url = urlparse(rtd_url)
-    hostname_parts = parsed_url.hostname.split(".")
-    path_parts = [part for part in parsed_url.path.split("/") if part]
-
-    project_slug = None
-
-    # Priorità 1: Sottodominio (es. project.readthedocs.io o project.rtfd.io)
-    if len(hostname_parts) >= 3 and hostname_parts[-2] in ("readthedocs", "rtfd") and hostname_parts[-1] == "io":
-        project_slug = hostname_parts[0]
-        # Se lo slug è 'docs' o 'www', potrebbe essere un URL generico di RTD,
-        # quindi proviamo a cercarlo nel percorso.
-        if project_slug in ("docs", "www") and path_parts:
-            # Spesso il formato è /<lang>/<slug>/ o /projects/<slug>/
-            if path_parts[0] == "projects" and len(path_parts) > 1:
-                project_slug = path_parts[1]
-            elif len(path_parts) > 1 and path_parts[0] not in ("builds", "downloads", "proxito"): # Evita percorsi non di progetto
-                 # Se il primo elemento del percorso è una lingua (es. 'en'), prendi il secondo
-                if len(path_parts[0]) == 2 or path_parts[0] in ("latest", "stable"): # Heuristica per la lingua o versione
-                    if len(path_parts) > 1:
-                        project_slug = path_parts[1]
-                    else: # Non c'è uno slug dopo la lingua/versione
-                        project_slug = None # Resetta per evitare 'en' come slug
-                elif path_parts[0] != project_slug: # Se il primo elemento del percorso non è lo stesso slug già trovato
-                    project_slug = path_parts[0]
-
-    # Priorità 2: Se non trovato dal sottodominio, prova dal percorso (per URL come readthedocs.org/projects/slug/)
-    elif not project_slug and path_parts:
-        if path_parts[0] == "projects" and len(path_parts) > 1:
-            project_slug = path_parts[1]
-        elif path_parts[0] not in ("builds", "downloads", "proxito", "dashboard", "profiles", "accounts", "organizations"):
-            project_slug = path_parts[0] # Caso generico, primo elemento del percorso
-
-    if not project_slug or project_slug in ("www", "readthedocs", "docs"): # Controllo finale
-        print(f"Error: Unable to reliably deduct project slug from URL: {rtd_url}")
-        return None
-
-    print(f"Project Slug deducted: {project_slug}")
-    return project_slug
 
 
 def _fetch_available_versions(project_slug):
@@ -259,13 +218,14 @@ def _download_file(file_url, local_filepath):
                 print(f"Error while removing partial file: {remove_err}")
 
 
-def download_readthedocs_prebuilt_robust(
+def download_readthedocs_prebuilt_robust(project_name,
     rtd_url, download_folder="rtd_prebuilt_downloads",
         preferred_versions=("stable", "latest"), download_format="htmlzip"
 ):
     """Download a pre-packaged documentation from Read the Docs.
 
     Args:
+        project_name (str): project name.
         rtd_url (str): project base URL of Read the Docs
             (es. https://black.readthedocs.io/).
         preferred_versions (list): versions slugs list to
@@ -275,7 +235,7 @@ def download_readthedocs_prebuilt_robust(
     Returns:
         str: Il path downloaded file, o None in caso di failure.
     """
-    project_slug = _get_project_slug(rtd_url)
+    project_slug = project_name
     if not project_slug:
         return None
 
@@ -307,58 +267,43 @@ def download_readthedocs_prebuilt_robust(
     return None
 
 if __name__ == "__main__":
-    print("--- Executing Script 1 (Version 3: Robusta - Refactored) ---")
+    print("--- Executing Script: Download Prebuilt Docs (Robust) ---") # Titolo più generico
 
-    print("Trying with: https://black.readthedocs.io/")
-    downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
-    if downloaded_file:
-        print(f"successfully Downloaded for Black: {downloaded_file}")
-    else:
-        print("failed Download for Black.")
-    print("-" * 30)
-
-    print("Trying with: https://requests.readthedocs.io/")
-    downloaded_file = download_readthedocs_prebuilt_robust(
-        "https://requests.readthedocs.io/"
+    # Esempio per Black
+    print("\nTrying with: Black (https://black.readthedocs.io/)")
+    downloaded_file_black = download_readthedocs_prebuilt_robust(
+        project_name="black",  # Passa lo slug qui
+        rtd_url="https://black.readthedocs.io/"
     )
-    if downloaded_file:
-        print(f"Download successfully for Requests: {downloaded_file}")
+    if downloaded_file_black:
+        print(f"  SUCCESS: Downloaded for Black: {downloaded_file_black}")
     else:
-        print("Failed Download per Requests.")
+        print("  FAILURE: Download failed for Black.")
     print("-" * 30)
 
-    print("Trying with: https://sphinx.readthedocs.io/")
-    downloaded_file = download_readthedocs_prebuilt_robust("https://sphinx.readthedocs.io/")
-    if downloaded_file:
-        print(f"Download successfully for Sphinx: {downloaded_file}")
-    else:
-        print("Failed Download for Sphinx.")
-    print("-" * 30)
-
-    print("--- Executing Script 1 (Version 3: Robusta) ---")
-
-    print("Trying with: https://black.readthedocs.io/")
-    downloaded_file = download_readthedocs_prebuilt_robust("https://black.readthedocs.io/")
-    if downloaded_file:
-        print(f"Download successo per Black: {downloaded_file}")
-    else:
-        print("Download failed for Black.")
-    print("-" * 30)
-
-    print("Trying with: https://requests.readthedocs.io/")
-    downloaded_file = download_readthedocs_prebuilt_robust(
-        "https://requests.readthedocs.io/"
+    # Esempio per Requests
+    print("\nTrying with: Requests (https://requests.readthedocs.io/)")
+    downloaded_file_requests = download_readthedocs_prebuilt_robust(
+        project_name="requests", # Passa lo slug qui
+        rtd_url="https://requests.readthedocs.io/"
     )
-    if downloaded_file:
-        print(f"Download successfully for Requests: {downloaded_file}")
+    if downloaded_file_requests:
+        print(f"  SUCCESS: Downloaded for Requests: {downloaded_file_requests}")
     else:
-        print("Download failed for Requests.")
+        print("  FAILURE: Download failed for Requests.")
     print("-" * 30)
 
-    print("Trying with: https://sphinx.readthedocs.io/")
-    downloaded_file = download_readthedocs_prebuilt_robust("https://sphinx.readthedocs.io/")
-    if downloaded_file:
-        print(f"Download successfully for Sphinx: {downloaded_file}")
+    # Esempio per Sphinx
+    print("\nTrying with: Sphinx (https://sphinx.readthedocs.io/)")
+    downloaded_file_sphinx = download_readthedocs_prebuilt_robust(
+        project_name="sphinx-doc", # Lo slug per Sphinx è "sphinx-doc" su RTD
+        rtd_url="https://sphinx.readthedocs.io/" # L'URL pubblico può essere diverso dallo slug
+                                                 # ma l'API RTD usa lo slug "sphinx-doc"
+    )
+    if downloaded_file_sphinx:
+        print(f"  SUCCESS: Downloaded for Sphinx: {downloaded_file_sphinx}")
     else:
-        print("Failed Download for Sphinx.")
+        print("  FAILURE: Download failed for Sphinx.")
     print("-" * 30)
+
+    # Nota: Ho rimosso la duplicazione del blocco di test.

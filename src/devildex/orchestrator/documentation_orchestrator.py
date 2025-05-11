@@ -6,17 +6,19 @@ from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 
 class Orchestrator:
 
-    def __init__(self, project_path, rtd_url=None):
+    def __init__(self, project_name, project_path, project_url=None, rtd_url=None):
         self.detected_doc_type = None
+        self.project_name = project_name
         self.project_path = project_path
+        self.project_url = project_url
         self.rtd_url = rtd_url
         self.doc_strings = DocStringsSrc()
         self._grabbers = {"sphinx": {"function": download_readthedocs_source_and_build,
-                               "args": {"rtd_url": self.rtd_url}},
+                               "args": {"project_url": self.project_url, "project_name": self.project_name}},
                     "readthedocs": {"function": download_readthedocs_prebuilt_robust,
-                                    "args": {"rtd_url": self.rtd_url}},
+                                    "args": {"rtd_url": self.rtd_url, "project_name": self.project_name}},
                     "docstrings": {"function": self.doc_strings.generate_docs_from_folder,
-                                   "args": {"input_folder": self.project_path}}}
+                                   "args": {"input_folder": self.project_path, "project_name": self.project_name}}}
         self.last_operation_result = None
 
     def _interpret_tuple_res(self, value):

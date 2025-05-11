@@ -8,97 +8,104 @@ PACKAGES_TO_TEST = [
     {
         "repo_url": "https://github.com/psf/black.git",
         "project_name": "black",
-        #"version_tag": "24.4.2",
+        "project_url": "https://github.com/psf/black.git",
         "rtd_url": "https://black.readthedocs.io/",
-        "expected_preferred_type": "sphinx",  # Black uses Sphinx
-        "expected_entry_point": "index.html", # Sphinx main output
+        "expected_preferred_type": "sphinx",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pallets/flask.git",
         "project_name": "flask",
-        #"version_tag": "3.0.3",
+        "project_url": "https://github.com/pallets/flask.git",
         "rtd_url": "https://flask.palletsprojects.com/",
-        "expected_preferred_type": "sphinx",  # Flask uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pytest-dev/pytest.git",
         "project_name": "pytest",
-        #"version_tag": "8.2.2",
+        "project_url": "https://github.com/pytest-dev/pytest.git",
         "rtd_url": "https://docs.pytest.org/",
-        "expected_preferred_type": "sphinx",  # Pytest uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
+    },
+    # Test case for RTD failure falling back to local Sphinx build
+    {
+        "repo_url": "https://github.com/psf/black.git", # Using a repo known to have local Sphinx
+        "project_name": "project-slug-intended-to-fail-rtd", # This slug will be used for RTD API
+        "project_url": "https://github.com/psf/black.git", # project_url for context
+        "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/", # RTD URL that should fail
+        "expected_preferred_type": "sphinx",  # Expect fallback to local sphinx
+        "expected_entry_point": "index.html", # Standard Sphinx output
     },
     {
         "repo_url": "https://github.com/Textualize/rich.git",
         "project_name": "rich",
-        #"version_tag": "13.7.1",
-        # "rtd_url": "https://rich.readthedocs.io/",
-        "expected_preferred_type": "docstrings",  # Rich uses MkDocs, Orchestrator might default to docstrings
-        "expected_entry_point": "rich/index.html", # pdoc3 style
+        "project_url": "https://github.com/Textualize/rich.git",
+        "expected_preferred_type": "docstrings",
+        "expected_entry_point": "rich/index.html",
     },
     {
         "repo_url": "https://github.com/tiangolo/fastapi.git",
         "project_name": "fastapi",
-        #"version_tag": "0.111.0",
-        # "rtd_url": "https://fastapi.tiangolo.com/",
-        "expected_preferred_type": "docstrings",  # FastAPI uses MkDocs, Orchestrator might default to docstrings
-        "expected_entry_point": "fastapi/index.html", # pdoc3 style
+        "project_url": "https://github.com/tiangolo/fastapi.git",
+        "expected_preferred_type": "docstrings",
+        "expected_entry_point": "fastapi/index.html",
     },
     {
         "repo_url": "https://github.com/requests/requests.git",
         "project_name": "requests",
-        #"version_tag": "v2.32.3",
+        "project_url": "https://github.com/requests/requests.git",
         "rtd_url": "https://requests.readthedocs.io/",
-        "expected_preferred_type": "sphinx",  # Requests uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/boto/boto3.git",
         "project_name": "boto3",
-        #"version_tag": "1.34.121",
+        "project_url": "https://github.com/boto/boto3.git",
         "rtd_url": "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html",
-        "expected_preferred_type": "sphinx",  # Boto3 uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/django/django.git",
         "project_name": "django",
-        #"version_tag": "5.0.6",
+        "project_url": "https://github.com/django/django.git",
         "rtd_url": "https://docs.djangoproject.com/",
-        "expected_preferred_type": "sphinx",  # Django uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/numpy/numpy.git",
         "project_name": "numpy",
-        #"version_tag": "v2.0.0",
+        "project_url": "https://github.com/numpy/numpy.git",
         "rtd_url": "https://numpy.org/doc/",
-        "expected_preferred_type": "sphinx",  # Numpy uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pallets/click.git",
         "project_name": "click",
-        #"version_tag": "8.1.7",
+        "project_url": "https://github.com/pallets/click.git",
         "rtd_url": "https://click.palletsprojects.com/",
-        "expected_preferred_type": "sphinx",  # Click uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/benjaminp/six.git",
         "project_name": "six",
-        #"version_tag": "1.16.0",
+        "project_url": "https://github.com/benjaminp/six.git",
         "rtd_url": "https://six.readthedocs.io/",
-        "expected_preferred_type": "sphinx", # Six uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pypa/pipenv.git",
         "project_name": "pipenv",
-        #"version_tag": "v2024.2.2",
+        "project_url": "https://github.com/pypa/pipenv.git",
         "rtd_url": "https://pipenv.pypa.io/",
-        "expected_preferred_type": "sphinx", # Pipenv uses Sphinx
+        "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
 ]
@@ -107,6 +114,7 @@ PACKAGES_TO_TEST = [
 def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     repo_url = package_info["repo_url"]
     project_name = package_info["project_name"]
+    project_url_for_orchestrator = package_info.get("project_url", repo_url)
     #version_tag = package_info["version_tag"]
     rtd_url = package_info.get("rtd_url") # Usare .get() per sicurezza se la chiave potesse mancare
     expected_preferred_doc_type = package_info["expected_preferred_type"]
@@ -133,7 +141,12 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     # 2. Inizializza ed esegue l'Orchestrator
     print(f"Initializing Orchestrator for {project_name} at {clone_target_dir}")
     # Assicurati che il costruttore dell'Orchestrator accetti project_path e rtd_url come previsti
-    orchestrator = Orchestrator(project_path=str(clone_target_dir), rtd_url=rtd_url)
+    orchestrator = Orchestrator(
+        project_name=project_name,
+        project_path=str(clone_target_dir),
+        rtd_url=rtd_url,
+        project_url=project_url_for_orchestrator  # <-- AGGIUNTA QUI
+    )
 
     orchestrator.start_scan() # Questo metodo dovrebbe rilevare il tipo di documentazione
     detected_doc_type = orchestrator.get_detected_doc_type()
@@ -148,6 +161,8 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     # grab_build_doc dovrebbe restituire il percorso della documentazione o False/None in caso di fallimento
     # e impostare internamente last_operation_result
     output_docs_root_path_str = orchestrator.grab_build_doc()
+    print(f"DEBUG: Path returned by grab_build_doc for {project_name}: {output_docs_root_path_str}")
+
     operation_result = orchestrator.get_last_operation_result()
 
     print(f"Project: {project_name}, Orchestrator grab_build_doc result: {operation_result}, Output path from return: {output_docs_root_path_str}")

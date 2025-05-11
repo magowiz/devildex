@@ -207,6 +207,7 @@ class DocStringsSrc:
 
     def generate_docs_from_folder(
         self,
+        project_name: str,
         input_folder: str,
         output_folder: str,
         modules_to_document: list[str] | None = None,
@@ -470,6 +471,7 @@ class DocStringsSrc:
             try:
                 print("Executing generate_docs_from_folder con venv sys.path...")
                 success = self.generate_docs_from_folder(
+                    project_name,
                     str(cloned_repo_path),
                     str(tmp_output_dir),
                     modules_to_document=[project_name],
