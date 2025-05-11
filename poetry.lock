@@ -43,30 +43,6 @@ files = [
 dev = ["backports.zoneinfo ; python_version < \"3.9\"", "freezegun (>=1.0,<2.0)", "jinja2 (>=3.0)", "pytest (>=6.0)", "pytest-cov", "pytz", "setuptools", "tzdata ; sys_platform == \"win32\""]
 
 [[package]]
-name = "beautifulsoup4"
-version = "4.13.4"
-description = "Screen-scraping library"
-optional = false
-python-versions = ">=3.7.0"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "beautifulsoup4-4.13.4-py3-none-any.whl", hash = "sha256:9bbbb14bfde9d79f38b8cd5f8c7c85f4b8f2523190ebed90e950a8dea4cb1c4b"},
-    {file = "beautifulsoup4-4.13.4.tar.gz", hash = "sha256:dbb3c4e1ceae6aefebdaf2423247260cd062430a410e38c66f2baa50a8437195"},
-]
-
-[package.dependencies]
-soupsieve = ">1.2"
-typing-extensions = ">=4.0.0"
-
-[package.extras]
-cchardet = ["cchardet"]
-chardet = ["chardet"]
-charset-normalizer = ["charset-normalizer"]
-html5lib = ["html5lib"]
-lxml = ["lxml"]
-
-[[package]]
 name = "black"
 version = "25.1.0"
 description = "The uncompromising code formatter."
@@ -628,25 +604,6 @@ testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)",
 typing = ["typing-extensions (>=4.12.2) ; python_version < \"3.11\""]
 
 [[package]]
-name = "furo"
-version = "2024.8.6"
-description = "A clean customisable Sphinx documentation theme."
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "furo-2024.8.6-py3-none-any.whl", hash = "sha256:6cd97c58b47813d3619e63e9081169880fbe331f0ca883c871ff1f3f11814f5c"},
-    {file = "furo-2024.8.6.tar.gz", hash = "sha256:b63e4cee8abfc3136d3bc03a3d45a76a850bada4d6374d24c1716b0e01394a01"},
-]
-
-[package.dependencies]
-beautifulsoup4 = "*"
-pygments = ">=2.7"
-sphinx = ">=6.0,<9.0"
-sphinx-basic-ng = ">=1.0.0.beta2"
-
-[[package]]
 name = "idna"
 version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -1151,24 +1108,6 @@ files = [
     {file = "packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484"},
     {file = "packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f"},
 ]
-
-[[package]]
-name = "pallets-sphinx-themes"
-version = "2.3.0"
-description = "Sphinx themes for Pallets and related projects."
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "pallets_sphinx_themes-2.3.0-py3-none-any.whl", hash = "sha256:7ed13de3743c462c2804e2aa63d96cc9ffa82cb76d0251cea03de9bcd9f8dbec"},
-    {file = "pallets_sphinx_themes-2.3.0.tar.gz", hash = "sha256:6293ced11a1d5d3de7268af1acd60428732b5a9e6051a47a596c6d9a083e60d9"},
-]
-
-[package.dependencies]
-packaging = "*"
-sphinx = ">=3"
-sphinx-notfound-page = "*"
 
 [[package]]
 name = "patchelf"
@@ -1797,19 +1736,6 @@ files = [
 ]
 
 [[package]]
-name = "soupsieve"
-version = "2.7"
-description = "A modern CSS selector implementation for Beautiful Soup."
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4"},
-    {file = "soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a"},
-]
-
-[[package]]
 name = "sphinx"
 version = "8.2.3"
 description = "Python documentation generator"
@@ -1847,25 +1773,6 @@ lint = ["betterproto (==2.0.0b6)", "mypy (==1.15.0)", "pypi-attestations (==0.0.
 test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=8.0)", "pytest-xdist[psutil] (>=3.4)", "setuptools (>=70.0)", "typing_extensions (>=4.9)"]
 
 [[package]]
-name = "sphinx-basic-ng"
-version = "1.0.0b2"
-description = "A modern skeleton for Sphinx themes."
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "sphinx_basic_ng-1.0.0b2-py3-none-any.whl", hash = "sha256:eb09aedbabfb650607e9b4b68c9d240b90b1e1be221d6ad71d61c52e29f7932b"},
-    {file = "sphinx_basic_ng-1.0.0b2.tar.gz", hash = "sha256:9ec55a47c90c8c002b5960c57492ec3021f5193cb26cebc2dc4ea226848651c9"},
-]
-
-[package.dependencies]
-sphinx = ">=4.0"
-
-[package.extras]
-docs = ["furo", "ipython", "myst-parser", "sphinx-copybutton", "sphinx-inline-tabs"]
-
-[[package]]
 name = "sphinx-copybutton"
 version = "0.5.2"
 description = "Add a copy button to each of your code cells."
@@ -1884,48 +1791,6 @@ sphinx = ">=1.8"
 [package.extras]
 code-style = ["pre-commit (==2.12.1)"]
 rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
-
-[[package]]
-name = "sphinx-notfound-page"
-version = "1.1.0"
-description = "Sphinx extension to build a 404 page with absolute URLs"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "sphinx_notfound_page-1.1.0-py3-none-any.whl", hash = "sha256:835dc76ff7914577a1f58d80a2c8418fb6138c0932c8da8adce4d9096fbcd389"},
-    {file = "sphinx_notfound_page-1.1.0.tar.gz", hash = "sha256:913e1754370bb3db201d9300d458a8b8b5fb22e9246a816643a819a9ea2b8067"},
-]
-
-[package.dependencies]
-sphinx = ">=5"
-
-[package.extras]
-doc = ["sphinx-autoapi", "sphinx-rtd-theme", "sphinx-tabs", "sphinxemoji"]
-test = ["tox"]
-
-[[package]]
-name = "sphinx-tabs"
-version = "3.4.7"
-description = "Tabbed views for Sphinx"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "sphinx-tabs-3.4.7.tar.gz", hash = "sha256:991ad4a424ff54119799ba1491701aa8130dd43509474aef45a81c42d889784d"},
-    {file = "sphinx_tabs-3.4.7-py3-none-any.whl", hash = "sha256:c12d7a36fd413b369e9e9967a0a4015781b71a9c393575419834f19204bd1915"},
-]
-
-[package.dependencies]
-docutils = "*"
-pygments = "*"
-sphinx = ">=1.8"
-
-[package.extras]
-code-style = ["pre-commit (==2.13.0)"]
-testing = ["bs4", "coverage", "pygments", "pytest (>=7.1,<8)", "pytest-cov", "pytest-regressions", "rinohtype"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -1996,22 +1861,6 @@ files = [
 
 [package.extras]
 test = ["flake8", "mypy", "pytest"]
-
-[[package]]
-name = "sphinxcontrib-log-cabinet"
-version = "1.0.1"
-description = "Organize changelog directives in Sphinx docs."
-optional = false
-python-versions = "*"
-groups = ["main"]
-markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
-files = [
-    {file = "sphinxcontrib-log-cabinet-1.0.1.tar.gz", hash = "sha256:103b2e62df4e57abb943bea05ee9c2beb7da922222c8b77314ffd6ab9901c558"},
-    {file = "sphinxcontrib_log_cabinet-1.0.1-py2.py3-none-any.whl", hash = "sha256:3decc888e8e453d1912cd95d50efb0794a4670a214efa65e71a7de277dcfe2cd"},
-]
-
-[package.dependencies]
-Sphinx = "*"
 
 [[package]]
 name = "sphinxcontrib-programoutput"
@@ -2116,7 +1965,7 @@ version = "4.13.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "lint"]
+groups = ["lint"]
 markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "typing_extensions-4.13.2-py3-none-any.whl", hash = "sha256:a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c"},
@@ -2272,4 +2121,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "1f76015a73b9a524660c9a1402ad527dbb26b9b6ae744c8c737f672e96c2a2ab"
+content-hash = "93da5b732b900dda6d69dc8d9eed611a100f84a9b612a4753bce85b8cfecf6f2"
