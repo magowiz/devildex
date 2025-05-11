@@ -2,15 +2,16 @@
 #
 import os
 import sys
+
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'devildex'
-copyright = '2025, magowiz'
-author = 'magowiz'
+project = "devildex"
+copyright = "2025, magowiz"
+author = "magowiz"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -31,7 +32,7 @@ napoleon_use_rtype = True
 napoleon_preprocess_types = False
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 html_theme_options = {
     # Set the name of the project to appear in the navigation.
@@ -59,7 +60,7 @@ html_theme_options = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
-html_static_path = ['_static']
+html_theme = "alabaster"
+html_static_path = ["_static"]
 sys.path.insert(0, os.path.dirname(os.path.abspath(".")))
 print(os.path.dirname(os.path.abspath("..")))

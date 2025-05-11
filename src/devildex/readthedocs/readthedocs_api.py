@@ -6,14 +6,10 @@ from urllib.parse import urlparse
 import requests
 
 
-
-
 def _fetch_available_versions(project_slug):
     """Fetch ALL available versions for a project from RTD API, handling pagination."""
     all_versions_results = []
-    next_page_url = (
-        f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
-    )
+    next_page_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
     print(f"\nCalling API to list versions (starting with): {next_page_url}")
 
     page_num = 1
@@ -27,7 +23,7 @@ def _fetch_available_versions(project_slug):
             current_page_versions = data.get("results", [])
             all_versions_results.extend(current_page_versions)
 
-            total_count = data.get('count', len(all_versions_results))
+            total_count = data.get("count", len(all_versions_results))
 
             print(
                 f"Page {page_num}: Fetched {len(current_page_versions)} versions. "
@@ -58,7 +54,9 @@ def _choose_best_version(available_versions, preferred_versions):
         print("Error: No versions available for choice (list is empty or None).")
         return None
 
-    print(f"\nAnalyzing {len(available_versions)} available versions to choose the best:")
+    print(
+        f"\nAnalyzing {len(available_versions)} available versions to choose the best:"
+    )
 
     for preferred_slug in preferred_versions:
         for version in available_versions:
@@ -67,7 +65,9 @@ def _choose_best_version(available_versions, preferred_versions):
                 and version.get("active") is True
                 and version.get("built") is True
             ):
-                print(f"\nChosen favourite version (active and built): '{preferred_slug}'")
+                print(
+                    f"\nChosen favourite version (active and built): '{preferred_slug}'"
+                )
                 return preferred_slug
 
     print(
@@ -82,7 +82,6 @@ def _choose_best_version(available_versions, preferred_versions):
 
     print("\nError: No active and built version found among all available ones.")
     return None
-
 
 
 def _fetch_version_details(project_slug, version_slug):
@@ -175,7 +174,7 @@ def _download_file(file_url, local_filepath):
     download_successful = False
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
         with requests.get(file_url, stream=True, timeout=300) as r:
             r.raise_for_status()
@@ -206,9 +205,12 @@ def _download_file(file_url, local_filepath):
                 print(f"Error while removing partial file: {remove_err}")
 
 
-def download_readthedocs_prebuilt_robust(project_name,
-    rtd_url, download_folder="rtd_prebuilt_downloads",
-        preferred_versions=("stable", "latest"), download_format="htmlzip"
+def download_readthedocs_prebuilt_robust(
+    project_name,
+    rtd_url,
+    download_folder="rtd_prebuilt_downloads",
+    preferred_versions=("stable", "latest"),
+    download_format="htmlzip",
 ):
     """Download a pre-packaged documentation from Read the Docs.
 
@@ -254,13 +256,15 @@ def download_readthedocs_prebuilt_robust(project_name,
         return local_filepath
     return None
 
+
 if __name__ == "__main__":
-    print("--- Executing Script: Download Prebuilt Docs (Robust) ---") # Titolo più generico
+    print(
+        "--- Executing Script: Download Prebuilt Docs (Robust) ---"
+    )  # Titolo più generico
 
     print("\nTrying with: Black (https://black.readthedocs.io/)")
     downloaded_file_black = download_readthedocs_prebuilt_robust(
-        project_name="black",
-        rtd_url="https://black.readthedocs.io/"
+        project_name="black", rtd_url="https://black.readthedocs.io/"
     )
     if downloaded_file_black:
         print(f"  SUCCESS: Downloaded for Black: {downloaded_file_black}")
@@ -270,8 +274,7 @@ if __name__ == "__main__":
 
     print("\nTrying with: Requests (https://requests.readthedocs.io/)")
     downloaded_file_requests = download_readthedocs_prebuilt_robust(
-        project_name="requests",
-        rtd_url="https://requests.readthedocs.io/"
+        project_name="requests", rtd_url="https://requests.readthedocs.io/"
     )
     if downloaded_file_requests:
         print(f"  SUCCESS: Downloaded for Requests: {downloaded_file_requests}")
@@ -281,8 +284,7 @@ if __name__ == "__main__":
 
     print("\nTrying with: Sphinx (https://sphinx.readthedocs.io/)")
     downloaded_file_sphinx = download_readthedocs_prebuilt_robust(
-        project_name="sphinx-doc",
-        rtd_url="https://sphinx.readthedocs.io/"
+        project_name="sphinx-doc", rtd_url="https://sphinx.readthedocs.io/"
     )
     if downloaded_file_sphinx:
         print(f"  SUCCESS: Downloaded for Sphinx: {downloaded_file_sphinx}")

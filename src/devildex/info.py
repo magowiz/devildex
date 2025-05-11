@@ -1,4 +1,5 @@
 """application information module."""
+
 from pathlib import Path
 
 VERSION = "0.1"

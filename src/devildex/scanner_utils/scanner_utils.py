@@ -53,7 +53,6 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
                 found_files.extend(recursive_finds_in_base)
     # Ensure uniqueness and sort all found files (especially important after recursive search)
 
-
     if found_files:
         unique_paths_str = set()
         unique_files_final: list[Path] = []

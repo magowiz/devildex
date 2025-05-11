@@ -1,4 +1,5 @@
 """scanner module."""
+
 import os
 import re
 import shutil
@@ -191,6 +192,7 @@ LOG_LEVEL = "INFO"
     print("Done.")
 import ast
 
+
 def has_docstrings(project_path: str) -> bool:
     project_dir = Path(project_path)
     found_docstring_indicator = False
@@ -206,7 +208,9 @@ def has_docstrings(project_path: str) -> bool:
                     if ast.get_docstring(tree):
                         return True
                     for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                        if isinstance(
+                            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+                        ):
                             if ast.get_docstring(node):
                                 return True
                 except SyntaxError:

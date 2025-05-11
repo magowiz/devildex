@@ -1,7 +1,5 @@
-
 import logging
 from pathlib import Path
-
 
 
 from pip_requirements_parser import RequirementsFile
@@ -40,7 +38,9 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
 
     try:
         logger.debug(f"Tentativo di parsificare e filtrare: {file_path}")
-        requirements_file_obj = RequirementsFile.from_file(str(file_path))  # La libreria vuole una stringa
+        requirements_file_obj = RequirementsFile.from_file(
+            str(file_path)
+        )  # La libreria vuole una stringa
 
         for req in requirements_file_obj.requirements:
             if req.line:  # Assicurati che la linea non sia vuota
@@ -63,14 +63,20 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
         for line in valid_lines:
             stripped_line = line.strip()
             if stripped_line in lines_to_explicitly_remove:
-                logger.info(f"Rimozione esplicita della riga '{stripped_line}' da '{file_path}'")
+                logger.info(
+                    f"Rimozione esplicita della riga '{stripped_line}' da '{file_path}'"
+                )
             else:
                 final_valid_lines.append(line)
         valid_lines = final_valid_lines
-        logger.debug(f"Numero di righe valide estratte da '{file_path}': {len(valid_lines)}")
+        logger.debug(
+            f"Numero di righe valide estratte da '{file_path}': {len(valid_lines)}"
+        )
         return valid_lines
 
     except Exception as e:
-        logger.error(f"Errore imprevisto durante la parsificazione del file '{file_path}' "
-                     f"con pip-requirements-parser: {e}")
+        logger.error(
+            f"Errore imprevisto durante la parsificazione del file '{file_path}' "
+            f"con pip-requirements-parser: {e}"
+        )
         return None

@@ -12,12 +12,17 @@ from devildex.info import VERSION, PROJECT_ROOT
 from devildex.utils.venv_cm import IsolatedVenvManager  # Già presente
 from pathlib import Path  # Già presente
 
-from devildex.utils.venv_utils import execute_command, install_project_and_dependencies_in_venv
+from devildex.utils.venv_utils import (
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
-    logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s"
+    )
 
 config = configparser.ConfigParser()
 config_file = PROJECT_ROOT / "devildex_config.ini"
@@ -403,16 +408,6 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
     print("DevilDex customizations applied.")
 
 
-
-
-
-
-
-
-
-
-
-
 def find_doc_source_in_clone(repo_path):
     """
     Identifies the documentation source directory within a cloned repository.
@@ -455,11 +450,10 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
     for doc_dir_name in potential_doc_dirs:
         current_path = os.path.join(repo_path, doc_dir_name)
         if os.path.isdir(current_path) and os.path.exists(
-                os.path.join(current_path, "conf.py")
+            os.path.join(current_path, "conf.py")
         ):
             print(
-                "Found documentation source directory with conf.py: "
-                f"{current_path}"
+                "Found documentation source directory with conf.py: " f"{current_path}"
             )
             return current_path
         if os.path.isdir(current_path):
@@ -472,14 +466,31 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
         print(f"Found conf.py in the repository root: {repo_path}")
         return repo_path
 
-    print(f"Fallback: Searching for conf.py recursively in the entire repository: {repo_path}...")
+    print(
+        f"Fallback: Searching for conf.py recursively in the entire repository: {repo_path}..."
+    )
     for root, dirs, files in os.walk(repo_path):
         # Escludi directory comuni per velocizzare e ridurre rumore
-        dirs[:] = [d for d in dirs if d not in [
-            '.git', '.hg', '.svn', 'venv', '.venv', 'env', '__pycache__',
-            'node_modules', 'build', 'dist', 'docs/_build', 'site'
-            # Aggiungi altre directory da escludere se necessario
-        ]]
+        dirs[:] = [
+            d
+            for d in dirs
+            if d
+            not in [
+                ".git",
+                ".hg",
+                ".svn",
+                "venv",
+                ".venv",
+                "env",
+                "__pycache__",
+                "node_modules",
+                "build",
+                "dist",
+                "docs/_build",
+                "site",
+                # Aggiungi altre directory da escludere se necessario
+            ]
+        ]
         if "conf.py" in files:
             conf_file_path = os.path.join(root, "conf.py")
             doc_source_dir = root
@@ -491,6 +502,7 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
 
     return None
 
+
 # Inserisci queste funzioni helper in readthedocs_src.py
 # (ad esempio, dopo la sezione di configurazione e prima di apply_devildex_customizations)
 
@@ -498,16 +510,19 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
 # In /home/magowiz/MEGA/projects/devildex/src/devildex/readthedocs/readthedocs_src.py
 # Sostituisci la tua attuale funzione build_sphinx_docs con questa:
 
+
 def build_sphinx_docs(
-    isolated_source_path: str, # Path alla directory con conf.py
+    isolated_source_path: str,  # Path alla directory con conf.py
     project_slug: str,
     version_identifier: str,
-    original_clone_dir_path: str # Path alla radice del repo clonato
+    original_clone_dir_path: str,  # Path alla radice del repo clonato
 ) -> str | None:
     """
     Execute sphinx-build in a temporary, isolated virtual environment.
     """
-    logger.info(f"\n--- Starting Isolated Sphinx Build for {project_slug} v{version_identifier} ---")
+    logger.info(
+        f"\n--- Starting Isolated Sphinx Build for {project_slug} v{version_identifier} ---"
+    )
     source_dir_path = Path(isolated_source_path)
     clone_root_path = Path(original_clone_dir_path)
 
@@ -523,25 +538,33 @@ def build_sphinx_docs(
     candidate_req_paths = [
         source_dir_path / "requirements.txt",
         source_dir_path.parent / "requirements.txt",
-        clone_root_path / "doc-requirements.txt", # Nomi comuni
+        clone_root_path / "doc-requirements.txt",  # Nomi comuni
         clone_root_path / "docs-requirements.txt",
-        clone_root_path / "dev-requirements.txt", # A volte include docs
+        clone_root_path / "dev-requirements.txt",  # A volte include docs
         clone_root_path / "requirements-doc.txt",
         clone_root_path / "requirements-docs.txt",
         clone_root_path / "requirements-dev.txt",
-        clone_root_path / "requirements.txt", # Alla radice del progetto
-        clone_root_path / "docs" / "requirements.txt", # Strutture comuni
+        clone_root_path / "requirements.txt",  # Alla radice del progetto
+        clone_root_path / "docs" / "requirements.txt",  # Strutture comuni
         clone_root_path / "doc" / "requirements.txt",
-        clone_root_path / "requirements" / "docs.txt",  # <--- AGGIUNGI QUESTO (per Flask)
-        clone_root_path / "requirements" / "doc.txt",  # <--- AGGIUNGI QUESTO (variante comune)
+        clone_root_path
+        / "requirements"
+        / "docs.txt",  # <--- AGGIUNGI QUESTO (per Flask)
+        clone_root_path
+        / "requirements"
+        / "doc.txt",  # <--- AGGIUNGI QUESTO (variante comune)
     ]
     for req_path_candidate in candidate_req_paths:
         if req_path_candidate.exists():
             doc_requirements_file = req_path_candidate
-            logger.info(f"Found documentation requirements file: {doc_requirements_file}")
+            logger.info(
+                f"Found documentation requirements file: {doc_requirements_file}"
+            )
             break
     if not doc_requirements_file:
-        logger.info(f"No specific 'requirements.txt' found for documentation in common locations for {project_slug}.")
+        logger.info(
+            f"No specific 'requirements.txt' found for documentation in common locations for {project_slug}."
+        )
 
     # Determina se il progetto stesso deve essere installato (radice del clone)
     project_install_root: Path | None = clone_root_path
@@ -549,7 +572,9 @@ def build_sphinx_docs(
     # Determina la radice del tuo progetto DevilDex
 
     # --- FINE BLOCCO MODIFICATO/AGGIUNTO per FINAL_OUTPUT_DIR ---
-    final_output_dir = (PROJECT_ROOT / "docset" / project_slug / version_identifier).resolve()
+    final_output_dir = (
+        PROJECT_ROOT / "docset" / project_slug / version_identifier
+    ).resolve()
 
     logger.info(f"Sphinx HTML output directory: {final_output_dir}")
 
@@ -559,18 +584,22 @@ def build_sphinx_docs(
             shutil.rmtree(final_output_dir)
         final_output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        logger.error(f"Error creating/cleaning output directory {final_output_dir}: {e}")
+        logger.error(
+            f"Error creating/cleaning output directory {final_output_dir}: {e}"
+        )
         return None
 
     build_successful = False
     try:
-        with IsolatedVenvManager(project_name=f"{project_slug}-{version_identifier}") as venv:
+        with IsolatedVenvManager(
+            project_name=f"{project_slug}-{version_identifier}"
+        ) as venv:
 
             install_success = install_project_and_dependencies_in_venv(
                 pip_executable=venv.pip_executable,
                 project_name=project_slug,
                 project_root_for_install=project_install_root,
-                doc_requirements_path=doc_requirements_file
+                doc_requirements_path=doc_requirements_file,
             )
 
             if not install_success:
@@ -582,32 +611,39 @@ def build_sphinx_docs(
 
             sphinx_command = [
                 venv.python_executable,
-                "-m", "sphinx",
-                "-b", "html",
+                "-m",
+                "sphinx",
+                "-b",
+                "html",
                 ".",
                 str(final_output_dir),
             ]
 
             logger.info(f"Executing Sphinx: {' '.join(sphinx_command)}")
-            sphinx_env = {'LC_ALL': 'C'}
+            sphinx_env = {"LC_ALL": "C"}
             stdout, stderr, returncode = execute_command(
                 sphinx_command,
                 f"Sphinx build for {project_slug}",
                 cwd=source_dir_path,
-                env=sphinx_env
+                env=sphinx_env,
             )
 
             if returncode == 0:
                 logger.info(f"Sphinx build for {project_slug} completed successfully.")
                 build_successful = True
             else:
-                logger.error(f"Sphinx build for {project_slug} failed. Return code: {returncode}")
-
+                logger.error(
+                    f"Sphinx build for {project_slug} failed. Return code: {returncode}"
+                )
 
     except RuntimeError as e:
-        logger.error(f"Critical error during isolated build setup for {project_slug}: {e}")
+        logger.error(
+            f"Critical error during isolated build setup for {project_slug}: {e}"
+        )
     except Exception as e:
-        logger.exception(f"Unexpected exception during isolated Sphinx build for {project_slug}: {e}")
+        logger.exception(
+            f"Unexpected exception during isolated Sphinx build for {project_slug}: {e}"
+        )
     finally:
         logger.info(f"--- Finished Isolated Sphinx Build for {project_slug} ---")
 
@@ -655,7 +691,9 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
     return default_branch, repo_url
 
 
-def download_readthedocs_source_and_build(project_name, project_url, existing_clone_path=None):
+def download_readthedocs_source_and_build(
+    project_name, project_url, existing_clone_path=None
+):
     """Get RTD sources, clone, isolate sources doc, executes Sphinx, and cleans-up.
 
     Args:
@@ -690,7 +728,7 @@ def download_readthedocs_source_and_build(project_name, project_url, existing_cl
     clone_dir_path = base_output_dir / clone_dir_name
     cloned_repo_exists_before = os.path.exists(clone_dir_path)
     bzr = False
-    if repo_url and repo_url.startswith('lp:'):
+    if repo_url and repo_url.startswith("lp:"):
         bzr = True
     if repo_url and not cloned_repo_exists_before:
         print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
@@ -765,9 +803,7 @@ def download_readthedocs_source_and_build(project_name, project_url, existing_cl
 
     isolated_docs_output_dir = PROJECT_ROOT / "rtd_isolated_doc_sources"
     isolated_docs_output_dir.mkdir(parents=True, exist_ok=True)
-    isolated_source_path = find_doc_source_in_clone(
-        clone_dir_path
-    )
+    isolated_source_path = find_doc_source_in_clone(clone_dir_path)
 
     build_output_path = None
     if isolated_source_path:
@@ -794,11 +830,12 @@ def download_readthedocs_source_and_build(project_name, project_url, existing_cl
     print("\nFailed Isolating sources and build Sphinx.")
     return None, None
 
+
 if __name__ == "__main__":
     project_name_example = "black"
-    project_url_example = "https://github.com/psf/black"  # o l'URL RTD se la tua logica lo gestisce
-    isolated_folder, build_folder = download_readthedocs_source_and_build(
-        project_name=project_name_example,
-        project_url=project_url_example
+    project_url_example = (
+        "https://github.com/psf/black"  # o l'URL RTD se la tua logica lo gestisce
     )
-
+    isolated_folder, build_folder = download_readthedocs_source_and_build(
+        project_name=project_name_example, project_url=project_url_example
+    )
