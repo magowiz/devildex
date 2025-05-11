@@ -617,7 +617,7 @@ def build_sphinx_docs(
                 str(final_output_dir),
             ]
 
-            logger.info(f"Executing Sphinx: {' '.join(sphinx_command)}")
+            logger.info(f"Executing Sphinx: %s", ' '.join(sphinx_command))
             sphinx_env = {"LC_ALL": "C"}
             stdout, stderr, returncode = execute_command(
                 sphinx_command,

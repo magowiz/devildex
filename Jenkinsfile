@@ -24,7 +24,6 @@ pipeline {
                 }
             }
         }
-
         stage('Build Docker Image') {
             agent any
             steps {
@@ -37,13 +36,13 @@ pipeline {
                     when {
                         not {
                             changelog "$LINT_TAG_REGEX"
+                        }
                     }
-                }
                     environment {
                         JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
                         JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
                         JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
-                }
+                    }
                     agent {
                         dockerfile {
                             label 'general'
@@ -52,20 +51,20 @@ pipeline {
                                   -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket'
                             filename 'Dockerfile'
                             dir 'ci_dockerfiles/generate_doc'
+                        }
                     }
-                }
                     steps {
                         pythonGenerateDocsSphinx(packager: 'poetry')
-                }
+                    }
                     post {
                         always {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
                                          reportDir: 'build/html', reportFiles: 'index.html',
                                          reportName: 'Documentation', reportTitles: '',
                                          useWrapperFileDirectly: true])
+                        }
                     }
-                }
-            }
+        }
         stage('megalinter') {
             agent {
                 docker {
@@ -109,8 +108,8 @@ pipeline {
                             args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
                             filename 'Dockerfile'
                             dir 'ci_dockerfiles/pytest_x11'
+                        }
                     }
-                }
                     environment {
                         DROPBOX_TOKEN = credentials('dropbox_token')
                         GDRIVE_TOKEN = credentials('google_drive_token')
@@ -162,7 +161,6 @@ pipeline {
                         }
                     }
                 }
-            }
         }
         stage('SonarQube analysis') {
             environment {
@@ -237,7 +235,6 @@ pipeline {
                             }
                         }
                     }
-
                     stage('Build Nuitka') {
                         agent {
                             dockerfile {
@@ -261,9 +258,7 @@ pipeline {
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh 'python -m pip install --break-system-packages nuitka'
-
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
-
                                     echo "Starting Nuitka build for Linux on host ${env.ARCH}"
                                     sh "python -m nuitka src/devildex/main.py --standalone --onefile \
                                         --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
@@ -284,7 +279,6 @@ pipeline {
                             }
                         }
                     }
-
                     stage('Build PyOxidizer') {
                         agent {
                             dockerfile {
@@ -309,7 +303,6 @@ pipeline {
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh 'python -m pip install --break-system-packages pyoxidizer'
                                     sh "mkdir -p dist/${env.ARCH}/pyoxidizer"
-
                                     sh 'pyoxidizer build'
                                     def sourceFolder = '-unknown-linux-gnu/debug/install/'
                                     def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
@@ -318,10 +311,8 @@ pipeline {
                                     } else if (env.ARCH != 'amd64') {
                                         error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
                                     }
-
                                     echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
                                     sh "ls -l ${sourceBuildPath}"
-
                                     def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
                                     sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
                                     sh "chmod +r '${finalArtifactName}'"
@@ -344,8 +335,6 @@ pipeline {
                 }
             }
         }
-
-
         stage('Build macOS Package (Requires macOS Agent)') {
             agent {
                 label 'amd64'
@@ -356,10 +345,8 @@ pipeline {
             steps {
                 script {
                     echo "--- Start Build macOS Package on ${env.ARCH} ---"
-
                     echo 'Configuring macOS environment...'
                     echo 'Executing macOS build commands ...'
-
                     echo 'Placeholder: build macOS Commands completed.'
                     echo "--- End Build macOS Package on ${env.ARCH} ---"
                 }
@@ -368,6 +355,6 @@ pipeline {
                 always {
                     cleanWs()
                 }
-             }
+            }
         }
 
