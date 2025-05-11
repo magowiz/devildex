@@ -15,15 +15,7 @@ pipeline {
         IP_INDEX_URL = 'http://192.168.2.11:5000/index/'
         LINT_TAG_REGEX = '.*\\[lint\\].*'
     }
-    stages {
-        stage('Checkout') {
-            agent any
-            steps {
-                script {
-                    checkout scm
-                }
-            }
-        }
+
         stage('Build Docker Image') {
             agent any
             steps {

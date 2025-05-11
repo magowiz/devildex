@@ -24,5 +24,13 @@ pipeline {
                 }
             }
         }
+        stage('Build Docker Image') {
+            agent any
+            steps {
+                script {
+                    sh 'docker build -t devil-dex-build:latest .'
+                }
+            }
+        }
     }
 }
