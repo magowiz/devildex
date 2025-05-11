@@ -3,7 +3,7 @@ import subprocess
 import logging # Aggiungi questo
 from pathlib import Path
 # Rimuovi l'import di _execute_command e logger da readthedocs_src
-
+from devildex.utils.deps_utils import filter_requirements_lines
 logger = logging.getLogger(__name__) # Logger specifico per questo modulo
 
 
@@ -59,9 +59,18 @@ def install_project_and_dependencies_in_venv(
     # Installare le dipendenze specifiche della documentazione, se specificate
     if doc_requirements_path and doc_requirements_path.exists():
         logger.info(f"Attempting to install documentation-specific dependencies from '{doc_requirements_path}' into the venv...")
+        logger.info(f"Attempting to filter requirements file: {doc_requirements_path}")
+        filtered_req_lines = filter_requirements_lines(str(doc_requirements_path))
 
         # Esegui pip dalla cartella del requirements.txt o dalla radice del progetto
         requirements_filename = doc_requirements_path.name
+        if filtered_req_lines:
+            with open(doc_requirements_path.parent / requirements_filename, 'wt') as req_file:
+                for line in filtered_req_lines:
+                    req_file.write(f"{line}\n")
+
+
+
         req_install_cmd = [pip_executable, "install", "--disable-pip-version-check", "--no-python-version-warning",
                            "-r", requirements_filename]
         pip_stdout, pip_stderr, ret_code = execute_command(

@@ -694,9 +694,10 @@ def download_readthedocs_source_and_build(project_name, project_url, existing_cl
         bzr = True
     if repo_url and not cloned_repo_exists_before:
         print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
+        fallback_branches = ["master", "main"]
         try:
             if not bzr:
-                subprocess.run(
+                result = subprocess.run(
                     [
                         "git",
                         "clone",
@@ -707,11 +708,32 @@ def download_readthedocs_source_and_build(project_name, project_url, existing_cl
                         repo_url,
                         clone_dir_path,
                     ],
-                    check=True,
+                    check=False,
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
                 )
+                if result.returncode != 0:
+                    for default_branch in fallback_branches:
+                        shutil.rmtree(clone_dir_path, ignore_errors=True)
+                        result = subprocess.run(
+                            [
+                                "git",
+                                "clone",
+                                "--depth",
+                                "1",
+                                "--branch",
+                                default_branch,
+                                repo_url,
+                                clone_dir_path,
+                            ],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                        )
+                        if result.returncode == 0:
+                            break
             else:
                 subprocess.run(
                     [

@@ -61,7 +61,7 @@ PACKAGES_TO_TEST = [
         "project_name": "fastapi",
         "project_url": "https://github.com/tiangolo/fastapi.git",
         "expected_preferred_type": "docstrings",
-        "expected_entry_point": "fastapi/index.html",
+        "expected_entry_point": "index.html"
     },
     {
         "repo_url": "https://github.com/requests/requests.git",

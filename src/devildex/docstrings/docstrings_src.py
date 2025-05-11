@@ -13,6 +13,10 @@ from pathlib import Path
 from types import ModuleType
 
 import pdoc
+
+from devildex.utils.venv_cm import IsolatedVenvManager
+from devildex.utils.venv_utils import execute_command, install_project_and_dependencies_in_venv
+
 logger = logging.getLogger(__name__)
 CONFIG_FILE = "../../../devildex_config.ini"
 
@@ -274,40 +278,30 @@ class DocStringsSrc:
                 install_deps_success = install_project_and_dependencies_in_venv(
                     pip_executable=venv.pip_executable,
                     project_name=project_name,
-                    project_root_for_install=source_project_path,  # Per `pip install -e .`
+                    project_root_for_install=source_project_path,
                     doc_requirements_path=requirements_file_to_install,
-                    base_packages_to_install=["pdoc>=14.0"]  # Installa pdoc nel venv
+                    base_packages_to_install=["pdoc>=14.0"]
                 )
 
                 if not install_deps_success:
-                    # install_project_and_dependencies_in_venv restituisce False
-                    # solo se l'installazione dei pacchetti base (pdoc qui) fallisce.
                     logger.error(f"DocStringsSrc: CRITICAL: Failed to install pdoc "
                                  f"for {project_name} in venv. Aborting pdoc build.")
-                    return False  # Fallimento critico
-
-                # 5. Esegui pdoc usando execute_command
-                # Comando: python -m pdoc <module_name> --html -o <output_base_dir>
-                # pdoc creerà <output_base_dir>/<module_name>/index.html
+                    return False
                 pdoc_command = [
-                    venv.python_executable,  # Python del venv
+                    venv.python_executable,
                     "-m", "pdoc",
-                    project_name,  # Il modulo/package principale da documentare
-                    "--html",  # Forza output HTML
-                    "-o", str(base_output_dir_for_pdoc.resolve())  # Directory base per l'output di pdoc
+                    project_name,
+                    "-o", str(base_output_dir_for_pdoc.resolve() / project_name)
                 ]
 
                 logger.info(f"DocStringsSrc: Executing pdoc: {' '.join(pdoc_command)}")
-                # Esegui pdoc dalla radice del progetto clonato (input_folder)
-                # così che pdoc possa risolvere import relativi se il progetto li usa.
                 stdout, stderr, returncode = execute_command(
                     pdoc_command,
                     f"pdoc HTML generation for {project_name}",
-                    cwd=source_project_path  # Esegui dalla radice del progetto clonato
+                    cwd=source_project_path
                 )
 
                 if returncode == 0:
-                    # Verifica che l'output atteso (es. docset/fastapi/index.html) sia stato creato
                     if final_project_pdoc_output_dir.exists() and \
                             (final_project_pdoc_output_dir / "index.html").exists():
                         logger.info(f"DocStringsSrc: pdoc build for {project_name} completed successfully. "
@@ -319,24 +313,20 @@ class DocStringsSrc:
                                      f"{final_project_pdoc_output_dir / 'index.html'}.")
                         logger.debug(f"pdoc stdout:\n{stdout}")
                         logger.debug(f"pdoc stderr:\n{stderr}")
-                        # build_successful rimane False
                 else:
                     logger.error(f"DocStringsSrc: pdoc build for {project_name} FAILED. Return code: {returncode}")
                     logger.debug(f"pdoc stdout:\n{stdout}")  # Logga sempre stdout/stderr per il debug di pdoc
                     logger.debug(f"pdoc stderr:\n{stderr}")
-                    # build_successful rimane False
 
-        except RuntimeError as e:  # Errore dalla creazione del venv
+
+        except RuntimeError as e:
             logger.error(f"DocStringsSrc: Critical error during isolated pdoc build setup for {project_name}: {e}")
-            # build_successful rimane False
-        except Exception as e:  # Altre eccezioni impreviste
+        except Exception as e:
             logger.exception(f"DocStringsSrc: Unexpected exception during isolated pdoc build for {project_name}")
-            # build_successful rimane False
         finally:
             logger.info(f"--- Finished Isolated pdoc Build for {project_name} ---")
 
         if build_successful:
-            # Restituisce il percorso alla directory specifica del progetto (es. "docset/fastapi")
             return str(final_project_pdoc_output_dir)
         else:
             # Se la build fallisce, assicurati che la directory di output parziale venga rimossa

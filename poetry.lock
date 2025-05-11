@@ -1146,6 +1146,27 @@ mako = "*"
 markdown = ">=3.0"
 
 [[package]]
+name = "pip-requirements-parser"
+version = "32.0.1"
+description = "pip requirements parser - a mostly correct pip requirements parsing library because it uses pip's own code."
+optional = false
+python-versions = ">=3.6.0"
+groups = ["main"]
+markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
+files = [
+    {file = "pip-requirements-parser-32.0.1.tar.gz", hash = "sha256:b4fa3a7a0be38243123cf9d1f3518da10c51bdb165a2b2985566247f9155a7d3"},
+    {file = "pip_requirements_parser-32.0.1-py3-none-any.whl", hash = "sha256:4659bc2a667783e7a15d190f6fccf8b2486685b6dba4c19c3876314769c57526"},
+]
+
+[package.dependencies]
+packaging = "*"
+pyparsing = "*"
+
+[package.extras]
+docs = ["Sphinx (>=3.3.1)", "doc8 (>=0.8.1)", "sphinx-rtd-theme (>=0.5.0)"]
+testing = ["aboutcode-toolkit (>=6.0.0)", "black", "pytest (>=6,!=7.0.0)", "pytest-xdist (>=2)"]
+
+[[package]]
 name = "platformdirs"
 version = "4.3.7"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -1333,6 +1354,22 @@ files = [
     {file = "pyoxidizer-0.24.0-py3-none-win32.whl", hash = "sha256:4ccc59d157952bccb6ab6897f061966ac31403b2cee18fe9dfbd871f429bd34c"},
     {file = "pyoxidizer-0.24.0-py3-none-win_amd64.whl", hash = "sha256:9b18f8d5f6b309ec856109b2f4d8228bae513da0b0213991e3305cf73583c385"},
 ]
+
+[[package]]
+name = "pyparsing"
+version = "3.2.3"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
+files = [
+    {file = "pyparsing-3.2.3-py3-none-any.whl", hash = "sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf"},
+    {file = "pyparsing-3.2.3.tar.gz", hash = "sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be"},
+]
+
+[package.extras]
+diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pyside6"
@@ -2080,4 +2117,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "ca19435827909cd3c51f7681635555495d8ca737888ce90b924411752f29f231"
+content-hash = "33f7bb18f04485abeed7eb5fbcb285f1eb7a581c7e9bcdc8ac49935d014949c8"
