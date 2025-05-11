@@ -96,7 +96,62 @@ pipeline {
                 }
             }
         }
+        stage('test code') {
+                    when {
+                        not {
+                            changelog "$LINT_TAG_REGEX"
+                        }
+                    }
+                    agent {
+                        dockerfile {
+                            reuseNode true
+                            args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
+                            filename 'Dockerfile'
+                            dir 'ci_dockerfiles/pytest_x11'
+                        }
+                    }
+                    environment {
+                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                    }
+                    options {
+                        throttle(['pytest_telenium'])
+                    }
+                    steps {
+                        sh 'pip install -e . --timeout 10000'
+                        sh 'touch app.log'
+                        sh 'echo $PWD > pwd.log'
+                        pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
+                               skipMarkers: '')
+                        script {
+                            def exists = fileExists 'core'
+                            if (exists) {
+                                    echo 'core found'
+                                    sh 'pip install pystack'
+                                    sh 'pystack core core /usr/local/bin/python'
+                                    sh 'mv core oldcore'
+                                    sh 'pip list | grep pytest'
+                            }
+                            stash includes: 'coverage_report_xml/coverage.xml', name: 'coverageReportXML', allowEmpty: true
+                        }
+                    }
+                    post {
+                        always {
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'test_report', reportFiles: 'index.html',
+                                         reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'coverage_report', reportFiles: 'index.html',
+                                         reportName: 'Coverage Report', reportTitles: '',
+                                         useWrapperFileDirectly: true])
+                            archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
+                        }
+                    }
 
+        }
 
     }
 }
