@@ -4,9 +4,7 @@ import importlib.metadata
 
 
 def get_installed_packages_with_docs_urls(explicit=None):
-    """Return a list of tuple (package_name, version, docs_url)
-    for all packages installed that declares a documentation URL.
-    """
+    """Return a list of tuple for all packages installed that declares a documentation URL."""
     package_list = []
     for dist in importlib.metadata.distributions():
         if explicit and dist.name not in explicit:

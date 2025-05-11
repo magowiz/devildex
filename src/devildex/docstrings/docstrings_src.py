@@ -214,16 +214,10 @@ class DocStringsSrc:
 
     def generate_docs_from_folder(
         self,
-        project_name: str,  # Nome del progetto/modulo principale da documentare (es. "fastapi")
-        input_folder: str,  # Path alla radice del clone del progetto (es. "/tmp/clone_di_fastapi")
+        project_name: str,
+        input_folder: str,
         output_folder: str,
-        # Path alla directory base dove TUTTI i docset pdoc vengono salvati (es. "PROJECT_ROOT/docset")
-        # Questo 'output_folder' è self.pdoc_base_output_dir
-        # L'argomento 'modules_to_document' non è più necessario se documentiamo 'project_name'.
-        # L'argomento 'venv_python_interpreter' non è più necessario.
-    ) -> (
-        str | bool
-    ):  # Restituisce il percorso alla documentazione specifica del progetto (es. "docset/fastapi") o False
+    ) -> str | bool:
         """
         Genera documentazione HTML per un progetto Python usando pdoc in un ambiente isolato.
         """
@@ -236,14 +230,16 @@ class DocStringsSrc:
 
         logger.info(f"--- Starting Isolated pdoc Build for {project_name} ---")
         logger.info(
-            f"DocStringsSrc: Project root (cloned input): {source_project_path}"
+            "DocStringsSrc: Project root (cloned input): %s",
+            source_project_path
         )
         logger.info(f"DocStringsSrc: Module to document with pdoc: {project_name}")
         logger.info(
             f"DocStringsSrc: Base output directory for pdoc outputs: {base_output_dir_for_pdoc}"
         )
         logger.info(
-            f"DocStringsSrc: Final output directory for this project: {final_project_pdoc_output_dir}"
+            "DocStringsSrc: Final output directory for "
+            f"this project: {final_project_pdoc_output_dir}"
         )
 
         # 1. Pulizia della directory di output specifica per questo progetto, se esiste
@@ -308,8 +304,9 @@ class DocStringsSrc:
 
                 if not install_deps_success:
                     logger.error(
-                        f"DocStringsSrc: CRITICAL: Failed to install pdoc "
-                        f"for {project_name} in venv. Aborting pdoc build."
+                        "DocStringsSrc: CRITICAL: Failed to install pdoc "
+                        "for %s in venv. Aborting pdoc build.",
+                        project_name
                     )
                     return False
                 pdoc_command = [
@@ -348,7 +345,8 @@ class DocStringsSrc:
                         logger.debug(f"pdoc stderr:\n{stderr}")
                 else:
                     logger.error(
-                        f"DocStringsSrc: pdoc build for {project_name} FAILED. Return code: {returncode}"
+                        f"DocStringsSrc: pdoc build for {project_name} FAILED. "
+                        f"Return code: {returncode}"
                     )
                     logger.debug(
                         f"pdoc stdout:\n{stdout}"
@@ -357,7 +355,8 @@ class DocStringsSrc:
 
         except RuntimeError as e:
             logger.error(
-                f"DocStringsSrc: Critical error during isolated pdoc build setup for {project_name}: {e}"
+                "DocStringsSrc: Critical error during isolated pdoc build setup for %s: %s",
+                project_name, e
             )
         except Exception as e:
             logger.exception(
@@ -372,13 +371,16 @@ class DocStringsSrc:
             # Se la build fallisce, assicurati che la directory di output parziale venga rimossa
             if final_project_pdoc_output_dir.exists():
                 logger.info(
-                    f"DocStringsSrc: Cleaning up partially created/failed pdoc output at {final_project_pdoc_output_dir}"
+                    "DocStringsSrc: Cleaning up partially created/failed pdoc output at %s",
+                    final_project_pdoc_output_dir
                 )
                 try:
                     shutil.rmtree(final_project_pdoc_output_dir)
                 except OSError as e_clean:
                     logger.error(
-                        f"DocStringsSrc: Error cleaning up failed pdoc output directory {final_project_pdoc_output_dir}: {e_clean}"
+                        "DocStringsSrc: Error cleaning up failed pdoc output directory"
+                        " %s: %s",
+                        final_project_pdoc_output_dir, e_clean
                     )
             return False
 

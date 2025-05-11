@@ -1,6 +1,6 @@
+import logging  # Aggiungi questo
 import os
 import subprocess
-import logging  # Aggiungi questo
 from pathlib import Path
 
 # Rimuovi l'import di _execute_command e logger da readthedocs_src
@@ -116,7 +116,8 @@ def install_project_and_dependencies_in_venv(
         )
         if ret_code == 0:
             logger.info(
-                f"Dependencies from '{doc_requirements_path}' installed successfully (or already present) in venv."
+                f"Dependencies from '{doc_requirements_path}' installed "
+                "successfully (or already present) in venv."
             )
         else:
             logger.error(
@@ -192,5 +193,7 @@ def execute_command(
         )
         return "", f"Command not found: {command[0]}", -1
     except Exception as e:
-        logger.error(f"Exception during command execution '{' '.join(command)}': {e}")
+        logger.error(
+            "Exception during command execution '%s': %s", " ".join(command), e
+        )
         return "", str(e), -2

@@ -49,7 +49,6 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
             # Using list() to realize the generator from rglob immediately
             recursive_finds_in_base = list(base_dir.rglob(filename))
             if recursive_finds_in_base:
-                # print(f"    ➡️ Found {len(recursive_finds_in_base)} instance(s) of '{filename}' recursively in {base_dir}") # Optional debug
                 found_files.extend(recursive_finds_in_base)
     # Ensure uniqueness and sort all found files (especially important after recursive search)
 

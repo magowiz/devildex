@@ -1,15 +1,13 @@
 import logging
 from pathlib import Path
 
-
 from pip_requirements_parser import RequirementsFile
 
 logger = logging.getLogger(__name__)
 
 
 def filter_requirements_lines(file_path_str: str) -> list[str] | None:
-    """
-    Legge un file requirements.txt, filtra le righe non valide
+    """Legge un file requirements.txt, filtra le righe non valide
     usando pip-requirements-parser e restituisce una lista delle stringhe di requisito valide.
 
     Args:

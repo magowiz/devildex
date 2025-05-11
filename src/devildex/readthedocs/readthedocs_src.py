@@ -1,3 +1,4 @@
+"""readthedocs source handling module."""
 import ast
 import configparser
 import logging
@@ -5,18 +6,14 @@ import os
 import re
 import shutil
 import subprocess
-
+from pathlib import Path
 import requests
-from devildex.info import VERSION, PROJECT_ROOT
-
-from devildex.utils.venv_cm import IsolatedVenvManager  # Già presente
-from pathlib import Path  # Già presente
-
+from devildex.info import PROJECT_ROOT, VERSION
+from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
     execute_command,
     install_project_and_dependencies_in_venv,
 )
-
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -34,7 +31,7 @@ try:
             f"Warning: configuration File  '{config_file}' not found. "
             "Using default values."
         )
-        custom_theme = default_theme
+        CUSTOM_THEME = default_theme
         custom_banner = DEFAULT_BANNER
     else:
         custom_theme = config.get("customization", "theme_name", fallback=default_theme)
@@ -434,8 +431,8 @@ def find_doc_source_in_clone(repo_path):
 
 
 def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
-    """
-    Finds the first potential documentation directory that contains a conf.py file.
+    """Finds the first potential documentation directory that contains a conf.py file.
+
     Also checks the repository root if no specific doc directory is found.
 
     Args:
@@ -563,7 +560,8 @@ def build_sphinx_docs(
             break
     if not doc_requirements_file:
         logger.info(
-            f"No specific 'requirements.txt' found for documentation in common locations for {project_slug}."
+            "No specific 'requirements.txt' found for documentation in common "
+            f"locations for {project_slug}."
         )
 
     # Determina se il progetto stesso deve essere installato (radice del clone)
@@ -580,7 +578,7 @@ def build_sphinx_docs(
 
     try:
         if final_output_dir.exists():
-            logger.info(f"Removing existing output directory: {final_output_dir}")
+            logger.info("Removing existing output directory: %s", final_output_dir)
             shutil.rmtree(final_output_dir)
         final_output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
@@ -629,23 +627,27 @@ def build_sphinx_docs(
             )
 
             if returncode == 0:
-                logger.info(f"Sphinx build for {project_slug} completed successfully.")
+                logger.info("Sphinx build for %s completed successfully.", project_slug)
                 build_successful = True
             else:
                 logger.error(
-                    f"Sphinx build for {project_slug} failed. Return code: {returncode}"
+                    "Sphinx build for %s failed. Return code: %s",
+                    project_slug, returncode
                 )
 
     except RuntimeError as e:
         logger.error(
-            f"Critical error during isolated build setup for {project_slug}: {e}"
+            "Critical error during isolated build setup for %s: %s",
+            project_slug, e
         )
     except Exception as e:
         logger.exception(
-            f"Unexpected exception during isolated Sphinx build for {project_slug}: {e}"
+            "Unexpected exception during isolated Sphinx build for %s: %s",
+            project_slug,
+            e,
         )
     finally:
-        logger.info(f"--- Finished Isolated Sphinx Build for {project_slug} ---")
+        logger.info("--- Finished Isolated Sphinx Build for %s ---", project_slug)
 
     return str(final_output_dir) if build_successful else None
 

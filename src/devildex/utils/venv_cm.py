@@ -1,17 +1,15 @@
+import logging  # È una buona idea aggiungere un po' di logging
+import shutil
 import subprocess
 import sys
 import tempfile
-import shutil
 from pathlib import Path
-import logging  # È una buona idea aggiungere un po' di logging
 
 logger = logging.getLogger(__name__)  # O un logger specifico per DevilDex
 
 
 class IsolatedVenvManager:
-    """
-    A context manager to create and manage a temporary isolated Python virtual environment.
-    """
+    """A context manager to create and manage a temporary isolated Python virtual environment."""
 
     def __init__(self, project_name: str, base_temp_dir: Path | None = None):
         self.project_name = project_name
@@ -68,12 +66,12 @@ class IsolatedVenvManager:
             logger.info(f"  Python executable: {self.python_executable}")
             logger.info(f"  Pip executable: {self.pip_executable}")
 
-            # Opzionale: aggiornare pip alla versione più recente nel venv
             self._upgrade_pip()
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to create venv for '{self.project_name}': {e.stderr}")
-            self._cleanup()  # Pulisci se la creazione fallisce
+            logger.error("Failed to create venv for '%s': %s",
+                         self.project_name, e.stderr)
+            self._cleanup()
             raise
         except Exception as e:
             logger.error(
@@ -108,7 +106,9 @@ class IsolatedVenvManager:
         """Removes the temporary virtual environment directory."""
         if self.venv_path and self.venv_path.exists():
             logger.info(
-                f"Cleaning up temporary venv for '{self.project_name}' at: {self.venv_path}"
+                "Cleaning up temporary venv for '%s' at: %s",
+                self.project_name,
+            self.venv_path
             )
             try:
                 shutil.rmtree(self.venv_path)
