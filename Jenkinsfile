@@ -123,6 +123,7 @@ pipeline {
                         throttle(['pytest_telenium'])
                     }
                     steps {
+                        sh 'pip install -e . --timeout 10000'
                         sh 'touch app.log'
                         sh 'echo $PWD > pwd.log'
                         sh 'mkdir -p secrets && echo $GDRIVE_TOKEN | base64 --decode > secrets/credentials.json'
