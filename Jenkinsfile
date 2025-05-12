@@ -132,7 +132,8 @@ pipeline {
                         sh 'mv core oldcore'
                         sh 'pip list | grep pytest'
                             }
-                            stash includes: 'coverage_report_xml/coverage.xml', name: 'coverageReportXML', allowEmpty: true
+                            stash includes: 'coverage_report_xml/coverage.xml',
+                                  name: 'coverageReportXML', allowEmpty: true
                         }
                     }
                     post {
@@ -150,7 +151,6 @@ pipeline {
                             archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
                         }
                     }
-
         }
         stage('SonarQube analysis') {
             environment {
