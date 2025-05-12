@@ -162,7 +162,7 @@ pipeline {
                     label 'amd64'
                     image 'sonarsource/sonar-scanner-cli'
                     reuseNode true
-                    args "-u root"
+                    args '-u root'
                 }
             }
             steps {
