@@ -1,11 +1,7 @@
 import pytest
 from pathlib import Path
 import subprocess
-import shutil
 
-"""
-    
-"""
 
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
@@ -35,13 +31,12 @@ PACKAGES_TO_TEST = [
         "expected_entry_point": "index.html",
     },
     {
-        "repo_url": "https://github.com/psf/black.git",  # Using a repo known to have local Sphinx
-        "project_name": "project-slug-intended-to-fail-rtd",  # This slug will cause RTD API failure
+        "repo_url": "https://github.com/psf/black.git",
+        "project_name": "project-slug-intended-to-fail-rtd",
         "project_url": "https://github.com/psf/black.git",
-        "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",  # RTD URL that should fail
-        "expected_preferred_type": "sphinx",  # Scan will detect sphinx locally
-        # "expected_entry_point": "index.html", # Non applicabile se l'operazione fallisce
-        "expect_grab_success": False,  # NUOVO FLAG: indica che ci aspettiamo un fallimento da grab_build_doc
+        "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",
+        "expected_preferred_type": "sphinx",
+        "expect_grab_success": False
     },
     {
         "repo_url": "https://github.com/Textualize/rich.git",
@@ -167,10 +162,9 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     )
     expect_success = package_info.get(
         "expect_grab_success", True
-    )  # Default a True se non specificato
+    )
 
     if expect_success:
-        # Se ci aspettiamo un SUCCESSO, eseguiamo le verifiche originali:
         assert (
             operation_result is not False
         ), f"Orchestrator's grab_build_doc failed for {project_name} (detected type: {detected_doc_type}). Result: {operation_result}"
@@ -189,9 +183,6 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
             output_docs_root_path.is_dir()
         ), f"Output path '{output_docs_root_path}' from Orchestrator is not a directory for {project_name}"
 
-        # Verifica l'esistenza del punto di ingresso atteso
-        # expected_entry_point_filename è relativo a output_docs_root_path
-        # Assicurati che expected_entry_point_filename sia definito per i casi di successo
         assert (
             expected_entry_point_filename is not None
         ), f"expected_entry_point_filename is missing in test config for {project_name} when success is expected."
@@ -205,8 +196,6 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
             len(html_files) > 0
         ), f"No HTML files found in output for {project_name} at {output_docs_root_path}"
     else:
-        # Se ci aspettiamo un FALLIMENTO (come per package_info3):
-        # Verifichiamo che il risultato sia None, come ci aspettiamo
         assert (
             operation_result is None
         ), f"Expected grab_build_doc to result in None for {project_name} due to expected failure, but got type {type(operation_result)} with value: {operation_result}"
