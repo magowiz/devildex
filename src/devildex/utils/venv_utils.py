@@ -11,12 +11,8 @@ logger = logging.getLogger(__name__)
 def install_project_and_dependencies_in_venv(
     pip_executable: str,
     project_name: str,
-    project_root_for_install: (
-        Path | None
-    ),
-    doc_requirements_path: (
-        Path | None
-    ),
+    project_root_for_install: Path | None,
+    doc_requirements_path: Path | None,
     base_packages_to_install=None,
 ) -> bool:
     """Installa il progetto e/o le sue dipendenze nel venv fornito."""
@@ -72,19 +68,20 @@ def install_project_and_dependencies_in_venv(
             if ret_code == 0:
                 logger.info(
                     "Project '%s' installed successfully (or already present) in venv.",
-                    project_name
+                    project_name,
                 )
             else:
                 logger.error(
                     "Failed to install project '%s' in venv. "
-                    "Error details in DEBUG log.", project_name
+                    "Error details in DEBUG log.",
+                    project_name,
                 )
                 success = False
     else:
         logger.info(
             "No project root provided for installation, or path does not exist. "
             "Skipping editable install of project '%s'.",
-            project_name
+            project_name,
         )
 
     if doc_requirements_path and doc_requirements_path.exists():
@@ -92,8 +89,7 @@ def install_project_and_dependencies_in_venv(
             "Attempting to install documentation-specific dependencies from "
             f"'{doc_requirements_path}' into the venv..."
         )
-        logger.info("Attempting to filter requirements file: %s",
-                    doc_requirements_path)
+        logger.info("Attempting to filter requirements file: %s", doc_requirements_path)
         filtered_req_lines = filter_requirements_lines(str(doc_requirements_path))
 
         requirements_filename = doc_requirements_path.name
@@ -115,18 +111,19 @@ def install_project_and_dependencies_in_venv(
         pip_stdout, pip_stderr, ret_code = execute_command(
             req_install_cmd,
             f"Install doc requirements for {project_name}",
-            cwd=doc_requirements_path.parent
+            cwd=doc_requirements_path.parent,
         )
         if ret_code == 0:
             logger.info(
                 "Dependencies from '%s' installed "
                 "successfully (or already present) in venv.",
-                doc_requirements_path
+                doc_requirements_path,
             )
         else:
             logger.error(
                 "Failed to install dependencies from '%s' "
-                "in venv. Error details in DEBUG log.", doc_requirements_path
+                "in venv. Error details in DEBUG log.",
+                doc_requirements_path,
             )
             success = False
     elif doc_requirements_path:  # Se il path era fornito ma non esiste
@@ -136,7 +133,8 @@ def install_project_and_dependencies_in_venv(
     else:
         logger.info(
             "No documentation requirements file provided for %s, "
-            "skipping dependency installation.", project_name
+            "skipping dependency installation.",
+            project_name,
         )
     return success
 
@@ -154,8 +152,7 @@ def execute_command(
         print(f"DEBUG EXEC_CMD: Full command list: {command}")
         print(f"DEBUG EXEC_CMD: Working directory (cwd): {cwd_str or '.'}")
 
-        logger.info("Executing: %s (cwd: %s)",
-                    ' '.join(command), cwd_str or '.')
+        logger.info("Executing: %s (cwd: %s)", " ".join(command), cwd_str or ".")
         process = subprocess.run(
             command,
             capture_output=True,
@@ -191,13 +188,12 @@ def execute_command(
             if process.stdout.strip():
                 logger.debug(f"Stdout (success):\n%s", process.stdout.strip())
             if process.stderr.strip():
-                logger.debug("Stderr (success/warnings):\n%s",
-                             process.stderr.strip())
+                logger.debug("Stderr (success/warnings):\n%s", process.stderr.strip())
         return process.stdout, process.stderr, process.returncode
     except FileNotFoundError:
         logger.error(
             "Command not found: %s. Ensure it's in PATH or provide full path.",
-            command[0]
+            command[0],
         )
         return "", f"Command not found: {command[0]}", -1
     except Exception as e:

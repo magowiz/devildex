@@ -1,4 +1,5 @@
 """readthedocs source handling module."""
+
 import ast
 import configparser
 import logging
@@ -483,7 +484,7 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
                 "build",
                 "dist",
                 "docs/_build",
-                "site"
+                "site",
             ]
         ]
         if "conf.py" in files:
@@ -507,7 +508,8 @@ def build_sphinx_docs(
     """Execute sphinx-build in a temporary, isolated virtual environment."""
     logger.info(
         "\n--- Starting Isolated Sphinx Build for %s v%s ---",
-        project_slug, version_identifier
+        project_slug,
+        version_identifier,
     )
     source_dir_path = Path(isolated_source_path)
     clone_root_path = Path(original_clone_dir_path)
@@ -530,25 +532,21 @@ def build_sphinx_docs(
         clone_root_path / "requirements.txt",
         clone_root_path / "docs" / "requirements.txt",
         clone_root_path / "doc" / "requirements.txt",
-        clone_root_path
-        / "requirements"
-        / "docs.txt",
-        clone_root_path
-        / "requirements"
-        / "doc.txt",
+        clone_root_path / "requirements" / "docs.txt",
+        clone_root_path / "requirements" / "doc.txt",
     ]
     for req_path_candidate in candidate_req_paths:
         if req_path_candidate.exists():
             doc_requirements_file = req_path_candidate
             logger.info(
-                "Found documentation requirements file: %s",
-                doc_requirements_file
+                "Found documentation requirements file: %s", doc_requirements_file
             )
             break
     if not doc_requirements_file:
         logger.info(
             "No specific 'requirements.txt' found for documentation in common "
-            "locations for %s.", project_slug
+            "locations for %s.",
+            project_slug,
         )
 
     project_install_root: Path | None = clone_root_path
@@ -565,8 +563,7 @@ def build_sphinx_docs(
         final_output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         logger.error(
-            "Error creating/cleaning output directory %s: %s",
-            final_output_dir, e
+            "Error creating/cleaning output directory %s: %s", final_output_dir, e
         )
         return None
 
@@ -587,7 +584,7 @@ def build_sphinx_docs(
                 logger.error(
                     "CRITICAL: Installation of project/dependencies (including Sphinx) "
                     "for %s FAILED or had critical issues. Aborting Sphinx build.",
-                    project_slug
+                    project_slug,
                 )
                 return None
 
@@ -601,7 +598,7 @@ def build_sphinx_docs(
                 str(final_output_dir),
             ]
 
-            logger.info("Executing Sphinx: %s", ' '.join(sphinx_command))
+            logger.info("Executing Sphinx: %s", " ".join(sphinx_command))
             sphinx_env = {"LC_ALL": "C"}
             stdout, stderr, returncode = execute_command(
                 sphinx_command,
@@ -616,13 +613,13 @@ def build_sphinx_docs(
             else:
                 logger.error(
                     "Sphinx build for %s failed. Return code: %s",
-                    project_slug, returncode
+                    project_slug,
+                    returncode,
                 )
 
     except RuntimeError as e:
         logger.error(
-            "Critical error during isolated build setup for %s: %s",
-            project_slug, e
+            "Critical error during isolated build setup for %s: %s", project_slug, e
         )
     except Exception as e:
         logger.exception(
@@ -819,9 +816,7 @@ def download_readthedocs_source_and_build(
 
 if __name__ == "__main__":
     PROJECT_NAME_EXAMPLE = "black"
-    PROJECT_URL_EXAMPLE = (
-        "https://github.com/psf/black"
-    )
+    PROJECT_URL_EXAMPLE = "https://github.com/psf/black"
     isolated_folder, build_folder = download_readthedocs_source_and_build(
         project_name=PROJECT_NAME_EXAMPLE, project_url=PROJECT_URL_EXAMPLE
     )

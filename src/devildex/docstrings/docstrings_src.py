@@ -226,31 +226,30 @@ class DocStringsSrc:
 
         logger.info("--- Starting Isolated pdoc Build for %s ---", project_name)
         logger.info(
-            "DocStringsSrc: Project root (cloned input): %s",
-            source_project_path
+            "DocStringsSrc: Project root (cloned input): %s", source_project_path
         )
         logger.info("DocStringsSrc: Module to document with pdoc: %s", project_name)
         logger.info(
             "DocStringsSrc: Base output directory for pdoc outputs: %s",
-            base_output_dir_for_pdoc
+            base_output_dir_for_pdoc,
         )
         logger.info(
-            "DocStringsSrc: Final output directory for "
-            "this project: %s",
-            final_project_pdoc_output_dir
+            "DocStringsSrc: Final output directory for " "this project: %s",
+            final_project_pdoc_output_dir,
         )
 
         if final_project_pdoc_output_dir.exists():
             logger.info(
                 "DocStringsSrc: Removing existing pdoc output directory: %s",
-                final_project_pdoc_output_dir
+                final_project_pdoc_output_dir,
             )
             try:
                 shutil.rmtree(final_project_pdoc_output_dir)
             except OSError as e:
                 logger.error(
                     "DocStringsSrc: Error removing %s: %s",
-                    final_project_pdoc_output_dir, e
+                    final_project_pdoc_output_dir,
+                    e,
                 )
                 return False
 
@@ -259,19 +258,16 @@ class DocStringsSrc:
         requirements_file_to_install: Path | None = None
         candidate_req_paths = [
             source_project_path / "requirements.txt",
-            source_project_path
-            / "dev-requirements.txt",
+            source_project_path / "dev-requirements.txt",
             source_project_path / "requirements-dev.txt",
-            source_project_path
-            / "docs"
-            / "requirements.txt"
+            source_project_path / "docs" / "requirements.txt",
         ]
         for req_path_candidate in candidate_req_paths:
             if req_path_candidate.exists() and req_path_candidate.is_file():
                 requirements_file_to_install = req_path_candidate
                 logger.info(
                     "DocStringsSrc: Found requirements file for dependencies: %s",
-                    requirements_file_to_install
+                    requirements_file_to_install,
                 )
                 break
         if not requirements_file_to_install:
@@ -279,7 +275,7 @@ class DocStringsSrc:
                 "DocStringsSrc: No general 'requirements.txt' found for %s "
                 "in common locations. "
                 "Will rely on project's setup (e.g., setup.py, pyproject.toml).",
-                project_name
+                project_name,
             )
 
         build_successful = False
@@ -288,7 +284,7 @@ class DocStringsSrc:
             with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as venv:
                 logger.info(
                     "DocStringsSrc: Created temporary venv for pdoc at %s",
-                    venv.venv_path
+                    venv.venv_path,
                 )
 
                 install_deps_success = install_project_and_dependencies_in_venv(
@@ -303,7 +299,7 @@ class DocStringsSrc:
                     logger.error(
                         "DocStringsSrc: CRITICAL: Failed to install pdoc "
                         "for %s in venv. Aborting pdoc build.",
-                        project_name
+                        project_name,
                     )
                     return False
                 pdoc_command = [
@@ -315,7 +311,7 @@ class DocStringsSrc:
                     str(base_output_dir_for_pdoc.resolve() / project_name),
                 ]
 
-                logger.info("DocStringsSrc: Executing pdoc: %s", ' '.join(pdoc_command))
+                logger.info("DocStringsSrc: Executing pdoc: %s", " ".join(pdoc_command))
                 stdout, stderr, returncode = execute_command(
                     pdoc_command,
                     f"pdoc HTML generation for {project_name}",
@@ -330,7 +326,8 @@ class DocStringsSrc:
                         logger.info(
                             "DocStringsSrc: pdoc build for %s completed successfully. "
                             "Output: %s",
-                            project_name, final_project_pdoc_output_dir
+                            project_name,
+                            final_project_pdoc_output_dir,
                         )
                         build_successful = True
                     else:
@@ -338,30 +335,30 @@ class DocStringsSrc:
                             "DocStringsSrc: pdoc command for %s seemed to succeed (exit 0) "
                             "but expected output directory/file not found at "
                             "%s.",
-                            project_name, final_project_pdoc_output_dir / 'index.html'
+                            project_name,
+                            final_project_pdoc_output_dir / "index.html",
                         )
                         logger.debug("pdoc stdout:\n%s", stdout)
                         logger.debug("pdoc stderr:\n%s", stderr)
                 else:
                     logger.error(
-                        "DocStringsSrc: pdoc build for %s FAILED. "
-                        "Return code: %s",
-                        project_name, returncode
+                        "DocStringsSrc: pdoc build for %s FAILED. " "Return code: %s",
+                        project_name,
+                        returncode,
                     )
-                    logger.debug(
-                        "pdoc stdout:\n%s", stdout
-                    )
+                    logger.debug("pdoc stdout:\n%s", stdout)
                     logger.debug("pdoc stderr:\n%s", stderr)
 
         except RuntimeError as e:
             logger.error(
                 "DocStringsSrc: Critical error during isolated pdoc build setup for %s: %s",
-                project_name, e
+                project_name,
+                e,
             )
         except Exception:
             logger.exception(
                 "DocStringsSrc: Unexpected exception during isolated pdoc build for %s",
-                project_name
+                project_name,
             )
         finally:
             logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
@@ -371,7 +368,7 @@ class DocStringsSrc:
         if final_project_pdoc_output_dir.exists():
             logger.info(
                 "DocStringsSrc: Cleaning up partially created/failed pdoc output at %s",
-                final_project_pdoc_output_dir
+                final_project_pdoc_output_dir,
             )
             try:
                 shutil.rmtree(final_project_pdoc_output_dir)
@@ -379,7 +376,8 @@ class DocStringsSrc:
                 logger.error(
                     "DocStringsSrc: Error cleaning up failed pdoc output directory"
                     " %s: %s",
-                    final_project_pdoc_output_dir, e_clean
+                    final_project_pdoc_output_dir,
+                    e_clean,
                 )
         return False
 

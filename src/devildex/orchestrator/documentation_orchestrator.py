@@ -89,9 +89,7 @@ if __name__ == "__main__":
     example_project_path_rtd = "/tmp/test_project_for_rtd"
     example_rtd_url = "https://example-docs.readthedocs.io"  # Or None
 
-    example_project_path_local = (
-        "/tmp/test_project_local_scan"
-    )
+    example_project_path_local = "/tmp/test_project_local_scan"
 
     example_project_path_unknown = "/tmp/test_project_unknown"
 
@@ -128,9 +126,7 @@ if __name__ == "__main__":
 
     print("Starting scan...")
     orchestrator3.start_scan()
-    print(
-        f"Detected type: {orchestrator3.get_detected_doc_type()}"
-    )
+    print(f"Detected type: {orchestrator3.get_detected_doc_type()}")
 
     print("Starting grab/build documentation...")
     orchestrator3.grab_build_doc()

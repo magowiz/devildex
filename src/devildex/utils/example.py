@@ -1,6 +1,5 @@
 """example context manager venv."""
 
-
 from devildex.utils.venv_cm import IsolatedVenvManager
 
 

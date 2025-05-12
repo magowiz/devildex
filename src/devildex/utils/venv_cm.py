@@ -1,4 +1,5 @@
 """venv context manager module."""
+
 import logging
 import shutil
 import subprocess
@@ -28,8 +29,7 @@ class IsolatedVenvManager:
             )
         )
         logger.info(
-            "Creating temporary venv for '%s' at: %s",
-            self.project_name, self.venv_path
+            "Creating temporary venv for '%s' at: %s", self.project_name, self.venv_path
         )
         print(f"DEBUG VENV_CM: Attempting to create venv at: {self.venv_path}")
 
@@ -54,7 +54,7 @@ class IsolatedVenvManager:
             print(f"DEBUG VENV_CM: VENV CREATED. Pip executable: {self.pip_executable}")
             print(
                 "DEBUG VENV_CM: VENV CREATED. Does python exist? %s",
-                Path(self.python_executable).exists()
+                Path(self.python_executable).exists(),
             )
             print(
                 f"DEBUG VENV_CM: VENV CREATED. Does pip exist? {Path(self.pip_executable).exists()}"
@@ -67,14 +67,16 @@ class IsolatedVenvManager:
             self._upgrade_pip()
 
         except subprocess.CalledProcessError as e:
-            logger.error("Failed to create venv for '%s': %s",
-                         self.project_name, e.stderr)
+            logger.error(
+                "Failed to create venv for '%s': %s", self.project_name, e.stderr
+            )
             self._cleanup()
             raise
         except Exception as e:
             logger.error(
                 "An unexpected error occurred during venv creation for '%s': %s",
-                self.project_name, e
+                self.project_name,
+                e,
             )
             self._cleanup()
             raise
@@ -96,8 +98,7 @@ class IsolatedVenvManager:
             logger.info("Pip upgraded successfully in venv.")
         except subprocess.CalledProcessError as e:
             logger.warning(
-                "Failed to upgrade pip in venv '%s': %s",
-                self.venv_path, e.stderr
+                "Failed to upgrade pip in venv '%s': %s", self.venv_path, e.stderr
             )
 
     def _cleanup(self):
@@ -106,7 +107,7 @@ class IsolatedVenvManager:
             logger.info(
                 "Cleaning up temporary venv for '%s' at: %s",
                 self.project_name,
-            self.venv_path
+                self.venv_path,
             )
             try:
                 shutil.rmtree(self.venv_path)
@@ -114,7 +115,8 @@ class IsolatedVenvManager:
             except OSError as e:
                 logger.error(
                     "Error removing venv '%s': %s. Manual cleanup might be needed.",
-                    self.venv_path, e
+                    self.venv_path,
+                    e,
                 )
         self.venv_path = None
         self.python_executable = None

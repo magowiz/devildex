@@ -115,9 +115,7 @@ class DevilDexMainWindow(QMainWindow):
             item = self.results_table.item(row, column)
             if item is not None:
                 url_text = item.text()
-                if (
-                    url_text and url_text != "N/A"
-                ):
+                if url_text and url_text != "N/A":
                     url = QUrl(url_text)
                     QDesktopServices.openUrl(url)
 
