@@ -26,7 +26,7 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
             "La libreria 'pip-requirements-parser' non è installata. "
             "Impossibile filtrare il file requirements."
         )
-        return None  # O potresti voler restituire le righe originali non filtrate
+        return None
 
     valid_lines: list[str] = []
     invalid_lines_found: list[str] = []
