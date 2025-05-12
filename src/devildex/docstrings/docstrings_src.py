@@ -219,9 +219,7 @@ class DocStringsSrc:
         output_folder: str,
     ) -> str | bool:
         """Genera documentazione HTML per un progetto Python usando pdoc in un ambiente isolato."""
-        source_project_path = Path(input_folder)  # Radice del clone del progetto
-        # output_folder passato dall'Orchestrator è già la base, es. "PROJECT_ROOT/docset"
-        # quindi base_output_dir_for_pdoc è output_folder.
+        source_project_path = Path(input_folder)
         base_output_dir_for_pdoc = Path(output_folder)
 
         final_project_pdoc_output_dir = base_output_dir_for_pdoc / project_name

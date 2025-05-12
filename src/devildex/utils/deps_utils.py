@@ -30,7 +30,7 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
 
     valid_lines: list[str] = []
     invalid_lines_found: list[str] = []
-    file_path = Path(file_path_str)  # Converti in Path per coerenza
+    file_path = Path(file_path_str)
 
     if not file_path.exists():
         logger.error("Il file requirements '%s' non trovato.", file_path)

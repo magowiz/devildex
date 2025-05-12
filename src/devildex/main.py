@@ -117,7 +117,7 @@ class DevilDexMainWindow(QMainWindow):
                 url_text = item.text()
                 if (
                     url_text and url_text != "N/A"
-                ):  # Controlla che l'URL esista e non sia "N/A"
+                ):
                     url = QUrl(url_text)
                     QDesktopServices.openUrl(url)
 

@@ -260,7 +260,7 @@ def download_readthedocs_prebuilt_robust(
 if __name__ == "__main__":
     print(
         "--- Executing Script: Download Prebuilt Docs (Robust) ---"
-    )  # Titolo più generico
+    )
 
     print("\nTrying with: Black (https://black.readthedocs.io/)")
     downloaded_file_black = download_readthedocs_prebuilt_robust(

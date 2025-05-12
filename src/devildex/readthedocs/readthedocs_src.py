@@ -418,7 +418,7 @@ def find_doc_source_in_clone(repo_path):
              or None if not found.
     """
     print(f"\nSearching for documentation source directory in: {repo_path}")
-    potential_doc_dirs = ["docs", "doc", "Doc"]  # Puoi personalizzare questa lista
+    potential_doc_dirs = ["docs", "doc", "Doc"]
 
     doc_source_path = _find_doc_dir_in_repo(repo_path, potential_doc_dirs)
 

@@ -115,7 +115,7 @@ def install_project_and_dependencies_in_venv(
         pip_stdout, pip_stderr, ret_code = execute_command(
             req_install_cmd,
             f"Install doc requirements for {project_name}",
-            cwd=doc_requirements_path.parent,  # Usa Path object
+            cwd=doc_requirements_path.parent
         )
         if ret_code == 0:
             logger.info(

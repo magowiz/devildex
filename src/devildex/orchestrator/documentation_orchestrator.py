@@ -90,7 +90,7 @@ if __name__ == "__main__":
     example_rtd_url = "https://example-docs.readthedocs.io"  # Or None
 
     example_project_path_local = (
-        "/tmp/test_project_local_scan"  # For Sphinx or docstrings
+        "/tmp/test_project_local_scan"
     )
 
     example_project_path_unknown = "/tmp/test_project_unknown"
@@ -108,7 +108,6 @@ if __name__ == "__main__":
     orchestrator1.grab_build_doc()
     print(f"Operation outcome: {orchestrator1.get_last_operation_result()}")
 
-    # Scenario 2: Project without RTD URL (relying on local scan)
     print(
         f"\n--- Scenario 2: Project without RTD URL (path: {example_project_path_local}) ---"
     )
