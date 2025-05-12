@@ -1,12 +1,11 @@
-import logging  # Aggiungi questo
+import logging
 import os
 import subprocess
 from pathlib import Path
 
-# Rimuovi l'import di _execute_command e logger da readthedocs_src
 from devildex.utils.deps_utils import filter_requirements_lines
 
-logger = logging.getLogger(__name__)  # Logger specifico per questo modulo
+logger = logging.getLogger(__name__)
 
 
 def install_project_and_dependencies_in_venv(
@@ -14,10 +13,10 @@ def install_project_and_dependencies_in_venv(
     project_name: str,
     project_root_for_install: (
         Path | None
-    ),  # Path alla radice del progetto per 'pip install -e .'
+    ),
     doc_requirements_path: (
         Path | None
-    ),  # Path completo al file requirements.txt per i docs
+    ),
     base_packages_to_install=None,
 ) -> bool:
     """Installa il progetto e/o le sue dipendenze nel venv fornito."""
@@ -65,11 +64,10 @@ def install_project_and_dependencies_in_venv(
                 "-e",
                 ".",
             ]
-            # Esegui pip dalla radice del progetto
             pip_stdout, pip_stderr, ret_code = execute_command(
                 install_cmd,
                 f"Editable install of {project_name}",
-                cwd=project_root_for_install,  # Usa Path object direttamente
+                cwd=project_root_for_install,
             )
             if ret_code == 0:
                 logger.info(
@@ -148,7 +146,6 @@ def execute_command(
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
     try:
-        # Assicura che cwd sia una stringa se è un Path
         cwd_str = str(cwd) if cwd else None
         current_env = os.environ.copy()
         if env:
