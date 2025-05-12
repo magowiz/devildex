@@ -33,17 +33,17 @@ pipeline {
             }
         }
         stage('generate documentation') {
-             when {
-                   not {
+            when {
+                not {
                             changelog "$LINT_TAG_REGEX"
-                        }
-             }
-             environment {
+                }
+            }
+            environment {
                         JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
                         JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
                         JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
-             }
-             agent {
+            }
+            agent {
                     dockerfile {
                             label 'general'
                             reuseNode true
