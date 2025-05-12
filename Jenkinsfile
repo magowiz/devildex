@@ -53,10 +53,10 @@ pipeline {
                             dir 'ci_dockerfiles/generate_doc'
                     }
              }
-             steps {
+            steps {
                         pythonGenerateDocsSphinx(packager: 'poetry')
-             }
-             post {
+            }
+            post {
                         always {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
                                          reportDir: 'build/html', reportFiles: 'index.html',
@@ -126,11 +126,11 @@ pipeline {
                         script {
                             def exists = fileExists 'core'
                             if (exists) {
-                                    echo 'core found'
-                                    sh 'pip install pystack'
-                                    sh 'pystack core core /usr/local/bin/python'
-                                    sh 'mv core oldcore'
-                                    sh 'pip list | grep pytest'
+                        echo 'core found'
+                        sh 'pip install pystack'
+                        sh 'pystack core core /usr/local/bin/python'
+                        sh 'mv core oldcore'
+                        sh 'pip list | grep pytest'
                             }
                             stash includes: 'coverage_report_xml/coverage.xml', name: 'coverageReportXML', allowEmpty: true
                         }
@@ -154,7 +154,8 @@ pipeline {
         }
         stage('SonarQube analysis') {
             environment {
-                SONAR_SCANNER_OPTS = '--add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED'
+                SONAR_SCANNER_OPTS = '--add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+                                      --add-opens java.base/java.io=ALL-UNNAMED'
             }
             agent {
                 docker {
