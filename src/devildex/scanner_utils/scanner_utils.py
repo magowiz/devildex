@@ -45,25 +45,21 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
     if found_files:
         return found_files
     for base_dir in base_dirs:
-        if base_dir.is_dir():  # Ensure it's a directory before rglob
-            # Using list() to realize the generator from rglob immediately
+        if base_dir.is_dir():
             recursive_finds_in_base = list(base_dir.rglob(filename))
             if recursive_finds_in_base:
                 found_files.extend(recursive_finds_in_base)
-    # Ensure uniqueness and sort all found files (especially important after recursive search)
 
     if found_files:
         unique_paths_str = set()
         unique_files_final: list[Path] = []
         for p in found_files:
             try:
-                # Resolve to handle symlinks and get canonical path
                 resolved_path_str = str(p.resolve())
                 if resolved_path_str not in unique_paths_str:
                     unique_paths_str.add(resolved_path_str)
                     unique_files_final.append(p)
             except FileNotFoundError:
-                # Path might be a broken symlink or deleted during processing, skip it
                 print(f"    ⚠️ Path {p} could not be resolved, skipping.")
                 continue
 
