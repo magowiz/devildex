@@ -83,12 +83,9 @@ class Orchestrator:
         return self.last_operation_result
 
 
-# --- Main Usage Example ---
 if __name__ == "__main__":
     print("--- Orchestrator Usage Example ---")
 
-    # Define parameters for your test/example here
-    # CHANGE THESE to actual paths or meaningful test values
     example_project_path_rtd = "/tmp/test_project_for_rtd"
     example_rtd_url = "https://example-docs.readthedocs.io"  # Or None
 
@@ -98,10 +95,7 @@ if __name__ == "__main__":
 
     example_project_path_unknown = "/tmp/test_project_unknown"
 
-    # Scenario 1: Project with a ReadTheDocs URL
     print(f"\n--- Scenario 1: Project with ReadTheDocs URL ({example_rtd_url}) ---")
-    # For this scenario, ensure is_sphinx_project(example_project_path_rtd) is False
-    # if you want 'readthedocs' to be detected primarily due to the URL.
     orchestrator1 = Orchestrator(
         project_path=example_project_path_rtd, rtd_url=example_rtd_url
     )
@@ -118,7 +112,6 @@ if __name__ == "__main__":
     print(
         f"\n--- Scenario 2: Project without RTD URL (path: {example_project_path_local}) ---"
     )
-    # This will depend on is_sphinx_project() and has_docstrings() for example_project_path_local
     orchestrator2 = Orchestrator(project_path=example_project_path_local, rtd_url=None)
 
     print("Starting scan...")
@@ -128,8 +121,6 @@ if __name__ == "__main__":
     print("Starting grab/build documentation...")
     orchestrator2.grab_build_doc()
     print(f"Operation outcome: {orchestrator2.get_last_operation_result()}")
-
-    # Scenario 3: A path expected to have no detectable documentation
     print(
         "\n--- Scenario 3: Project with no detectable documentation "
         f"({example_project_path_unknown}) ---"
@@ -140,17 +131,16 @@ if __name__ == "__main__":
     orchestrator3.start_scan()
     print(
         f"Detected type: {orchestrator3.get_detected_doc_type()}"
-    )  # Should be "unknown"
+    )
 
     print("Starting grab/build documentation...")
-    orchestrator3.grab_build_doc()  # Should print the warning for "unknown"
+    orchestrator3.grab_build_doc()
     print(f"Operation outcome: {orchestrator3.get_last_operation_result()}")
 
-    # Scenario 4: Calling grab_build_doc without scanning first
     print(f"\n--- Scenario 4: Calling grab_build_doc() before start_scan() ---")
     orchestrator4 = Orchestrator(project_path="/tmp/another_project_no_scan")
     print("Attempting grab/build documentation without prior scan...")
-    orchestrator4.grab_build_doc()  # Should print the error for no scan
+    orchestrator4.grab_build_doc()
     print(f"Operation outcome: {orchestrator4.get_last_operation_result()}")
 
     print("\n--- End of Orchestrator Usage Example ---")
