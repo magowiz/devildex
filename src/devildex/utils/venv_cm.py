@@ -14,6 +14,7 @@ class IsolatedVenvManager:
     """A context manager to create and manage a temporary isolated Python virtual environment."""
 
     def __init__(self, project_name: str, base_temp_dir: Path | None = None):
+        """Initializes the IsolatedVenvManager."""
         self.project_name = project_name
         self.base_temp_dir = base_temp_dir or Path(tempfile.gettempdir())
         self.venv_path: Path | None = None
@@ -22,7 +23,6 @@ class IsolatedVenvManager:
 
     def _create_venv(self):
         """Creates the virtual environment."""
-
         self.venv_path = Path(
             tempfile.mkdtemp(
                 prefix=f"devildex_venv_{self.project_name}_", dir=self.base_temp_dir

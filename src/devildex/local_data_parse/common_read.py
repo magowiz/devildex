@@ -24,6 +24,7 @@ def find_pyproject_toml(start_path="."):
 
 
 def add_deps_from_section(section_data, explicit_deps):
+    """Add read dependencies from a specific section to explicit deps."""
     if isinstance(section_data, dict):
         for name in section_data.keys():
             normalized_name = name.lower().replace("_", "-")

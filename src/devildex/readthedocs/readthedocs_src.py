@@ -14,7 +14,9 @@ import requests
 from devildex.info import PROJECT_ROOT, VERSION
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -600,7 +602,7 @@ def build_sphinx_docs(
 
             logger.info("Executing Sphinx: %s", " ".join(sphinx_command))
             sphinx_env = {"LC_ALL": "C"}
-            stdout, stderr, returncode = execute_command(
+            _, _, returncode = execute_command(
                 sphinx_command,
                 f"Sphinx build for {project_slug}",
                 cwd=source_dir_path,
@@ -674,6 +676,68 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
     return default_branch, repo_url
 
 
+def run_clone(repo_url, default_branch, clone_dir_path, bzr):
+    """Perform a clone for matching vcs."""
+    print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
+    fallback_branches = ["master", "main"]
+    cmd_git = [
+        "git",
+        "clone",
+        "--depth",
+        "1",
+        "--branch",
+        default_branch,
+        repo_url,
+        clone_dir_path,
+    ]
+    cmd_bzr = ["bzr", "branch", repo_url, str(clone_dir_path)]
+    try:
+        if not bzr:
+            result = subprocess.run(
+                cmd_git,
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            if result.returncode != 0:
+                for default_branch in fallback_branches:
+                    shutil.rmtree(clone_dir_path, ignore_errors=True)
+                    result = subprocess.run(
+                        [
+                            "git",
+                            "clone",
+                            "--depth",
+                            "1",
+                            "--branch",
+                            default_branch,
+                            repo_url,
+                            clone_dir_path,
+                        ],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                    )
+                    if result.returncode == 0:
+                        break
+        else:
+            subprocess.run(
+                cmd_bzr,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+        print("git clone Command executed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error during execution of git clone command:\n{e.stderr}")
+        return None, None
+    except FileNotFoundError:
+        print("Error: 'git' command not found. Be sure that Git is installed.")
+        return None, None
+
+
 def download_readthedocs_source_and_build(
     project_name, project_url, existing_clone_path=None
 ):
@@ -714,75 +778,14 @@ def download_readthedocs_source_and_build(
     if repo_url and repo_url.startswith("lp:"):
         bzr = True
     if repo_url and not cloned_repo_exists_before:
-        print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
-        fallback_branches = ["master", "main"]
-        try:
-            if not bzr:
-                result = subprocess.run(
-                    [
-                        "git",
-                        "clone",
-                        "--depth",
-                        "1",
-                        "--branch",
-                        default_branch,
-                        repo_url,
-                        clone_dir_path,
-                    ],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                )
-                if result.returncode != 0:
-                    for default_branch in fallback_branches:
-                        shutil.rmtree(clone_dir_path, ignore_errors=True)
-                        result = subprocess.run(
-                            [
-                                "git",
-                                "clone",
-                                "--depth",
-                                "1",
-                                "--branch",
-                                default_branch,
-                                repo_url,
-                                clone_dir_path,
-                            ],
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                            encoding="utf-8",
-                        )
-                        if result.returncode == 0:
-                            break
-            else:
-                subprocess.run(
-                    [
-                        "bzr",
-                        "branch",
-                        repo_url,
-                        str(clone_dir_path),
-                    ],
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                )
-            print("git clone Command executed successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error during execution of git clone command:\n{e.stderr}")
-            return None, None
-        except FileNotFoundError:
-            print("Error: 'git' command not found. Be sure that Git is installed.")
-            return None, None
-    elif not cloned_repo_exists_before:
+        return run_clone(repo_url, default_branch, clone_dir_path, bzr)
+    if not cloned_repo_exists_before:
         print(
             "Unable to clone (URL not available or error) e "
             f"expected directory '{clone_dir_path}' doesn't exist."
         )
         return None, None
-    else:
-        print(f"expected clone Directory '{clone_dir_path}' found locally.")
+    print(f"expected clone Directory '{clone_dir_path}' found locally.")
 
     isolated_docs_output_dir = PROJECT_ROOT / "rtd_isolated_doc_sources"
     isolated_docs_output_dir.mkdir(parents=True, exist_ok=True)
@@ -802,6 +805,10 @@ def download_readthedocs_source_and_build(
 
     _cleanup(clone_dir_path)
 
+    return _download_handle_result(isolated_source_path, build_output_path)
+
+
+def _download_handle_result(isolated_source_path, build_output_path):
     if isolated_source_path and build_output_path:
         print(f"\nIsolated source documentation in: {isolated_source_path}")
         print(f"Build HTML Sphinx generata in:    {build_output_path}")

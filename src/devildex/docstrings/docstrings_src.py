@@ -16,13 +16,17 @@ import pdoc
 
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = "../../../devildex_config.ini"
 
 
 class DocStringsSrc:
+    """Implement class that build documentation from docstrings."""
+
     def __init__(self):
         """Initialize il DocStringsSrc."""
         project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -61,9 +65,8 @@ class DocStringsSrc:
                             f"No module named '{module_name_to_process}' "
                             "(pdoc returned dummy object)"
                         )
-                    else:
-                        module_obj = None
-                        break
+                    module_obj = None
+                    break
 
                 module_obj = current_module_obj_candidate
                 pdoc_module_instance = pdoc.Module(module_obj, context=context)
@@ -189,6 +192,7 @@ class DocStringsSrc:
         return processed_pdoc_modules
 
     def get_docset_dir(self):
+        """Get docset dir."""
         return self.docset_dir
 
     def _discover_modules_in_folder(self, input_folder_path: Path) -> list[str]:
@@ -232,7 +236,7 @@ class DocStringsSrc:
             base_output_dir_for_pdoc,
         )
         logger.info(
-            "DocStringsSrc: Final output directory for " "this project: %s",
+            "DocStringsSrc: Final output directory for this project: %s",
             final_project_pdoc_output_dir,
         )
 
@@ -278,30 +282,29 @@ class DocStringsSrc:
 
         build_successful = False
         try:
-            # 3. Usa IsolatedVenvManager
-            with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as venv:
+            with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as i_venv:
                 logger.info(
-                    "DocStringsSrc: Created temporary venv for pdoc at %s",
-                    venv.venv_path,
+                    "DocStringsSrc: Created temporary venv for pdoc3 at %s",
+                    i_venv.venv_path,
                 )
 
                 install_deps_success = install_project_and_dependencies_in_venv(
-                    pip_executable=venv.pip_executable,
+                    pip_executable=i_venv.pip_executable,
                     project_name=project_name,
                     project_root_for_install=source_project_path,
                     doc_requirements_path=requirements_file_to_install,
-                    base_packages_to_install=["pdoc>=14.0"],
+                    base_packages_to_install=["pdoc3"],
                 )
 
                 if not install_deps_success:
                     logger.error(
-                        "DocStringsSrc: CRITICAL: Failed to install pdoc "
-                        "for %s in venv. Aborting pdoc build.",
+                        "DocStringsSrc: CRITICAL: Failed to install pdoc3 "
+                        "for %s in venv. Aborting pdoc3 build.",
                         project_name,
                     )
                     return False
                 pdoc_command = [
-                    venv.python_executable,
+                    i_venv.python_executable,
                     "-m",
                     "pdoc",
                     project_name,
@@ -340,7 +343,7 @@ class DocStringsSrc:
                         logger.debug("pdoc stderr:\n%s", stderr)
                 else:
                     logger.error(
-                        "DocStringsSrc: pdoc build for %s FAILED. " "Return code: %s",
+                        "DocStringsSrc: pdoc build for %s FAILED. Return code: %s",
                         project_name,
                         returncode,
                     )

@@ -3,12 +3,15 @@
 import os
 import re
 import shutil
+import ast
 from pathlib import Path
 
-from devildex.scanner_utils.scanner_utils import (check_content_patterns,
-                                                  count_matching_strings,
-                                                  find_config_files,
-                                                  read_file_content_robustly)
+from devildex.scanner_utils.scanner_utils import (
+    check_content_patterns,
+    count_matching_strings,
+    find_config_files,
+    read_file_content_robustly,
+)
 
 
 def is_sphinx_project(project_path: str) -> bool:
@@ -188,10 +191,10 @@ LOG_LEVEL = "INFO"
     shutil.rmtree(test_non_sphinx_dir, ignore_errors=True)
     shutil.rmtree(test_non_sphinx_dir_no_conf, ignore_errors=True)
     print("Done.")
-import ast
 
 
 def has_docstrings(project_path: str) -> bool:
+    """Detect if a project has docstrings in its sources."""
     project_dir = Path(project_path)
     found_docstring_indicator = False
 

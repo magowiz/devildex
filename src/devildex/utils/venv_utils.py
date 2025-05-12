@@ -1,3 +1,5 @@
+"""venv utilities module."""
+
 import logging
 import os
 import subprocess
@@ -32,7 +34,8 @@ def install_project_and_dependencies_in_venv(
     if ret_code_sphinx != 0:
         logger.error(
             "CRITICAL: Failed to install/verify Sphinx in venv for "
-            f"'{project_name}'. Sphinx build will fail."
+            "'%s'. Sphinx build will fail.",
+            project_name,
         )
         return False
 
@@ -44,13 +47,15 @@ def install_project_and_dependencies_in_venv(
         ):
             logger.info(
                 "No setup.py, setup.cfg, or pyproject.toml found in "
-                f"'{project_root_for_install}'. Skipping editable install of "
-                f"project '{project_name}'."
+                "'%s'. Skipping editable install of "
+                "project '%s'.",
+                project_root_for_install, project_name
             )
         else:
             logger.info(
-                f"Attempting to install project '{project_name}' from "
-                f"'{project_root_for_install}' in editable mode into the venv..."
+                "Attempting to install project '%s' from "
+                "'%s' in editable mode into the venv...",
+                project_name, project_root_for_install
             )
             install_cmd = [
                 pip_executable,
@@ -60,7 +65,7 @@ def install_project_and_dependencies_in_venv(
                 "-e",
                 ".",
             ]
-            pip_stdout, pip_stderr, ret_code = execute_command(
+            _, _, ret_code = execute_command(
                 install_cmd,
                 f"Editable install of {project_name}",
                 cwd=project_root_for_install,
@@ -87,7 +92,8 @@ def install_project_and_dependencies_in_venv(
     if doc_requirements_path and doc_requirements_path.exists():
         logger.info(
             "Attempting to install documentation-specific dependencies from "
-            f"'{doc_requirements_path}' into the venv..."
+            "'%s' into the venv...",
+            doc_requirements_path,
         )
         logger.info("Attempting to filter requirements file: %s", doc_requirements_path)
         filtered_req_lines = filter_requirements_lines(str(doc_requirements_path))
@@ -95,7 +101,9 @@ def install_project_and_dependencies_in_venv(
         requirements_filename = doc_requirements_path.name
         if filtered_req_lines:
             with open(
-                doc_requirements_path.parent / requirements_filename, "wt"
+                doc_requirements_path.parent / requirements_filename,
+                "wt",
+                encoding="utf-8",
             ) as req_file:
                 for line in filtered_req_lines:
                     req_file.write(f"{line}\n")
@@ -108,7 +116,7 @@ def install_project_and_dependencies_in_venv(
             "-r",
             requirements_filename,
         ]
-        pip_stdout, pip_stderr, ret_code = execute_command(
+        _, _, ret_code = execute_command(
             req_install_cmd,
             f"Install doc requirements for {project_name}",
             cwd=doc_requirements_path.parent,
@@ -128,7 +136,8 @@ def install_project_and_dependencies_in_venv(
             success = False
     elif doc_requirements_path:  # Se il path era fornito ma non esiste
         logger.warning(
-            f"Documentation requirements file not found at '{doc_requirements_path}', skipping."
+            "Documentation requirements file not found at '%s', skipping.",
+            doc_requirements_path
         )
     else:
         logger.info(
@@ -174,7 +183,9 @@ def execute_command(
             )
 
         if process.returncode != 0:
-            logger.warning(f"{description} failed. Return code: {process.returncode}")
+            logger.warning(
+                "%s failed. Return code: %s", description, process.returncode
+            )
             if process.stdout.strip():
                 logger.debug("Stdout:\n%s", process.stdout.strip())
             if process.stderr.strip():
@@ -186,7 +197,7 @@ def execute_command(
         else:
             logger.info("%s completed successfully.", description)
             if process.stdout.strip():
-                logger.debug(f"Stdout (success):\n%s", process.stdout.strip())
+                logger.debug("Stdout (success):\n%s", process.stdout.strip())
             if process.stderr.strip():
                 logger.debug("Stderr (success/warnings):\n%s", process.stderr.strip())
         return process.stdout, process.stderr, process.returncode

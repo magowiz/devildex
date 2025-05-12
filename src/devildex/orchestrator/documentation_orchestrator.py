@@ -1,15 +1,17 @@
+"""documentation orchestrator module."""
+
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.info import PROJECT_ROOT
-from devildex.readthedocs.readthedocs_api import \
-    download_readthedocs_prebuilt_robust
-from devildex.readthedocs.readthedocs_src import \
-    download_readthedocs_source_and_build
+from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
+from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 
 
 class Orchestrator:
+    """Implement orchestrator class which detects doc type and perform right action."""
 
     def __init__(self, project_name, project_path, project_url=None, rtd_url=None):
+        """Implement class constructor."""
         docstrings_output_base = PROJECT_ROOT / "docset"  # o simile
         docstrings_output_base.mkdir(parents=True, exist_ok=True)
         self.detected_doc_type = None
@@ -79,9 +81,11 @@ class Orchestrator:
             self.detected_doc_type = "unknown"
 
     def get_detected_doc_type(self):
+        """Get detected document type."""
         return self.detected_doc_type
 
     def get_last_operation_result(self):
+        """Get last operation result."""
         return self.last_operation_result
 
 
@@ -134,7 +138,7 @@ if __name__ == "__main__":
     orchestrator3.grab_build_doc()
     print(f"Operation outcome: {orchestrator3.get_last_operation_result()}")
 
-    print(f"\n--- Scenario 4: Calling grab_build_doc() before start_scan() ---")
+    print("\n--- Scenario 4: Calling grab_build_doc() before start_scan() ---")
     orchestrator4 = Orchestrator(project_path="/tmp/another_project_no_scan")
     print("Attempting grab/build documentation without prior scan...")
     orchestrator4.grab_build_doc()
