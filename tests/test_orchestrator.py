@@ -36,7 +36,7 @@ PACKAGES_TO_TEST = [
         "project_url": "https://github.com/psf/black.git",
         "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",
         "expected_preferred_type": "sphinx",
-        "expect_grab_success": False
+        "expect_grab_success": False,
     },
     {
         "repo_url": "https://github.com/Textualize/rich.git",
@@ -108,9 +108,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     repo_url = package_info["repo_url"]
     project_name = package_info["project_name"]
     project_url_for_orchestrator = package_info.get("project_url", repo_url)
-    rtd_url = package_info.get(
-        "rtd_url"
-    )
+    rtd_url = package_info.get("rtd_url")
     expected_preferred_doc_type = package_info["expected_preferred_type"]
     expected_entry_point_filename = package_info.get("expected_entry_point")
 
@@ -160,9 +158,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     print(
         f"Project: {project_name}, Orchestrator grab_build_doc result: {operation_result}, Output path from return: {output_docs_root_path_str}"
     )
-    expect_success = package_info.get(
-        "expect_grab_success", True
-    )
+    expect_success = package_info.get("expect_grab_success", True)
 
     if expect_success:
         assert (
