@@ -131,7 +131,8 @@ if __name__ == "__main__":
 
     # Scenario 3: A path expected to have no detectable documentation
     print(
-        f"\n--- Scenario 3: Project with no detectable documentation ({example_project_path_unknown}) ---"
+        "\n--- Scenario 3: Project with no detectable documentation "
+        f"({example_project_path_unknown}) ---"
     )
     orchestrator3 = Orchestrator(project_path=example_project_path_unknown)
 

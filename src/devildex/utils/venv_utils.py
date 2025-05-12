@@ -24,7 +24,7 @@ def install_project_and_dependencies_in_venv(
     if base_packages_to_install is None:
         base_packages_to_install = ["sphinx"]
     success = True
-    logger.info(f"Ensuring Sphinx is installed in the venv for '{project_name}'...")
+    logger.info("Ensuring Sphinx is installed in the venv for '%s'...", project_name)
     sphinx_install_cmd = [
         pip_executable,
         "install",
@@ -36,25 +36,26 @@ def install_project_and_dependencies_in_venv(
     )
     if ret_code_sphinx != 0:
         logger.error(
-            f"CRITICAL: Failed to install/verify Sphinx in venv for '{project_name}'. Sphinx build will fail."
+            "CRITICAL: Failed to install/verify Sphinx in venv for "
+            f"'{project_name}'. Sphinx build will fail."
         )
-        # Non impostare overall_install_success = False qui, restituisci direttamente False
-        return False  # Fallimento critico, impossibile procedere
+        return False
 
-    # Installare il progetto stesso in modalità editable, se specificato
     if project_root_for_install and project_root_for_install.exists():
-        # Verifica la presenza di setup.py, setup.cfg o pyproject.toml per decidere se installare
         if not (
             (project_root_for_install / "setup.py").exists()
             or (project_root_for_install / "setup.cfg").exists()
             or (project_root_for_install / "pyproject.toml").exists()
         ):
             logger.info(
-                f"No setup.py, setup.cfg, or pyproject.toml found in '{project_root_for_install}'. Skipping editable install of project '{project_name}'."
+                "No setup.py, setup.cfg, or pyproject.toml found in "
+                f"'{project_root_for_install}'. Skipping editable install of "
+                f"project '{project_name}'."
             )
         else:
             logger.info(
-                f"Attempting to install project '{project_name}' from '{project_root_for_install}' in editable mode into the venv..."
+                f"Attempting to install project '{project_name}' from "
+                f"'{project_root_for_install}' in editable mode into the venv..."
             )
             install_cmd = [
                 pip_executable,
@@ -72,27 +73,31 @@ def install_project_and_dependencies_in_venv(
             )
             if ret_code == 0:
                 logger.info(
-                    f"Project '{project_name}' installed successfully (or already present) in venv."
+                    "Project '%s' installed successfully (or already present) in venv.",
+                    project_name
                 )
             else:
                 logger.error(
-                    f"Failed to install project '{project_name}' in venv. Error details in DEBUG log."
+                    "Failed to install project '%s' in venv. "
+                    "Error details in DEBUG log.", project_name
                 )
-                success = False  # Potresti voler interrompere qui
+                success = False
     else:
         logger.info(
-            f"No project root provided for installation, or path does not exist. Skipping editable install of project '{project_name}'."
+            "No project root provided for installation, or path does not exist. "
+            "Skipping editable install of project '%s'.",
+            project_name
         )
 
-    # Installare le dipendenze specifiche della documentazione, se specificate
     if doc_requirements_path and doc_requirements_path.exists():
         logger.info(
-            f"Attempting to install documentation-specific dependencies from '{doc_requirements_path}' into the venv..."
+            "Attempting to install documentation-specific dependencies from "
+            f"'{doc_requirements_path}' into the venv..."
         )
-        logger.info(f"Attempting to filter requirements file: {doc_requirements_path}")
+        logger.info("Attempting to filter requirements file: %s",
+                    doc_requirements_path)
         filtered_req_lines = filter_requirements_lines(str(doc_requirements_path))
 
-        # Esegui pip dalla cartella del requirements.txt o dalla radice del progetto
         requirements_filename = doc_requirements_path.name
         if filtered_req_lines:
             with open(
@@ -116,12 +121,14 @@ def install_project_and_dependencies_in_venv(
         )
         if ret_code == 0:
             logger.info(
-                f"Dependencies from '{doc_requirements_path}' installed "
-                "successfully (or already present) in venv."
+                "Dependencies from '%s' installed "
+                "successfully (or already present) in venv.",
+                doc_requirements_path
             )
         else:
             logger.error(
-                f"Failed to install dependencies from '{doc_requirements_path}' in venv. Error details in DEBUG log."
+                "Failed to install dependencies from '%s' "
+                "in venv. Error details in DEBUG log.", doc_requirements_path
             )
             success = False
     elif doc_requirements_path:  # Se il path era fornito ma non esiste
@@ -130,7 +137,8 @@ def install_project_and_dependencies_in_venv(
         )
     else:
         logger.info(
-            f"No documentation requirements file provided for {project_name}, skipping dependency installation."
+            "No documentation requirements file provided for %s, "
+            "skipping dependency installation.", project_name
         )
     return success
 
@@ -149,7 +157,8 @@ def execute_command(
         print(f"DEBUG EXEC_CMD: Full command list: {command}")
         print(f"DEBUG EXEC_CMD: Working directory (cwd): {cwd_str or '.'}")
 
-        logger.info(f"Executing: {' '.join(command)} (cwd: {cwd_str or '.'})")
+        logger.info("Executing: %s (cwd: %s)",
+                    ' '.join(command), cwd_str or '.')
         process = subprocess.run(
             command,
             capture_output=True,
@@ -162,34 +171,36 @@ def execute_command(
         )
         if "sphinx" in description.lower():
             print(
-                f"DEBUG SPHINX STDOUT for '{description}':\n{process.stdout.strip() if process.stdout else '<empty>'}"
+                "DEBUG SPHINX STDOUT for "
+                f"'{description}':\n{process.stdout.strip() if process.stdout else '<empty>'}"
             )
             print(
-                f"DEBUG SPHINX STDERR for '{description}':\n{process.stderr.strip() if process.stderr else '<empty>'}"
+                "DEBUG SPHINX STDERR for "
+                f"'{description}':\n{process.stderr.strip() if process.stderr else '<empty>'}"
             )
 
         if process.returncode != 0:
             logger.warning(f"{description} failed. Return code: {process.returncode}")
-            # Logga stdout/stderr solo se c'è contenuto e il comando è fallito
             if process.stdout.strip():
-                logger.debug(f"Stdout:\n{process.stdout.strip()}")
+                logger.debug("Stdout:\n%s", process.stdout.strip())
             if process.stderr.strip():
-                logger.debug(f"Stderr:\n{process.stderr.strip()}")
+                logger.debug("Stderr:\n%s", process.stderr.strip())
                 print(
                     f"DEBUG STDERR from FAILED command '{description}':\n{process.stderr.strip()}"
                 )
 
         else:
-            logger.info(f"{description} completed successfully.")
-            # Logga stdout/stderr anche in caso di successo se contengono informazioni utili (a livello DEBUG)
+            logger.info("%s completed successfully.", description)
             if process.stdout.strip():
-                logger.debug(f"Stdout (success):\n{process.stdout.strip()}")
-            if process.stderr.strip():  # Spesso i warning di Sphinx finiscono qui
-                logger.debug(f"Stderr (success/warnings):\n{process.stderr.strip()}")
+                logger.debug(f"Stdout (success):\n%s", process.stdout.strip())
+            if process.stderr.strip():
+                logger.debug("Stderr (success/warnings):\n%s",
+                             process.stderr.strip())
         return process.stdout, process.stderr, process.returncode
     except FileNotFoundError:
         logger.error(
-            f"Command not found: {command[0]}. Ensure it's in PATH or provide full path."
+            "Command not found: %s. Ensure it's in PATH or provide full path.",
+            command[0]
         )
         return "", f"Command not found: {command[0]}", -1
     except Exception as e:

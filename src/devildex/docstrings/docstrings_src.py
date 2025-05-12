@@ -218,9 +218,7 @@ class DocStringsSrc:
         input_folder: str,
         output_folder: str,
     ) -> str | bool:
-        """
-        Genera documentazione HTML per un progetto Python usando pdoc in un ambiente isolato.
-        """
+        """Genera documentazione HTML per un progetto Python usando pdoc in un ambiente isolato."""
         source_project_path = Path(input_folder)  # Radice del clone del progetto
         # output_folder passato dall'Orchestrator è già la base, es. "PROJECT_ROOT/docset"
         # quindi base_output_dir_for_pdoc è output_folder.
@@ -228,61 +226,62 @@ class DocStringsSrc:
 
         final_project_pdoc_output_dir = base_output_dir_for_pdoc / project_name
 
-        logger.info(f"--- Starting Isolated pdoc Build for {project_name} ---")
+        logger.info("--- Starting Isolated pdoc Build for %s ---", project_name)
         logger.info(
             "DocStringsSrc: Project root (cloned input): %s",
             source_project_path
         )
-        logger.info(f"DocStringsSrc: Module to document with pdoc: {project_name}")
+        logger.info("DocStringsSrc: Module to document with pdoc: %s", project_name)
         logger.info(
-            f"DocStringsSrc: Base output directory for pdoc outputs: {base_output_dir_for_pdoc}"
+            "DocStringsSrc: Base output directory for pdoc outputs: %s",
+            base_output_dir_for_pdoc
         )
         logger.info(
             "DocStringsSrc: Final output directory for "
-            f"this project: {final_project_pdoc_output_dir}"
+            "this project: %s",
+            final_project_pdoc_output_dir
         )
 
-        # 1. Pulizia della directory di output specifica per questo progetto, se esiste
         if final_project_pdoc_output_dir.exists():
             logger.info(
-                f"DocStringsSrc: Removing existing pdoc output directory: {final_project_pdoc_output_dir}"
+                "DocStringsSrc: Removing existing pdoc output directory: %s",
+                final_project_pdoc_output_dir
             )
             try:
                 shutil.rmtree(final_project_pdoc_output_dir)
             except OSError as e:
                 logger.error(
-                    f"DocStringsSrc: Error removing {final_project_pdoc_output_dir}: {e}"
+                    "DocStringsSrc: Error removing %s: %s",
+                    final_project_pdoc_output_dir, e
                 )
-                return False  # Non possiamo procedere se non possiamo pulire
+                return False
 
-        # Non creiamo final_project_pdoc_output_dir qui, pdoc lo farà.
-        # Assicuriamoci che la directory base (base_output_dir_for_pdoc) esista.
         base_output_dir_for_pdoc.mkdir(parents=True, exist_ok=True)
 
-        # 2. Trova un file requirements.txt (opzionale) nella radice del progetto clonato
         requirements_file_to_install: Path | None = None
         candidate_req_paths = [
             source_project_path / "requirements.txt",
             source_project_path
-            / "dev-requirements.txt",  # Alcuni progetti usano questo
+            / "dev-requirements.txt",
             source_project_path / "requirements-dev.txt",
-            # Aggiungi altri percorsi candidati se il progetto ha requirements specifici per i docs
-            # in posti non standard, ma per pdoc, i requirements generali del progetto sono più importanti.
             source_project_path
             / "docs"
-            / "requirements.txt",  # Meno probabile per pdoc, più per Sphinx
+            / "requirements.txt"
         ]
         for req_path_candidate in candidate_req_paths:
             if req_path_candidate.exists() and req_path_candidate.is_file():
                 requirements_file_to_install = req_path_candidate
                 logger.info(
-                    f"DocStringsSrc: Found requirements file for dependencies: {requirements_file_to_install}"
+                    "DocStringsSrc: Found requirements file for dependencies: %s",
+                    requirements_file_to_install
                 )
                 break
         if not requirements_file_to_install:
             logger.info(
-                f"DocStringsSrc: No general 'requirements.txt' found for {project_name} in common locations. "
-                "Will rely on project's setup (e.g., setup.py, pyproject.toml)."
+                "DocStringsSrc: No general 'requirements.txt' found for %s "
+                "in common locations. "
+                "Will rely on project's setup (e.g., setup.py, pyproject.toml).",
+                project_name
             )
 
         build_successful = False
@@ -290,10 +289,10 @@ class DocStringsSrc:
             # 3. Usa IsolatedVenvManager
             with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as venv:
                 logger.info(
-                    f"DocStringsSrc: Created temporary venv for pdoc at {venv.venv_path}"
+                    "DocStringsSrc: Created temporary venv for pdoc at %s",
+                    venv.venv_path
                 )
 
-                # 4. Installa pdoc e le dipendenze del progetto nel venv
                 install_deps_success = install_project_and_dependencies_in_venv(
                     pip_executable=venv.pip_executable,
                     project_name=project_name,
@@ -318,7 +317,7 @@ class DocStringsSrc:
                     str(base_output_dir_for_pdoc.resolve() / project_name),
                 ]
 
-                logger.info(f"DocStringsSrc: Executing pdoc: {' '.join(pdoc_command)}")
+                logger.info("DocStringsSrc: Executing pdoc: %s", ' '.join(pdoc_command))
                 stdout, stderr, returncode = execute_command(
                     pdoc_command,
                     f"pdoc HTML generation for {project_name}",
@@ -331,58 +330,60 @@ class DocStringsSrc:
                         and (final_project_pdoc_output_dir / "index.html").exists()
                     ):
                         logger.info(
-                            f"DocStringsSrc: pdoc build for {project_name} completed successfully. "
-                            f"Output: {final_project_pdoc_output_dir}"
+                            "DocStringsSrc: pdoc build for %s completed successfully. "
+                            "Output: %s",
+                            project_name, final_project_pdoc_output_dir
                         )
                         build_successful = True
                     else:
                         logger.error(
-                            f"DocStringsSrc: pdoc command for {project_name} seemed to succeed (exit 0) "
+                            "DocStringsSrc: pdoc command for %s seemed to succeed (exit 0) "
                             "but expected output directory/file not found at "
-                            f"{final_project_pdoc_output_dir / 'index.html'}."
+                            "%s.",
+                            project_name, final_project_pdoc_output_dir / 'index.html'
                         )
-                        logger.debug(f"pdoc stdout:\n{stdout}")
-                        logger.debug(f"pdoc stderr:\n{stderr}")
+                        logger.debug("pdoc stdout:\n%s", stdout)
+                        logger.debug("pdoc stderr:\n%s", stderr)
                 else:
                     logger.error(
-                        f"DocStringsSrc: pdoc build for {project_name} FAILED. "
-                        f"Return code: {returncode}"
+                        "DocStringsSrc: pdoc build for %s FAILED. "
+                        "Return code: %s",
+                        project_name, returncode
                     )
                     logger.debug(
-                        f"pdoc stdout:\n{stdout}"
-                    )  # Logga sempre stdout/stderr per il debug di pdoc
-                    logger.debug(f"pdoc stderr:\n{stderr}")
+                        "pdoc stdout:\n%s", stdout
+                    )
+                    logger.debug("pdoc stderr:\n%s", stderr)
 
         except RuntimeError as e:
             logger.error(
                 "DocStringsSrc: Critical error during isolated pdoc build setup for %s: %s",
                 project_name, e
             )
-        except Exception as e:
+        except Exception:
             logger.exception(
-                f"DocStringsSrc: Unexpected exception during isolated pdoc build for {project_name}"
+                "DocStringsSrc: Unexpected exception during isolated pdoc build for %s",
+                project_name
             )
         finally:
-            logger.info(f"--- Finished Isolated pdoc Build for {project_name} ---")
+            logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
 
         if build_successful:
             return str(final_project_pdoc_output_dir)
-        else:
-            # Se la build fallisce, assicurati che la directory di output parziale venga rimossa
-            if final_project_pdoc_output_dir.exists():
-                logger.info(
-                    "DocStringsSrc: Cleaning up partially created/failed pdoc output at %s",
-                    final_project_pdoc_output_dir
+        if final_project_pdoc_output_dir.exists():
+            logger.info(
+                "DocStringsSrc: Cleaning up partially created/failed pdoc output at %s",
+                final_project_pdoc_output_dir
+            )
+            try:
+                shutil.rmtree(final_project_pdoc_output_dir)
+            except OSError as e_clean:
+                logger.error(
+                    "DocStringsSrc: Error cleaning up failed pdoc output directory"
+                    " %s: %s",
+                    final_project_pdoc_output_dir, e_clean
                 )
-                try:
-                    shutil.rmtree(final_project_pdoc_output_dir)
-                except OSError as e_clean:
-                    logger.error(
-                        "DocStringsSrc: Error cleaning up failed pdoc output directory"
-                        " %s: %s",
-                        final_project_pdoc_output_dir, e_clean
-                    )
-            return False
+        return False
 
     def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
         """Clean una single folder/file o una lista di folders/files.

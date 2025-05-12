@@ -32,7 +32,8 @@ def add_deps_from_section(section_data, explicit_deps):
 
 
 def get_explicit_poetry_dependencies(pyproject_path):
-    """Read pyproject.toml and returns a set con i nomi delle direct dependencies
+    """Read pyproject.toml and returns a set con i nomi delle direct dependencies.
+
     (from sections tool.poetry.dependencies e tool.poetry.group.*.dependencies).
     Requires that 'toml' is importable.
 
@@ -87,6 +88,7 @@ def get_explicit_poetry_dependencies(pyproject_path):
 
 def find_requirements_txt(start_path="."):
     """Cerca requirements.txt nella directory start_path e nelle sue parent directories.
+
     Returns il absolute path or None if not found.
     (Simile a find_pyproject_toml)
     """
@@ -158,7 +160,8 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
 
 
 def get_explicit_dependencies_from_project_config(start_path="."):
-    """Cerca i file di configuration del project (pyproject.toml o requirements.txt)
+    """Cerca i file di configuration del project (pyproject.toml o requirements.txt).
+
     a starting from start_path e returns un set con i nomi delle explicit dependencies.
     Dà priority a pyproject.toml.
 

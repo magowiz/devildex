@@ -1,11 +1,12 @@
-import logging  # È una buona idea aggiungere un po' di logging
+"""venv context manager module."""
+import logging
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-logger = logging.getLogger(__name__)  # O un logger specifico per DevilDex
+logger = logging.getLogger(__name__)
 
 
 class IsolatedVenvManager:
@@ -20,8 +21,6 @@ class IsolatedVenvManager:
 
     def _create_venv(self):
         """Creates the virtual environment."""
-        # Creare una sottocartella unica per questo venv
-        # Usare tempfile.mkdtemp per una directory temporanea sicura
 
         self.venv_path = Path(
             tempfile.mkdtemp(
@@ -29,7 +28,8 @@ class IsolatedVenvManager:
             )
         )
         logger.info(
-            f"Creating temporary venv for '{self.project_name}' at: {self.venv_path}"
+            "Creating temporary venv for '%s' at: %s",
+            self.project_name, self.venv_path
         )
         print(f"DEBUG VENV_CM: Attempting to create venv at: {self.venv_path}")
 
@@ -41,9 +41,6 @@ class IsolatedVenvManager:
                 text=True,
             )
 
-            # Determina i percorsi degli eseguibili nel venv
-            # In Windows, gli eseguibili sono in venv_path/Scripts
-            # In Unix/macOS, sono in venv_path/bin
             bin_dir = self.venv_path / ("Scripts" if sys.platform == "win32" else "bin")
             self.python_executable = str(
                 bin_dir / ("python.exe" if sys.platform == "win32" else "python")
@@ -56,15 +53,16 @@ class IsolatedVenvManager:
             )
             print(f"DEBUG VENV_CM: VENV CREATED. Pip executable: {self.pip_executable}")
             print(
-                f"DEBUG VENV_CM: VENV CREATED. Does python exist? {Path(self.python_executable).exists()}"
+                "DEBUG VENV_CM: VENV CREATED. Does python exist? %s",
+                Path(self.python_executable).exists()
             )
             print(
                 f"DEBUG VENV_CM: VENV CREATED. Does pip exist? {Path(self.pip_executable).exists()}"
             )
 
-            logger.info(f"Venv for '{self.project_name}' created successfully.")
-            logger.info(f"  Python executable: {self.python_executable}")
-            logger.info(f"  Pip executable: {self.pip_executable}")
+            logger.info("Venv for '%s' created successfully.", self.project_name)
+            logger.info("  Python executable: %s", self.python_executable)
+            logger.info("  Pip executable: %s", self.pip_executable)
 
             self._upgrade_pip()
 
@@ -75,7 +73,8 @@ class IsolatedVenvManager:
             raise
         except Exception as e:
             logger.error(
-                f"An unexpected error occurred during venv creation for '{self.project_name}': {e}"
+                "An unexpected error occurred during venv creation for '%s': %s",
+                self.project_name, e
             )
             self._cleanup()
             raise
@@ -86,8 +85,7 @@ class IsolatedVenvManager:
             logger.warning("Pip executable not set, cannot upgrade pip.")
             return
         try:
-            logger.info(f"Upgrading pip in venv: {self.venv_path}")
-            # Usare python -m pip per assicurarsi di usare il pip del venv
+            logger.info("Upgrading pip in venv: %s", self.venv_path)
             subprocess.run(
                 [self.python_executable, "-m", "pip", "install", "--upgrade", "pip"],
                 check=True,
@@ -97,9 +95,9 @@ class IsolatedVenvManager:
             )
             logger.info("Pip upgraded successfully in venv.")
         except subprocess.CalledProcessError as e:
-            # Non è critico se l'upgrade di pip fallisce, quindi solo un warning
             logger.warning(
-                f"Failed to upgrade pip in venv '{self.venv_path}': {e.stderr}"
+                "Failed to upgrade pip in venv '%s': %s",
+                self.venv_path, e.stderr
             )
 
     def _cleanup(self):
@@ -112,10 +110,11 @@ class IsolatedVenvManager:
             )
             try:
                 shutil.rmtree(self.venv_path)
-                logger.info(f"Venv '{self.venv_path}' removed successfully.")
-            except OSError as e:  # Può fallire su Windows se i file sono bloccati
+                logger.info("Venv '%s' removed successfully.", self.venv_path)
+            except OSError as e:
                 logger.error(
-                    f"Error removing venv '{self.venv_path}': {e}. Manual cleanup might be needed."
+                    "Error removing venv '%s': %s. Manual cleanup might be needed.",
+                    self.venv_path, e
                 )
         self.venv_path = None
         self.python_executable = None
@@ -127,9 +126,8 @@ class IsolatedVenvManager:
             raise RuntimeError(
                 f"Venv for {self.project_name} was not properly initialized."
             )
-        return self  # Rende l'istanza stessa disponibile nel blocco 'with'
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._cleanup()
-        # Non sopprimere le eccezioni, lasciale propagare
         return False

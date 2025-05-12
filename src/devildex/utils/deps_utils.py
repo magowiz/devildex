@@ -1,3 +1,4 @@
+"""deps utils module."""
 import logging
 from pathlib import Path
 
@@ -7,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 def filter_requirements_lines(file_path_str: str) -> list[str] | None:
-    """Legge un file requirements.txt, filtra le righe non valide
+    """Legge un file requirements.txt, filtra le righe non valide.
+
     usando pip-requirements-parser e restituisce una lista delle stringhe di requisito valide.
 
     Args:
@@ -31,30 +33,31 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
     file_path = Path(file_path_str)  # Converti in Path per coerenza
 
     if not file_path.exists():
-        logger.error(f"Il file requirements '{file_path}' non trovato.")
+        logger.error("Il file requirements '%s' non trovato.", file_path)
         return None
 
     try:
-        logger.debug(f"Tentativo di parsificare e filtrare: {file_path}")
+        logger.debug("Tentativo di parsificare e filtrare: %s", file_path)
         requirements_file_obj = RequirementsFile.from_file(
             str(file_path)
-        )  # La libreria vuole una stringa
+        )
 
         for req in requirements_file_obj.requirements:
-            if req.line:  # Assicurati che la linea non sia vuota
+            if req.line:
                 valid_lines.append(req.line)
 
         for invalid_line_obj in requirements_file_obj.invalid_lines:
-            if invalid_line_obj.line:  # Assicurati che la linea non sia vuota
+            if invalid_line_obj.line:
                 invalid_lines_found.append(invalid_line_obj.line)
 
         if invalid_lines_found:
             logger.warning(
-                f"Trovate {len(invalid_lines_found)} righe potenzialmente non valide in '{file_path}'. "
-                "Sono state scartate dal parser."
+                "Riga Trovate %s righe potenzialmente non valide in '%s'. "
+                "Sono state scartate dal parser.",
+                len(invalid_lines_found), file_path
             )
             for line in invalid_lines_found:
-                logger.debug(f"  Riga scartata: {line.strip()}")
+                logger.debug("  Riga scartata: %s", line.strip())
         final_valid_lines: list[str] = []
         lines_to_explicitly_remove = {"-e .", "-e."}
 
@@ -62,19 +65,22 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
             stripped_line = line.strip()
             if stripped_line in lines_to_explicitly_remove:
                 logger.info(
-                    f"Rimozione esplicita della riga '{stripped_line}' da '{file_path}'"
+                    "Rimozione esplicita della riga '%s' da '%s'",
+                    stripped_line, file_path
                 )
             else:
                 final_valid_lines.append(line)
         valid_lines = final_valid_lines
         logger.debug(
-            f"Numero di righe valide estratte da '{file_path}': {len(valid_lines)}"
+            "Numero di righe valide estratte da '%s': %s",
+            file_path, len(valid_lines)
         )
         return valid_lines
 
     except Exception as e:
         logger.error(
-            f"Errore imprevisto durante la parsificazione del file '{file_path}' "
-            f"con pip-requirements-parser: {e}"
+            "Errore imprevisto durante la parsificazione del file '%s' "
+            "con pip-requirements-parser: %s",
+            file_path, e
         )
         return None

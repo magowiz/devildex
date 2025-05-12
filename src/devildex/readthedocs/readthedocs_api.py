@@ -1,8 +1,6 @@
 """readthedocs api module."""
 
 import os
-from urllib.parse import urlparse
-
 import requests
 
 
@@ -175,7 +173,8 @@ def _download_file(file_url, local_filepath):
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/91.0.4472.124 Safari/537.36"
         }
         with requests.get(file_url, stream=True, timeout=300) as r:
             r.raise_for_status()
