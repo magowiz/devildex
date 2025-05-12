@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def install_project_and_dependencies_in_venv(
-    pip_executable: str,  # Pip dell'ambiente isolato
+    pip_executable: str,
     project_name: str,
     project_root_for_install: (
         Path | None
