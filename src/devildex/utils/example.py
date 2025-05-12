@@ -2,7 +2,6 @@
 
 from devildex.utils.venv_cm import IsolatedVenvManager
 
-
 project_name = "mio_progetto"
 try:
     with IsolatedVenvManager(project_name=project_name) as venv_manager:

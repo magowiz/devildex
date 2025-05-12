@@ -1,6 +1,7 @@
 """readthedocs api module."""
 
 import os
+
 import requests
 
 
