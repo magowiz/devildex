@@ -113,18 +113,15 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     repo_url = package_info["repo_url"]
     project_name = package_info["project_name"]
     project_url_for_orchestrator = package_info.get("project_url", repo_url)
-    # version_tag = package_info["version_tag"]
     rtd_url = package_info.get(
         "rtd_url"
-    )  # Usare .get() per sicurezza se la chiave potesse mancare
+    )
     expected_preferred_doc_type = package_info["expected_preferred_type"]
     expected_entry_point_filename = package_info.get("expected_entry_point")
 
-    # 1. Clona il repository nella directory temporanea e fa il checkout del tag specifico
     clone_target_dir = tmp_path / project_name
     print(f"\nCloning {repo_url}  to {clone_target_dir} for project {project_name}...")
     try:
-        # Tenta prima di clonare direttamente il tag come branch (alcuni hosting lo permettono)
         subprocess.run(
             ["git", "clone", "--depth", "1", repo_url, str(clone_target_dir)],
             check=True,
@@ -133,38 +130,31 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
             encoding="utf-8",
         )
     except subprocess.CalledProcessError:
-        # Fallback: clona il branch di default e poi fa il checkout del tag
         print(f"Direct tag clone failed for , trying default branch then checkout...")
     except FileNotFoundError:
         pytest.fail("Git command not found. Ensure git is installed and in PATH.")
 
-    # 2. Inizializza ed esegue l'Orchestrator
     print(f"Initializing Orchestrator for {project_name} at {clone_target_dir}")
-    # Assicurati che il costruttore dell'Orchestrator accetti project_path e rtd_url come previsti
     orchestrator = Orchestrator(
         project_name=project_name,
         project_path=str(clone_target_dir),
         rtd_url=rtd_url,
-        project_url=project_url_for_orchestrator,  # <-- AGGIUNTA QUI
+        project_url=project_url_for_orchestrator,
     )
 
-    orchestrator.start_scan()  # Questo metodo dovrebbe rilevare il tipo di documentazione
+    orchestrator.start_scan()
     detected_doc_type = orchestrator.get_detected_doc_type()
     print(
         f"Project: {project_name}, Detected documentation type by Orchestrator: {detected_doc_type}"
     )
 
-    # 3. Verifica il tipo di documentazione rilevato
     assert (
         detected_doc_type == expected_preferred_doc_type
     ), f"For {project_name}, expected preferred type '{expected_preferred_doc_type}' but Orchestrator detected '{detected_doc_type}'"
 
-    # 4. Tenta di ottenere/costruire la documentazione
     print(
         f"Orchestrator attempting to grab/build docs for {project_name} using type: {detected_doc_type}..."
     )
-    # grab_build_doc dovrebbe restituire il percorso della documentazione o False/None in caso di fallimento
-    # e impostare internamente last_operation_result
     output_docs_root_path_str = orchestrator.grab_build_doc()
     print(
         f"DEBUG: Path returned by grab_build_doc for {project_name}: {output_docs_root_path_str}"
