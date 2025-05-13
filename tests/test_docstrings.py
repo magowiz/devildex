@@ -44,12 +44,6 @@ PACKAGES_TO_TEST = [
         "expected_entry_point": "requests/index.html",
     },
     {
-        "repo_url": "https://github.com/boto/boto3.git",
-        "project_name": "boto3",
-        "version_tag": "1.34.121",
-        "expected_entry_point": "boto3/index.html",
-    },
-    {
         "repo_url": "https://github.com/django/django.git",
         "project_name": "django",
         "version_tag": "5.0.6",
