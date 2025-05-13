@@ -123,7 +123,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
             encoding="utf-8",
         )
     except subprocess.CalledProcessError:
-        print(f"Direct tag clone failed for , trying default branch then checkout...")
+        print("Direct tag clone failed for , trying default branch then checkout...")
     except FileNotFoundError:
         pytest.fail("Git command not found. Ensure git is installed and in PATH.")
 
@@ -138,12 +138,14 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     orchestrator.start_scan()
     detected_doc_type = orchestrator.get_detected_doc_type()
     print(
-        f"Project: {project_name}, Detected documentation type by Orchestrator: {detected_doc_type}"
+        f"Project: {project_name}, Detected documentation type by "
+        f"Orchestrator: {detected_doc_type}"
     )
 
     assert (
         detected_doc_type == expected_preferred_doc_type
-    ), f"For {project_name}, expected preferred type '{expected_preferred_doc_type}' but Orchestrator detected '{detected_doc_type}'"
+    ), f"For {project_name}, expected preferred type '{expected_preferred_doc_type}'"
+    f" but Orchestrator detected '{detected_doc_type}'"
 
     print(
         f"Orchestrator attempting to grab/build docs for {project_name} using type: {detected_doc_type}..."
@@ -197,8 +199,10 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         ), f"Expected grab_build_doc to result in None for {project_name} due to expected failure, but got type {type(operation_result)} with value: {operation_result}"
         assert (
             output_docs_root_path_str is None
-        ), f"Expected grab_build_doc to return None for {project_name} due to expected failure, but got: {output_docs_root_path_str}"
+        ), f"Expected grab_build_doc to return None for {project_name} "
+        f"due to expected failure, but got: {output_docs_root_path_str}"
 
     print(
-        f"Successfully processed and verified {project_name} with type {detected_doc_type}."
+        f"Successfully processed and verified {project_name} with "
+        "type {detected_doc_type}."
     )

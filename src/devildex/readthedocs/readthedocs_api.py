@@ -26,7 +26,8 @@ def _fetch_available_versions(project_slug):
 
             print(
                 f"Page {page_num}: Fetched {len(current_page_versions)} versions. "
-                f"Total fetched so far: {len(all_versions_results)} out of {total_count}."
+                f"Total fetched so far: {len(all_versions_results)}" 
+                f"out of {total_count}."
             )
 
             next_page_url = data.get("next")
@@ -42,7 +43,8 @@ def _fetch_available_versions(project_slug):
             return None
 
     print(
-        f"API list versions: All pages fetched. Total versions found: {len(all_versions_results)}."
+        "API list versions: All pages fetched. Total versions found:"
+        f" {len(all_versions_results)}."
     )
     return all_versions_results
 

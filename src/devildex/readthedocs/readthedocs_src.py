@@ -467,8 +467,8 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
         return repo_path
 
     print(
-        f"Fallback: Searching for conf.py recursively in the entire 
-        repository: {repo_path}..."
+        "Fallback: Searching for conf.py recursively in the entire" 
+        f"repository: {repo_path}..."
     )
     for root, dirs, files in os.walk(repo_path):
         dirs[:] = [
