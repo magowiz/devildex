@@ -201,9 +201,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         f"file for {project_name} (type: {detected_doc_type})"
 
         html_files = list(output_docs_root_path.glob("**/*.html"))
-        assert (
-            len(html_files) > 0
-        ), "No HTML files found in output for "
+        assert len(html_files) > 0, "No HTML files found in output for "
         f"{project_name} at {output_docs_root_path}"
     else:
         assert (

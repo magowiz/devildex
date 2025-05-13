@@ -125,6 +125,22 @@ class IsolatedVenvManager:
         self.pip_executable = None
 
     def __enter__(self):
+        """Sets up the isolated virtual environment.
+
+        This method is called when entering the 'with' statement. It creates
+        the temporary virtual environment, sets up the paths to Python and pip
+        executables within it, and upgrades pip.
+
+        Returns:
+            IsolatedVenvManager: The instance of the context manager itself,
+                                 providing access to venv details like
+                                 `python_executable` and `pip_executable`.
+
+        Raises:
+            RuntimeError: If the virtual environment cannot be properly
+                          initialized (e.g., Python or pip executables
+                          are not found after creation).
+        """
         self._create_venv()
         if not self.python_executable or not self.pip_executable:
             raise RuntimeError(
@@ -133,5 +149,23 @@ class IsolatedVenvManager:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Cleans up resources when exiting the context.
+
+        This method is called automatically when the 'with' statement block is exited.
+        It ensures that the temporary virtual environment is removed.
+
+        Args:
+            exc_type: The type of the exception that caused the context to be exited,
+                      if an exception occurred. None otherwise.
+            exc_val: The exception instance that caused the context to be exited,
+                     if an exception occurred. None otherwise.
+            exc_tb: A traceback object for the exception that caused the context
+                    to be exited, if an exception occurred. None otherwise.
+
+        Returns:
+            False, indicating that any exception that occurred within the 'with'
+            block should not be suppressed and should be re-raised.
+        """
+        _ = exc_type, exc_val, exc_tb
         self._cleanup()
         return False

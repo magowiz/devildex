@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from dataclasses import dataclass
 
 import requests
 
@@ -53,25 +54,22 @@ except configparser.Error as exc:
     )
 
 
-def _write_custom_css(custom_css_path, css_content):
+def _write_custom_css(custom_css_path: Path, css_content: str):
     try:
         with open(custom_css_path, "w", encoding="utf-8") as f:
             f.write(css_content)
-        print(
-            "  - Created/Updated customized CSS: "
-            f"{os.path.basename(custom_css_path)}"
-        )
+        logger.info("  - Created/Updated customized CSS: %s", custom_css_path.name)
     except Exception as e:
-        print(f"  - Error writing customized CSS {custom_css_path}: {e}")
+        logger.error("  - Error writing customized CSS %s: %s", custom_css_path, e)
 
 
-def _write_conf(conf_updated, conf_py_path, new_conf_content):
+def _write_conf(conf_updated: bool, conf_py_path: Path, new_conf_content: str):
     if conf_updated:
         with open(conf_py_path, "w", encoding="utf-8") as f:
             f.write(new_conf_content)
-        print("  - conf.py rewritten with updates.")
+        logger.info("  - conf.py rewritten with updates.")
     else:
-        print("  - conf.py did not need modifications for customizations.")
+        logger.info("  - conf.py did not need modifications for customizations.")
 
 
 def _fallback_css(current_list_str, css_file_to_add, new_conf_content, match):
@@ -87,49 +85,35 @@ def _fallback_css(current_list_str, css_file_to_add, new_conf_content, match):
     return conf_updated
 
 
-def _create_template_static(templates_dir, static_dir):
+def _create_template_static(templates_dir: Path, static_dir: Path):
     try:
-        os.makedirs(templates_dir, exist_ok=True)
-        os.makedirs(static_dir, exist_ok=True)
-        print("  - Created directory: _templates, _static")
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        static_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("  - Created/Ensured directories: _templates, _static")
     except OSError as e:
-        print(f"  - Error creating directory _templates/_static: {e}")
+        logger.error("  - Error creating directory _templates/_static: %s", e)
 
 
-def _write_override_template(layout_template_path, layout_content):
+def _write_override_template(layout_template_path: Path, layout_content: str):
     try:
         with open(layout_template_path, "w", encoding="utf-8") as f:
             f.write(layout_content)
-        print(
-            "  - Created/Updated override template: "
-            f"{os.path.basename(layout_template_path)}"
+        logger.info(
+            "  - Created/Updated override template: %s", layout_template_path.name
         )
     except Exception as e:
-        print(f"  - Error writing override template {layout_template_path}: {e}")
+        logger.error(
+            "  - Error writing override template %s: %s", layout_template_path, e
+        )
 
 
-def _update_templates_path_in_conf(new_conf_content, match):
-    """Update templates_path variable in conf.py content.
-
-    Tries to add '_templates' at the beginning of existing list
-    using ast.literal_eval, con fallback a concatenating di strings.
-
-    Args:
-        new_conf_content (str): current content (potentially already modified)
-                                del file conf.py.
-        match (re.Match): Match object resulting from search pattern
-                          for templates_path.
-
-    Returns:
-        tuple(str, bool): tuple containing up-to-date content of
-                          new_conf_content and a boolean that tells if
-                          a modification has been made (True) or not (False).
-    """
+def _update_templates_path_in_conf(
+    new_conf_content: str, match: re.Match
+) -> tuple[str, bool]:
     conf_updated = False
     current_list_str = match.group(1)
     if "'_templates'" not in current_list_str:
         try:
-
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
                 new_list = ["_templates"] + current_list
@@ -137,45 +121,35 @@ def _update_templates_path_in_conf(new_conf_content, match):
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"templates_path = {new_list_str_repr}", 1
                 )
-                print("  - Prepend '_templates' a templates_path in conf.py")
+                logger.info(
+                    "  - Prepended '_templates' to templates_path in conf.py"
+                )  # Changed
                 conf_updated = True
             else:
                 raise ValueError("parsed value for templates_path is not a list")
-        except (ValueError, SyntaxError, ImportError):
-            print(
-                "  - Warning: Fallback per templates_path, uso concatenating strings."
+        except (
+            ValueError,
+            SyntaxError,
+            ImportError,
+        ):  # Keep ImportError for ast.literal_eval safety
+            logger.warning(  # Changed
+                "  - Warning: Fallback for templates_path, using string concatenation."
             )
             new_list_str = "['_templates'] + " + current_list_str
             new_conf_content = new_conf_content.replace(
                 match.group(0), f"templates_path = {new_list_str}", 1
             )
             conf_updated = True
-
     return new_conf_content, conf_updated
 
 
-def _update_static_path_in_conf(new_conf_content, match):
-    """Updates la variable html_static_path nel content di conf.py.
-
-    Try to add '_static' alla fine della lista existing
-    using ast.literal_eval, con fallback a concatenating di strings.
-
-    Args:
-        new_conf_content (str): Il current content (potentially already modified)
-                                del file conf.py.
-        match (re.Match): Match object match resulting from searching pattern
-                          for html_static_path.
-
-    Returns:
-        tuple(str, bool): A tuple containing up-to-date content of
-                          new_conf_content and a bool that tells if
-                          there was a modification (True) or not (False).
-    """
+def _update_static_path_in_conf(
+    new_conf_content: str, match: re.Match
+) -> tuple[str, bool]:
     conf_updated = False
     current_list_str = match.group(1)
     if "'_static'" not in current_list_str:
         try:
-
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
                 current_list.append("_static")
@@ -183,14 +157,15 @@ def _update_static_path_in_conf(new_conf_content, match):
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"html_static_path = {new_list_str_repr}", 1
                 )
-                print("  - Append '_static' a html_static_path in conf.py")
+                logger.info(
+                    "  - Appended '_static' to html_static_path in conf.py"
+                )  # Changed
                 conf_updated = True
             else:
                 raise ValueError("parsed value for html_static_path is not a list")
         except (ValueError, SyntaxError, ImportError):
-            print(
-                "  - Warning: Fallback per html_static_path, uso "
-                "concatenating strings."
+            logger.warning(  # Changed
+                "  - Warning: Fallback for html_static_path, using string concatenation."
             )
             new_list_str = current_list_str.rstrip()[:-1].strip()
             if new_list_str and new_list_str != "[":
@@ -201,33 +176,16 @@ def _update_static_path_in_conf(new_conf_content, match):
                 match.group(0), f"html_static_path = {new_list_str}", 1
             )
             conf_updated = True
-
     return new_conf_content, conf_updated
 
 
-def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
-    """Update html_css_files variable in conf.py content.
-
-    Tenta di add il specified CSS file to existing list
-    using ast.literal_eval, con fallback a concatenating di strings.
-
-    Args:
-        new_conf_content (str): current content (potentially already modified)
-                                del file conf.py.
-        match (re.Match): match object resulting from pattern search for
-                          html_css_files.
-        css_file_to_add (str): Il nome del file CSS da add (ex. 'custom.css').
-
-    Returns:
-        tuple(str, bool): A tuple containing il up-to-date content of
-                          new_conf_content and a bool that tells if
-                          a modification occurred (True) or not (False).
-    """
+def _update_css_files_in_conf(
+    new_conf_content: str, match: re.Match, css_file_to_add: str
+) -> tuple[str, bool]:
     conf_updated = False
     current_list_str = match.group(1)
     if repr(css_file_to_add) not in current_list_str:
         try:
-
             current_list = ast.literal_eval(current_list_str)
             if isinstance(current_list, list):
                 current_list.append(css_file_to_add)
@@ -235,13 +193,15 @@ def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"html_css_files = {new_list_str_repr}", 1
                 )
-                print(f"  - Append '{css_file_to_add}' a html_css_files in conf.py")
+                logger.info(
+                    "  - Appended '%s' to html_css_files in conf.py", css_file_to_add
+                )  # Changed
                 conf_updated = True
             else:
                 raise ValueError("parsed value for html_css_files is not a list")
         except (ValueError, SyntaxError, ImportError):
-            print(
-                "  - Warning: Fallback per html_css_files, uso concatenating strings."
+            logger.warning(  # Changed
+                "  - Warning: Fallback for html_css_files, using string concatenation."
             )
             new_list_str = current_list_str.rstrip()[:-1].strip()
             if new_list_str and new_list_str != "[":
@@ -252,8 +212,85 @@ def _update_css_files_in_conf(new_conf_content, match, css_file_to_add):
                 match.group(0), f"html_css_files = {new_list_str}", 1
             )
             conf_updated = True
-
     return new_conf_content, conf_updated
+
+
+def _apply_sphinx_conf_customizations(
+    conf_py_path: Path, theme_name: str, css_file_name: str = "custom.css"
+):
+    """Reads, modifies, and writes Sphinx conf.py with customizations."""
+    logger.info("Applying customizations to Sphinx conf.py: %s", conf_py_path)
+    try:
+        with open(conf_py_path, "r", encoding="utf-8") as f:
+            original_conf_content = f.read()
+
+        new_conf_content = original_conf_content
+        overall_conf_updated = False
+
+        # 1. Update Theme
+        new_conf_content, theme_updated = _update_theme_in_conf(
+            new_conf_content, theme_name
+        )
+        if theme_updated:
+            overall_conf_updated = True
+
+        # 2. Update templates_path
+        templates_pattern = re.compile(
+            r"^\s*templates_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
+        )
+        match_templates = templates_pattern.search(new_conf_content)
+        if match_templates:
+            new_conf_content, updated_by_template = _update_templates_path_in_conf(
+                new_conf_content, match_templates
+            )
+            if updated_by_template:
+                overall_conf_updated = True
+        else:
+            new_conf_content += "\ntemplates_path = ['_templates']\n"
+            logger.info("  - Added templates_path = ['_templates'] to conf.py")
+            overall_conf_updated = True
+
+        # 3. Update html_static_path
+        static_pattern = re.compile(
+            r"^\s*html_static_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
+        )
+        match_static = static_pattern.search(new_conf_content)
+        if match_static:
+            new_conf_content, updated_by_static = _update_static_path_in_conf(
+                new_conf_content, match_static
+            )
+            if updated_by_static:
+                overall_conf_updated = True
+        else:
+            new_conf_content += "\nhtml_static_path = ['_static']\n"
+            logger.info("  - Added html_static_path = ['_static'] to conf.py")
+            overall_conf_updated = True
+
+        # 4. Update html_css_files
+        css_pattern = re.compile(
+            r"^\s*html_css_files\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
+        )
+        match_css = css_pattern.search(new_conf_content)
+        if match_css:
+            new_conf_content, updated_by_css_add = _update_css_files_in_conf(
+                new_conf_content, match_css, css_file_name
+            )
+            if updated_by_css_add:
+                overall_conf_updated = True
+        else:
+            new_conf_content += f"\nhtml_css_files = ['{css_file_name}']\n"
+            logger.info("  - Added html_css_files = ['%s'] to conf.py", css_file_name)
+            overall_conf_updated = True
+
+        _write_conf(overall_conf_updated, conf_py_path, new_conf_content)
+
+    except Exception as e:
+        logger.error(
+            "Error during modification of conf.py %s: %s",
+            conf_py_path,
+            e,
+            exc_info=True,
+        )
 
 
 def _update_theme_in_conf(conf_content, theme_name):
@@ -268,8 +305,8 @@ def _update_theme_in_conf(conf_content, theme_name):
                           and a bool that tells if
                           a modification was made (True) or not (False).
     """
-    return conf_content, True
     conf_updated = False
+    return conf_content, conf_updated
     new_conf_content = conf_content
     theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
     target_theme_line = f"html_theme = '{theme_name}'"
@@ -277,38 +314,58 @@ def _update_theme_in_conf(conf_content, theme_name):
     match = theme_pattern.search(new_conf_content)
     if match:
         old_theme_line = match.group(0)
-        if old_theme_line != target_theme_line:
+        if target_theme_line not in old_theme_line:
             new_conf_content = theme_pattern.sub(
                 target_theme_line, new_conf_content, count=1
             )
-            print(f"  - Updated html_theme -> '{theme_name}' in conf.py")
+            logger.info("  - Updated html_theme -> '%s' in conf.py", theme_name)
             conf_updated = True
     else:
         new_conf_content += f"\n{target_theme_line}\n"
-        print(f"  - Added html_theme = '{theme_name}' a conf.py")
+        logger.info("  - Added html_theme = '%s' to conf.py", theme_name)
         conf_updated = True
 
     return new_conf_content, conf_updated
 
 
-def apply_devildex_customizations(isolated_source_path, theme_name, banner_text):
+@dataclass
+class CustomizationFilePaths:
+    """Holds paths for Sphinx documentation customization."""
+
+    conf_py: Path
+    templates_dir: Path
+    static_dir: Path
+    layout_template: Path
+    custom_css: Path
+
+
+def apply_devildex_customizations(
+    isolated_source_path_str: str, theme_name: str, banner_text: str
+):
     """Apply DevilDex customizations to conf and template, basing on given parameters.
 
     Args:
-        isolated_source_path (str): Path to isolated sources doc directory.
+        isolated_source_path_str (str): Path to isolated sources doc directory.
         theme_name (str): Name of Sphinx theme to use.
-        banner_text (str): Testo da view nel banner.
+        banner_text (str): Text to view in the banner.
     """
-    print(
-        "\nApplying DevilDex customizations (Theme: "
-        f"{theme_name}, Banner: '{banner_text}')..."
+    logger.info(  # Changed from print
+        "\nApplying DevilDex customizations (Theme: %s, Banner: '%s')...",
+        theme_name,
+        banner_text,
     )
-    conf_py_path = os.path.join(isolated_source_path, "conf.py")
-    templates_dir = os.path.join(isolated_source_path, "_templates")
-    static_dir = os.path.join(isolated_source_path, "_static")
-    layout_template_path = os.path.join(templates_dir, "layout.html")
-    custom_css_path = os.path.join(static_dir, "custom.css")
-    _create_template_static(templates_dir, static_dir)
+    source_path_p = Path(isolated_source_path_str)
+
+    paths = CustomizationFilePaths(
+        conf_py=source_path_p / "conf.py",
+        templates_dir=source_path_p / "_templates",
+        static_dir=source_path_p / "_static",
+        layout_template=source_path_p / "_templates" / "layout.html",
+        custom_css=source_path_p / "_static" / "custom.css",
+    )
+
+    _create_template_static(paths.templates_dir, paths.static_dir)
+
     final_banner = banner_text.format(version=VERSION)
     layout_content = f"""\
     {{% extends "!layout.html" %}}
@@ -319,7 +376,7 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         {{{{ super() }}}}
     {{% endblock %}}
     """
-    _write_override_template(layout_template_path, layout_content)
+    _write_override_template(paths.layout_template, layout_content)
 
     css_content = """\
     /* customized Styles for DevilDex */
@@ -341,71 +398,13 @@ def apply_devildex_customizations(isolated_source_path, theme_name, banner_text)
         padding-top: 0;
     }
     """
-    _write_custom_css(custom_css_path, css_content)
-    try:
-        with open(conf_py_path, "r", encoding="utf-8") as f:
-            original_conf_content = f.read()
-        new_conf_content = original_conf_content
+    _write_custom_css(paths.custom_css, css_content)
 
-        conf_updated = False
+    _apply_sphinx_conf_customizations(
+        paths.conf_py, theme_name, css_file_name=paths.custom_css.name
+    )
 
-        new_conf_content, theme_updated = _update_theme_in_conf(
-            new_conf_content, theme_name
-        )
-        if theme_updated:
-            conf_updated = True
-
-        templates_pattern = re.compile(
-            r"^\s*templates_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
-        )
-        match = templates_pattern.search(new_conf_content)
-        if match:
-            new_conf_content, updated_by_template = _update_templates_path_in_conf(
-                new_conf_content, match
-            )
-            if updated_by_template:
-                conf_updated = True
-
-        else:
-            new_conf_content += "\ntemplates_path = ['_templates']\n"
-            print("  - Added templates_path = ['_templates'] a conf.py")
-            conf_updated = True
-
-        static_pattern = re.compile(
-            r"^\s*html_static_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
-        )
-        match = static_pattern.search(new_conf_content)
-        if match:
-            new_conf_content, updated_by_static = _update_static_path_in_conf(
-                new_conf_content, match
-            )
-            if updated_by_static:
-                conf_updated = True
-        else:
-            new_conf_content += "\nhtml_static_path = ['_static']\n"
-            print("  - Added html_static_path = ['_static'] a conf.py")
-            conf_updated = True
-
-        css_pattern = re.compile(
-            r"^\s*html_css_files\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
-        )
-        match_css = css_pattern.search(new_conf_content)
-        css_file_to_add = "custom.css"
-        if match_css:
-            new_conf_content, updated_by_css_add = _update_css_files_in_conf(
-                new_conf_content, match_css, css_file_to_add
-            )
-            if updated_by_css_add:
-                conf_updated = True
-        else:
-            new_conf_content += f"\nhtml_css_files = ['{css_file_to_add}']\n"
-            print(f"  - Added html_css_files = ['{css_file_to_add}'] a conf.py")
-            conf_updated = True
-        _write_conf(conf_updated, conf_py_path, new_conf_content)
-    except Exception as e:
-        print(f"  - Error during modifying conf.py {conf_py_path}: {e}")
-
-    print("DevilDex customizations applied.")
+    logger.info("DevilDex customizations applied.")
 
 
 def find_doc_source_in_clone(repo_path):
@@ -502,27 +501,10 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
     return None
 
 
-def build_sphinx_docs(
-    isolated_source_path: str,
-    project_slug: str,
-    version_identifier: str,
-    original_clone_dir_path: str,
-) -> str | None:
-    """Execute sphinx-build in a temporary, isolated virtual environment."""
-    logger.info(
-        "\n--- Starting Isolated Sphinx Build for %s v%s ---",
-        project_slug,
-        version_identifier,
-    )
-    source_dir_path = Path(isolated_source_path)
-    clone_root_path = Path(original_clone_dir_path)
-
-    conf_py_file = source_dir_path / "conf.py"
-    if not conf_py_file.exists():
-        logger.error("Critical Error: conf.py not found in %s.", source_dir_path)
-        return None
-
-    doc_requirements_file: Path | None = None
+def _find_sphinx_doc_requirements_file(
+    source_dir_path: Path, clone_root_path: Path, project_slug: str
+) -> Path | None:
+    """Cerca il file dei requisiti specifici per la documentazione di Sphinx."""
     candidate_req_paths = [
         source_dir_path / "requirements.txt",
         source_dir_path.parent / "requirements.txt",
@@ -540,47 +522,89 @@ def build_sphinx_docs(
     ]
     for req_path_candidate in candidate_req_paths:
         if req_path_candidate.exists():
-            doc_requirements_file = req_path_candidate
-            logger.info(
-                "Found documentation requirements file: %s", doc_requirements_file
-            )
-            break
-    if not doc_requirements_file:
-        logger.info(
-            "No specific 'requirements.txt' found for documentation in common "
-            "locations for %s.",
-            project_slug,
-        )
+            logger.info("Found documentation requirements file: %s", req_path_candidate)
+            return req_path_candidate
+    logger.info(
+        "No specific 'requirements.txt' found for documentation in common "
+        "locations for %s.",
+        project_slug,
+    )
+    return None
 
-    project_install_root: Path | None = clone_root_path
-    final_output_dir = (
-        PROJECT_ROOT / "docset" / project_slug / version_identifier
-    ).resolve()
 
-    logger.info("Sphinx HTML output directory: %s", final_output_dir)
+@dataclass
+class SphinxBuildContext:
+    """Holds context and paths for a Sphinx build operation."""
+
+    source_dir: Path
+    clone_root: Path
+    conf_py_file: Path
+    doc_requirements_file: Path | None
+    project_install_root: Path
+    final_output_dir: Path
+    project_slug: str
+    version_identifier: str
+
+
+def build_sphinx_docs(
+    isolated_source_path: str,
+    project_slug: str,
+    version_identifier: str,
+    original_clone_dir_path: str,
+) -> str | None:
+    """Execute sphinx-build in a temporary, isolated virtual environment."""
+    logger.info(
+        "\n--- Starting Isolated Sphinx Build for %s v%s ---",
+        project_slug,
+        version_identifier,
+    )
+    source_dir_p = Path(isolated_source_path)
+    clone_root_p = Path(original_clone_dir_path)
+
+    # Create the Sphinx Build Context
+    sctx = SphinxBuildContext(
+        source_dir=source_dir_p,
+        clone_root=clone_root_p,
+        conf_py_file=source_dir_p / "conf.py",
+        doc_requirements_file=_find_sphinx_doc_requirements_file(
+            source_dir_p, clone_root_p, project_slug
+        ),
+        project_install_root=clone_root_p,  # As per original logic
+        final_output_dir=(
+            PROJECT_ROOT / "docset" / project_slug / version_identifier
+        ).resolve(),
+        project_slug=project_slug,
+        version_identifier=version_identifier,
+    )
+
+    if not sctx.conf_py_file.exists():
+        logger.error("Critical Error: conf.py not found in %s.", sctx.source_dir)
+        return None
+
+    logger.info("Sphinx HTML output directory: %s", sctx.final_output_dir)
 
     try:
-        if final_output_dir.exists():
-            logger.info("Removing existing output directory: %s", final_output_dir)
-            shutil.rmtree(final_output_dir)
-        final_output_dir.mkdir(parents=True, exist_ok=True)
+        if sctx.final_output_dir.exists():
+            logger.info("Removing existing output directory: %s", sctx.final_output_dir)
+            shutil.rmtree(sctx.final_output_dir)
+        sctx.final_output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         logger.error(
-            "Error creating/cleaning output directory %s: %s", final_output_dir, e
+            "Error creating/cleaning output directory %s: %s", sctx.final_output_dir, e
         )
         return None
 
     build_successful = False
     try:
         with IsolatedVenvManager(
-            project_name=f"{project_slug}-{version_identifier}"
+            project_name=f"{sctx.project_slug}-{sctx.version_identifier}"
         ) as venv:
 
             install_success = install_project_and_dependencies_in_venv(
                 pip_executable=venv.pip_executable,
-                project_name=project_slug,
-                project_root_for_install=project_install_root,
-                doc_requirements_path=doc_requirements_file,
+                project_name=sctx.project_slug,
+                project_root_for_install=sctx.project_install_root,
+                doc_requirements_path=sctx.doc_requirements_file,
                 base_packages_to_install=[
                     "sphinx",
                     "pallets-sphinx-themes",
@@ -593,53 +617,57 @@ def build_sphinx_docs(
                 logger.error(
                     "CRITICAL: Installation of project/dependencies (including Sphinx) "
                     "for %s FAILED or had critical issues. Aborting Sphinx build.",
-                    project_slug,
+                    sctx.project_slug,
                 )
                 return None
 
-            sphinx_command = [
+            sphinx_command_list = [
                 venv.python_executable,
                 "-m",
                 "sphinx",
                 "-b",
                 "html",
                 ".",
-                str(final_output_dir),
+                str(sctx.final_output_dir),
             ]
+            sphinx_process_env = {"LC_ALL": "C"}
 
-            logger.info("Executing Sphinx: %s", " ".join(sphinx_command))
-            sphinx_env = {"LC_ALL": "C"}
+            logger.info("Executing Sphinx: %s", " ".join(sphinx_command_list))
             _, _, returncode = execute_command(
-                sphinx_command,
-                f"Sphinx build for {project_slug}",
-                cwd=source_dir_path,
-                env=sphinx_env,
+                sphinx_command_list,
+                f"Sphinx build for {sctx.project_slug}",
+                cwd=sctx.source_dir,
+                env=sphinx_process_env,
             )
 
             if returncode == 0:
-                logger.info("Sphinx build for %s completed successfully.", project_slug)
+                logger.info(
+                    "Sphinx build for %s completed successfully.", sctx.project_slug
+                )
                 build_successful = True
             else:
                 logger.error(
                     "Sphinx build for %s failed. Return code: %s",
-                    project_slug,
+                    sctx.project_slug,
                     returncode,
                 )
 
     except RuntimeError as e:
         logger.error(
-            "Critical error during isolated build setup for %s: %s", project_slug, e
-        )
-    except Exception as e:
-        logger.exception(
-            "Unexpected exception during isolated Sphinx build for %s: %s",
-            project_slug,
+            "Critical error during isolated build setup for %s: %s",
+            sctx.project_slug,
             e,
         )
+    except Exception as e_gen:
+        logger.exception(
+            "Unexpected exception during isolated Sphinx build for %s: %s",
+            sctx.project_slug,
+            e_gen,
+        )
     finally:
-        logger.info("--- Finished Isolated Sphinx Build for %s ---", project_slug)
+        logger.info("--- Finished Isolated Sphinx Build for %s ---", sctx.project_slug)
 
-    return str(final_output_dir) if build_successful else None
+    return str(sctx.final_output_dir) if build_successful else None
 
 
 def _cleanup(clone_dir_path):
@@ -750,79 +778,226 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
     )
 
 
-def download_readthedocs_source_and_build(
-    project_name, project_url, existing_clone_path=None
-):
-    """Get RTD sources, clone, isolate sources doc, executes Sphinx, and cleans-up.
+def _attempt_clone_and_process_result(
+    repo_url: str,
+    initial_default_branch: str,
+    clone_dir_path: Path,
+    bzr: bool,
+    project_slug: str,
+) -> tuple[bool, str]:
+    """Tenta di clonare il repository e processa il risultato.
 
-    Args:
-        project_name (str): the name of the project.
-        project_url (str): the URL of repository of the project.
-        existing_clone_path (str, optional): Percorso to a repository già clonato.
-                                             Se fornito, la clonazione viene saltata.
-                                             Default a None.
-
-
-    Returns:
-        tuple(str, str) or tuple(None, None): Path isolated sources and build HTML path
-                                              o (None, None) in case of failure.
+    Restituisce (successo_clone, branch_effettivo_post_tentativo).
     """
-    print("--- Process Source Download, Build e Clean-up ---")
-    print(f"Analyzing the URL: {project_url}")
+    current_effective_branch = initial_default_branch
+    run_clone_result = run_clone(repo_url, initial_default_branch, clone_dir_path, bzr)
 
-    project_slug = project_name
-    if not project_slug:
-        return None, None
-
-    print(f"project Slug: {project_slug}")
-    api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
-    print(f"Calling API for project details: {api_project_detail_url}")
-
-    default_branch, repo_url = _extract_repo_url_branch(
-        api_project_detail_url, project_slug
+    if isinstance(run_clone_result, str):  # Successo da run_clone
+        current_effective_branch = run_clone_result
+        logger.info(
+            "Cloning successful for '%s'. Effective branch: '%s'. Path: '%s'",
+            project_slug,
+            current_effective_branch,
+            clone_dir_path,
+        )
+        return True, current_effective_branch
+    if isinstance(run_clone_result, tuple) and run_clone_result == (None, None):
+        logger.error(
+            "Cloning failed for '%s' due to command error (details in previous logs).",
+            project_slug,
+        )
+        return False, initial_default_branch
+    logger.error(
+        "Cloning attempt for '%s' resulted in an unexpected state or failure. Result: %s",
+        project_slug,
+        run_clone_result,
     )
-    base_output_dir = PROJECT_ROOT / "rtd_source_clones_temp"
-    base_output_dir.mkdir(parents=True, exist_ok=True)
-    clone_dir_name = f"{project_slug}_repo_{default_branch}"
+    return False, initial_default_branch
+
+
+def _handle_repository_cloning(
+    repo_url: str | None,
+    initial_default_branch: str,
+    base_output_dir: Path,
+    project_slug: str,
+    bzr: bool,
+) -> tuple[Path | None, str]:
+    """Gestisce la logica di clonazione del repository.
+
+    Restituisce il percorso del clone e il branch effettivo utilizzato.
+    """
+    clone_dir_name = f"{project_slug}_repo_{initial_default_branch}"
     clone_dir_path = base_output_dir / clone_dir_name
-    cloned_repo_exists_before = os.path.exists(clone_dir_path)
-    bzr = False
-    if repo_url and repo_url.startswith("lp:"):
-        bzr = True
+    # Inizia con il branch iniziale, verrà aggiornato se il clone ha successo con un branch diverso
+    effective_branch = initial_default_branch
+    cloned_repo_exists_before = clone_dir_path.exists()
+
     if repo_url and not cloned_repo_exists_before:
-        run_clone_result = run_clone(repo_url, default_branch, clone_dir_path, bzr)
-        if isinstance(run_clone_result, tuple) and (
-            not run_clone_result[0] or not run_clone_result[1]
-        ):
-            return run_clone_result
-        if isinstance(run_clone_result, str):
-            cloned_repo_exists_before = True
-            default_branch = run_clone_result
-    if not cloned_repo_exists_before:
-        print(
-            "Unable to clone (URL not available or error) e "
-            f"expected directory '{clone_dir_path}' doesn't exist."
+        logger.info(
+            "Repository for '%s' not found locally at '%s'. Attempting to clone.",
+            project_slug,
+            clone_dir_path,
         )
-        return None, None
-    print(f"expected clone Directory '{clone_dir_path}' found locally.")
+        _, branch_after_attempt = _attempt_clone_and_process_result(
+            repo_url, initial_default_branch, clone_dir_path, bzr, project_slug
+        )
+        effective_branch = branch_after_attempt
+    elif repo_url and cloned_repo_exists_before:
+        logger.info(
+            "Repository for '%s' already exists at '%s'. Skipping clone.",
+            project_slug,
+            clone_dir_path,
+        )
+    elif not repo_url:
+        logger.warning(
+            "No repository URL provided for '%s'. Cannot clone.", project_slug
+        )
+        if not cloned_repo_exists_before:
+            logger.error(
+                "No repository URL and no existing clone for '%s'.", project_slug
+            )
+            return None, effective_branch
 
-    isolated_docs_output_dir = PROJECT_ROOT / "rtd_isolated_doc_sources"
-    isolated_docs_output_dir.mkdir(parents=True, exist_ok=True)
-    isolated_source_path = find_doc_source_in_clone(clone_dir_path)
+    if clone_dir_path.exists():
+        logger.info("Using repository for '%s' at: '%s'", project_slug, clone_dir_path)
+        return clone_dir_path, effective_branch
+    logger.error(
+        "Repository directory for '%s' not found at '%s' after processing.",
+        project_slug,
+        clone_dir_path,
+    )
+    return None, effective_branch
 
+
+@dataclass
+class ProjectContext:
+    """Project context."""
+
+    slug: str
+    version: str
+
+
+@dataclass
+class CustomizationSettings:
+    """Customization Settings."""
+
+    theme: str
+    banner_text: str
+
+
+def _process_documentation(
+    clone_dir_path: Path,
+    project_ctx: ProjectContext,
+    customization: CustomizationSettings,
+) -> tuple[str | None, str | None]:
+    """Isola la sorgente della documentazione, applica personalizzazioni e la costruisce."""
+    logger.info(
+        "Processing documentation for '%s' (version: %s) from '%s'",
+        project_ctx.slug,
+        project_ctx.version,
+        clone_dir_path,
+    )
+    isolated_source_path = find_doc_source_in_clone(str(clone_dir_path))
     build_output_path = None
-    if isolated_source_path:
-        apply_devildex_customizations(
-            isolated_source_path, theme_name=custom_theme, banner_text=custom_banner
-        )
 
+    if isolated_source_path:
+        logger.info(
+            "Documentation source for '%s' isolated at: %s",
+            project_ctx.slug,
+            isolated_source_path,
+        )
+        apply_devildex_customizations(
+            isolated_source_path,
+            theme_name=customization.theme,  # Accedi tramite l'oggetto
+            banner_text=customization.banner_text,  # Accedi tramite l'oggetto
+        )
         build_output_path = build_sphinx_docs(
-            isolated_source_path, project_slug, default_branch, clone_dir_path
+            isolated_source_path,
+            project_ctx.slug,
+            project_ctx.version,
+            str(clone_dir_path),  # Deriva qui la stringa
         )
     else:
-        print("Isolate sources Failed, skipping Sphinx build.")
+        logger.warning(
+            "Documentation source isolation failed for '%s' (path: '%s'). Skipping Sphinx build.",
+            project_ctx.slug,
+            clone_dir_path,
+        )
 
-    _cleanup(clone_dir_path)
+    return isolated_source_path, build_output_path
+
+
+def download_readthedocs_source_and_build(
+    project_name: str, project_url: str, existing_clone_path: str | None = None
+) -> tuple[str | None, str | None]:
+    """Scarica sorgenti da RTD, clona, isola sorgenti doc, esegue Sphinx e pulisce."""
+    logger.info(
+        "\n--- Starting RTD Source Download, Build & Cleanup for: %s ---", project_name
+    )
+    logger.info("Project URL: %s", project_url)
+
+    project_slug = project_name  # Assumiamo che project_name sia già lo slug corretto
+    if not project_slug:
+        logger.error("Project slug (project_name) cannot be empty.")
+        return None, None
+
+    logger.info("Project Slug: %s", project_slug)
+    api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
+    logger.info("Fetching project details from API: %s", api_project_detail_url)
+
+    initial_default_branch, repo_url = _extract_repo_url_branch(
+        api_project_detail_url, project_slug
+    )
+    # Se _extract_repo_url_branch non trova repo_url, repo_url sarà None.
+    # initial_default_branch avrà un valore di fallback (es. "main").
+
+    base_output_dir = PROJECT_ROOT / "rtd_source_clones_temp"
+    base_output_dir.mkdir(parents=True, exist_ok=True)
+
+    bzr = bool(repo_url and repo_url.startswith("lp:"))
+
+    # Gestione di existing_clone_path:
+    # Se existing_clone_path è fornito, dovrebbe idealmente bypassare il fetch API e il cloning.
+    # La logica attuale non lo fa in modo pulito. Per ora, ci concentriamo sul refactoring
+    # della logica di cloning esistente. Se existing_clone_path è una priorità,
+    # andrebbe gestito all'inizio della funzione.
+    if existing_clone_path and Path(existing_clone_path).exists():
+        logger.info("Using existing clone path: %s", existing_clone_path)
+        clone_dir_path = Path(existing_clone_path)
+        # In questo scenario, effective_branch non è noto dall'API.
+        # Potrebbe essere dedotto da git nel clone_dir_path o usare un default.
+        # Per semplicità, se usiamo un clone esistente, potremmo dover assumere un branch
+        # o tentare di rilevarlo. Per ora, usiamo initial_default_branch.
+        effective_branch = (
+            initial_default_branch  # Da rivedere se si usa existing_clone_path
+        )
+    else:
+        clone_dir_path, effective_branch = _handle_repository_cloning(
+            repo_url, initial_default_branch, base_output_dir, project_slug, bzr
+        )
+
+    if not clone_dir_path:
+        logger.error(
+            "Failed to obtain a valid repository clone for '%s'.", project_slug
+        )
+        # _cleanup non viene chiamato qui nel codice originale se il clone fallisce prima
+        return _download_handle_result(None, None)
+
+    # Accedi a custom_theme e custom_banner (globali/config o passati come argomenti)
+    # Per questo refactoring, assumiamo che siano accessibili come nel codice originale.
+    # Idealmente, verrebbero passati a _process_documentation.
+    global custom_theme, custom_banner  # Riferimento esplicito se sono globali in questo modulo
+
+    project_context = ProjectContext(slug=project_slug, version=effective_branch)
+    customization_settings = CustomizationSettings(
+        theme=custom_theme, banner_text=custom_banner
+    )
+
+    isolated_source_path, build_output_path = _process_documentation(
+        clone_dir_path, project_context, customization_settings
+    )
+
+    _cleanup(str(clone_dir_path))  # _cleanup si aspetta una stringa
 
     return _download_handle_result(isolated_source_path, build_output_path)
 
@@ -843,6 +1018,6 @@ def _download_handle_result(isolated_source_path, build_output_path):
 if __name__ == "__main__":
     PROJECT_NAME_EXAMPLE = "black"
     PROJECT_URL_EXAMPLE = "https://github.com/psf/black"
-    isolated_folder, build_folder = download_readthedocs_source_and_build(
+    _, _ = download_readthedocs_source_and_build(
         project_name=PROJECT_NAME_EXAMPLE, project_url=PROJECT_URL_EXAMPLE
     )
