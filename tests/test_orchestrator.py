@@ -148,11 +148,13 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     f" but Orchestrator detected '{detected_doc_type}'"
 
     print(
-        f"Orchestrator attempting to grab/build docs for {project_name} using type: {detected_doc_type}..."
+        f"Orchestrator attempting to grab/build docs for {project_name} "
+        f"using type: {detected_doc_type}..."
     )
     output_docs_root_path_str = orchestrator.grab_build_doc()
     print(
-        f"DEBUG: Path returned by grab_build_doc for {project_name}: {output_docs_root_path_str}"
+        "DEBUG: Path returned by grab_build_doc for "
+        f"{project_name}: {output_docs_root_path_str}"
     )
 
     operation_result = orchestrator.get_last_operation_result()
@@ -187,7 +189,8 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         final_entry_point_path = output_docs_root_path / expected_entry_point_filename
         assert (
             final_entry_point_path.is_file()
-        ), f"Expected entry point '{final_entry_point_path}' not found or is not a file for {project_name} (type: {detected_doc_type})"
+        ), f"Expected entry point '{final_entry_point_path}' not found or is not a "
+        f"file for {project_name} (type: {detected_doc_type})"
 
         html_files = list(output_docs_root_path.glob("**/*.html"))
         assert (
@@ -196,7 +199,8 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     else:
         assert (
             operation_result is None
-        ), f"Expected grab_build_doc to result in None for {project_name} due to expected failure, but got type {type(operation_result)} with value: {operation_result}"
+        ), f"Expected grab_build_doc to result in None for {project_name} due to "
+        f"expected failure, but got type {type(operation_result)} with value: {operation_result}"
         assert (
             output_docs_root_path_str is None
         ), f"Expected grab_build_doc to return None for {project_name} "
