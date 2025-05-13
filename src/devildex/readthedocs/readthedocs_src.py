@@ -156,9 +156,7 @@ def _update_static_path_in_conf(
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"html_static_path = {new_list_str_repr}", 1
                 )
-                logger.info(
-                    "  - Appended '_static' to html_static_path in conf.py"
-                )
+                logger.info("  - Appended '_static' to html_static_path in conf.py")
                 conf_updated = True
             else:
                 raise ValueError("parsed value for html_static_path is not a list")
@@ -220,7 +218,7 @@ def _process_conf_list_setting(
     pattern_regex: re.Pattern,
     default_value_if_missing: str,
     specific_update_logic_func: Callable[..., tuple[str, bool]],
-    *args_for_specific_updater: Any
+    *args_for_specific_updater: Any,
 ) -> tuple[str, bool]:
     """Helper to find, update, or add a list-based setting in conf.py content."""
     match = pattern_regex.search(conf_content)
@@ -288,7 +286,7 @@ def _apply_sphinx_conf_customizations(
             css_pattern_obj,
             f"['{css_file_name}']",
             _update_css_files_in_conf,
-            css_file_name
+            css_file_name,
         )
         if css_files_updated:
             overall_conf_updated = True
@@ -338,6 +336,7 @@ def _update_theme_in_conf(conf_content, theme_name):
 @dataclass
 class CustomizationFilePaths:
     """Holds paths for Sphinx documentation customization."""
+
     conf_py: Path
     templates_dir: Path
     static_dir: Path
@@ -530,6 +529,7 @@ def _find_sphinx_doc_requirements_file(
 @dataclass
 class SphinxBuildContext:
     """Holds context and paths for a Sphinx build operation."""
+
     source_dir: Path
     clone_root: Path
     conf_py_file: Path
@@ -848,6 +848,7 @@ def _handle_repository_cloning(
 @dataclass
 class ProjectContext:
     """Project context."""
+
     slug: str
     version: str
 
@@ -855,6 +856,7 @@ class ProjectContext:
 @dataclass
 class CustomizationSettings:
     """Customization Settings."""
+
     theme: str
     banner_text: str
 
@@ -930,9 +932,7 @@ def download_readthedocs_source_and_build(
     if existing_clone_path and Path(existing_clone_path).exists():
         logger.info("Using existing clone path: %s", existing_clone_path)
         clone_dir_path = Path(existing_clone_path)
-        effective_branch = (
-            initial_default_branch
-        )
+        effective_branch = initial_default_branch
     else:
         clone_dir_path, effective_branch = _handle_repository_cloning(
             repo_url, initial_default_branch, base_output_dir, project_slug, bzr

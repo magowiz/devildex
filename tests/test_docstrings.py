@@ -48,7 +48,7 @@ PACKAGES_TO_TEST = [
         "project_name": "six",
         "version_tag": "1.16.0",
         "expected_entry_point": "index.html",
-    }
+    },
 ]
 
 TEST_DOCS_OUTPUT_BASE = Path("docset")

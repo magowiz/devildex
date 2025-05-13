@@ -7,8 +7,6 @@ import re
 import shutil
 import subprocess
 import sys
-import traceback
-import venv
 from pathlib import Path
 from types import ModuleType
 
@@ -85,27 +83,28 @@ class DocStringsSrc:
             return False
 
     def _is_pdoc_dummy_module(
-            self, module_candidate: ModuleType | None, expected_name: str
+        self, module_candidate: ModuleType | None, expected_name: str
     ) -> bool:
         """Checks if the imported object is a pdoc dummy module."""
-        if not module_candidate:  # Can be None if pdoc.import_module itself returns None
+        if (
+            not module_candidate
+        ):  # Can be None if pdoc.import_module itself returns None
             return True
         # A dummy module created by pdoc typically lacks __file__ and __path__,
         # and its __name__ might not match the expected_name if it's a placeholder.
         return (
-                not hasattr(module_candidate, "__file__")
-                and not hasattr(module_candidate, "__path__")
-                and (
-                    not hasattr(module_candidate, "__name__")
-                    or module_candidate.__name__ != expected_name
-                )
+            not hasattr(module_candidate, "__file__")
+            and not hasattr(module_candidate, "__path__")
+            and (
+                not hasattr(module_candidate, "__name__")
+                or module_candidate.__name__ != expected_name
+            )
         )
 
     def _perform_single_import(
-            self, module_name: str
+        self, module_name: str
     ) -> tuple[ModuleType | None, Exception | None]:
-        """
-        Performs a single attempt to import the module using pdoc.
+        """Performs a single attempt to import the module using pdoc.
 
         Returns:
             - (module_object, None) on successful import of a real module.
@@ -119,11 +118,18 @@ class DocStringsSrc:
         try:
             # pdoc.import_module with skip_errors=True might return a "dummy" module
             # instead of raising an error directly for missing dependencies.
-            module_candidate = pdoc.import_module(module_name, reload=True, skip_errors=True)
+            module_candidate = pdoc.import_module(
+                module_name, reload=True, skip_errors=True
+            )
 
             if self._is_pdoc_dummy_module(module_candidate, module_name):
-                logger.debug("Module '%s' imported as a pdoc dummy object.", module_name)
-                return None, None  # Indicates dummy, not a specific ImportError from this call
+                logger.debug(
+                    "Module '%s' imported as a pdoc dummy object.", module_name
+                )
+                return (
+                    None,
+                    None,
+                )  # Indicates dummy, not a specific ImportError from this call
 
             logger.debug("Successfully imported module '%s'.", module_name)
             return module_candidate, None  # Success, real module
@@ -132,20 +138,24 @@ class DocStringsSrc:
             # This block is hit if pdoc.import_module itself raises these errors,
             # which can happen if the module name is invalid or pdoc cannot skip the error.
             logger.debug(
-                "Import of '%s' failed within pdoc.import_module with: %s", module_name, e
+                "Import of '%s' failed within pdoc.import_module with: %s",
+                module_name,
+                e,
             )
             return None, e  # Specific import error that pdoc might re-raise
 
         except Exception as e:  # pylint: disable=broad-except
             # Catch other potential exceptions from pdoc.import_module
             logger.error(
-                "Unexpected error during pdoc.import_module for '%s': %s", module_name, e
+                "Unexpected error during pdoc.import_module for '%s': %s",
+                module_name,
+                e,
             )
             logger.debug("Traceback:", exc_info=True)
             return None, None  # Other error, not a specific ImportError to parse
 
     def _attempt_import_with_retry(
-            self, module_name: str, venv_python_interpreter: str | None
+        self, module_name: str, venv_python_interpreter: str | None
     ) -> tuple[ModuleType | None, bool]:
         """Attempts to import a module, retrying once after attempting to install.
 
@@ -170,9 +180,13 @@ class DocStringsSrc:
         # and we have a venv, try to parse the error and install the missing dependency.
         if import_error and venv_python_interpreter:
             missing_dep_name = self._extract_missing_module_name(str(import_error))
-            if missing_dep_name and missing_dep_name.strip() and missing_dep_name != module_name:
+            if (
+                missing_dep_name
+                and missing_dep_name.strip()
+                and missing_dep_name != module_name
+            ):
                 if self._attempt_install_missing_dependency(
-                        missing_dep_name, venv_python_interpreter
+                    missing_dep_name, venv_python_interpreter
                 ):
                     dependency_installed = True
             else:
@@ -180,13 +194,17 @@ class DocStringsSrc:
                     "Could not extract a valid missing dependency "
                     "name from error for '%s' (error: %s), "
                     "or it was the module itself. No install attempted based on this error.",
-                    module_name, import_error
+                    module_name,
+                    import_error,
                 )
-        elif not import_error:  # Import resulted in dummy or other non-ImportError issue
+        elif (
+            not import_error
+        ):  # Import resulted in dummy or other non-ImportError issue
             logger.debug(
                 "Module '%s' import resulted in dummy or non-specific issue on attempt 1. "
                 "Cannot attempt targeted dependency installation "
-                "based on an error message.", module_name
+                "based on an error message.",
+                module_name,
             )
         # If import_error is None (dummy/other) or no venv_python_interpreter,
         # we proceed to the second attempt without trying to install a dependency based on an error.
@@ -203,7 +221,7 @@ class DocStringsSrc:
         # --- Failed after all attempts ---
         logger.info(
             "Module '%s' could not be imported or resulted in a dummy object after all attempts.",
-            module_name
+            module_name,
         )
         return None, dependency_installed
 
@@ -522,7 +540,7 @@ class DocStringsSrc:
         return False
 
     def _validate_pdoc_output(
-            self, pdoc_base_output_dir: Path, project_name: str
+        self, pdoc_base_output_dir: Path, project_name: str
     ) -> str | None:
         """Checks if pdoc output directory and content are valid.
 
@@ -536,9 +554,9 @@ class DocStringsSrc:
         """
         actual_docs_path = pdoc_base_output_dir / project_name
         if (
-                actual_docs_path.exists()
-                and actual_docs_path.is_dir()
-                and any(actual_docs_path.iterdir())
+            actual_docs_path.exists()
+            and actual_docs_path.is_dir()
+            and any(actual_docs_path.iterdir())
         ):
             logger.info(
                 "DocStringsSrc: pdoc content generated successfully in %s.",
@@ -553,10 +571,10 @@ class DocStringsSrc:
         return None
 
     def generate_docs_from_folder(
-            self,
-            project_name: str,
-            input_folder: str,
-            output_folder: str,  # This is the base directory for all pdoc outputs
+        self,
+        project_name: str,
+        input_folder: str,
+        output_folder: str,  # This is the base directory for all pdoc outputs
     ) -> str | bool:
         """Genera documentazione HTML usando pdoc in un ambiente isolato."""
         logger.info("\n--- Starting Isolated pdoc Build for %s ---", project_name)
@@ -713,110 +731,106 @@ class DocStringsSrc:
             return match.group(1)
         return None
 
-    def run(self, url, project_name, version=""):
-        """Run logic."""
+    def _handle_successful_doc_move(
+        self, generated_content_path_str: str, final_docs_destination: Path
+    ):
+        """Handles moving generated docs to their final destination."""
+        logger.info(
+            "Documentation generated by isolated build at: %s",
+            generated_content_path_str,
+        )
+        if final_docs_destination.exists():
+            self.cleanup_folder(final_docs_destination)
+        final_docs_destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(generated_content_path_str), str(final_docs_destination))
+        logger.info("Documentation moved to final location: %s", final_docs_destination)
+
+    def _define_run_paths(
+        self, project_name: str, version: str
+    ) -> tuple[Path, Path, Path]:
+        """Defines and returns standard paths used in the run method."""
+        cloned_repo_path = Path(project_name)  # Relative to CWD for cloning
+
+        final_docs_destination = self.docset_dir / project_name
+        if version:  # McCabe +1
+            final_docs_destination /= version
+
+        temp_output_dirname = f"tmp_pdoc_output_{project_name}"
+        if version:  # McCabe +1
+            temp_output_dirname += f"_v{version}"
+        pdoc_operation_basedir = self.docset_dir / temp_output_dirname
+
+        return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
+
+    def _log_subprocess_error(
+        self, cpe: subprocess.CalledProcessError, context_msg: str
+    ):
+        """Logs details of a CalledProcessError."""
+        logger.error("%s: Subprocess execution failed: %s", context_msg, cpe.cmd)
+        logger.error("%s: Exit Code: %s", context_msg, cpe.returncode)
+        if cpe.stdout and cpe.stdout.strip():  # McCabe +1
+            logger.debug("%s: Stdout:\n%s", context_msg, cpe.stdout.strip())
+        if cpe.stderr and cpe.stderr.strip():  # McCabe +1
+            logger.error("%s: Stderr:\n%s", context_msg, cpe.stderr.strip())
+
+    def run(self, url: str, project_name: str, version: str = ""):
+        """Main execution logic to clone, generate docs, and move to final location."""
         cloned_repo_path: Path | None = None
-        temp_venv_path: Path | None = None
+        pdoc_operation_basedir: Path | None = None
+        generation_outcome: str | bool = False
+
         try:
-            cloned_repo_path = Path(project_name)
-            temp_venv_path = cloned_repo_path / ".venv_docs"
+            cloned_repo_path, final_docs_destination, pdoc_operation_basedir = (
+                self._define_run_paths(project_name, version)
+            )
 
-            final_output_dir = self.docset_dir / project_name / version
-            tmp_output_dir = self.docset_dir / f"tmp_{project_name}" / version
-
+            # Initial cleanup - paths from _define_run_paths are Path objects
             self.cleanup_folder(
-                [cloned_repo_path, temp_venv_path, final_output_dir, tmp_output_dir]
+                [cloned_repo_path, final_docs_destination, pdoc_operation_basedir]
             )
 
             self.git_clone(url, cloned_repo_path)
 
-            venv.create(temp_venv_path, with_pip=True, clear=True)
-
-            if sys.platform == "win32":
-                _venv_python_rel = temp_venv_path / "Scripts" / "python.exe"
-            else:
-                _venv_python_rel = temp_venv_path / "bin" / "python"
-            venv_python_interpreter = str(_venv_python_rel.resolve())
-            get_site_packages_command = [
-                venv_python_interpreter,
-                "-c",
-                "import site; print(site.getsitepackages()[0])",
-            ]
-            result = subprocess.run(
-                get_site_packages_command,
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-            venv_site_packages = result.stdout.strip()
-            subprocess.run(
-                [venv_python_interpreter, "-m", "pip", "install", "."],
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                cwd=cloned_repo_path,
+            logger.info("Calling generate_docs_from_folder for isolated build...")
+            # cloned_repo_path and pdoc_operation_basedir are Path objects here
+            generation_outcome = self.generate_docs_from_folder(
+                project_name,
+                str(cloned_repo_path.resolve()),
+                str(pdoc_operation_basedir.resolve()),
             )
 
-            subprocess.run(
-                [venv_python_interpreter, "-m", "pip", "install", "pdoc3"],
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-            original_sys_path_inner = list(sys.path)
-
-            sys.path.insert(0, venv_site_packages)
-            print(f"Added {venv_site_packages} a sys.path")
-            try:
-                print("Executing generate_docs_from_folder con venv sys.path...")
-                path_to_generated_docs_or_false = self.generate_docs_from_folder(
-                    project_name,
-                    str(cloned_repo_path),
-                    str(tmp_output_dir)
+            if isinstance(generation_outcome, str):
+                self._handle_successful_doc_move(
+                    generation_outcome, final_docs_destination
                 )
-
-                if path_to_generated_docs_or_false:
-                    print(
-                        "Generating documentation completed successfully for"
-                        f" {project_name}"
-                    )
-                    if final_output_dir.exists():
-                        self.cleanup_folder(final_output_dir)
-                    final_output_dir.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.move(str(path_to_generated_docs_or_false), str(final_output_dir))
-                else:
-                    print(
-                        "documentation Generation failed or no documented module "
-                        f"for {project_name}"
-                    )
-
-            finally:
-                sys.path = original_sys_path_inner
-                print(f"Removed {venv_site_packages} da sys.path")
-                if tmp_output_dir.exists():
-                    self.cleanup_folder(tmp_output_dir)
+            else:
+                logger.error(
+                    "Documentation generation failed for %s using isolated build.",
+                    project_name,
+                )
         except subprocess.CalledProcessError as cpe:
-            print(f"\nERROR during execution of pip command: {cpe.cmd}")
-            print(f"exit Code: {cpe.returncode}")
-            print(f"Output del comando (stdout):\n---\n{cpe.stdout}\n---")
-            print(f"Errors del comando (stderr):\n---\n{cpe.stderr}\n---")
+            self._log_subprocess_error(cpe, f"Run phase for {project_name}")
         except RuntimeError as e:
-            print(f"\nERROR during preparing phase (es. cloning): {e}")
+            logger.error("Runtime error during run for %s: %s", project_name, e)
         except OSError as e:
-            print(f"\nUnexpected ERROR during il process di {project_name}: {e}")
-            print("--- TRACEBACK ---")
-            traceback.print_exc()
-            print("--- FINE DETAIL ERROR UNEXPECTED ---")
+            logger.error("OS error during run for %s: %s", project_name, e)
+            logger.debug("Traceback:", exc_info=True)
+        except Exception:
+            logger.exception(
+                "Unexpected critical error during run for %s", project_name
+            )
         finally:
-            print(f"Cleaning temporary folders for {project_name}...")
-            if cloned_repo_path:
+            logger.info("Starting final cleanup for %s...", project_name)
+            if cloned_repo_path and cloned_repo_path.exists():
+                logger.info("Cleaning up cloned repository: %s", cloned_repo_path)
                 self.cleanup_folder(cloned_repo_path)
-            if temp_venv_path:
-                self.cleanup_folder(temp_venv_path)
-            print(f"Cleaning temporary folders for {project_name} completed.")
+            if pdoc_operation_basedir and pdoc_operation_basedir.exists():
+                logger.info(
+                    "Final cleanup of pdoc operation base directory: %s",
+                    pdoc_operation_basedir,
+                )
+                self.cleanup_folder(pdoc_operation_basedir)
+            logger.info("Final cleanup for %s completed.", project_name)
 
 
 if __name__ == "__main__":

@@ -103,9 +103,11 @@ if __name__ == "__main__":
     EXAMPLE_PROJECT_PATH_UNKNOWN = "/tmp/test_project_unknown"
 
     print(f"\n--- Scenario 1: Project with ReadTheDocs URL ({EXAMPLE_RTD_URL}) ---")
-    orchestrator1 = Orchestrator(project_name='test_project_rtd',
-                                 project_path=EXAMPLE_PROJECT_PATH_RTD,
-                                 rtd_url=EXAMPLE_RTD_URL)
+    orchestrator1 = Orchestrator(
+        project_name="test_project_rtd",
+        project_path=EXAMPLE_PROJECT_PATH_RTD,
+        rtd_url=EXAMPLE_RTD_URL,
+    )
 
     print("Starting scan...")
     orchestrator1.start_scan()
@@ -119,8 +121,11 @@ if __name__ == "__main__":
         "\n--- Scenario 2: Project without RTD URL (path: "
         f"{EXAMPLE_PROJECT_PATH_LOCAL}) ---"
     )
-    orchestrator2 = Orchestrator(project_path=EXAMPLE_PROJECT_PATH_LOCAL, rtd_url=None,
-                                 project_name='test_project_local')
+    orchestrator2 = Orchestrator(
+        project_path=EXAMPLE_PROJECT_PATH_LOCAL,
+        rtd_url=None,
+        project_name="test_project_local",
+    )
 
     print("Starting scan...")
     orchestrator2.start_scan()
@@ -133,8 +138,9 @@ if __name__ == "__main__":
         "\n--- Scenario 3: Project with no detectable documentation "
         f"({EXAMPLE_PROJECT_PATH_UNKNOWN}) ---"
     )
-    orchestrator3 = Orchestrator(project_path=EXAMPLE_PROJECT_PATH_UNKNOWN,
-                                 project_name='test_project_unknown')
+    orchestrator3 = Orchestrator(
+        project_path=EXAMPLE_PROJECT_PATH_UNKNOWN, project_name="test_project_unknown"
+    )
 
     print("Starting scan...")
     orchestrator3.start_scan()
@@ -145,8 +151,10 @@ if __name__ == "__main__":
     print(f"Operation outcome: {orchestrator3.get_last_operation_result()}")
 
     print("\n--- Scenario 4: Calling grab_build_doc() before start_scan() ---")
-    orchestrator4 = Orchestrator(project_path="/tmp/another_project_no_scan",
-                                 project_name="another_project_no_scan")
+    orchestrator4 = Orchestrator(
+        project_path="/tmp/another_project_no_scan",
+        project_name="another_project_no_scan",
+    )
     print("Attempting grab/build documentation without prior scan...")
     orchestrator4.grab_build_doc()
     print(f"Operation outcome: {orchestrator4.get_last_operation_result()}")

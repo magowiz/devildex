@@ -146,9 +146,10 @@ def _install_doc_requirements_in_venv(
         return False
 
     if not filtered_req_lines:
-        logger.info("No valid requirements found in '%s' "
-                    "after filtering. Skipping install.",
-                    doc_requirements_path)
+        logger.info(
+            "No valid requirements found in '%s' " "after filtering. Skipping install.",
+            doc_requirements_path,
+        )
         return True
 
     # Overwrite the original file with filtered content.
@@ -162,11 +163,16 @@ def _install_doc_requirements_in_venv(
         ) as req_file:
             for line in filtered_req_lines:
                 req_file.write(f"{line}\n")
-        logger.info("Overwrote '%s' with filtered requirements for "
-                    "installation.", doc_requirements_path)
+        logger.info(
+            "Overwrote '%s' with filtered requirements for " "installation.",
+            doc_requirements_path,
+        )
     except IOError as e:
-        logger.error("Failed to write filtered requirements to "
-                     "'%s': %s. Skipping install.", doc_requirements_path, e)
+        logger.error(
+            "Failed to write filtered requirements to " "'%s': %s. Skipping install.",
+            doc_requirements_path,
+            e,
+        )
         return False
 
     req_install_cmd = [
@@ -241,42 +247,43 @@ def _prepare_command_env(
     if additional_env:
         current_env.update(additional_env)
     return current_env
+
+
 def _log_command_failure_details(
     description: str, returncode: int, stdout_text: str | None, stderr_text: str | None
 ):
     """Logs details and prints debug info for a failed command."""
-    logger.warning(
-        "%s failed. Return code: %s", description, returncode
-    )
+    logger.warning("%s failed. Return code: %s", description, returncode)
     if stdout_text and stdout_text.strip():
         logger.debug("Stdout:\n%s", stdout_text.strip())
     if stderr_text and stderr_text.strip():
         stripped_stderr = stderr_text.strip()
         logger.debug("Stderr:\n%s", stripped_stderr)
         print(
-            f"DEBUG STDERR from FAILED command '{description}':\n"
-            f"{stripped_stderr}"
+            f"DEBUG STDERR from FAILED command '{description}':\n" f"{stripped_stderr}"
         )
-def _log_command_success_details(description: str,
-                                 stdout_text: str | None,
-                                 stderr_text: str | None):
+
+
+def _log_command_success_details(
+    description: str, stdout_text: str | None, stderr_text: str | None
+):
     """Logs details for a successfully executed command."""
     logger.info("%s completed successfully.", description)
     if stdout_text and stdout_text.strip():
         logger.debug("Stdout (success):\n%s", stdout_text.strip())
     if stderr_text and stderr_text.strip():
         logger.debug("Stderr (success/warnings):\n%s", stderr_text.strip())
-def _log_sphinx_specific_debug(description: str, stdout_text: str | None, stderr_text: str | None):
+
+
+def _log_sphinx_specific_debug(
+    description: str, stdout_text: str | None, stderr_text: str | None
+):
     """Prints Sphinx-specific debug STDOUT and STDERR if applicable."""
     if "sphinx" in description.lower():
         actual_stdout = stdout_text.strip() if stdout_text else "<empty>"
         actual_stderr = stderr_text.strip() if stderr_text else "<empty>"
-        print(
-            f"DEBUG SPHINX STDOUT for '{description}':\n{actual_stdout}"
-        )
-        print(
-            f"DEBUG SPHINX STDERR for '{description}':\n{actual_stderr}"
-        )
+        print(f"DEBUG SPHINX STDOUT for '{description}':\n{actual_stdout}")
+        print(f"DEBUG SPHINX STDERR for '{description}':\n{actual_stderr}")
 
 
 def _get_effective_cwd(cwd_param: str | None) -> str:
@@ -285,7 +292,10 @@ def _get_effective_cwd(cwd_param: str | None) -> str:
 
 
 def _handle_command_result(
-    process: subprocess.CompletedProcess, command: list[str], description: str, cwd_param: str | None
+    process: subprocess.CompletedProcess,
+    command: list[str],
+    description: str,
+    cwd_param: str | None,
 ) -> int:
     """Gestisce il risultato del subprocess, logga e stampa info di debug."""
     full_command_str = " ".join(command)

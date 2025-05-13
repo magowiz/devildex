@@ -56,7 +56,7 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
 
 
 def _find_recursive_deduplicate_and_sort(
-        base_dirs: list[Path], filename: str
+    base_dirs: list[Path], filename: str
 ) -> list[Path]:
     """Performs a recursive search for filename in base_dirs.
 
@@ -84,7 +84,9 @@ def _find_recursive_deduplicate_and_sort(
                 unique_files_final.append(p)
         except FileNotFoundError:
             # This can happen if a path component is a broken symlink, for example.
-            print(f"    ⚠️ Path {p} could not be resolved during deduplication, skipping.")
+            print(
+                f"    ⚠️ Path {p} could not be resolved during deduplication, skipping."
+            )
             continue
 
     return sorted(unique_files_final)
