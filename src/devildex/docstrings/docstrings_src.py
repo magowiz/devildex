@@ -758,7 +758,7 @@ class DocStringsSrc:
                     if final_output_dir.exists():
                         self.cleanup_folder(final_output_dir)
                     final_output_dir.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.move(str(tmp_output_dir), str(final_output_dir))
+                    shutil.move(str(path_to_generated_docs_or_false), str(final_output_dir))
                 else:
                     print(
                         "documentation Generation failed or no documented module "
