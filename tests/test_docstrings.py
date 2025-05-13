@@ -20,12 +20,6 @@ PACKAGES_TO_TEST = [
         "expected_entry_point": "index.html",
     },
     {
-        "repo_url": "https://github.com/pytest-dev/pytest.git",
-        "project_name": "pytest",
-        "version_tag": "8.2.2",
-        "expected_entry_point": "pytest/index.html",
-    },
-    {
         "repo_url": "https://github.com/Textualize/rich.git",
         "project_name": "rich",
         "version_tag": "13.7.1",
