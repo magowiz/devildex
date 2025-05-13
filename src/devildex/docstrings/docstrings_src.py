@@ -14,6 +14,7 @@ from types import ModuleType
 
 import pdoc
 
+from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
     execute_command,
@@ -29,7 +30,7 @@ class DocStringsSrc:
 
     def __init__(self):
         """Initialize il DocStringsSrc."""
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        project_root = info.PROJECT_ROOT
         self.docset_dir = project_root / "docset"
         self.docset_dir.mkdir(parents=True, exist_ok=True)
 
@@ -402,22 +403,20 @@ class DocStringsSrc:
             "DocStringsSrc: Final output directory for this project: %s",
             final_project_pdoc_output_dir,
         )
-
-        if final_project_pdoc_output_dir.exists():
+        if base_output_dir_for_pdoc.exists():
             logger.info(
-                "DocStringsSrc: Removing existing pdoc output directory: %s",
-                final_project_pdoc_output_dir,
+                "DocStringsSrc: Removing existing base pdoc output directory: %s",  # CAMBIATO
+                base_output_dir_for_pdoc,
             )
             try:
-                shutil.rmtree(final_project_pdoc_output_dir)
+                shutil.rmtree(base_output_dir_for_pdoc)
             except OSError as e:
                 logger.error(
                     "DocStringsSrc: Error removing %s: %s",
-                    final_project_pdoc_output_dir,
+                    base_output_dir_for_pdoc,
                     e,
                 )
                 return None
-
         try:
             base_output_dir_for_pdoc.mkdir(parents=True, exist_ok=True)
         except OSError as e:
@@ -427,7 +426,7 @@ class DocStringsSrc:
                 e,
             )
             return None
-        return final_project_pdoc_output_dir
+        return base_output_dir_for_pdoc
 
     def _find_pdoc_project_requirements(
         self, source_project_path: Path, project_name: str
@@ -572,10 +571,29 @@ class DocStringsSrc:
             logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
 
         if build_successful:
-            # The actual content will be in final_project_pdoc_output_dir / project_name
-            # However, we return final_project_pdoc_output_dir as the container.
-            # This matches the original logic where final_project_pdoc_output_dir was returned.
-            return str(final_project_pdoc_output_dir)
+            actual_docs_path = final_project_pdoc_output_dir / project_name
+            if actual_docs_path.exists() and actual_docs_path.is_dir() and any(actual_docs_path.iterdir()):
+                logger.info(
+                    "DocStringsSrc: pdoc content generated successfully in %s.",
+                    actual_docs_path
+                )
+                return str(actual_docs_path)
+            else:
+                logger.warning(
+                    "DocStringsSrc: pdoc build marked successful, but expected content directory %s not found or empty. "
+                    "Returning False.",
+                    actual_docs_path
+                )
+                if final_project_pdoc_output_dir.exists():
+                    logger.info(
+                        "DocStringsSrc: Cleaning up base pdoc output directory %s as specific project dir is missing or empty.",
+                        final_project_pdoc_output_dir
+                    )
+                    try:
+                        shutil.rmtree(final_project_pdoc_output_dir)
+                    except OSError as e_clean:
+                        logger.error("Error cleaning up %s: %s", final_project_pdoc_output_dir, e_clean)
+                return False
 
         if final_project_pdoc_output_dir.exists():
             logger.info(
@@ -726,20 +744,21 @@ class DocStringsSrc:
             print(f"Added {venv_site_packages} a sys.path")
             try:
                 print("Executing generate_docs_from_folder con venv sys.path...")
-                success = self.generate_docs_from_folder(
+                path_to_generated_docs_or_false = self.generate_docs_from_folder(
                     project_name,
                     str(cloned_repo_path),
                     str(tmp_output_dir)
                 )
 
-                if success:
+                if path_to_generated_docs_or_false:
                     print(
                         "Generating documentation completed successfully for"
                         f" {project_name}"
                     )
                     if final_output_dir.exists():
                         self.cleanup_folder(final_output_dir)
-                    shutil.move(tmp_output_dir, final_output_dir)
+                    final_output_dir.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(tmp_output_dir), str(final_output_dir))
                 else:
                     print(
                         "documentation Generation failed or no documented module "

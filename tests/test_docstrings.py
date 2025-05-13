@@ -11,7 +11,7 @@ PACKAGES_TO_TEST = [
         "repo_url": "https://github.com/psf/black.git",
         "project_name": "black",
         "version_tag": "24.4.2",
-        "expected_entry_point": "black/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pallets/flask.git",
