@@ -580,7 +580,12 @@ def build_sphinx_docs(
                 project_name=project_slug,
                 project_root_for_install=project_install_root,
                 doc_requirements_path=doc_requirements_file,
-                base_packages_to_install=["sphinx", "pallets-sphinx-themes", "sphinxcontrib.log-cabinet", "sphinx-tabs"]
+                base_packages_to_install=[
+                    "sphinx",
+                    "pallets-sphinx-themes",
+                    "sphinxcontrib.log-cabinet",
+                    "sphinx-tabs",
+                ],
             )
 
             if not install_success:
@@ -737,7 +742,11 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
     except FileNotFoundError:
         print("Error: 'git' command not found. Be sure that Git is installed.")
         return None, None
-    return default_branch if default_branch and default_branch.lower() != "unknown" else "trunk"
+    return (
+        default_branch
+        if default_branch and default_branch.lower() != "unknown"
+        else "trunk"
+    )
 
 
 def download_readthedocs_source_and_build(
@@ -781,7 +790,9 @@ def download_readthedocs_source_and_build(
         bzr = True
     if repo_url and not cloned_repo_exists_before:
         run_clone_result = run_clone(repo_url, default_branch, clone_dir_path, bzr)
-        if isinstance(run_clone_result, tuple) and (not run_clone_result[0] or not run_clone_result[1]):
+        if isinstance(run_clone_result, tuple) and (
+            not run_clone_result[0] or not run_clone_result[1]
+        ):
             return run_clone_result
         elif isinstance(run_clone_result, str):
             cloned_repo_exists_before = True

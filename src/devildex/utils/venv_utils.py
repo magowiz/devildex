@@ -49,13 +49,15 @@ def install_project_and_dependencies_in_venv(
                 "No setup.py, setup.cfg, or pyproject.toml found in "
                 "'%s'. Skipping editable install of "
                 "project '%s'.",
-                project_root_for_install, project_name
+                project_root_for_install,
+                project_name,
             )
         else:
             logger.info(
                 "Attempting to install project '%s' from "
                 "'%s' in editable mode into the venv...",
-                project_name, project_root_for_install
+                project_name,
+                project_root_for_install,
             )
             install_cmd = [
                 pip_executable,
@@ -137,7 +139,7 @@ def install_project_and_dependencies_in_venv(
     elif doc_requirements_path:  # Se il path era fornito ma non esiste
         logger.warning(
             "Documentation requirements file not found at '%s', skipping.",
-            doc_requirements_path
+            doc_requirements_path,
         )
     else:
         logger.info(

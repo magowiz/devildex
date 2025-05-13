@@ -31,6 +31,7 @@ def scan_current_project():
 
 class DevilDexMainWindow(QMainWindow):
     """Main window class."""
+
     def __init__(self):
         """Build main window."""
         super().__init__()
