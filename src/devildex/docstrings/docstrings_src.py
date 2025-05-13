@@ -233,7 +233,6 @@ class DocStringsSrc:
         """
         processed_submodules: list[pdoc.Module] = []
         package_name = getattr(package_module_obj, "__name__", "unknown package")
-        found_salvageable_submodule = False
 
         for submodule_info in pdoc.iter_submodules(package_module_obj):
             submodule_qualname = submodule_info.name
@@ -267,9 +266,6 @@ class DocStringsSrc:
                         "Successfully recovered and wrapped submodule '%s'.",
                         submodule_qualname,
                     )
-                    found_salvageable_submodule = True
-                # _wrap_module_with_pdoc logs errors if wrapping fails
-
             except ImportError as sub_import_err:
                 logger.warning(
                     "FAILED IMPORT (submodule): unable to import '%s' of package '%s': %s",
@@ -522,8 +518,7 @@ class DocStringsSrc:
     def _validate_pdoc_output(
             self, pdoc_base_output_dir: Path, project_name: str
     ) -> str | None:
-        """
-        Checks if pdoc output directory and content are valid.
+        """Checks if pdoc output directory and content are valid.
 
         Args:
             pdoc_base_output_dir: The base directory where pdoc was instructed to output.

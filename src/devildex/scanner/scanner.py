@@ -191,30 +191,42 @@ LOG_LEVEL = "INFO"
     print("Done.")
 
 
+def _check_file_for_docstrings(file_path: Path) -> bool:
+    """Checks a single Python file for module, function, or class docstrings.
+
+    Returns True if any docstring is found, False otherwise.
+    """
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            source_code = f.read()
+        tree = ast.parse(source_code, filename=str(file_path))
+        # Check for module-level docstring
+        if ast.get_docstring(tree):
+            return True
+        # Check for docstrings in functions, async functions, and classes
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                if ast.get_docstring(node):
+                    return True
+    except SyntaxError:
+        # Ignore files with syntax errors, as they cannot be parsed
+        pass
+    except Exception:  # pylint: disable=broad-except
+        # Catch other potential errors during parsing (e.g., from ast.parse or ast.walk)
+        # This makes the scanner robust to malformed files but might hide specific issues.
+        # Consider logging for debugging: logger.debug("Error parsing %s", file_path, exc_info=True)
+        pass
+    return False
+
+
 def has_docstrings(project_path: str) -> bool:
-    """Detect if a project has docstrings in its sources."""
+    """Detect if a project has docstrings in its Python source files."""
     project_dir = Path(project_path)
-    found_docstring_indicator = False
 
     for root, _, files in os.walk(project_dir):
         for file_name in files:
             if file_name.endswith(".py"):
                 file_path = Path(root) / file_name
-                try:
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                        source_code = f.read()
-                    tree = ast.parse(source_code, filename=str(file_path))
-                    if ast.get_docstring(tree):
-                        return True
-                    for node in ast.walk(tree):
-                        if isinstance(
-                            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-                        ):
-                            if ast.get_docstring(node):
-                                return True
-                except SyntaxError:
-                    pass
-                except Exception:
-                    pass
-
-    return found_docstring_indicator
+                if _check_file_for_docstrings(file_path):
+                    return True  # Found a docstring, no need to check further
+    return False  # No docstrings found in any .py file

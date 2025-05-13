@@ -95,17 +95,17 @@ class Orchestrator:
 if __name__ == "__main__":
     print("--- Orchestrator Usage Example ---")
 
-    example_project_path_rtd = "/tmp/test_project_for_rtd"
-    example_rtd_url = "https://example-docs.readthedocs.io"  # Or None
+    EXAMPLE_PROJECT_PATH_RTD = "/tmp/test_project_for_rtd"
+    EXAMPLE_RTD_URL = "https://example-docs.readthedocs.io"  # Or None
 
     EXAMPLE_PROJECT_PATH_LOCAL = "/tmp/test_project_local_scan"
 
-    example_project_path_unknown = "/tmp/test_project_unknown"
+    EXAMPLE_PROJECT_PATH_UNKNOWN = "/tmp/test_project_unknown"
 
-    print(f"\n--- Scenario 1: Project with ReadTheDocs URL ({example_rtd_url}) ---")
+    print(f"\n--- Scenario 1: Project with ReadTheDocs URL ({EXAMPLE_RTD_URL}) ---")
     orchestrator1 = Orchestrator(project_name='test_project_rtd',
-        project_path=example_project_path_rtd, rtd_url=example_rtd_url
-    )
+                                 project_path=EXAMPLE_PROJECT_PATH_RTD,
+                                 rtd_url=EXAMPLE_RTD_URL)
 
     print("Starting scan...")
     orchestrator1.start_scan()
@@ -131,9 +131,9 @@ if __name__ == "__main__":
     print(f"Operation outcome: {orchestrator2.get_last_operation_result()}")
     print(
         "\n--- Scenario 3: Project with no detectable documentation "
-        f"({example_project_path_unknown}) ---"
+        f"({EXAMPLE_PROJECT_PATH_UNKNOWN}) ---"
     )
-    orchestrator3 = Orchestrator(project_path=example_project_path_unknown,
+    orchestrator3 = Orchestrator(project_path=EXAMPLE_PROJECT_PATH_UNKNOWN,
                                  project_name='test_project_unknown')
 
     print("Starting scan...")

@@ -32,76 +32,74 @@ def add_deps_from_section(section_data, explicit_deps):
                 explicit_deps.add(normalized_name)
 
 
-def get_explicit_poetry_dependencies(pyproject_path):
-    """Read pyproject.toml and returns a set con i nomi delle direct dependencies.
-
-    (from sections tool.poetry.dependencies e tool.poetry.group.*.dependencies).
-    Requires that 'toml' is importable.
+def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
+    """Reads and parses a pyproject.toml file.
 
     Args:
-        pyproject_path (str): Il path al file pyproject.toml.
+        pyproject_path: The path to the pyproject.toml file.
 
     Returns:
-        set: A set di strings containing explicit dependencies names.
-             Returns un empty set if file not exist, not readable,
-             not a valid Poetry project, or haven't got explicit dependencies.
+        A dictionary with the parsed TOML data, or None if an error occurs.
     """
-    explicit_deps = set()
-    if not pyproject_path:
-        return explicit_deps
-
     try:
         with open(pyproject_path, "r", encoding="utf-8") as f:
-            pyproject_data = toml.load(f)
+            return toml.load(f)
     except FileNotFoundError:
-        return explicit_deps
+        # Consider using logging if this module gets a logger instance
+        # print(f"Info: pyproject.toml not found at {pyproject_path}", file=sys.stderr)
+        return None
     except toml.TomlDecodeError:
         print(
             f"Warning: Invalid TOML in {pyproject_path}. "
             "Cannot read explicit dependencies.",
             file=sys.stderr,
         )
-        return explicit_deps
-    except Exception as e:
+        return None
+    except Exception as e:  # pylint: disable=broad-except
         print(
             f"Warning: Unexpected error reading {pyproject_path}: {e}", file=sys.stderr
         )
+        return None
+
+
+def get_explicit_poetry_dependencies(pyproject_path: str | None) -> set[str]:
+    """Read pyproject.toml and returns a set con i nomi delle direct dependencies.
+
+    (from sections tool.poetry.dependencies e tool.poetry.group.*.dependencies).
+    Requires that 'toml' is importable.
+
+    Args:
+        pyproject_path (str | None): Il path al file pyproject.toml.
+
+    Returns:
+        set[str]: A set di strings containing explicit dependencies names.
+                  Returns un empty set if file not exist, not readable,
+                  not a valid Poetry project, or haven't got explicit dependencies.
+    """
+    explicit_deps: set[str] = set()
+    if not pyproject_path:
         return explicit_deps
 
-    if (
-        "tool" in pyproject_data
-        and "poetry" in pyproject_data["tool"]
-        and "dependencies" in pyproject_data["tool"]["poetry"]
-    ):
-        add_deps_from_section(pyproject_data["tool"]["poetry"]["dependencies"])
+    pyproject_data = _read_and_parse_pyproject_toml(pyproject_path)
+    if not pyproject_data:
+        return explicit_deps
 
-    if (
-        "tool" in pyproject_data
-        and "poetry" in pyproject_data["tool"]
-        and "group" in pyproject_data["tool"]["poetry"]
-    ):
-        for group_name, group_data in pyproject_data["tool"]["poetry"]["group"].items():
-            if isinstance(group_data, dict) and "dependencies" in group_data:
-                add_deps_from_section(group_data["dependencies"], explicit_deps)
+    tool_data = pyproject_data.get("tool", {})
+    poetry_data = tool_data.get("poetry", {})
+
+    main_deps_data = poetry_data.get("dependencies")
+    if main_deps_data:
+        add_deps_from_section(main_deps_data, explicit_deps)
+
+    group_section_data = poetry_data.get("group", {})
+    if isinstance(group_section_data, dict):
+        for _group_name, group_content in group_section_data.items():
+            if isinstance(group_content, dict):
+                group_deps_data = group_content.get("dependencies")
+                if group_deps_data:
+                    add_deps_from_section(group_deps_data, explicit_deps)
 
     return explicit_deps
-
-
-def find_requirements_txt(start_path="."):
-    """Cerca requirements.txt nella directory start_path e nelle sue parent directories.
-
-    Returns il absolute path or None if not found.
-    (Simile a find_pyproject_toml)
-    """
-    current_path = os.path.abspath(start_path)
-    while True:
-        reqs_path = os.path.join(current_path, "requirements.txt")
-        if os.path.exists(reqs_path):
-            return reqs_path
-        parent_path = os.path.dirname(current_path)
-        if parent_path == current_path:
-            return None
-        current_path = parent_path
 
 
 def get_explicit_package_names_from_requirements(requirements_filepath):
@@ -158,6 +156,23 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
         return set()
 
     return explicit_package_names
+
+
+def find_requirements_txt(start_path="."):
+    """Cerca requirements.txt nella directory start_path e nelle sue parent directories.
+
+    Returns il absolute path or None if not found.
+    (Simile a find_pyproject_toml)
+    """
+    current_path = os.path.abspath(start_path)
+    while True:
+        reqs_path = os.path.join(current_path, "requirements.txt")
+        if os.path.exists(reqs_path):
+            return reqs_path
+        parent_path = os.path.dirname(current_path)
+        if parent_path == current_path:
+            return None
+        current_path = parent_path
 
 
 def get_explicit_dependencies_from_project_config(start_path="."):
