@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Any, Callable
 
 import requests
 
@@ -131,8 +132,8 @@ def _update_templates_path_in_conf(
             ValueError,
             SyntaxError,
             ImportError,
-        ):  # Keep ImportError for ast.literal_eval safety
-            logger.warning(  # Changed
+        ):
+            logger.warning(
                 "  - Warning: Fallback for templates_path, using string concatenation."
             )
             new_list_str = "['_templates'] + " + current_list_str
@@ -159,12 +160,12 @@ def _update_static_path_in_conf(
                 )
                 logger.info(
                     "  - Appended '_static' to html_static_path in conf.py"
-                )  # Changed
+                )
                 conf_updated = True
             else:
                 raise ValueError("parsed value for html_static_path is not a list")
         except (ValueError, SyntaxError, ImportError):
-            logger.warning(  # Changed
+            logger.warning(
                 "  - Warning: Fallback for html_static_path, using string concatenation."
             )
             new_list_str = current_list_str.rstrip()[:-1].strip()
@@ -195,12 +196,12 @@ def _update_css_files_in_conf(
                 )
                 logger.info(
                     "  - Appended '%s' to html_css_files in conf.py", css_file_to_add
-                )  # Changed
+                )
                 conf_updated = True
             else:
                 raise ValueError("parsed value for html_css_files is not a list")
         except (ValueError, SyntaxError, ImportError):
-            logger.warning(  # Changed
+            logger.warning(
                 "  - Warning: Fallback for html_css_files, using string concatenation."
             )
             new_list_str = current_list_str.rstrip()[:-1].strip()
@@ -215,6 +216,32 @@ def _update_css_files_in_conf(
     return new_conf_content, conf_updated
 
 
+def _process_conf_list_setting(
+    conf_content: str,
+    setting_variable_name: str,
+    pattern_regex: re.Pattern,
+    default_value_if_missing: str,
+    specific_update_logic_func: Callable[..., tuple[str, bool]],
+    *args_for_specific_updater: Any
+) -> tuple[str, bool]:
+    """Helper to find, update, or add a list-based setting in conf.py content."""
+    match = pattern_regex.search(conf_content)
+    updated_this_setting = False
+    if match:
+        conf_content, updated_this_setting = specific_update_logic_func(
+            conf_content, match, *args_for_specific_updater
+        )
+    else:
+        conf_content += f"\n{setting_variable_name} = {default_value_if_missing}\n"
+        logger.info(
+            "  - Added %s = %s to conf.py",
+            setting_variable_name,
+            default_value_if_missing,
+        )
+        updated_this_setting = True
+    return conf_content, updated_this_setting
+
+
 def _apply_sphinx_conf_customizations(
     conf_py_path: Path, theme_name: str, css_file_name: str = "custom.css"
 ):
@@ -227,59 +254,51 @@ def _apply_sphinx_conf_customizations(
         new_conf_content = original_conf_content
         overall_conf_updated = False
 
-        # 1. Update Theme
         new_conf_content, theme_updated = _update_theme_in_conf(
             new_conf_content, theme_name
         )
         if theme_updated:
             overall_conf_updated = True
 
-        # 2. Update templates_path
-        templates_pattern = re.compile(
+        templates_pattern_obj = re.compile(
             r"^\s*templates_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
-        match_templates = templates_pattern.search(new_conf_content)
-        if match_templates:
-            new_conf_content, updated_by_template = _update_templates_path_in_conf(
-                new_conf_content, match_templates
-            )
-            if updated_by_template:
-                overall_conf_updated = True
-        else:
-            new_conf_content += "\ntemplates_path = ['_templates']\n"
-            logger.info("  - Added templates_path = ['_templates'] to conf.py")
-            overall_conf_updated = True
-
-        # 3. Update html_static_path
-        static_pattern = re.compile(
+        static_pattern_obj = re.compile(
             r"^\s*html_static_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
-        match_static = static_pattern.search(new_conf_content)
-        if match_static:
-            new_conf_content, updated_by_static = _update_static_path_in_conf(
-                new_conf_content, match_static
-            )
-            if updated_by_static:
-                overall_conf_updated = True
-        else:
-            new_conf_content += "\nhtml_static_path = ['_static']\n"
-            logger.info("  - Added html_static_path = ['_static'] to conf.py")
-            overall_conf_updated = True
-
-        # 4. Update html_css_files
-        css_pattern = re.compile(
+        css_pattern_obj = re.compile(
             r"^\s*html_css_files\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
-        match_css = css_pattern.search(new_conf_content)
-        if match_css:
-            new_conf_content, updated_by_css_add = _update_css_files_in_conf(
-                new_conf_content, match_css, css_file_name
-            )
-            if updated_by_css_add:
-                overall_conf_updated = True
-        else:
-            new_conf_content += f"\nhtml_css_files = ['{css_file_name}']\n"
-            logger.info("  - Added html_css_files = ['%s'] to conf.py", css_file_name)
+
+        new_conf_content, templates_updated = _process_conf_list_setting(
+            new_conf_content,
+            setting_variable_name="templates_path",
+            pattern_regex=templates_pattern_obj,
+            default_value_if_missing="['_templates']",
+            specific_update_logic_func=_update_templates_path_in_conf,
+        )
+        if templates_updated:
+            overall_conf_updated = True
+
+        new_conf_content, static_updated = _process_conf_list_setting(
+            new_conf_content,
+            setting_variable_name="html_static_path",
+            pattern_regex=static_pattern_obj,
+            default_value_if_missing="['_static']",
+            specific_update_logic_func=_update_static_path_in_conf,
+        )
+        if static_updated:
+            overall_conf_updated = True
+
+        new_conf_content, css_files_updated = _process_conf_list_setting(
+            new_conf_content,
+            setting_variable_name="html_css_files",
+            pattern_regex=css_pattern_obj,
+            default_value_if_missing=f"['{css_file_name}']",
+            specific_update_logic_func=_update_css_files_in_conf,
+            css_file_to_add=css_file_name,
+        )
+        if css_files_updated:
             overall_conf_updated = True
 
         _write_conf(overall_conf_updated, conf_py_path, new_conf_content)
@@ -349,7 +368,7 @@ def apply_devildex_customizations(
         theme_name (str): Name of Sphinx theme to use.
         banner_text (str): Text to view in the banner.
     """
-    logger.info(  # Changed from print
+    logger.info(
         "\nApplying DevilDex customizations (Theme: %s, Banner: '%s')...",
         theme_name,
         banner_text,
@@ -561,7 +580,6 @@ def build_sphinx_docs(
     source_dir_p = Path(isolated_source_path)
     clone_root_p = Path(original_clone_dir_path)
 
-    # Create the Sphinx Build Context
     sctx = SphinxBuildContext(
         source_dir=source_dir_p,
         clone_root=clone_root_p,
@@ -569,7 +587,7 @@ def build_sphinx_docs(
         doc_requirements_file=_find_sphinx_doc_requirements_file(
             source_dir_p, clone_root_p, project_slug
         ),
-        project_install_root=clone_root_p,  # As per original logic
+        project_install_root=clone_root_p,
         final_output_dir=(
             PROJECT_ROOT / "docset" / project_slug / version_identifier
         ).resolve(),
@@ -736,7 +754,8 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
                 encoding="utf-8",
             )
             if result.returncode != 0:
-                for default_branch in fallback_branches:
+                # Intentional redefinition for fallback logic
+                for default_branch in fallback_branches:  # pylint: disable=R1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
                     result = subprocess.run(
                         [
@@ -792,7 +811,7 @@ def _attempt_clone_and_process_result(
     current_effective_branch = initial_default_branch
     run_clone_result = run_clone(repo_url, initial_default_branch, clone_dir_path, bzr)
 
-    if isinstance(run_clone_result, str):  # Successo da run_clone
+    if isinstance(run_clone_result, str):
         current_effective_branch = run_clone_result
         logger.info(
             "Cloning successful for '%s'. Effective branch: '%s'. Path: '%s'",
@@ -828,7 +847,6 @@ def _handle_repository_cloning(
     """
     clone_dir_name = f"{project_slug}_repo_{initial_default_branch}"
     clone_dir_path = base_output_dir / clone_dir_name
-    # Inizia con il branch iniziale, verrà aggiornato se il clone ha successo con un branch diverso
     effective_branch = initial_default_branch
     cloned_repo_exists_before = clone_dir_path.exists()
 
@@ -872,7 +890,6 @@ def _handle_repository_cloning(
 @dataclass
 class ProjectContext:
     """Project context."""
-
     slug: str
     version: str
 
@@ -880,7 +897,6 @@ class ProjectContext:
 @dataclass
 class CustomizationSettings:
     """Customization Settings."""
-
     theme: str
     banner_text: str
 
@@ -908,14 +924,14 @@ def _process_documentation(
         )
         apply_devildex_customizations(
             isolated_source_path,
-            theme_name=customization.theme,  # Accedi tramite l'oggetto
-            banner_text=customization.banner_text,  # Accedi tramite l'oggetto
+            theme_name=customization.theme,
+            banner_text=customization.banner_text,
         )
         build_output_path = build_sphinx_docs(
             isolated_source_path,
             project_ctx.slug,
             project_ctx.version,
-            str(clone_dir_path),  # Deriva qui la stringa
+            str(clone_dir_path),
         )
     else:
         logger.warning(
@@ -936,7 +952,7 @@ def download_readthedocs_source_and_build(
     )
     logger.info("Project URL: %s", project_url)
 
-    project_slug = project_name  # Assumiamo che project_name sia già lo slug corretto
+    project_slug = project_name
     if not project_slug:
         logger.error("Project slug (project_name) cannot be empty.")
         return None, None
@@ -948,28 +964,17 @@ def download_readthedocs_source_and_build(
     initial_default_branch, repo_url = _extract_repo_url_branch(
         api_project_detail_url, project_slug
     )
-    # Se _extract_repo_url_branch non trova repo_url, repo_url sarà None.
-    # initial_default_branch avrà un valore di fallback (es. "main").
 
     base_output_dir = PROJECT_ROOT / "rtd_source_clones_temp"
     base_output_dir.mkdir(parents=True, exist_ok=True)
 
     bzr = bool(repo_url and repo_url.startswith("lp:"))
 
-    # Gestione di existing_clone_path:
-    # Se existing_clone_path è fornito, dovrebbe idealmente bypassare il fetch API e il cloning.
-    # La logica attuale non lo fa in modo pulito. Per ora, ci concentriamo sul refactoring
-    # della logica di cloning esistente. Se existing_clone_path è una priorità,
-    # andrebbe gestito all'inizio della funzione.
     if existing_clone_path and Path(existing_clone_path).exists():
         logger.info("Using existing clone path: %s", existing_clone_path)
         clone_dir_path = Path(existing_clone_path)
-        # In questo scenario, effective_branch non è noto dall'API.
-        # Potrebbe essere dedotto da git nel clone_dir_path o usare un default.
-        # Per semplicità, se usiamo un clone esistente, potremmo dover assumere un branch
-        # o tentare di rilevarlo. Per ora, usiamo initial_default_branch.
         effective_branch = (
-            initial_default_branch  # Da rivedere se si usa existing_clone_path
+            initial_default_branch
         )
     else:
         clone_dir_path, effective_branch = _handle_repository_cloning(
@@ -980,13 +985,7 @@ def download_readthedocs_source_and_build(
         logger.error(
             "Failed to obtain a valid repository clone for '%s'.", project_slug
         )
-        # _cleanup non viene chiamato qui nel codice originale se il clone fallisce prima
         return _download_handle_result(None, None)
-
-    # Accedi a custom_theme e custom_banner (globali/config o passati come argomenti)
-    # Per questo refactoring, assumiamo che siano accessibili come nel codice originale.
-    # Idealmente, verrebbero passati a _process_documentation.
-    global custom_theme, custom_banner  # Riferimento esplicito se sono globali in questo modulo
 
     project_context = ProjectContext(slug=project_slug, version=effective_branch)
     customization_settings = CustomizationSettings(
@@ -997,8 +996,7 @@ def download_readthedocs_source_and_build(
         clone_dir_path, project_context, customization_settings
     )
 
-    _cleanup(str(clone_dir_path))  # _cleanup si aspetta una stringa
-
+    _cleanup(str(clone_dir_path))
     return _download_handle_result(isolated_source_path, build_output_path)
 
 

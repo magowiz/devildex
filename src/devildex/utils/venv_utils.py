@@ -150,20 +150,89 @@ def install_project_and_dependencies_in_venv(
     return success
 
 
+"""venv utilities module."""
+
+import logging
+import os
+import subprocess
+from pathlib import Path
+from typing import Dict, Any # Import per type hinting
+
+from devildex.utils.deps_utils import filter_requirements_lines
+
+logger = logging.getLogger(__name__)
+
+# ... (la funzione install_project_and_dependencies_in_venv rimane invariata) ...
+
+
+def _prepare_command_env(
+    base_env: Dict[str, str], additional_env: Dict[str, str] | None
+) -> Dict[str, str]:
+    """Prepara il dizionario dell'ambiente per il subprocess."""
+    current_env = base_env.copy()
+    if additional_env:
+        current_env.update(additional_env)
+    return current_env
+
+
+def _handle_command_result(
+    process: subprocess.CompletedProcess, command: list[str], description: str, cwd_str: str
+) -> int:
+    """Gestisce il risultato del subprocess, logga e stampa info di debug."""
+    full_command_str = " ".join(command)
+
+    # Stampa debug iniziale (mantenuta per coerenza con l'originale)
+    print(f"DEBUG EXEC_CMD: Preparing to execute command[0]: {command[0]}")
+    print(f"DEBUG EXEC_CMD: Full command list: {command}")
+    print(f"DEBUG EXEC_CMD: Working directory (cwd): {cwd_str or '.'}")
+
+    logger.info("Executing: %s (cwd: %s)", full_command_str, cwd_str or ".")
+
+    # Stampa debug condizionale per Sphinx
+    if "sphinx" in description.lower():
+        print(
+            "DEBUG SPHINX STDOUT for "
+            f"'{description}':\n{process.stdout.strip() if process.stdout else '<empty>'}"
+        )
+        print(
+            "DEBUG SPHINX STDERR for "
+            f"'{description}':\n"
+            f"{process.stderr.strip() if process.stderr else '<empty>'}"
+        )
+
+    # Gestione del codice di ritorno e logging
+    if process.returncode != 0:
+        logger.warning(
+            "%s failed. Return code: %s", description, process.returncode
+        )
+        if process.stdout.strip():
+            logger.debug("Stdout:\n%s", process.stdout.strip())
+        if process.stderr.strip():
+            logger.debug("Stderr:\n%s", process.stderr.strip())
+            # Stampa debug per stderr in caso di fallimento
+            print(
+                f"DEBUG STDERR from FAILED command '{description}':\n"
+                f"{process.stderr.strip()}"
+            )
+    else:
+        logger.info("%s completed successfully.", description)
+        if process.stdout.strip():
+            logger.debug("Stdout (success):\n%s", process.stdout.strip())
+        if process.stderr.strip():
+            logger.debug("Stderr (success/warnings):\n%s", process.stderr.strip())
+
+    return process.returncode
+
+
 def execute_command(
     command: list[str], description: str, cwd: str | Path | None = None, env=None
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
-    try:
-        cwd_str = str(cwd) if cwd else None
-        current_env = os.environ.copy()
-        if env:
-            current_env.update(env)
-        print(f"DEBUG EXEC_CMD: Preparing to execute command[0]: {command[0]}")
-        print(f"DEBUG EXEC_CMD: Full command list: {command}")
-        print(f"DEBUG EXEC_CMD: Working directory (cwd): {cwd_str or '.'}")
+    cwd_str = str(cwd) if cwd else None
 
-        logger.info("Executing: %s (cwd: %s)", " ".join(command), cwd_str or ".")
+    try:
+        current_env = _prepare_command_env(os.environ.copy(), env)
+
         process = subprocess.run(
             command,
             capture_output=True,
@@ -174,37 +243,11 @@ def execute_command(
             errors="replace",
             env=current_env,
         )
-        if "sphinx" in description.lower():
-            print(
-                "DEBUG SPHINX STDOUT for "
-                f"'{description}':\n{process.stdout.strip() if process.stdout else '<empty>'}"
-            )
-            print(
-                "DEBUG SPHINX STDERR for "
-                f"'{description}':\n"
-                f"{process.stderr.strip() if process.stderr else '<empty>'}"
-            )
 
-        if process.returncode != 0:
-            logger.warning(
-                "%s failed. Return code: %s", description, process.returncode
-            )
-            if process.stdout.strip():
-                logger.debug("Stdout:\n%s", process.stdout.strip())
-            if process.stderr.strip():
-                logger.debug("Stderr:\n%s", process.stderr.strip())
-                print(
-                    f"DEBUG STDERR from FAILED command '{description}':\n"
-                    f"{process.stderr.strip()}"
-                )
+        ret_code = _handle_command_result(process, command, description, cwd_str)
 
-        else:
-            logger.info("%s completed successfully.", description)
-            if process.stdout.strip():
-                logger.debug("Stdout (success):\n%s", process.stdout.strip())
-            if process.stderr.strip():
-                logger.debug("Stderr (success/warnings):\n%s", process.stderr.strip())
-        return process.stdout, process.stderr, process.returncode
+        return process.stdout, process.stderr, ret_code
+
     except FileNotFoundError:
         logger.error(
             "Command not found: %s. Ensure it's in PATH or provide full path.",

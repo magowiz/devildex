@@ -729,9 +729,7 @@ class DocStringsSrc:
                 success = self.generate_docs_from_folder(
                     project_name,
                     str(cloned_repo_path),
-                    str(tmp_output_dir),
-                    modules_to_document=[project_name],
-                    venv_python_interpreter=venv_python_interpreter,
+                    str(tmp_output_dir)
                 )
 
                 if success:

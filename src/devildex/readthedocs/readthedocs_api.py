@@ -213,7 +213,7 @@ def download_readthedocs_prebuilt_robust(
     """Download a pre-packaged documentation from Read the Docs.
 
     Args:
-        project_name (str): project name.
+        project_name (str): project name (used as slug).
         rtd_url (str): project base URL of Read the Docs
             (es. https://black.readthedocs.io/).
         preferred_versions (list): versions slugs list to
@@ -223,6 +223,8 @@ def download_readthedocs_prebuilt_robust(
     Returns:
         str: Il path downloaded file, o None in caso di failure.
     """
+    final_downloaded_path = None
+
     project_slug = project_name
     if not project_slug:
         return None
@@ -243,6 +245,7 @@ def download_readthedocs_prebuilt_robust(
     if not file_url:
         return None
 
+    # If all prerequisites are met, proceed with download preparations
     local_filename = _determine_local_filename(
         project_slug, chosen_version_slug, file_url, download_format
     )
@@ -251,8 +254,9 @@ def download_readthedocs_prebuilt_robust(
     local_filepath = os.path.join(output_dir, local_filename)
 
     if _download_file(file_url, local_filepath):
-        return local_filepath
-    return None
+        final_downloaded_path = local_filepath
+
+    return final_downloaded_path
 
 
 if __name__ == "__main__":
