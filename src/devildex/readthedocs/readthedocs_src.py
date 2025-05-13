@@ -296,14 +296,14 @@ def _apply_sphinx_conf_customizations(
             pattern_regex=css_pattern_obj,
             default_value_if_missing=f"['{css_file_name}']",
             specific_update_logic_func=_update_css_files_in_conf,
-            css_file_to_add=css_file_name,
+            css_file_to_add=css_file_name
         )
         if css_files_updated:
             overall_conf_updated = True
 
         _write_conf(overall_conf_updated, conf_py_path, new_conf_content)
 
-    except Exception as e:
+    except OSError as e:
         logger.error(
             "Error during modification of conf.py %s: %s",
             conf_py_path,
@@ -676,12 +676,11 @@ def build_sphinx_docs(
             sctx.project_slug,
             e,
         )
-    except Exception as e_gen:
-        logger.exception(
-            "Unexpected exception during isolated Sphinx build for %s: %s",
-            sctx.project_slug,
-            e_gen,
+    except OSError as e:  # Catch OSError specifically
+        logger.error(
+            "Error creating/cleaning output directory %s: %s", sctx.final_output_dir, e
         )
+        return None
     finally:
         logger.info("--- Finished Isolated Sphinx Build for %s ---", sctx.project_slug)
 
@@ -694,7 +693,7 @@ def _cleanup(clone_dir_path):
         try:
             shutil.rmtree(clone_dir_path)
             print("Delete completed.")
-        except Exception as e:
+        except OSError as e:
             print(
                 "Error during deleting della repository cloned "
                 f"'{clone_dir_path}': {e}"
@@ -969,7 +968,8 @@ def download_readthedocs_source_and_build(
     base_output_dir.mkdir(parents=True, exist_ok=True)
 
     bzr = bool(repo_url and repo_url.startswith("lp:"))
-
+    clone_dir_path: Path | None
+    effective_branch: str
     if existing_clone_path and Path(existing_clone_path).exists():
         logger.info("Using existing clone path: %s", existing_clone_path)
         clone_dir_path = Path(existing_clone_path)
