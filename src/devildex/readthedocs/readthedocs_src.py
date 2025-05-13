@@ -795,7 +795,7 @@ def download_readthedocs_source_and_build(
             not run_clone_result[0] or not run_clone_result[1]
         ):
             return run_clone_result
-        elif isinstance(run_clone_result, str):
+        if isinstance(run_clone_result, str):
             cloned_repo_exists_before = True
             default_branch = run_clone_result
     if not cloned_repo_exists_before:
