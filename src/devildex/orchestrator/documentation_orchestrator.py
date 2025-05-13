@@ -114,8 +114,7 @@ if __name__ == "__main__":
 
     print(
         "\n--- Scenario 2: Project without RTD URL (path: "
-         f"{example_project_path_local}) ---"
-    )
+         f"{example_project_path_local}) ---")
     orchestrator2 = Orchestrator(project_path=example_project_path_local, rtd_url=None)
 
     print("Starting scan...")

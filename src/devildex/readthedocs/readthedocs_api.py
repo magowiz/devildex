@@ -26,7 +26,7 @@ def _fetch_available_versions(project_slug):
 
             print(
                 f"Page {page_num}: Fetched {len(current_page_versions)} versions. "
-                f"Total fetched so far: {len(all_versions_results)}" 
+                f"Total fetched so far: {len(all_versions_results)}"
                 f"out of {total_count}."
             )
 
@@ -174,11 +174,6 @@ def _download_file(file_url, local_filepath):
     print(f"Download file in: {local_filepath}")
     download_successful = False
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/91.0.4472.124 Safari/537.36"
-        }
         with requests.get(file_url, stream=True, timeout=300) as r:
             r.raise_for_status()
             with open(local_filepath, "wb") as f:

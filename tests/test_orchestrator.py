@@ -168,14 +168,17 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     if expect_success:
         assert (
             operation_result is not False
-        ), f"Orchestrator's grab_build_doc failed for {project_name} (detected type: {detected_doc_type}). Result: {operation_result}"
+        ), f"Orchestrator's grab_build_doc failed for {project_name} "
+        f"(detected type: {detected_doc_type}). Result: {operation_result}"
         assert isinstance(
             operation_result, str
-        ), f"Expected a path string from successful grab_build_doc for {project_name}, got {type(operation_result)}. Value: {operation_result}"
+        ), f"Expected a path string from successful grab_build_doc for {project_name},"
+        f" got {type(operation_result)}. Value: {operation_result}"
         assert (
             output_docs_root_path_str == operation_result
         ), f"Return value of grab_build_doc ('{output_docs_root_path_str}')"
-        f" and last_operation_result ('{operation_result}') mismatch for {project_name}."
+        f" and last_operation_result ('{operation_result}')"
+        f" mismatch for {project_name}."
 
         output_docs_root_path = Path(output_docs_root_path_str)
         assert (

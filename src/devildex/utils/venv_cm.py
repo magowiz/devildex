@@ -49,8 +49,8 @@ class IsolatedVenvManager:
                 bin_dir / ("pip.exe" if sys.platform == "win32" else "pip")
             )
             print(
-                f"DEBUG VENV_CM: VENV CREATED. Python executable: 
-                {self.python_executable}"
+                f"DEBUG VENV_CM: VENV CREATED. Python executable: "
+                f"{self.python_executable}"
             )
             print(f"DEBUG VENV_CM: VENV CREATED. Pip executable: {self.pip_executable}")
             print(
