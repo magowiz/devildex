@@ -113,7 +113,8 @@ if __name__ == "__main__":
     print(f"Operation outcome: {orchestrator1.get_last_operation_result()}")
 
     print(
-        f"\n--- Scenario 2: Project without RTD URL (path: {example_project_path_local}) ---"
+        "\n--- Scenario 2: Project without RTD URL (path: "
+         f"{example_project_path_local}) ---"
     )
     orchestrator2 = Orchestrator(project_path=example_project_path_local, rtd_url=None)
 

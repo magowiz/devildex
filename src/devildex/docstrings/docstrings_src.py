@@ -220,7 +220,7 @@ class DocStringsSrc:
         input_folder: str,
         output_folder: str,
     ) -> str | bool:
-        """Genera documentazione HTML per un progetto Python usando pdoc in un ambiente isolato."""
+        """Genera documentazione HTML usando pdoc in un ambiente isolato."""
         source_project_path = Path(input_folder)
         base_output_dir_for_pdoc = Path(output_folder)
 
@@ -333,7 +333,8 @@ class DocStringsSrc:
 
         except RuntimeError as e:
             logger.error(
-                "DocStringsSrc: Critical error during isolated pdoc build setup for %s: %s",
+                "DocStringsSrc: Critical error during isolated pdoc "
+                "build setup for %s: %s",
                 project_name,
                 e,
             )
