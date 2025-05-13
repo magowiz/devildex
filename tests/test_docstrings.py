@@ -17,7 +17,7 @@ PACKAGES_TO_TEST = [
         "repo_url": "https://github.com/pallets/flask.git",
         "project_name": "flask",
         "version_tag": "3.0.3",
-        "expected_entry_point": "flask/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pytest-dev/pytest.git",
@@ -29,19 +29,19 @@ PACKAGES_TO_TEST = [
         "repo_url": "https://github.com/Textualize/rich.git",
         "project_name": "rich",
         "version_tag": "13.7.1",
-        "expected_entry_point": "rich/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/tiangolo/fastapi.git",
         "project_name": "fastapi",
         "version_tag": "0.111.0",
-        "expected_entry_point": "fastapi/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/requests/requests.git",
         "project_name": "requests",
         "version_tag": "v2.32.3",
-        "expected_entry_point": "requests/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/django/django.git",
@@ -59,13 +59,13 @@ PACKAGES_TO_TEST = [
         "repo_url": "https://github.com/pallets/click.git",
         "project_name": "click",
         "version_tag": "8.1.7",
-        "expected_entry_point": "click/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/benjaminp/six.git",
         "project_name": "six",
         "version_tag": "1.16.0",
-        "expected_entry_point": "six/index.html",
+        "expected_entry_point": "index.html",
     },
     {
         "repo_url": "https://github.com/pypa/pipenv.git",
