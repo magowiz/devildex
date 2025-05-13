@@ -181,7 +181,8 @@ def execute_command(
             )
             print(
                 "DEBUG SPHINX STDERR for "
-                f"'{description}':\n{process.stderr.strip() if process.stderr else '<empty>'}"
+                f"'{description}':\n
+                {process.stderr.strip() if process.stderr else '<empty>'}"
             )
 
         if process.returncode != 0:
@@ -193,7 +194,8 @@ def execute_command(
             if process.stderr.strip():
                 logger.debug("Stderr:\n%s", process.stderr.strip())
                 print(
-                    f"DEBUG STDERR from FAILED command '{description}':\n{process.stderr.strip()}"
+                    f"DEBUG STDERR from FAILED command '{description}':\n
+                    {process.stderr.strip()}"
                 )
 
         else:

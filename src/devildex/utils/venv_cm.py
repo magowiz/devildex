@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class IsolatedVenvManager:
-    """A context manager to create and manage a temporary isolated Python virtual environment."""
+    """A context manager to create and manage a temp isolated Python virtual environment."""
 
     def __init__(self, project_name: str, base_temp_dir: Path | None = None):
         """Initializes the IsolatedVenvManager."""
@@ -49,7 +49,8 @@ class IsolatedVenvManager:
                 bin_dir / ("pip.exe" if sys.platform == "win32" else "pip")
             )
             print(
-                f"DEBUG VENV_CM: VENV CREATED. Python executable: {self.python_executable}"
+                f"DEBUG VENV_CM: VENV CREATED. Python executable: 
+                {self.python_executable}"
             )
             print(f"DEBUG VENV_CM: VENV CREATED. Pip executable: {self.pip_executable}")
             print(
@@ -57,7 +58,8 @@ class IsolatedVenvManager:
                 Path(self.python_executable).exists(),
             )
             print(
-                f"DEBUG VENV_CM: VENV CREATED. Does pip exist? {Path(self.pip_executable).exists()}"
+                f"DEBUG VENV_CM: VENV CREATED. Does pip exist? 
+                {Path(self.pip_executable).exists()}"
             )
 
             logger.info("Venv for '%s' created successfully.", self.project_name)
