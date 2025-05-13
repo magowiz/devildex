@@ -758,7 +758,7 @@ class DocStringsSrc:
             print(f"Errors del comando (stderr):\n---\n{cpe.stderr}\n---")
         except RuntimeError as e:
             print(f"\nERROR during preparing phase (es. cloning): {e}")
-        except Exception as e:
+        except OSError as e:
             print(f"\nUnexpected ERROR during il process di {project_name}: {e}")
             print("--- TRACEBACK ---")
             traceback.print_exc()

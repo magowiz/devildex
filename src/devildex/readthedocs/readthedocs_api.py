@@ -1,6 +1,7 @@
 """readthedocs api module."""
 
 import os
+from json import JSONDecodeError
 
 import requests
 
@@ -38,8 +39,11 @@ def _fetch_available_versions(project_slug):
         except requests.exceptions.RequestException as e:
             print(f"Error calling API list versions ({next_page_url}): {e}")
             return None
-        except Exception as e:
-            print(f"An unexpected error occurred while listing versions: {e}")
+        except JSONDecodeError as e:
+            print(
+                f"Error decoding JSON response while listing versions "
+                f"({next_page_url}): {e}"
+            )
             return None
 
     print(
@@ -106,8 +110,11 @@ def _fetch_version_details(project_slug, version_slug):
             f"project__slug={project_slug}): {e}"
         )
         return None
-    except Exception as e:
-        print("An unexpected error occurred getting details " f"of version: {e}")
+    except JSONDecodeError as e:
+        print(
+            f"Error decoding JSON response for version details "
+            f"({api_version_detail_url}?project__slug={project_slug}): {e}"
+        )
         return None
 
 
@@ -190,9 +197,6 @@ def _download_file(file_url, local_filepath):
                 print(f"partial File removed: {local_filepath}")
             except OSError as remove_err:
                 print(f"Error while removing partial file: {remove_err}")
-        return False
-    except Exception as e:
-        print(f"An unexpected error occurred during file download: {e}")
         return False
     finally:
         if not download_successful and os.path.exists(local_filepath):

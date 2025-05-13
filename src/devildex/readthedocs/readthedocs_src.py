@@ -60,7 +60,7 @@ def _write_custom_css(custom_css_path: Path, css_content: str):
         with open(custom_css_path, "w", encoding="utf-8") as f:
             f.write(css_content)
         logger.info("  - Created/Updated customized CSS: %s", custom_css_path.name)
-    except Exception as e:
+    except OSError as e:
         logger.error("  - Error writing customized CSS %s: %s", custom_css_path, e)
 
 
@@ -102,7 +102,7 @@ def _write_override_template(layout_template_path: Path, layout_content: str):
         logger.info(
             "  - Created/Updated override template: %s", layout_template_path.name
         )
-    except Exception as e:
+    except OSError as e:
         logger.error(
             "  - Error writing override template %s: %s", layout_template_path, e
         )
@@ -250,16 +250,13 @@ def _apply_sphinx_conf_customizations(
     try:
         with open(conf_py_path, "r", encoding="utf-8") as f:
             original_conf_content = f.read()
-
         new_conf_content = original_conf_content
         overall_conf_updated = False
-
         new_conf_content, theme_updated = _update_theme_in_conf(
             new_conf_content, theme_name
         )
         if theme_updated:
             overall_conf_updated = True
-
         templates_pattern_obj = re.compile(
             r"^\s*templates_path\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
@@ -269,7 +266,6 @@ def _apply_sphinx_conf_customizations(
         css_pattern_obj = re.compile(
             r"^\s*html_css_files\s*=\s*(\[.*?\])", re.MULTILINE | re.DOTALL
         )
-
         new_conf_content, templates_updated = _process_conf_list_setting(
             new_conf_content,
             setting_variable_name="templates_path",
@@ -279,7 +275,6 @@ def _apply_sphinx_conf_customizations(
         )
         if templates_updated:
             overall_conf_updated = True
-
         new_conf_content, static_updated = _process_conf_list_setting(
             new_conf_content,
             setting_variable_name="html_static_path",
@@ -289,20 +284,17 @@ def _apply_sphinx_conf_customizations(
         )
         if static_updated:
             overall_conf_updated = True
-
         new_conf_content, css_files_updated = _process_conf_list_setting(
-            new_conf_content,
-            setting_variable_name="html_css_files",
-            pattern_regex=css_pattern_obj,
-            default_value_if_missing=f"['{css_file_name}']",
-            specific_update_logic_func=_update_css_files_in_conf,
-            css_file_to_add=css_file_name
+            new_conf_content,  # 1° argomento posizionale per conf_content
+            "html_css_files",  # 2° argomento posizionale per setting_variable_name
+            css_pattern_obj,  # 3° argomento posizionale per pattern_regex
+            f"['{css_file_name}']",  # 4° argomento posizionale per default_value_if_missing
+            _update_css_files_in_conf,  # 5° argomento posizionale per specific_update_logic_func
+            css_file_name  # 6° argomento posizionale, catturato da *args_for_specific_updater
         )
         if css_files_updated:
             overall_conf_updated = True
-
         _write_conf(overall_conf_updated, conf_py_path, new_conf_content)
-
     except OSError as e:
         logger.error(
             "Error during modification of conf.py %s: %s",
@@ -329,7 +321,6 @@ def _update_theme_in_conf(conf_content, theme_name):
     new_conf_content = conf_content
     theme_pattern = re.compile(r"^\s*html_theme\s*=\s*['\"].*['\"]", re.MULTILINE)
     target_theme_line = f"html_theme = '{theme_name}'"
-
     match = theme_pattern.search(new_conf_content)
     if match:
         old_theme_line = match.group(0)
@@ -343,14 +334,12 @@ def _update_theme_in_conf(conf_content, theme_name):
         new_conf_content += f"\n{target_theme_line}\n"
         logger.info("  - Added html_theme = '%s' to conf.py", theme_name)
         conf_updated = True
-
     return new_conf_content, conf_updated
 
 
 @dataclass
 class CustomizationFilePaths:
     """Holds paths for Sphinx documentation customization."""
-
     conf_py: Path
     templates_dir: Path
     static_dir: Path
@@ -374,7 +363,6 @@ def apply_devildex_customizations(
         banner_text,
     )
     source_path_p = Path(isolated_source_path_str)
-
     paths = CustomizationFilePaths(
         conf_py=source_path_p / "conf.py",
         templates_dir=source_path_p / "_templates",
@@ -382,9 +370,7 @@ def apply_devildex_customizations(
         layout_template=source_path_p / "_templates" / "layout.html",
         custom_css=source_path_p / "_static" / "custom.css",
     )
-
     _create_template_static(paths.templates_dir, paths.static_dir)
-
     final_banner = banner_text.format(version=VERSION)
     layout_content = f"""\
     {{% extends "!layout.html" %}}
@@ -396,7 +382,6 @@ def apply_devildex_customizations(
     {{% endblock %}}
     """
     _write_override_template(paths.layout_template, layout_content)
-
     css_content = """\
     /* customized Styles for DevilDex */
     .devildex-banner {
@@ -418,11 +403,9 @@ def apply_devildex_customizations(
     }
     """
     _write_custom_css(paths.custom_css, css_content)
-
     _apply_sphinx_conf_customizations(
         paths.conf_py, theme_name, css_file_name=paths.custom_css.name
     )
-
     logger.info("DevilDex customizations applied.")
 
 
@@ -440,13 +423,10 @@ def find_doc_source_in_clone(repo_path):
     """
     print(f"\nSearching for documentation source directory in: {repo_path}")
     potential_doc_dirs = ["docs", "doc", "Doc"]
-
     doc_source_path = _find_doc_dir_in_repo(repo_path, potential_doc_dirs)
-
     if not doc_source_path:
         print("No documentation source directory with conf.py found in the clone.")
         return None
-
     print(f"Documentation source directory identified at: {doc_source_path}")
     return doc_source_path
 
@@ -479,7 +459,6 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
                 f"Found directory '{current_path}', but no conf.py. "
                 "Continuing search..."
             )
-
     if os.path.exists(os.path.join(repo_path, "conf.py")):
         print(f"Found conf.py in the repository root: {repo_path}")
         return repo_path
@@ -516,7 +495,6 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
                 f"{conf_file_path} (source directory: {doc_source_dir})"
             )
             return doc_source_dir
-
     return None
 
 
@@ -554,7 +532,6 @@ def _find_sphinx_doc_requirements_file(
 @dataclass
 class SphinxBuildContext:
     """Holds context and paths for a Sphinx build operation."""
-
     source_dir: Path
     clone_root: Path
     conf_py_file: Path
@@ -579,7 +556,6 @@ def build_sphinx_docs(
     )
     source_dir_p = Path(isolated_source_path)
     clone_root_p = Path(original_clone_dir_path)
-
     sctx = SphinxBuildContext(
         source_dir=source_dir_p,
         clone_root=clone_root_p,
@@ -594,13 +570,10 @@ def build_sphinx_docs(
         project_slug=project_slug,
         version_identifier=version_identifier,
     )
-
     if not sctx.conf_py_file.exists():
         logger.error("Critical Error: conf.py not found in %s.", sctx.source_dir)
         return None
-
     logger.info("Sphinx HTML output directory: %s", sctx.final_output_dir)
-
     try:
         if sctx.final_output_dir.exists():
             logger.info("Removing existing output directory: %s", sctx.final_output_dir)
@@ -611,13 +584,11 @@ def build_sphinx_docs(
             "Error creating/cleaning output directory %s: %s", sctx.final_output_dir, e
         )
         return None
-
     build_successful = False
     try:
         with IsolatedVenvManager(
             project_name=f"{sctx.project_slug}-{sctx.version_identifier}"
         ) as venv:
-
             install_success = install_project_and_dependencies_in_venv(
                 pip_executable=venv.pip_executable,
                 project_name=sctx.project_slug,
@@ -630,7 +601,6 @@ def build_sphinx_docs(
                     "sphinx-tabs",
                 ],
             )
-
             if not install_success:
                 logger.error(
                     "CRITICAL: Installation of project/dependencies (including Sphinx) "
@@ -638,7 +608,6 @@ def build_sphinx_docs(
                     sctx.project_slug,
                 )
                 return None
-
             sphinx_command_list = [
                 venv.python_executable,
                 "-m",
@@ -649,7 +618,6 @@ def build_sphinx_docs(
                 str(sctx.final_output_dir),
             ]
             sphinx_process_env = {"LC_ALL": "C"}
-
             logger.info("Executing Sphinx: %s", " ".join(sphinx_command_list))
             _, _, returncode = execute_command(
                 sphinx_command_list,
@@ -657,7 +625,6 @@ def build_sphinx_docs(
                 cwd=sctx.source_dir,
                 env=sphinx_process_env,
             )
-
             if returncode == 0:
                 logger.info(
                     "Sphinx build for %s completed successfully.", sctx.project_slug
@@ -669,7 +636,6 @@ def build_sphinx_docs(
                     sctx.project_slug,
                     returncode,
                 )
-
     except RuntimeError as e:
         logger.error(
             "Critical error during isolated build setup for %s: %s",
@@ -683,7 +649,6 @@ def build_sphinx_docs(
         return None
     finally:
         logger.info("--- Finished Isolated Sphinx Build for %s ---", sctx.project_slug)
-
     return str(sctx.final_output_dir) if build_successful else None
 
 
@@ -703,7 +668,6 @@ def _cleanup(clone_dir_path):
 def _extract_repo_url_branch(api_project_detail_url, project_slug):
     repo_url = None
     default_branch = "main"
-
     try:
         response = requests.get(api_project_detail_url, timeout=60)
         response.raise_for_status()
@@ -721,7 +685,6 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
         else:
             print(f"Trovato URL repository: {repo_url}")
             print(f"Branch di default (used come version identifier): {default_branch}")
-
     except requests.exceptions.RequestException as e:
         print(f"Warning: Error durante la richiesta API: {e}")
         print("Provo a search la repository cloned locally if already exists.")
@@ -848,7 +811,6 @@ def _handle_repository_cloning(
     clone_dir_path = base_output_dir / clone_dir_name
     effective_branch = initial_default_branch
     cloned_repo_exists_before = clone_dir_path.exists()
-
     if repo_url and not cloned_repo_exists_before:
         logger.info(
             "Repository for '%s' not found locally at '%s'. Attempting to clone.",
@@ -874,7 +836,6 @@ def _handle_repository_cloning(
                 "No repository URL and no existing clone for '%s'.", project_slug
             )
             return None, effective_branch
-
     if clone_dir_path.exists():
         logger.info("Using repository for '%s' at: '%s'", project_slug, clone_dir_path)
         return clone_dir_path, effective_branch
@@ -914,7 +875,6 @@ def _process_documentation(
     )
     isolated_source_path = find_doc_source_in_clone(str(clone_dir_path))
     build_output_path = None
-
     if isolated_source_path:
         logger.info(
             "Documentation source for '%s' isolated at: %s",
@@ -938,7 +898,6 @@ def _process_documentation(
             project_ctx.slug,
             clone_dir_path,
         )
-
     return isolated_source_path, build_output_path
 
 
