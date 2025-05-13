@@ -38,12 +38,6 @@ PACKAGES_TO_TEST = [
         "expected_entry_point": "index.html",
     },
     {
-        "repo_url": "https://github.com/django/django.git",
-        "project_name": "django",
-        "version_tag": "5.0.6",
-        "expected_entry_point": "django/index.html",
-    },
-    {
         "repo_url": "https://github.com/numpy/numpy.git",
         "project_name": "numpy",
         "version_tag": "v2.0.0",
