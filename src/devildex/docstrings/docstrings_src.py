@@ -466,13 +466,13 @@ class DocStringsSrc:
             "DocStringsSrc: Created temporary venv for pdoc3 at %s",
             i_venv.venv_path,
         )
-
+        base_deps_for_pdoc_and_build = ["pdoc3"]
         install_deps_success = install_project_and_dependencies_in_venv(
             pip_executable=i_venv.pip_executable,
             project_name=project_name,
             project_root_for_install=source_project_path,
             doc_requirements_path=requirements_file,
-            base_packages_to_install=["pdoc3"],
+            base_packages_to_install=base_deps_for_pdoc_and_build,
         )
 
         if not install_deps_success:
@@ -708,7 +708,6 @@ class DocStringsSrc:
             else:
                 _venv_python_rel = temp_venv_path / "bin" / "python"
             venv_python_interpreter = str(_venv_python_rel.resolve())
-
             get_site_packages_command = [
                 venv_python_interpreter,
                 "-c",

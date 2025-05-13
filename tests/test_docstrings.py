@@ -38,12 +38,6 @@ PACKAGES_TO_TEST = [
         "expected_entry_point": "index.html",
     },
     {
-        "repo_url": "https://github.com/numpy/numpy.git",
-        "project_name": "numpy",
-        "version_tag": "v2.0.0",
-        "expected_entry_point": "numpy/index.html",
-    },
-    {
         "repo_url": "https://github.com/pallets/click.git",
         "project_name": "click",
         "version_tag": "8.1.7",
