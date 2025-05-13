@@ -194,8 +194,8 @@ def execute_command(
             if process.stderr.strip():
                 logger.debug("Stderr:\n%s", process.stderr.strip())
                 print(
-                    f"DEBUG STDERR from FAILED command '{description}':\n
-                    {process.stderr.strip()}"
+                    f"DEBUG STDERR from FAILED command '{description}':\n"
+                    f"{process.stderr.strip()}"
                 )
 
         else:

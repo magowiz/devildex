@@ -95,7 +95,7 @@ if __name__ == "__main__":
     example_project_path_rtd = "/tmp/test_project_for_rtd"
     example_rtd_url = "https://example-docs.readthedocs.io"  # Or None
 
-    example_project_path_local = "/tmp/test_project_local_scan"
+    EXAMPLE_PROJECT_PATH_LOCAL = "/tmp/test_project_local_scan"
 
     example_project_path_unknown = "/tmp/test_project_unknown"
 
@@ -114,8 +114,8 @@ if __name__ == "__main__":
 
     print(
         "\n--- Scenario 2: Project without RTD URL (path: "
-         f"{example_project_path_local}) ---")
-    orchestrator2 = Orchestrator(project_path=example_project_path_local, rtd_url=None)
+         f"{EXAMPLE_PROJECT_PATH_LOCAL}) ---")
+    orchestrator2 = Orchestrator(project_path=EXAMPLE_PROJECT_PATH_LOCAL, rtd_url=None)
 
     print("Starting scan...")
     orchestrator2.start_scan()

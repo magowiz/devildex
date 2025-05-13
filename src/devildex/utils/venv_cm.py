@@ -58,8 +58,8 @@ class IsolatedVenvManager:
                 Path(self.python_executable).exists(),
             )
             print(
-                f"DEBUG VENV_CM: VENV CREATED. Does pip exist? 
-                {Path(self.pip_executable).exists()}"
+                "DEBUG VENV_CM: VENV CREATED. Does pip exist? "
+                f"{Path(self.pip_executable).exists()}"
             )
 
             logger.info("Venv for '%s' created successfully.", self.project_name)
