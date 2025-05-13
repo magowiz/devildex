@@ -99,7 +99,7 @@ class DocStringsSrc:
 
         for attempt in range(2):
             logger.debug(
-                "Attempting to import module '%s' " "(Attempt %d)...",
+                "Attempting to import module '%s' (Attempt %d)...",
                 module_name,
                 attempt + 1,
             )
@@ -240,7 +240,7 @@ class DocStringsSrc:
         for submodule_info in pdoc.iter_submodules(package_module_obj):
             submodule_qualname = submodule_info.name
             logger.debug(
-                "Attempting to process submodule '%s' of " "package '%s'.",
+                "Attempting to process submodule '%s' of package '%s'.",
                 submodule_qualname,
                 package_name,
             )
@@ -572,28 +572,31 @@ class DocStringsSrc:
 
         if build_successful:
             actual_docs_path = final_project_pdoc_output_dir / project_name
-            if actual_docs_path.exists() and actual_docs_path.is_dir() and any(actual_docs_path.iterdir()):
+            if (actual_docs_path.exists() and actual_docs_path.is_dir() and
+                    any(actual_docs_path.iterdir())):
                 logger.info(
                     "DocStringsSrc: pdoc content generated successfully in %s.",
                     actual_docs_path
                 )
                 return str(actual_docs_path)
-            else:
-                logger.warning(
-                    "DocStringsSrc: pdoc build marked successful, but expected content directory %s not found or empty. "
-                    "Returning False.",
-                    actual_docs_path
+            logger.warning(
+                "DocStringsSrc: pdoc build marked successful, but expected content"
+                " directory %s not found or empty. "
+                "Returning False.",
+                actual_docs_path
+            )
+            if final_project_pdoc_output_dir.exists():
+                logger.info(
+                    "DocStringsSrc: Cleaning up base pdoc output directory %s "
+                    "as specific project dir is missing or empty.",
+                    final_project_pdoc_output_dir
                 )
-                if final_project_pdoc_output_dir.exists():
-                    logger.info(
-                        "DocStringsSrc: Cleaning up base pdoc output directory %s as specific project dir is missing or empty.",
-                        final_project_pdoc_output_dir
-                    )
-                    try:
-                        shutil.rmtree(final_project_pdoc_output_dir)
-                    except OSError as e_clean:
-                        logger.error("Error cleaning up %s: %s", final_project_pdoc_output_dir, e_clean)
-                return False
+                try:
+                    shutil.rmtree(final_project_pdoc_output_dir)
+                except OSError as e_clean:
+                    logger.error("Error cleaning up %s: %s",
+                                 final_project_pdoc_output_dir, e_clean)
+            return False
 
         if final_project_pdoc_output_dir.exists():
             logger.info(

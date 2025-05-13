@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
+from typing import Dict
 
 from devildex.utils.deps_utils import filter_requirements_lines
 
@@ -150,19 +151,6 @@ def install_project_and_dependencies_in_venv(
     return success
 
 
-"""venv utilities module."""
-
-import logging
-import os
-import subprocess
-from pathlib import Path
-from typing import Dict, Any # Import per type hinting
-
-from devildex.utils.deps_utils import filter_requirements_lines
-
-logger = logging.getLogger(__name__)
-
-# ... (la funzione install_project_and_dependencies_in_venv rimane invariata) ...
 
 
 def _prepare_command_env(

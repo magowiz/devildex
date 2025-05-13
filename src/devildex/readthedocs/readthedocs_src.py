@@ -10,7 +10,6 @@ import subprocess
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Callable
-
 import requests
 
 from devildex.info import PROJECT_ROOT, VERSION
@@ -285,12 +284,12 @@ def _apply_sphinx_conf_customizations(
         if static_updated:
             overall_conf_updated = True
         new_conf_content, css_files_updated = _process_conf_list_setting(
-            new_conf_content,  # 1° argomento posizionale per conf_content
-            "html_css_files",  # 2° argomento posizionale per setting_variable_name
-            css_pattern_obj,  # 3° argomento posizionale per pattern_regex
-            f"['{css_file_name}']",  # 4° argomento posizionale per default_value_if_missing
-            _update_css_files_in_conf,  # 5° argomento posizionale per specific_update_logic_func
-            css_file_name  # 6° argomento posizionale, catturato da *args_for_specific_updater
+            new_conf_content,
+            "html_css_files",
+            css_pattern_obj,
+            f"['{css_file_name}']",
+            _update_css_files_in_conf,
+            css_file_name
         )
         if css_files_updated:
             overall_conf_updated = True

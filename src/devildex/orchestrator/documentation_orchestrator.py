@@ -49,7 +49,7 @@ class Orchestrator:
         return value
 
     def grab_build_doc(self):
-
+        """Grab and build documentation."""
         if self.detected_doc_type and self.detected_doc_type != "unknown":
             try:
                 method = self._grabbers.get(self.detected_doc_type)["function"]
@@ -71,6 +71,7 @@ class Orchestrator:
         return self.last_operation_result
 
     def start_scan(self):
+        """Start the scanning process."""
         if is_sphinx_project(self.project_path):
             self.detected_doc_type = "sphinx"
         elif self.rtd_url:
