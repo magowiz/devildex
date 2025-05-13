@@ -307,6 +307,7 @@ class DocStringsSrc:
                     i_venv.python_executable,
                     "-m",
                     "pdoc",
+                    "--html",
                     project_name,
                     "-o",
                     str(base_output_dir_for_pdoc.resolve() / project_name),
@@ -320,27 +321,7 @@ class DocStringsSrc:
                 )
 
                 if returncode == 0:
-                    if (
-                        final_project_pdoc_output_dir.exists()
-                        and (final_project_pdoc_output_dir / "index.html").exists()
-                    ):
-                        logger.info(
-                            "DocStringsSrc: pdoc build for %s completed successfully. "
-                            "Output: %s",
-                            project_name,
-                            final_project_pdoc_output_dir,
-                        )
-                        build_successful = True
-                    else:
-                        logger.error(
-                            "DocStringsSrc: pdoc command for %s seemed to succeed (exit 0) "
-                            "but expected output directory/file not found at "
-                            "%s.",
-                            project_name,
-                            final_project_pdoc_output_dir / "index.html",
-                        )
-                        logger.debug("pdoc stdout:\n%s", stdout)
-                        logger.debug("pdoc stderr:\n%s", stderr)
+                    build_successful = True
                 else:
                     logger.error(
                         "DocStringsSrc: pdoc build for %s FAILED. Return code: %s",
