@@ -519,11 +519,43 @@ class DocStringsSrc:
         logger.debug("pdoc stderr:\n%s", stderr)
         return False
 
+    def _validate_pdoc_output(
+            self, pdoc_base_output_dir: Path, project_name: str
+    ) -> str | None:
+        """
+        Checks if pdoc output directory and content are valid.
+
+        Args:
+            pdoc_base_output_dir: The base directory where pdoc was instructed to output.
+            project_name: The name of the project, used to find the subdirectory.
+
+        Returns:
+            The path to the actual documentation content as a string if valid,
+            otherwise None.
+        """
+        actual_docs_path = pdoc_base_output_dir / project_name
+        if (
+                actual_docs_path.exists()
+                and actual_docs_path.is_dir()
+                and any(actual_docs_path.iterdir())
+        ):
+            logger.info(
+                "DocStringsSrc: pdoc content generated successfully in %s.",
+                actual_docs_path,
+            )
+            return str(actual_docs_path)
+
+        logger.warning(
+            "DocStringsSrc: Expected pdoc content directory %s not found or empty.",
+            actual_docs_path,
+        )
+        return None
+
     def generate_docs_from_folder(
-        self,
-        project_name: str,
-        input_folder: str,
-        output_folder: str,  # This is the base directory for all pdoc outputs
+            self,
+            project_name: str,
+            input_folder: str,
+            output_folder: str,  # This is the base directory for all pdoc outputs
     ) -> str | bool:
         """Genera documentazione HTML usando pdoc in un ambiente isolato."""
         logger.info("\n--- Starting Isolated pdoc Build for %s ---", project_name)
@@ -533,11 +565,12 @@ class DocStringsSrc:
         )
         logger.info("DocStringsSrc: Module to document with pdoc: %s", project_name)
 
-        final_project_pdoc_output_dir = self._prepare_pdoc_output_directory(
+        # pdoc_base_output_dir is where pdoc will create a subdirectory for project_name
+        pdoc_base_output_dir = self._prepare_pdoc_output_directory(
             project_name, output_folder
         )
-        if not final_project_pdoc_output_dir:
-            return False  # Error already logged
+        if not pdoc_base_output_dir:  # _prepare_pdoc_output_directory logs errors
+            return False
 
         requirements_file_to_install = self._find_pdoc_project_requirements(
             source_project_path, project_name
@@ -546,12 +579,13 @@ class DocStringsSrc:
         build_successful = False
         try:
             with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as i_venv:
+                # pdoc will write into pdoc_base_output_dir / project_name
                 build_successful = self._execute_pdoc_build_in_venv(
                     i_venv,
                     project_name,
                     source_project_path,
                     requirements_file_to_install,
-                    final_project_pdoc_output_dir,  # pdoc will write into this_dir/project_name
+                    pdoc_base_output_dir,
                 )
         except RuntimeError as e:  # Errors from IsolatedVenvManager.__enter__
             logger.error(
@@ -560,59 +594,52 @@ class DocStringsSrc:
                 project_name,
                 e,
             )
+            # build_successful remains False
         except Exception:  # Catch any other unexpected error during the 'with' block
             logger.exception(
                 "DocStringsSrc: Unexpected exception during isolated pdoc build for %s.",
                 project_name,
             )
+            # build_successful remains False
         finally:
             logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
 
+        # Process results and decide on cleanup
         if build_successful:
-            actual_docs_path = final_project_pdoc_output_dir / project_name
-            if (actual_docs_path.exists() and actual_docs_path.is_dir() and
-                    any(actual_docs_path.iterdir())):
-                logger.info(
-                    "DocStringsSrc: pdoc content generated successfully in %s.",
-                    actual_docs_path
-                )
-                return str(actual_docs_path)
-            logger.warning(
-                "DocStringsSrc: pdoc build marked successful, but expected content"
-                " directory %s not found or empty. "
-                "Returning False.",
-                actual_docs_path
+            validated_docs_path = self._validate_pdoc_output(
+                pdoc_base_output_dir, project_name
             )
-            if final_project_pdoc_output_dir.exists():
-                logger.info(
-                    "DocStringsSrc: Cleaning up base pdoc output directory %s "
-                    "as specific project dir is missing or empty.",
-                    final_project_pdoc_output_dir
-                )
-                try:
-                    shutil.rmtree(final_project_pdoc_output_dir)
-                except OSError as e_clean:
-                    logger.error("Error cleaning up %s: %s",
-                                 final_project_pdoc_output_dir, e_clean)
-            return False
+            if validated_docs_path:
+                return validated_docs_path  # Success! Output dir remains for caller.
 
-        if final_project_pdoc_output_dir.exists():
+            # Build was marked successful, but content validation failed.
             logger.info(
-                "DocStringsSrc: Cleaning up partially created/failed pdoc output at %s "
-                "due to build failure.",
-                final_project_pdoc_output_dir,
+                "DocStringsSrc: Build reported success, but content validation failed for %s. "
+                "Cleaning up temporary output.",
+                project_name,
+            )
+        else:
+            # Build failed
+            logger.info(
+                "DocStringsSrc: pdoc build failed for %s. Cleaning up temporary output.",
+                project_name,
+            )
+
+        # Common cleanup for build failure or content validation failure
+        if pdoc_base_output_dir.exists():
+            logger.info(
+                "DocStringsSrc: Cleaning up pdoc base output directory %s.",
+                pdoc_base_output_dir,
             )
             try:
-                shutil.rmtree(final_project_pdoc_output_dir)
+                shutil.rmtree(pdoc_base_output_dir)
             except OSError as e_clean:
                 logger.error(
-                    "DocStringsSrc: Error cleaning up failed pdoc output directory %s: %s",
-                    final_project_pdoc_output_dir,
+                    "DocStringsSrc: Error cleaning up pdoc output directory %s: %s",
+                    pdoc_base_output_dir,
                     e_clean,
                 )
         return False
-
-        # ... (other methods like cleanup_folder, git_clone, _extract_missing_module_name, run)
 
     def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
         """Clean una single folder/file o una lista di folders/files.
