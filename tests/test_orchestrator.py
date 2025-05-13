@@ -160,7 +160,8 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     operation_result = orchestrator.get_last_operation_result()
 
     print(
-        f"Project: {project_name}, Orchestrator grab_build_doc result: {operation_result}, Output path from return: {output_docs_root_path_str}"
+        f"Project: {project_name}, Orchestrator grab_build_doc result:"
+        f" {operation_result}, Output path from return: {output_docs_root_path_str}"
     )
     expect_success = package_info.get("expect_grab_success", True)
 
@@ -173,19 +174,23 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         ), f"Expected a path string from successful grab_build_doc for {project_name}, got {type(operation_result)}. Value: {operation_result}"
         assert (
             output_docs_root_path_str == operation_result
-        ), f"Return value of grab_build_doc ('{output_docs_root_path_str}') and last_operation_result ('{operation_result}') mismatch for {project_name}."
+        ), f"Return value of grab_build_doc ('{output_docs_root_path_str}')"
+        f" and last_operation_result ('{operation_result}') mismatch for {project_name}."
 
         output_docs_root_path = Path(output_docs_root_path_str)
         assert (
             output_docs_root_path.exists()
-        ), f"Output path '{output_docs_root_path}' from Orchestrator does not exist for {project_name}"
+        ), f"Output path '{output_docs_root_path}' from Orchestrator"
+        f" does not exist for {project_name}"
         assert (
             output_docs_root_path.is_dir()
-        ), f"Output path '{output_docs_root_path}' from Orchestrator is not a directory for {project_name}"
+        ), f"Output path '{output_docs_root_path}' from "
+        f"Orchestrator is not a directory for {project_name}"
 
         assert (
             expected_entry_point_filename is not None
-        ), f"expected_entry_point_filename is missing in test config for {project_name} when success is expected."
+        ), "expected_entry_point_filename is missing in test "
+        f"config for {project_name} when success is expected."
         final_entry_point_path = output_docs_root_path / expected_entry_point_filename
         assert (
             final_entry_point_path.is_file()
@@ -195,12 +200,14 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         html_files = list(output_docs_root_path.glob("**/*.html"))
         assert (
             len(html_files) > 0
-        ), f"No HTML files found in output for {project_name} at {output_docs_root_path}"
+        ), "No HTML files found in output for "
+        f"{project_name} at {output_docs_root_path}"
     else:
         assert (
             operation_result is None
         ), f"Expected grab_build_doc to result in None for {project_name} due to "
-        f"expected failure, but got type {type(operation_result)} with value: {operation_result}"
+        f"expected failure, but got type {type(operation_result)}"
+        f" with value: {operation_result}"
         assert (
             output_docs_root_path_str is None
         ), f"Expected grab_build_doc to return None for {project_name} "
