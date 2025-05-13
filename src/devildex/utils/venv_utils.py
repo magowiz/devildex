@@ -257,7 +257,9 @@ def _log_command_failure_details(
             f"DEBUG STDERR from FAILED command '{description}':\n"
             f"{stripped_stderr}"
         )
-def _log_command_success_details(description: str, stdout_text: str | None, stderr_text: str | None):
+def _log_command_success_details(description: str,
+                                 stdout_text: str | None,
+                                 stderr_text: str | None):
     """Logs details for a successfully executed command."""
     logger.info("%s completed successfully.", description)
     if stdout_text and stdout_text.strip():
@@ -275,9 +277,12 @@ def _log_sphinx_specific_debug(description: str, stdout_text: str | None, stderr
         print(
             f"DEBUG SPHINX STDERR for '{description}':\n{actual_stderr}"
         )
+
+
 def _get_effective_cwd(cwd_param: str | None) -> str:
     """Returns the CWD string to use for logging, defaulting to '.'."""
     return cwd_param or "."
+
 
 def _handle_command_result(
     process: subprocess.CompletedProcess, command: list[str], description: str, cwd_param: str | None

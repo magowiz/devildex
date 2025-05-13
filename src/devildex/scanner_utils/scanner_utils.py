@@ -27,7 +27,6 @@ def read_file_content_robustly(filepath: Path) -> str | None:
         return None
 
 
-
 def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
     """Search a specific configuration file in a list of base directories.
 
@@ -50,7 +49,6 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
             direct_found_files.append(conf_path)
 
     if direct_found_files:
-        # Original logic: if direct files are found, return them as is (no deduplication or sorting here).
         return direct_found_files
 
     # If no direct files were found, proceed with recursive search, deduplication, and sorting.
@@ -60,8 +58,8 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
 def _find_recursive_deduplicate_and_sort(
         base_dirs: list[Path], filename: str
 ) -> list[Path]:
-    """
-    Performs a recursive search for filename in base_dirs,
+    """Performs a recursive search for filename in base_dirs.
+
     then deduplicates (by resolved path) and sorts the results.
     """
     recursive_finds: list[Path] = []

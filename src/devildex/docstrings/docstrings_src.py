@@ -84,122 +84,128 @@ class DocStringsSrc:
             logger.debug("Traceback:", exc_info=True)
             return False
 
+    def _is_pdoc_dummy_module(
+            self, module_candidate: ModuleType | None, expected_name: str
+    ) -> bool:
+        """Checks if the imported object is a pdoc dummy module."""
+        if not module_candidate:  # Can be None if pdoc.import_module itself returns None
+            return True
+        # A dummy module created by pdoc typically lacks __file__ and __path__,
+        # and its __name__ might not match the expected_name if it's a placeholder.
+        return (
+                not hasattr(module_candidate, "__file__")
+                and not hasattr(module_candidate, "__path__")
+                and (
+                    not hasattr(module_candidate, "__name__")
+                    or module_candidate.__name__ != expected_name
+                )
+        )
+
+    def _perform_single_import(
+            self, module_name: str
+    ) -> tuple[ModuleType | None, Exception | None]:
+        """
+        Performs a single attempt to import the module using pdoc.
+
+        Returns:
+            - (module_object, None) on successful import of a real module.
+            - (None, exception_object) if ModuleNotFoundError or ImportError occurs
+              directly from pdoc.import_module (less common with skip_errors=True
+              for simple missing deps, but possible for other import issues).
+            - (None, None) if a dummy module is imported or another unexpected
+              error occurs within pdoc.import_module that doesn't result in
+              a direct ImportError/ModuleNotFoundError.
+        """
+        try:
+            # pdoc.import_module with skip_errors=True might return a "dummy" module
+            # instead of raising an error directly for missing dependencies.
+            module_candidate = pdoc.import_module(module_name, reload=True, skip_errors=True)
+
+            if self._is_pdoc_dummy_module(module_candidate, module_name):
+                logger.debug("Module '%s' imported as a pdoc dummy object.", module_name)
+                return None, None  # Indicates dummy, not a specific ImportError from this call
+
+            logger.debug("Successfully imported module '%s'.", module_name)
+            return module_candidate, None  # Success, real module
+
+        except (ModuleNotFoundError, ImportError) as e:
+            # This block is hit if pdoc.import_module itself raises these errors,
+            # which can happen if the module name is invalid or pdoc cannot skip the error.
+            logger.debug(
+                "Import of '%s' failed within pdoc.import_module with: %s", module_name, e
+            )
+            return None, e  # Specific import error that pdoc might re-raise
+
+        except Exception as e:  # pylint: disable=broad-except
+            # Catch other potential exceptions from pdoc.import_module
+            logger.error(
+                "Unexpected error during pdoc.import_module for '%s': %s", module_name, e
+            )
+            logger.debug("Traceback:", exc_info=True)
+            return None, None  # Other error, not a specific ImportError to parse
+
     def _attempt_import_with_retry(
-        self, module_name: str, venv_python_interpreter: str | None
+            self, module_name: str, venv_python_interpreter: str | None
     ) -> tuple[ModuleType | None, bool]:
         """Attempts to import a module, retrying once after attempting to install.
 
-        a missing dependency if a venv interpreter is provided.
+        a missing dependency if a venv interpreter is provided and a specific
+        ImportError/ModuleNotFoundError was raised by pdoc.
+
         Returns (imported_module_object, dependency_installed_flag).
+        The flag indicates if a dependency installation was successfully performed
+        during this cycle.
         """
-        module_obj: ModuleType | None = None
         dependency_installed = False
 
-        for attempt in range(2):
+        # --- Attempt 1 ---
+        logger.debug("Attempting to import module '%s' (Attempt 1)...", module_name)
+        module_obj, import_error = self._perform_single_import(module_name)
+
+        if module_obj:
+            return module_obj, False  # Success on first try, no install attempted
+
+        # --- Handling failure of Attempt 1 ---
+        # If import_error is an actual ImportError/ModuleNotFoundError (not a dummy/other issue)
+        # and we have a venv, try to parse the error and install the missing dependency.
+        if import_error and venv_python_interpreter:
+            missing_dep_name = self._extract_missing_module_name(str(import_error))
+            if missing_dep_name and missing_dep_name.strip() and missing_dep_name != module_name:
+                if self._attempt_install_missing_dependency(
+                        missing_dep_name, venv_python_interpreter
+                ):
+                    dependency_installed = True
+            else:
+                logger.debug(
+                    "Could not extract a valid missing dependency "
+                    "name from error for '%s' (error: %s), "
+                    "or it was the module itself. No install attempted based on this error.",
+                    module_name, import_error
+                )
+        elif not import_error:  # Import resulted in dummy or other non-ImportError issue
             logger.debug(
-                "Attempting to import module '%s' (Attempt %d)...",
-                module_name,
-                attempt + 1,
+                "Module '%s' import resulted in dummy or non-specific issue on attempt 1. "
+                "Cannot attempt targeted dependency installation "
+                "based on an error message.", module_name
             )
-            try:
-                current_module_obj_candidate = pdoc.import_module(
-                    module_name, reload=True, skip_errors=True
-                )
+        # If import_error is None (dummy/other) or no venv_python_interpreter,
+        # we proceed to the second attempt without trying to install a dependency based on an error.
 
-                is_dummy = (
-                    not hasattr(current_module_obj_candidate, "__file__")
-                    and not hasattr(current_module_obj_candidate, "__path__")
-                    and (
-                        not hasattr(current_module_obj_candidate, "__name__")
-                        or current_module_obj_candidate.__name__ != module_name
-                    )
-                )
+        # --- Attempt 2 (Always happens if Attempt 1 didn't return a module) ---
+        logger.debug("Attempting to import module '%s' (Attempt 2)...", module_name)
+        # The effect of a previous dependency installation (if any) will be tested here.
+        module_obj_att2, _ = self._perform_single_import(module_name)
+        # We don't act on the error from the 2nd attempt for further installations.
 
-                if is_dummy:
-                    # If it's a dummy on the first attempt and we have a venv,
-                    # treat it like an import error to trigger install attempt.
-                    if attempt == 0 and venv_python_interpreter:
-                        logger.debug(
-                            "Module '%s' resulted in a dummy object on attempt 1. "
-                            "Treating as import error to trigger dependency check.",
-                            module_name,
-                        )
-                        module_obj = (
-                            None  # Ensure it's None so the except block knows it failed
-                        )
-                        continue  # Go to the except block
-                    logger.warning(
-                        "Module '%s' resulted in a dummy object after attempts. Cannot process.",
-                        module_name,
-                    )
-                    module_obj = None  # Explicitly set to None
-                    break  # Final failure
+        if module_obj_att2:
+            return module_obj_att2, dependency_installed
 
-                # If not a dummy, we got a module object
-                module_obj = current_module_obj_candidate
-                logger.debug(
-                    "Successfully imported module '%s' on attempt %d.",
-                    module_name,
-                    attempt + 1,
-                )
-                break  # Success
-
-            except (ModuleNotFoundError, ImportError) as import_err:
-                logger.debug(
-                    "Import failed for '%s' on attempt %d: %s",
-                    module_name,
-                    attempt + 1,
-                    import_err,
-                )
-                module_obj = None  # Ensure module_obj is None on import failure
-
-                # Only attempt install on the first failure and if venv interpreter is available
-                if attempt == 0 and venv_python_interpreter:
-                    missing_module_name = self._extract_missing_module_name(
-                        str(import_err)
-                    )
-
-                    # Only attempt install if we found a missing module name
-                    # and it's not the module we were originally trying to import
-                    # (to avoid infinite loops if the module itself is the problem)
-                    if (
-                        missing_module_name
-                        and missing_module_name.strip()
-                        and missing_module_name != module_name
-                    ):
-                        # Call the new helper function
-                        install_success = self._attempt_install_missing_dependency(
-                            missing_module_name, venv_python_interpreter
-                        )
-                        if install_success:
-                            dependency_installed = True
-                            # Loop will continue to attempt 2 automatically
-                        else:
-                            # Installation failed, no point in retrying import
-                            break
-                    else:
-                        # No missing module name extracted or it was the module itself
-                        logger.debug(
-                            "Could not extract a specific missing module name or it"
-                            " was the target module '%s'. Cannot attempt dependency installation.",
-                            module_name,
-                        )
-                        break
-                else:
-                    break
-
-            except Exception as e:
-                logger.error(
-                    "An unexpected error occurred during import of '%s' on attempt %d: %s",
-                    module_name,
-                    attempt + 1,
-                    e,
-                )
-                logger.debug("Traceback:", exc_info=True)
-                module_obj = None
-                break
-
-        return module_obj, dependency_installed
+        # --- Failed after all attempts ---
+        logger.info(
+            "Module '%s' could not be imported or resulted in a dummy object after all attempts.",
+            module_name
+        )
+        return None, dependency_installed
 
     def _wrap_module_with_pdoc(
         self, module_obj: ModuleType, context: pdoc.Context
