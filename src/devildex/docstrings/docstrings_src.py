@@ -101,7 +101,7 @@ class DocStringsSrc:
             )
         )
 
-    def _log_traceback():
+    def _log_traceback(self):
          logger.debug("Traceback:", exc_info=True)
 
     def _perform_single_import(
