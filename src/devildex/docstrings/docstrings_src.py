@@ -137,7 +137,7 @@ class DocStringsSrc:
             logger.debug("Successfully imported module '%s'.", module_name)
             return module_candidate, None  # Success, real module
 
-        except (ModuleNotFoundError, ImportError) as e:
+        except ImportError as e:
             # This block is hit if pdoc.import_module itself raises these errors,
             # which can happen if the module name is invalid or pdoc cannot skip the error.
             logger.debug(
@@ -330,7 +330,7 @@ class DocStringsSrc:
         logger.info("Attempting to process module '%s'...", module_name_to_process)
 
         # Step 1: Attempt to import the main module with retry logic
-        module_obj, dependency_installed = self._attempt_import_with_retry(
+        module_obj, _ = self._attempt_import_with_retry(
             module_name_to_process, venv_python_interpreter
         )
 
