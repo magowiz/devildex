@@ -147,7 +147,7 @@ def _install_doc_requirements_in_venv(
 
     if not filtered_req_lines:
         logger.info(
-            "No valid requirements found in '%s' " "after filtering. Skipping install.",
+            "No valid requirements found in '%s' after filtering. Skipping install.",
             doc_requirements_path,
         )
         return True
@@ -164,12 +164,12 @@ def _install_doc_requirements_in_venv(
             for line in filtered_req_lines:
                 req_file.write(f"{line}\n")
         logger.info(
-            "Overwrote '%s' with filtered requirements for " "installation.",
+            "Overwrote '%s' with filtered requirements for installation.",
             doc_requirements_path,
         )
     except IOError as e:
         logger.error(
-            "Failed to write filtered requirements to " "'%s': %s. Skipping install.",
+            "Failed to write filtered requirements to '%s': %s. Skipping install.",
             doc_requirements_path,
             e,
         )
@@ -260,7 +260,7 @@ def _log_command_failure_details(
         stripped_stderr = stderr_text.strip()
         logger.debug("Stderr:\n%s", stripped_stderr)
         print(
-            f"DEBUG STDERR from FAILED command '{description}':\n" f"{stripped_stderr}"
+            f"DEBUG STDERR from FAILED command '{description}':\n{stripped_stderr}"
         )
 
 
