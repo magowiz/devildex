@@ -79,7 +79,7 @@ class DocStringsSrc:
                 missing_module_name,
                 pip_exec_err,
             )
-            logger.debug("Traceback:", exc_info=True)
+            self._log_traceback()
             return False
 
     def _is_pdoc_dummy_module(
@@ -100,6 +100,9 @@ class DocStringsSrc:
                 or module_candidate.__name__ != expected_name
             )
         )
+
+    def _log_traceback():
+         logger.debug("Traceback:", exc_info=True)
 
     def _perform_single_import(
         self, module_name: str
@@ -151,7 +154,7 @@ class DocStringsSrc:
                 module_name,
                 e,
             )
-            logger.debug("Traceback:", exc_info=True)
+            self._log_traceback()
             return None, None  # Other error, not a specific ImportError to parse
 
     def _attempt_import_with_retry(
@@ -245,7 +248,7 @@ class DocStringsSrc:
                 getattr(module_obj, "__name__", "unknown"),
                 wrap_err,
             )
-            logger.debug("Traceback:", exc_info=True)
+            self._log_traceback()
             return None
 
     def _process_package_submodules(
@@ -304,7 +307,7 @@ class DocStringsSrc:
                     package_name,
                     sub_err,
                 )
-                logger.debug("Traceback:", exc_info=True)
+                self._log_traceback()
 
         # The original code had a log here if no submodules were found.
         # The caller can check if the returned list is empty.
@@ -814,7 +817,7 @@ class DocStringsSrc:
             logger.error("Runtime error during run for %s: %s", project_name, e)
         except OSError as e:
             logger.error("OS error during run for %s: %s", project_name, e)
-            logger.debug("Traceback:", exc_info=True)
+            self._log_traceback()
         except Exception:
             logger.exception(
                 "Unexpected critical error during run for %s", project_name
