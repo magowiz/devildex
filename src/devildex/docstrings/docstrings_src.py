@@ -15,7 +15,9 @@ import pdoc
 from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = "../../../devildex_config.ini"
@@ -41,46 +43,38 @@ class DocStringsSrc:
             "Attempting to install missing dependency '%s' using pip in venv...",
             missing_module_name,
         )
-        try:
-            # Use execute_command for consistency and better logging/error handling
-            pip_install_cmd = [
-                str(venv_python_interpreter),
-                "-m",
-                "pip",
-                "install",
-                missing_module_name,
-            ]
-            stdout, stderr, returncode = execute_command(
-                pip_install_cmd,
-                f"Install missing dependency {missing_module_name}",
-            )
 
-            if returncode == 0:
-                logger.info(
-                    "Installation of '%s' completed successfully.", missing_module_name
-                )
-                # Invalidate import caches before retrying import
-                # This is crucial for import_module to pick up the newly installed package
-                if missing_module_name in sys.modules:
-                    del sys.modules[missing_module_name]
-                importlib.invalidate_caches()
-                return True
-            logger.error(
-                "Failed installation of '%s' (return code %d).",
-                missing_module_name,
-                returncode,
+        # Use execute_command for consistency and better logging/error handling
+        pip_install_cmd = [
+            str(venv_python_interpreter),
+            "-m",
+            "pip",
+            "install",
+            missing_module_name,
+        ]
+        stdout, stderr, returncode = execute_command(
+            pip_install_cmd,
+            f"Install missing dependency {missing_module_name}",
+        )
+
+        if returncode == 0:
+            logger.info(
+                "Installation of '%s' completed successfully.", missing_module_name
             )
-            logger.debug("Install stdout:\n%s", stdout)
-            logger.debug("Install stderr:\n%s", stderr)
-            return False
-        except Exception as pip_exec_err:
-            logger.error(
-                "Exception during attempt to install '%s': %s",
-                missing_module_name,
-                pip_exec_err,
-            )
-            self._log_traceback()
-            return False
+            # Invalidate import caches before retrying import
+            # This is crucial for import_module to pick up the newly installed package
+            if missing_module_name in sys.modules:
+                del sys.modules[missing_module_name]
+            importlib.invalidate_caches()
+            return True
+        logger.error(
+            "Failed installation of '%s' (return code %d).",
+            missing_module_name,
+            returncode,
+        )
+        logger.debug("Install stdout:\n%s", stdout)
+        logger.debug("Install stderr:\n%s", stderr)
+        return False
 
     def _is_pdoc_dummy_module(
         self, module_candidate: ModuleType | None, expected_name: str
@@ -102,7 +96,7 @@ class DocStringsSrc:
         )
 
     def _log_traceback(self):
-         logger.debug("Traceback:", exc_info=True)
+        logger.debug("Traceback:", exc_info=True)
 
     def _perform_single_import(
         self, module_name: str
@@ -230,26 +224,20 @@ class DocStringsSrc:
 
     def _wrap_module_with_pdoc(
         self, module_obj: ModuleType, context: pdoc.Context
-    ) -> pdoc.Module | None:
+    ) -> pdoc.Module:  # Modificato il tipo di ritorno
         """Wraps a valid module object with pdoc.Module.
 
-        Returns the pdoc.Module instance or None if wrapping fails.
+        Returns the pdoc.Module instance.
+        Raises an exception if pdoc.Module() fails.
         """
-        try:
-            pdoc_module_instance = pdoc.Module(module_obj, context=context)
-            logger.debug(
-                "Successfully wrapped module '%s' with pdoc.",
-                getattr(module_obj, "__name__", "unknown"),
-            )
-            return pdoc_module_instance
-        except Exception as wrap_err:
-            logger.error(
-                "Error during pdoc wrapping of module '%s': %s",
-                getattr(module_obj, "__name__", "unknown"),
-                wrap_err,
-            )
-            self._log_traceback()
-            return None
+        # Il blocco try...except Exception è stato rimosso.
+        # Qualsiasi eccezione da pdoc.Module() si propagherà.
+        pdoc_module_instance = pdoc.Module(module_obj, context=context)
+        logger.debug(
+            "Successfully wrapped module '%s' with pdoc.",
+            getattr(module_obj, "__name__", "unknown"),
+        )
+        return pdoc_module_instance
 
     def _process_package_submodules(
         self, package_module_obj: ModuleType, context: pdoc.Context
@@ -300,14 +288,6 @@ class DocStringsSrc:
                     package_name,
                     sub_import_err,
                 )
-            except Exception as sub_err:
-                logger.error(
-                    "An unexpected error occurred processing submodule '%s' of package '%s': %s",
-                    submodule_qualname,
-                    package_name,
-                    sub_err,
-                )
-                self._log_traceback()
 
         # The original code had a log here if no submodules were found.
         # The caller can check if the returned list is empty.
@@ -617,12 +597,12 @@ class DocStringsSrc:
                 e,
             )
             # build_successful remains False
-        except Exception:  # Catch any other unexpected error during the 'with' block
-            logger.exception(
-                "DocStringsSrc: Unexpected exception during isolated pdoc build for %s.",
+        except (KeyboardInterrupt, SystemExit):  # Explicitly handle these
+            logger.warning(
+                "DocStringsSrc: Isolated pdoc build for %s interrupted or system exit called.",
                 project_name,
             )
-            # build_successful remains False
+            raise  # Re-raise to allow program termination
         finally:
             logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
 
@@ -688,41 +668,79 @@ class DocStringsSrc:
                     pass
 
     def git_clone(self, repo_url, clone_dir_path, default_branch="master"):
-        """Clone a git repository."""
-        try:
-            subprocess.run(
-                [
-                    "git",
-                    "clone",
-                    "--depth",
-                    "1",
-                    "--branch",
-                    default_branch,
-                    repo_url,
-                    clone_dir_path,
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
+        """Clone a git repository, trying specified branches in order."""
+        clone_dir_path_str = str(
+            clone_dir_path
+        )  # Ensure path is a string for subprocess
+
+        # Define the branches to attempt in order of preference
+        branches_to_try = [default_branch]
+        if default_branch.lower() != "main":  # Add 'main' as a fallback if different
+            branches_to_try.append("main")
+        # If default_branch is 'main', branches_to_try will just be ['main']
+
+        last_error = None
+
+        for branch_name in branches_to_try:
+            logger.info(
+                "Attempting to clone branch '%s' from %s into %s",
+                branch_name,
+                repo_url,
+                clone_dir_path_str,
             )
-        except Exception:
-            subprocess.run(
-                [
-                    "git",
-                    "clone",
-                    "--depth",
-                    "1",
-                    "--branch",
-                    "main",
+            try:
+                subprocess.run(
+                    [
+                        "git",
+                        "clone",
+                        "--depth",
+                        "1",
+                        "--branch",
+                        branch_name,
+                        repo_url,
+                        clone_dir_path_str,
+                    ],
+                    check=True,  # Will raise CalledProcessError on non-zero exit
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                )
+                logger.info(
+                    "Successfully cloned branch '%s' from %s.", branch_name, repo_url
+                )
+                return  # Exit on success
+            except subprocess.CalledProcessError as e:
+                last_error = e
+                logger.warning(
+                    "Failed to clone branch '%s' for repository %s. Git stderr: %s",
+                    branch_name,
                     repo_url,
-                    clone_dir_path,
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
+                    e.stderr.strip() if e.stderr else "N/A",
+                )
+                # Continue to the next branch in the list
+            except FileNotFoundError:
+                # This is a critical error: git command is not found.
+                logger.critical(
+                    "Git command not found. Ensure git is installed and in your system's PATH."
+                )
+                # Re-raise as a RuntimeError to signal a non-recoverable problem for this method.
+                raise RuntimeError(
+                    f"Git command not found. Cannot clone repository {repo_url}."
+                ) from None  # from None to break the exception chain here
+            # Other unexpected exceptions will propagate naturally.
+
+        # If the loop completes, all attempted branches failed
+        msg = f"Could not clone repository {repo_url} from branches {', '.join(branches_to_try)}."
+        logger.error(msg)
+        if last_error:
+            # Re-raise a more informative RuntimeError, chaining the last specific git error
+            raise RuntimeError(msg) from last_error
+        # If last_error is None, it means FileNotFoundError was raised and handled,
+        # or branches_to_try was empty (which current logic prevents).
+        # If FileNotFoundError was the cause, it's already been raised.
+        # This final raise is for other unexpected scenarios where the loop finishes without success
+        # and without last_error being set (e.g. if branches_to_try was empty).
+        raise RuntimeError(f"{msg} Unknown reason if no specific git error was logged.")
 
     def _extract_missing_module_name(self, error_message: str) -> str | None:
         """Extract il nome del modulo da un messaggio di ModuleNotFoundError.
@@ -818,10 +836,11 @@ class DocStringsSrc:
         except OSError as e:
             logger.error("OS error during run for %s: %s", project_name, e)
             self._log_traceback()
-        except Exception:
-            logger.exception(
-                "Unexpected critical error during run for %s", project_name
+        except (KeyboardInterrupt, SystemExit):
+            logger.warning(
+                "Operation interrupted or system exit called for %s.", project_name
             )
+            raise
         finally:
             logger.info("Starting final cleanup for %s...", project_name)
             if cloned_repo_path and cloned_repo_path.exists():

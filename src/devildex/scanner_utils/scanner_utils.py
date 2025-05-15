@@ -22,8 +22,8 @@ def read_file_content_robustly(filepath: Path) -> str | None:
             "Could not be a valid text file."
         )
         return None
-    except Exception as e:
-        print(f"    ❌ Error during reading {filepath}: {e}")
+    except IOError as e:
+        print(f"    ❌ Error reading file{filepath}: {e}")
         return None
 
 

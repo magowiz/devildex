@@ -259,9 +259,7 @@ def _log_command_failure_details(
     if stderr_text and stderr_text.strip():
         stripped_stderr = stderr_text.strip()
         logger.debug("Stderr:\n%s", stripped_stderr)
-        print(
-            f"DEBUG STDERR from FAILED command '{description}':\n{stripped_stderr}"
-        )
+        print(f"DEBUG STDERR from FAILED command '{description}':\n{stripped_stderr}")
 
 
 def _log_command_success_details(
@@ -327,7 +325,9 @@ def execute_command(
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
     cwd_str = str(cwd) if cwd else None
-
+    command_str_for_log = " ".join(
+        command
+    )  # Prepare for logging, even if command is empty
     try:
         current_env = _prepare_command_env(os.environ.copy(), env)
 
@@ -347,13 +347,49 @@ def execute_command(
         return process.stdout, process.stderr, ret_code
 
     except FileNotFoundError:
+
         logger.error(
             "Command not found: %s. Ensure it's in PATH or provide full path.",
-            command[0],
+            (
+                command[0] if command else "N/A"
+            ),  # Handle case where command list might be empty
         )
-        return "", f"Command not found: {command[0]}", -1
-    except Exception as e:
+
+        return "", f"Command not found: {command[0] if command else 'N/A'}", -1
+
+    except PermissionError as e:
+
         logger.error(
-            "Exception during command execution '%s': %s", " ".join(command), e
+            "Permission denied during command execution '%s': %s",
+            command_str_for_log,
+            e,
         )
-        return "", str(e), -2
+
+        return "", f"Permission denied: {e}", -3  # New error code for permission issues
+
+    except OSError as e:
+
+        # Catches other OS-level errors during execution that are not
+
+        # FileNotFoundError or PermissionError (which is a subclass of OSError).
+
+        logger.error(
+            "OS error during command execution '%s': %s", command_str_for_log, e
+        )
+
+        return "", f"OS error: {e}", -4  # New error code for other OS errors
+
+    except ValueError as e:
+
+        # This can be raised by subprocess.run if 'command' is an empty list,
+
+        # or other value-related issues with arguments.
+
+        logger.error(
+            "Value error during command setup or execution for '%s': %s",
+            command_str_for_log,
+            e,
+        )
+
+        return "", f"Value error: {e}", -5  # New error code for value errors
+    # The general

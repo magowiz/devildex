@@ -90,11 +90,12 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
             "Numero di righe valide estratte da '%s': %s", file_path, len(valid_lines)
         )
         return valid_lines
-
-    except Exception as e:
+    except (
+        IOError,
+        UnicodeDecodeError,
+    ) as e:  # Catch specific file I/O or decoding errors
         logger.error(
-            "Errore imprevisto durante la parsificazione del file '%s' "
-            "con pip-requirements-parser: %s",
+            "Errore di I/O o decodifica durante la parsificazione del file '%s': %s",
             file_path,
             e,
         )

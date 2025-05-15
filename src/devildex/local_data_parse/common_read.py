@@ -4,7 +4,7 @@ import os
 import sys
 
 import toml
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 
 
 def find_pyproject_toml(start_path="."):
@@ -144,16 +144,28 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
                 try:
                     req = Requirement(line)
                     explicit_package_names.add(req.name)
-                except Exception as e:
+                except InvalidRequirement as e:
                     print(
-                        "Warning: Error parsing line in "
+                        "Warning: Invalid requirement line in "
                         f"{requirements_filepath}: '{line}' - {e}",
                         file=sys.stderr,
                     )
 
-    except Exception as e:
-        print(f"Error reading {requirements_filepath}: {e}", file=sys.stderr)
-        return set()
+    except (IOError, UnicodeDecodeError) as e:
+
+        # Catch specific file operation or decoding errors
+
+        print(
+            f"Error reading or decoding {requirements_filepath}: {e}", file=sys.stderr
+        )
+
+        return set()  # Maintain behavior of returning empty set for these issues
+
+    except (KeyboardInterrupt, SystemExit):
+
+        # Ensure these are not caught by a general Exception if one were added later
+
+        raise
 
     return explicit_package_names
 

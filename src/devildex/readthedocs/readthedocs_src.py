@@ -16,7 +16,9 @@ import requests
 from devildex.info import PROJECT_ROOT, VERSION
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
