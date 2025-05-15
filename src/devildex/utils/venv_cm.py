@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class IsolatedVenvManager:
-    """A context manager to create and manage a temp isolated Python virtual environment."""
+    """A context manager to create and manage a Python virtual environment."""
 
     def __init__(self, project_name: str, base_temp_dir: Path | None = None):
         """Initializes the IsolatedVenvManager."""

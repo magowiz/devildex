@@ -6,12 +6,10 @@ import re
 import shutil
 from pathlib import Path
 
-from devildex.scanner_utils.scanner_utils import (
-    check_content_patterns,
-    count_matching_strings,
-    find_config_files,
-    read_file_content_robustly,
-)
+from devildex.scanner_utils.scanner_utils import (check_content_patterns,
+                                                  count_matching_strings,
+                                                  find_config_files,
+                                                  read_file_content_robustly)
 
 
 def is_sphinx_project(project_path: str) -> bool:
@@ -214,9 +212,6 @@ def _check_file_for_docstrings(file_path: Path) -> bool:
         # Ignore files with syntax errors, as they cannot be parsed
         pass
     except Exception:  # pylint: disable=broad-except
-        # Catch other potential errors during parsing (e.g., from ast.parse or ast.walk)
-        # This makes the scanner robust to malformed files but might hide specific issues.
-        # Consider logging for debugging: logger.debug("Error parsing %s", file_path, exc_info=True)
         pass
     return False
 

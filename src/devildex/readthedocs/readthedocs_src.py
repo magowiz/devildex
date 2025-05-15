@@ -16,9 +16,7 @@ import requests
 from devildex.info import PROJECT_ROOT, VERSION
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command,
-    install_project_and_dependencies_in_venv,
-)
+    execute_command, install_project_and_dependencies_in_venv)
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -165,7 +163,8 @@ def _update_static_path_in_conf(
                 raise ValueError("parsed value for html_static_path is not a list")
         except (ValueError, SyntaxError, ImportError):
             logger.warning(
-                "  - Warning: Fallback for html_static_path, using string concatenation."
+                "  - Warning: Fallback for html_static_path, "
+                "using string concatenation."
             )
             new_list_str = current_list_str.rstrip()[:-1].strip()
             if new_list_str and new_list_str != "[":
@@ -535,12 +534,22 @@ class SphinxBuildContext:
 
     source_dir: Path
     clone_root: Path
-    conf_py_file: Path
     doc_requirements_file: Path | None
     project_install_root: Path
-    final_output_dir: Path
     project_slug: str
     version_identifier: str
+
+    @property
+    def conf_py_file(self) -> Path:
+        """Path to the conf.py file within the source directory."""
+        return self.source_dir / CONF_SPHINX_FILE
+
+    @property
+    def final_output_dir(self) -> Path:
+        """The final, resolved path for the Sphinx HTML output."""
+        return (
+            PROJECT_ROOT / "docset" / self.project_slug / self.version_identifier
+        ).resolve()
 
 
 def build_sphinx_docs(
@@ -560,14 +569,10 @@ def build_sphinx_docs(
     sctx = SphinxBuildContext(
         source_dir=source_dir_p,
         clone_root=clone_root_p,
-        conf_py_file=source_dir_p / CONF_SPHINX_FILE,
         doc_requirements_file=_find_sphinx_doc_requirements_file(
             source_dir_p, clone_root_p, project_slug
         ),
         project_install_root=clone_root_p,
-        final_output_dir=(
-            PROJECT_ROOT / "docset" / project_slug / version_identifier
-        ).resolve(),
         project_slug=project_slug,
         version_identifier=version_identifier,
     )
@@ -789,7 +794,8 @@ def _attempt_clone_and_process_result(
         )
         return False, initial_default_branch
     logger.error(
-        "Cloning attempt for '%s' resulted in an unexpected state or failure. Result: %s",
+        "Cloning attempt for '%s' resulted in an unexpected state or failure. "
+        "Result: %s",
         project_slug,
         run_clone_result,
     )
@@ -868,7 +874,7 @@ def _process_documentation(
     project_ctx: ProjectContext,
     customization: CustomizationSettings,
 ) -> tuple[str | None, str | None]:
-    """Isola la sorgente della documentazione, applica personalizzazioni e la costruisce."""
+    """Isolate documentation source, apply customizations and build it."""
     logger.info(
         "Processing documentation for '%s' (version: %s) from '%s'",
         project_ctx.slug,
@@ -896,7 +902,8 @@ def _process_documentation(
         )
     else:
         logger.warning(
-            "Documentation source isolation failed for '%s' (path: '%s'). Skipping Sphinx build.",
+            "Documentation source isolation failed for '%s' (path: '%s'). "
+            "Skipping Sphinx build.",
             project_ctx.slug,
             clone_dir_path,
         )

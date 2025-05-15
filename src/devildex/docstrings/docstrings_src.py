@@ -10,14 +10,12 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-import pdoc
+import pdoc  # type: ignore[import-untyped]
 
 from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command,
-    install_project_and_dependencies_in_venv,
-)
+    execute_command, install_project_and_dependencies_in_venv)
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = "../../../devildex_config.ini"
@@ -132,8 +130,6 @@ class DocStringsSrc:
             return module_candidate, None  # Success, real module
 
         except ImportError as e:
-            # This block is hit if pdoc.import_module itself raises these errors,
-            # which can happen if the module name is invalid or pdoc cannot skip the error.
             logger.debug(
                 "Import of '%s' failed within pdoc.import_module with: %s",
                 module_name,
@@ -172,9 +168,6 @@ class DocStringsSrc:
         if module_obj:
             return module_obj, False  # Success on first try, no install attempted
 
-        # --- Handling failure of Attempt 1 ---
-        # If import_error is an actual ImportError/ModuleNotFoundError (not a dummy/other issue)
-        # and we have a venv, try to parse the error and install the missing dependency.
         if import_error and venv_python_interpreter:
             missing_dep_name = self._extract_missing_module_name(str(import_error))
             if (
@@ -190,7 +183,8 @@ class DocStringsSrc:
                 logger.debug(
                     "Could not extract a valid missing dependency "
                     "name from error for '%s' (error: %s), "
-                    "or it was the module itself. No install attempted based on this error.",
+                    "or it was the module itself. No install attempted "
+                    "based on this error.",
                     module_name,
                     import_error,
                 )
@@ -198,13 +192,12 @@ class DocStringsSrc:
             not import_error
         ):  # Import resulted in dummy or other non-ImportError issue
             logger.debug(
-                "Module '%s' import resulted in dummy or non-specific issue on attempt 1. "
+                "Module '%s' import resulted in dummy or non-specific "
+                "issue on attempt 1. "
                 "Cannot attempt targeted dependency installation "
                 "based on an error message.",
                 module_name,
             )
-        # If import_error is None (dummy/other) or no venv_python_interpreter,
-        # we proceed to the second attempt without trying to install a dependency based on an error.
 
         # --- Attempt 2 (Always happens if Attempt 1 didn't return a module) ---
         logger.debug("Attempting to import module '%s' (Attempt 2)...", module_name)
@@ -217,7 +210,8 @@ class DocStringsSrc:
 
         # --- Failed after all attempts ---
         logger.info(
-            "Module '%s' could not be imported or resulted in a dummy object after all attempts.",
+            "Module '%s' could not be imported or resulted in "
+            "a dummy object after all attempts.",
             module_name,
         )
         return None, dependency_installed
@@ -249,7 +243,9 @@ class DocStringsSrc:
         processed_submodules: list[pdoc.Module] = []
         package_name = getattr(package_module_obj, "__name__", "unknown package")
 
-        for submodule_info in pdoc.iter_submodules(package_module_obj):
+        for submodule_info in pdoc.iter_submodules(  # pylint: disable=no-member
+            package_module_obj
+        ):  # pylint: disable=no-member
             submodule_qualname = submodule_info.name
             logger.debug(
                 "Attempting to process submodule '%s' of package '%s'.",
@@ -265,7 +261,8 @@ class DocStringsSrc:
 
                 if not submodule_actual_obj:
                     logger.warning(
-                        "Submodule '%s' of package '%s' imported but resulted in None. Skipping.",
+                        "Submodule '%s' of package '%s' "
+                        "imported but resulted in None. Skipping.",
                         submodule_qualname,
                         package_name,
                     )
@@ -283,7 +280,8 @@ class DocStringsSrc:
                     )
             except ImportError as sub_import_err:
                 logger.warning(
-                    "FAILED IMPORT (submodule): unable to import '%s' of package '%s': %s",
+                    "FAILED IMPORT (submodule): unable to import '%s' "
+                    "of package '%s': %s",
                     submodule_qualname,
                     package_name,
                     sub_import_err,
@@ -324,7 +322,6 @@ class DocStringsSrc:
                     "Main module '%s' successfully wrapped.", module_name_to_process
                 )
             elif isinstance(module_obj, ModuleType) and hasattr(module_obj, "__path__"):
-                # Step 3: If it's a package but couldn't be wrapped directly, process submodules
                 logger.info(
                     "Main module '%s' imported as package but not wrapped."
                     " Attempting to recover submodules...",
@@ -344,7 +341,6 @@ class DocStringsSrc:
                     module_name_to_process,
                 )
         else:
-            # Module import failed after retries (logged within _attempt_import_with_retry)
             logger.info(
                 "Module '%s' could not be imported or resulted in a dummy "
                 "object after attempts. Cannot process.",
@@ -354,13 +350,15 @@ class DocStringsSrc:
         # Log final outcome
         if processed_pdoc_modules:
             logger.info(
-                "Finished processing '%s'. Successfully wrapped %d module(s)/submodule(s).",
+                "Finished processing '%s'. "
+                "Successfully wrapped %d module(s)/submodule(s).",
                 module_name_to_process,
                 len(processed_pdoc_modules),
             )
         else:
             logger.warning(
-                "Finished processing '%s'. No module(s)/submodule(s) were successfully wrapped.",
+                "Finished processing '%s'. "
+                "No module(s)/submodule(s) were successfully wrapped.",
                 module_name_to_process,
             )
 
@@ -406,7 +404,7 @@ class DocStringsSrc:
         )
         if base_output_dir_for_pdoc.exists():
             logger.info(
-                "DocStringsSrc: Removing existing base pdoc output directory: %s",  # CAMBIATO
+                "DocStringsSrc: Removing existing base pdoc " "output directory: %s",
                 base_output_dir_for_pdoc,
             )
             try:
@@ -454,8 +452,8 @@ class DocStringsSrc:
         )
         return None
 
+    @staticmethod
     def _execute_pdoc_build_in_venv(
-        self,
         i_venv: IsolatedVenvManager,
         project_name: str,
         source_project_path: Path,
@@ -528,7 +526,8 @@ class DocStringsSrc:
         """Checks if pdoc output directory and content are valid.
 
         Args:
-            pdoc_base_output_dir: The base directory where pdoc was instructed to output.
+            pdoc_base_output_dir: The base directory where pdoc was
+                instructed to output.
             project_name: The name of the project, used to find the subdirectory.
 
         Returns:
@@ -599,7 +598,8 @@ class DocStringsSrc:
             # build_successful remains False
         except (KeyboardInterrupt, SystemExit):  # Explicitly handle these
             logger.warning(
-                "DocStringsSrc: Isolated pdoc build for %s interrupted or system exit called.",
+                "DocStringsSrc: Isolated pdoc build for %s "
+                "interrupted or system exit called.",
                 project_name,
             )
             raise  # Re-raise to allow program termination
@@ -616,14 +616,16 @@ class DocStringsSrc:
 
             # Build was marked successful, but content validation failed.
             logger.info(
-                "DocStringsSrc: Build reported success, but content validation failed for %s. "
+                "DocStringsSrc: Build reported success, "
+                "but content validation failed for %s. "
                 "Cleaning up temporary output.",
                 project_name,
             )
         else:
             # Build failed
             logger.info(
-                "DocStringsSrc: pdoc build failed for %s. Cleaning up temporary output.",
+                "DocStringsSrc: pdoc build failed for %s. "
+                "Cleaning up temporary output.",
                 project_name,
             )
 
@@ -721,25 +723,22 @@ class DocStringsSrc:
             except FileNotFoundError:
                 # This is a critical error: git command is not found.
                 logger.critical(
-                    "Git command not found. Ensure git is installed and in your system's PATH."
+                    "Git command not found. Ensure git is installed and "
+                    "in your system's PATH."
                 )
-                # Re-raise as a RuntimeError to signal a non-recoverable problem for this method.
                 raise RuntimeError(
                     f"Git command not found. Cannot clone repository {repo_url}."
                 ) from None  # from None to break the exception chain here
             # Other unexpected exceptions will propagate naturally.
 
         # If the loop completes, all attempted branches failed
-        msg = f"Could not clone repository {repo_url} from branches {', '.join(branches_to_try)}."
+        msg = (
+            f"Could not clone repository {repo_url} from branches "
+            f"{', '.join(branches_to_try)}."
+        )
         logger.error(msg)
         if last_error:
-            # Re-raise a more informative RuntimeError, chaining the last specific git error
             raise RuntimeError(msg) from last_error
-        # If last_error is None, it means FileNotFoundError was raised and handled,
-        # or branches_to_try was empty (which current logic prevents).
-        # If FileNotFoundError was the cause, it's already been raised.
-        # This final raise is for other unexpected scenarios where the loop finishes without success
-        # and without last_error being set (e.g. if branches_to_try was empty).
         raise RuntimeError(f"{msg} Unknown reason if no specific git error was logged.")
 
     def _extract_missing_module_name(self, error_message: str) -> str | None:

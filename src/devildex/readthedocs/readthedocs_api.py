@@ -209,7 +209,6 @@ def _download_file(file_url, local_filepath):
 
 def download_readthedocs_prebuilt_robust(
     project_name,
-    rtd_url,
     download_folder="rtd_prebuilt_downloads",
     preferred_versions=("stable", "latest"),
     download_format="htmlzip",
@@ -218,8 +217,7 @@ def download_readthedocs_prebuilt_robust(
 
     Args:
         project_name (str): project name (used as slug).
-        rtd_url (str): project base URL of Read the Docs
-            (es. https://black.readthedocs.io/).
+        download_folder: download folder
         preferred_versions (list): versions slugs list to
             prefer (in order).
         download_format (str): Il format to download (es. 'htmlzip', 'pdf', 'epub').
@@ -267,9 +265,7 @@ if __name__ == "__main__":
     print("--- Executing Script: Download Prebuilt Docs (Robust) ---")
 
     print("\nTrying with: Black (https://black.readthedocs.io/)")
-    downloaded_file_black = download_readthedocs_prebuilt_robust(
-        project_name="black", rtd_url="https://black.readthedocs.io/"
-    )
+    downloaded_file_black = download_readthedocs_prebuilt_robust(project_name="black")
     if downloaded_file_black:
         print(f"  SUCCESS: Downloaded for Black: {downloaded_file_black}")
     else:
@@ -278,7 +274,7 @@ if __name__ == "__main__":
 
     print("\nTrying with: Requests (https://requests.readthedocs.io/)")
     downloaded_file_requests = download_readthedocs_prebuilt_robust(
-        project_name="requests", rtd_url="https://requests.readthedocs.io/"
+        project_name="requests"
     )
     if downloaded_file_requests:
         print(f"  SUCCESS: Downloaded for Requests: {downloaded_file_requests}")
@@ -288,7 +284,7 @@ if __name__ == "__main__":
 
     print("\nTrying with: Sphinx (https://sphinx.readthedocs.io/)")
     downloaded_file_sphinx = download_readthedocs_prebuilt_robust(
-        project_name="sphinx-doc", rtd_url="https://sphinx.readthedocs.io/"
+        project_name="sphinx-doc"
     )
     if downloaded_file_sphinx:
         print(f"  SUCCESS: Downloaded for Sphinx: {downloaded_file_sphinx}")

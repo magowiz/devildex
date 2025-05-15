@@ -59,7 +59,8 @@ def _install_project_editable_in_venv(
     """Installs the project in editable mode if conditions are met."""
     if not project_root_for_install:
         logger.info(
-            "No project root for installation provided for '%s'. Skipping editable install.",
+            "No project root for installation provided for '%s'. "
+            "Skipping editable install.",
             project_name,
         )
         return True  # Skipped, not a failure
@@ -82,7 +83,8 @@ def _install_project_editable_in_venv(
         return True  # Skipped, not a failure
 
     logger.info(
-        "Attempting to install project '%s' from '%s' in editable mode into the venv...",
+        "Attempting to install project '%s' from '%s' "
+        "in editable mode into the venv...",
         project_name,
         project_root_for_install,
     )
@@ -101,12 +103,14 @@ def _install_project_editable_in_venv(
     )
     if ret_code == 0:
         logger.info(
-            "Project '%s' installed successfully (or already present) in editable mode in venv.",
+            "Project '%s' installed successfully (or already present) "
+            "in editable mode in venv.",
             project_name,
         )
         return True
     logger.error(
-        "Failed to install project '%s' in editable mode in venv. Error details in DEBUG log.",
+        "Failed to install project '%s' in editable mode in venv. "
+        "Error details in DEBUG log.",
         project_name,
     )
     return False
@@ -116,23 +120,23 @@ def _install_doc_requirements_in_venv(
     pip_executable: str, project_name: str, doc_requirements_path: Path | None
 ) -> bool:
     """Installs documentation-specific requirements if specified and valid."""
-    if not doc_requirements_path:
-        logger.info(
-            "No documentation requirements file path provided for %s, "
-            "skipping dependency installation.",
-            project_name,
-        )
-        return True  # Skipped
-
-    if not doc_requirements_path.exists():
-        logger.warning(
-            "Documentation requirements file not found at '%s', skipping.",
-            doc_requirements_path,
-        )
-        return True  # Skipped
+    if not doc_requirements_path or not doc_requirements_path.exists():
+        if not doc_requirements_path:
+            logger.info(
+                "No documentation requirements file path provided for %s, "
+                "skipping dependency installation.",
+                project_name,
+            )
+        else:  # This means doc_requirements_path was provided but does not exist
+            logger.warning(
+                "Documentation requirements file not found at '%s', skipping.",
+                doc_requirements_path,
+            )
+        return True
 
     logger.info(
-        "Attempting to install documentation-specific dependencies from '%s' into the venv...",
+        "Attempting to install documentation-specific "
+        "dependencies from '%s' into the venv...",
         doc_requirements_path,
     )
     logger.info("Attempting to filter requirements file: %s", doc_requirements_path)
@@ -140,7 +144,8 @@ def _install_doc_requirements_in_venv(
 
     if filtered_req_lines is None:
         logger.error(
-            "Failed to read or parse requirements file '%s'. Skipping install of doc dependencies.",
+            "Failed to read or parse requirements file '%s'. "
+            "Skipping install of doc dependencies.",
             doc_requirements_path,
         )
         return False
@@ -190,7 +195,8 @@ def _install_doc_requirements_in_venv(
     )
     if ret_code == 0:
         logger.info(
-            "Dependencies from '%s' installed successfully (or already present) in venv.",
+            "Dependencies from '%s' installed successfully "
+            "(or already present) in venv.",
             doc_requirements_path,
         )
         return True
@@ -229,8 +235,6 @@ def install_project_and_dependencies_in_venv(
         # If attempted and failed, the overall operation is considered a failure.
         return False
 
-    # Step 3: Install documentation-specific requirements
-    # This helper also returns True if skipped or successful, False if attempted and failed.
     if not _install_doc_requirements_in_venv(
         pip_executable, project_name, doc_requirements_path
     ):

@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+
 from devildex.docstrings.docstrings_src import DocStringsSrc
 
 PACKAGES_TO_TEST = [

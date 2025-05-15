@@ -3,7 +3,8 @@
 import logging
 from pathlib import Path
 
-from pip_requirements_parser import RequirementsFile
+from pip_requirements_parser import \
+    RequirementsFile  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ def _process_requirements_obj(
     file_path_for_logging: Path,
     lines_to_explicitly_remove: set[str],
 ) -> list[str]:
-    """Processes a RequirementsFile object to extract valid lines and log invalid ones."""
+    """Processes a RequirementsFile to extract valid lines and log invalid ones."""
     valid_lines: list[str] = []
 
     # Process valid requirements and filter out specific lines
@@ -40,7 +41,8 @@ def _process_requirements_obj(
         )
         if invalid_line_content_count > 0:
             logger.warning(
-                "Trovate %s righe potenzialmente non valide (scartate dal parser) in '%s'.",
+                "Trovate %s righe potenzialmente non valide "
+                "(scartate dal parser) in '%s'.",
                 invalid_line_content_count,
                 file_path_for_logging,
             )

@@ -102,28 +102,66 @@ def get_explicit_poetry_dependencies(pyproject_path: str | None) -> set[str]:
     return explicit_deps
 
 
-def get_explicit_package_names_from_requirements(requirements_filepath):
-    """Read a requirements.txt file and return a set with explicit packages names.
-
-    Use packaging.requirements for a robust parsing.
-    Requires che 'packaging' sia importable.
+def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | None:
+    """Parses a single line from a requirements file.
 
     Args:
-        requirements_filepath (str): Il path al file requirements.txt.
+        line_content: The content of the line to parse.
+        filepath_for_log: The path of the requirements file, for logging purposes.
 
     Returns:
-        set: A set of strings containing explicit packages names.
-             Returns un empty set if file exist or there are
-                 read/parsing errors.
+        The package name if successfully parsed, otherwise None.
     """
-    explicit_package_names = set()
+    stripped_line = line_content.strip()
+
+    # Skip empty lines, comments, or pip options
+    if (
+        not stripped_line
+        or stripped_line.startswith("#")
+        or stripped_line.startswith("-")
+        or stripped_line.startswith("--")
+    ):
+        return None
+
+    try:
+        req = Requirement(stripped_line)
+        return req.name
+    except InvalidRequirement as e:
+        print(
+            f"Warning: Invalid requirement line in {filepath_for_log}: "
+            f"'{stripped_line}' - {e}",
+            file=sys.stderr,
+        )
+        return None
+    # It's generally good practice to let other unexpected errors propagate
+    # unless there's a specific way to handle them here.
+
+
+def get_explicit_package_names_from_requirements(
+    requirements_filepath: str | None,
+) -> set[str]:
+    """Reads a requirements.txt file and returns a set with explicit package names.
+
+    Uses packaging.requirements for robust parsing.
+
+    Args:
+        requirements_filepath: The path to the requirements.txt file.
+
+    Returns:
+        A set of strings containing explicit package names.
+        Returns an empty set if the file doesn't exist, cannot be read,
+        or contains no valid requirements.
+        May raise exceptions for critical unrecoverable errors not related to
+        individual line parsing or basic file I/O.
+    """
+    explicit_package_names: set[str] = set()
 
     if not requirements_filepath:
         return explicit_package_names
 
     if not os.path.exists(requirements_filepath):
         print(
-            f"Warning: File requirements.txt not found at {requirements_filepath}.",
+            f"Warning: Requirements file not found at {requirements_filepath}.",
             file=sys.stderr,
         )
         return explicit_package_names
@@ -131,42 +169,17 @@ def get_explicit_package_names_from_requirements(requirements_filepath):
     try:
         with open(requirements_filepath, "r", encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-
-                if (
-                    not line
-                    or line.startswith("#")
-                    or line.startswith("-")
-                    or line.startswith("--")
-                ):
-                    continue
-
-                try:
-                    req = Requirement(line)
-                    explicit_package_names.add(req.name)
-                except InvalidRequirement as e:
-                    print(
-                        "Warning: Invalid requirement line in "
-                        f"{requirements_filepath}: '{line}' - {e}",
-                        file=sys.stderr,
-                    )
+                package_name = _parse_requirement_line(line, requirements_filepath)
+                if package_name:
+                    explicit_package_names.add(package_name)
 
     except (IOError, UnicodeDecodeError) as e:
-
-        # Catch specific file operation or decoding errors
-
+        # Handle errors related to opening or reading the file itself
         print(
-            f"Error reading or decoding {requirements_filepath}: {e}", file=sys.stderr
+            f"Error reading or decoding requirements file {requirements_filepath}: {e}",
+            file=sys.stderr,
         )
-
-        return set()  # Maintain behavior of returning empty set for these issues
-
-    except (KeyboardInterrupt, SystemExit):
-
-        # Ensure these are not caught by a general Exception if one were added later
-
-        raise
-
+        return set()
     return explicit_package_names
 
 

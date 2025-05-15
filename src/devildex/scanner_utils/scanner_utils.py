@@ -51,7 +51,6 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
     if direct_found_files:
         return direct_found_files
 
-    # If no direct files were found, proceed with recursive search, deduplication, and sorting.
     return _find_recursive_deduplicate_and_sort(base_dirs, filename)
 
 
