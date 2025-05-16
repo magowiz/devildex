@@ -30,8 +30,9 @@ class DocStringsSrc:
         self.docset_dir = project_root / "docset"
         self.docset_dir.mkdir(parents=True, exist_ok=True)
 
+    @staticmethod
     def _attempt_install_missing_dependency(
-        self, missing_module_name: str, venv_python_interpreter: str
+        missing_module_name: str, venv_python_interpreter: str
     ) -> bool:
         """Attempts to install a missing dependency using pip in the venv.
 
@@ -41,8 +42,6 @@ class DocStringsSrc:
             "Attempting to install missing dependency '%s' using pip in venv...",
             missing_module_name,
         )
-
-        # Use execute_command for consistency and better logging/error handling
         pip_install_cmd = [
             str(venv_python_interpreter),
             "-m",
@@ -59,8 +58,6 @@ class DocStringsSrc:
             logger.info(
                 "Installation of '%s' completed successfully.", missing_module_name
             )
-            # Invalidate import caches before retrying import
-            # This is crucial for import_module to pick up the newly installed package
             if missing_module_name in sys.modules:
                 del sys.modules[missing_module_name]
             importlib.invalidate_caches()
@@ -74,16 +71,15 @@ class DocStringsSrc:
         logger.debug("Install stderr:\n%s", stderr)
         return False
 
+    @staticmethod
     def _is_pdoc_dummy_module(
-        self, module_candidate: ModuleType | None, expected_name: str
+        module_candidate: ModuleType | None, expected_name: str
     ) -> bool:
         """Checks if the imported object is a pdoc dummy module."""
         if (
             not module_candidate
-        ):  # Can be None if pdoc.import_module itself returns None
+        ):
             return True
-        # A dummy module created by pdoc typically lacks __file__ and __path__,
-        # and its __name__ might not match the expected_name if it's a placeholder.
         return (
             not hasattr(module_candidate, "__file__")
             and not hasattr(module_candidate, "__path__")
@@ -93,7 +89,8 @@ class DocStringsSrc:
             )
         )
 
-    def _log_traceback(self):
+    @staticmethod
+    def _log_traceback():
         logger.debug("Traceback:", exc_info=True)
 
     def _perform_single_import(
@@ -111,8 +108,6 @@ class DocStringsSrc:
               a direct ImportError/ModuleNotFoundError.
         """
         try:
-            # pdoc.import_module with skip_errors=True might return a "dummy" module
-            # instead of raising an error directly for missing dependencies.
             module_candidate = pdoc.import_module(
                 module_name, reload=True, skip_errors=True
             )
@@ -124,7 +119,7 @@ class DocStringsSrc:
                 return (
                     None,
                     None,
-                )  # Indicates dummy, not a specific ImportError from this call
+                )
 
             logger.debug("Successfully imported module '%s'.", module_name)
             return module_candidate, None  # Success, real module
@@ -135,17 +130,16 @@ class DocStringsSrc:
                 module_name,
                 e,
             )
-            return None, e  # Specific import error that pdoc might re-raise
+            return None, e
 
-        except Exception as e:  # pylint: disable=broad-except
-            # Catch other potential exceptions from pdoc.import_module
+        except Exception as e:
             logger.error(
                 "Unexpected error during pdoc.import_module for '%s': %s",
                 module_name,
                 e,
             )
             self._log_traceback()
-            return None, None  # Other error, not a specific ImportError to parse
+            return None, None
 
     def _attempt_import_with_retry(
         self, module_name: str, venv_python_interpreter: str | None
@@ -161,12 +155,11 @@ class DocStringsSrc:
         """
         dependency_installed = False
 
-        # --- Attempt 1 ---
         logger.debug("Attempting to import module '%s' (Attempt 1)...", module_name)
         module_obj, import_error = self._perform_single_import(module_name)
 
         if module_obj:
-            return module_obj, False  # Success on first try, no install attempted
+            return module_obj, False
 
         if import_error and venv_python_interpreter:
             missing_dep_name = self._extract_missing_module_name(str(import_error))
@@ -190,7 +183,7 @@ class DocStringsSrc:
                 )
         elif (
             not import_error
-        ):  # Import resulted in dummy or other non-ImportError issue
+        ):
             logger.debug(
                 "Module '%s' import resulted in dummy or non-specific "
                 "issue on attempt 1. "
@@ -199,16 +192,12 @@ class DocStringsSrc:
                 module_name,
             )
 
-        # --- Attempt 2 (Always happens if Attempt 1 didn't return a module) ---
         logger.debug("Attempting to import module '%s' (Attempt 2)...", module_name)
-        # The effect of a previous dependency installation (if any) will be tested here.
         module_obj_att2, _ = self._perform_single_import(module_name)
-        # We don't act on the error from the 2nd attempt for further installations.
 
         if module_obj_att2:
             return module_obj_att2, dependency_installed
 
-        # --- Failed after all attempts ---
         logger.info(
             "Module '%s' could not be imported or resulted in "
             "a dummy object after all attempts.",
@@ -216,16 +205,15 @@ class DocStringsSrc:
         )
         return None, dependency_installed
 
+    @staticmethod
     def _wrap_module_with_pdoc(
-        self, module_obj: ModuleType, context: pdoc.Context
-    ) -> pdoc.Module:  # Modificato il tipo di ritorno
+        module_obj: ModuleType, context: pdoc.Context
+    ) -> pdoc.Module:
         """Wraps a valid module object with pdoc.Module.
 
         Returns the pdoc.Module instance.
         Raises an exception if pdoc.Module() fails.
         """
-        # Il blocco try...except Exception è stato rimosso.
-        # Qualsiasi eccezione da pdoc.Module() si propagherà.
         pdoc_module_instance = pdoc.Module(module_obj, context=context)
         logger.debug(
             "Successfully wrapped module '%s' with pdoc.",
@@ -253,8 +241,6 @@ class DocStringsSrc:
                 package_name,
             )
             try:
-                # Use skip_errors=False here as in the original code for submodules.
-                # This means if a submodule import fails, it will raise an exception.
                 submodule_actual_obj = pdoc.import_module(
                     submodule_qualname, reload=True, skip_errors=False
                 )
@@ -266,7 +252,7 @@ class DocStringsSrc:
                         submodule_qualname,
                         package_name,
                     )
-                    continue  # Skip if import returned None
+                    continue
 
                 sub_pdoc_instance = self._wrap_module_with_pdoc(
                     submodule_actual_obj, context
@@ -286,12 +272,8 @@ class DocStringsSrc:
                     package_name,
                     sub_import_err,
                 )
-
-        # The original code had a log here if no submodules were found.
-        # The caller can check if the returned list is empty.
         return processed_submodules
 
-    # La funzione _try_process_module rifattorizzata
     def _try_process_module(
         self,
         module_name_to_process: str,
@@ -307,13 +289,11 @@ class DocStringsSrc:
 
         logger.info("Attempting to process module '%s'...", module_name_to_process)
 
-        # Step 1: Attempt to import the main module with retry logic
         module_obj, _ = self._attempt_import_with_retry(
             module_name_to_process, venv_python_interpreter
         )
 
         if module_obj:
-            # Step 2: Try to wrap the main module
             pdoc_module_instance = self._wrap_module_with_pdoc(module_obj, context)
 
             if pdoc_module_instance:
@@ -347,7 +327,6 @@ class DocStringsSrc:
                 module_name_to_process,
             )
 
-        # Log final outcome
         if processed_pdoc_modules:
             logger.info(
                 "Finished processing '%s'. "
@@ -368,7 +347,8 @@ class DocStringsSrc:
         """Get docset dir."""
         return self.docset_dir
 
-    def _discover_modules_in_folder(self, input_folder_path: Path) -> list[str]:
+    @staticmethod
+    def _discover_modules_in_folder(input_folder_path: Path) -> list[str]:
         """Discover Python modules and packages di first level in una data folder."""
         discovered_names = []
         for item_name in os.listdir(input_folder_path):
@@ -387,8 +367,9 @@ class DocStringsSrc:
                     discovered_names.append(package_name)
         return discovered_names
 
+    @staticmethod
     def _prepare_pdoc_output_directory(
-        self, project_name: str, base_output_str: str
+        project_name: str, base_output_str: str
     ) -> Path | None:
         """Prepares the output directory for pdoc, cleaning if necessary."""
         base_output_dir_for_pdoc = Path(base_output_str)
@@ -427,8 +408,9 @@ class DocStringsSrc:
             return None
         return base_output_dir_for_pdoc
 
+    @staticmethod
     def _find_pdoc_project_requirements(
-        self, source_project_path: Path, project_name: str
+        source_project_path: Path, project_name: str
     ) -> Path | None:
         """Finds a suitable requirements file for the project."""
         candidate_req_paths = [
@@ -482,18 +464,12 @@ class DocStringsSrc:
             )
             return False
 
-        # pdoc will create 'project_name' subdir in 'final_pdoc_output_path' if
-        # 'project_name' is the module and '-o' points to 'final_pdoc_output_path'.
-        # However, the original command was:
-        # pdoc project_name -o final_pdoc_output_path
-        # This means pdoc creates final_pdoc_output_path/project_name/...
-        # The final_pdoc_output_path itself is what we want to return/check.
         pdoc_command = [
             i_venv.python_executable,
             "-m",
             "pdoc",
             "--html",
-            project_name,  # The module to document
+            project_name,
             "-o",
             str(final_pdoc_output_path.resolve()),
         ]
@@ -520,8 +496,9 @@ class DocStringsSrc:
         logger.debug("pdoc stderr:\n%s", stderr)
         return False
 
+    @staticmethod
     def _validate_pdoc_output(
-        self, pdoc_base_output_dir: Path, project_name: str
+        pdoc_base_output_dir: Path, project_name: str
     ) -> str | None:
         """Checks if pdoc output directory and content are valid.
 
@@ -556,7 +533,7 @@ class DocStringsSrc:
         self,
         project_name: str,
         input_folder: str,
-        output_folder: str,  # This is the base directory for all pdoc outputs
+        output_folder: str,
     ) -> str | bool:
         """Genera documentazione HTML usando pdoc in un ambiente isolato."""
         logger.info("\n--- Starting Isolated pdoc Build for %s ---", project_name)
@@ -566,11 +543,10 @@ class DocStringsSrc:
         )
         logger.info("DocStringsSrc: Module to document with pdoc: %s", project_name)
 
-        # pdoc_base_output_dir is where pdoc will create a subdirectory for project_name
         pdoc_base_output_dir = self._prepare_pdoc_output_directory(
             project_name, output_folder
         )
-        if not pdoc_base_output_dir:  # _prepare_pdoc_output_directory logs errors
+        if not pdoc_base_output_dir:
             return False
 
         requirements_file_to_install = self._find_pdoc_project_requirements(
@@ -580,7 +556,6 @@ class DocStringsSrc:
         build_successful = False
         try:
             with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as i_venv:
-                # pdoc will write into pdoc_base_output_dir / project_name
                 build_successful = self._execute_pdoc_build_in_venv(
                     i_venv,
                     project_name,
@@ -588,33 +563,30 @@ class DocStringsSrc:
                     requirements_file_to_install,
                     pdoc_base_output_dir,
                 )
-        except RuntimeError as e:  # Errors from IsolatedVenvManager.__enter__
+        except RuntimeError as e:
             logger.error(
                 "DocStringsSrc: Critical error during isolated pdoc "
                 "build setup for %s: %s",
                 project_name,
                 e,
             )
-            # build_successful remains False
-        except (KeyboardInterrupt, SystemExit):  # Explicitly handle these
+        except (KeyboardInterrupt, SystemExit):
             logger.warning(
                 "DocStringsSrc: Isolated pdoc build for %s "
                 "interrupted or system exit called.",
                 project_name,
             )
-            raise  # Re-raise to allow program termination
+            raise
         finally:
             logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
 
-        # Process results and decide on cleanup
         if build_successful:
             validated_docs_path = self._validate_pdoc_output(
                 pdoc_base_output_dir, project_name
             )
             if validated_docs_path:
-                return validated_docs_path  # Success! Output dir remains for caller.
+                return validated_docs_path
 
-            # Build was marked successful, but content validation failed.
             logger.info(
                 "DocStringsSrc: Build reported success, "
                 "but content validation failed for %s. "
@@ -622,14 +594,12 @@ class DocStringsSrc:
                 project_name,
             )
         else:
-            # Build failed
             logger.info(
                 "DocStringsSrc: pdoc build failed for %s. "
                 "Cleaning up temporary output.",
                 project_name,
             )
 
-        # Common cleanup for build failure or content validation failure
         if pdoc_base_output_dir.exists():
             logger.info(
                 "DocStringsSrc: Cleaning up pdoc base output directory %s.",
@@ -645,7 +615,8 @@ class DocStringsSrc:
                 )
         return False
 
-    def cleanup_folder(self, folder_or_list: Path | str | list[Path | str]):
+    @staticmethod
+    def cleanup_folder(folder_or_list: Path | str | list[Path | str]):
         """Clean una single folder/file o una lista di folders/files.
 
         Handles sia strings che objects pathlib.Path.
@@ -669,17 +640,16 @@ class DocStringsSrc:
                 except FileNotFoundError:
                     pass
 
-    def git_clone(self, repo_url, clone_dir_path, default_branch="master"):
+    @staticmethod
+    def git_clone(repo_url, clone_dir_path, default_branch="master"):
         """Clone a git repository, trying specified branches in order."""
         clone_dir_path_str = str(
             clone_dir_path
-        )  # Ensure path is a string for subprocess
+        )
 
-        # Define the branches to attempt in order of preference
         branches_to_try = [default_branch]
-        if default_branch.lower() != "main":  # Add 'main' as a fallback if different
+        if default_branch.lower() != "main":
             branches_to_try.append("main")
-        # If default_branch is 'main', branches_to_try will just be ['main']
 
         last_error = None
 
@@ -702,7 +672,7 @@ class DocStringsSrc:
                         repo_url,
                         clone_dir_path_str,
                     ],
-                    check=True,  # Will raise CalledProcessError on non-zero exit
+                    check=True,
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
@@ -710,7 +680,7 @@ class DocStringsSrc:
                 logger.info(
                     "Successfully cloned branch '%s' from %s.", branch_name, repo_url
                 )
-                return  # Exit on success
+                return
             except subprocess.CalledProcessError as e:
                 last_error = e
                 logger.warning(
@@ -719,19 +689,14 @@ class DocStringsSrc:
                     repo_url,
                     e.stderr.strip() if e.stderr else "N/A",
                 )
-                # Continue to the next branch in the list
             except FileNotFoundError:
-                # This is a critical error: git command is not found.
                 logger.critical(
                     "Git command not found. Ensure git is installed and "
                     "in your system's PATH."
                 )
                 raise RuntimeError(
                     f"Git command not found. Cannot clone repository {repo_url}."
-                ) from None  # from None to break the exception chain here
-            # Other unexpected exceptions will propagate naturally.
-
-        # If the loop completes, all attempted branches failed
+                ) from None
         msg = (
             f"Could not clone repository {repo_url} from branches "
             f"{', '.join(branches_to_try)}."
@@ -741,7 +706,8 @@ class DocStringsSrc:
             raise RuntimeError(msg) from last_error
         raise RuntimeError(f"{msg} Unknown reason if no specific git error was logged.")
 
-    def _extract_missing_module_name(self, error_message: str) -> str | None:
+    @staticmethod
+    def _extract_missing_module_name(error_message: str) -> str | None:
         """Extract il nome del modulo da un messaggio di ModuleNotFoundError.
 
         Es. "No module named 'X'" -> "X"
@@ -782,8 +748,9 @@ class DocStringsSrc:
 
         return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
 
+    @staticmethod
     def _log_subprocess_error(
-        self, cpe: subprocess.CalledProcessError, context_msg: str
+        cpe: subprocess.CalledProcessError, context_msg: str
     ):
         """Logs details of a CalledProcessError."""
         logger.error("%s: Subprocess execution failed: %s", context_msg, cpe.cmd)
@@ -804,7 +771,6 @@ class DocStringsSrc:
                 self._define_run_paths(project_name, version)
             )
 
-            # Initial cleanup - paths from _define_run_paths are Path objects
             self.cleanup_folder(
                 [cloned_repo_path, final_docs_destination, pdoc_operation_basedir]
             )
@@ -812,7 +778,6 @@ class DocStringsSrc:
             self.git_clone(url, cloned_repo_path)
 
             logger.info("Calling generate_docs_from_folder for isolated build...")
-            # cloned_repo_path and pdoc_operation_basedir are Path objects here
             generation_outcome = self.generate_docs_from_folder(
                 project_name,
                 str(cloned_repo_path.resolve()),
