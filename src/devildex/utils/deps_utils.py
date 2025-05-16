@@ -17,7 +17,6 @@ def _process_requirements_obj(
     """Processes a RequirementsFile to extract valid lines and log invalid ones."""
     valid_lines: list[str] = []
 
-    # Process valid requirements and filter out specific lines
     for req in requirements_file_obj.requirements:
         if req.line:
             stripped_line = req.line.strip()
@@ -28,12 +27,9 @@ def _process_requirements_obj(
                     file_path_for_logging,
                 )
             else:
-                # Add the original, unstripped line as it was validly parsed
                 valid_lines.append(req.line)
 
-    # Log information about invalid lines found by the parser
     if requirements_file_obj.invalid_lines:
-        # Count invalid lines that actually have content
         invalid_line_content_count = sum(
             1
             for inv_line in requirements_file_obj.invalid_lines
@@ -81,7 +77,6 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
 
     try:
         logger.debug("Tentativo di parsificare e filtrare: %s", file_path)
-        # This call can raise exceptions if the file is malformed or unreadable
         requirements_file_obj = RequirementsFile.from_file(str(file_path))
 
         valid_lines = _process_requirements_obj(
@@ -95,7 +90,7 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
     except (
         IOError,
         UnicodeDecodeError,
-    ) as e:  # Catch specific file I/O or decoding errors
+    ) as e:
         logger.error(
             "Errore di I/O o decodifica durante la parsificazione del file '%s': %s",
             file_path,

@@ -648,7 +648,7 @@ def build_sphinx_docs(
             sctx.project_slug,
             e,
         )
-    except OSError as e:  # Catch OSError specifically
+    except OSError as e:
         logger.error(
             "Error creating/cleaning output directory %s: %s", sctx.final_output_dir, e
         )
@@ -722,7 +722,6 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
                 encoding="utf-8",
             )
             if result.returncode != 0:
-                # Intentional redefinition for fallback logic
                 for default_branch in fallback_branches:  # pylint: disable=R1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
                     result = subprocess.run(

@@ -113,8 +113,6 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
         The package name if successfully parsed, otherwise None.
     """
     stripped_line = line_content.strip()
-
-    # Skip empty lines, comments, or pip options
     if (
         not stripped_line
         or stripped_line.startswith("#")
@@ -133,8 +131,6 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
             file=sys.stderr,
         )
         return None
-    # It's generally good practice to let other unexpected errors propagate
-    # unless there's a specific way to handle them here.
 
 
 def get_explicit_package_names_from_requirements(
@@ -174,7 +170,6 @@ def get_explicit_package_names_from_requirements(
                     explicit_package_names.add(package_name)
 
     except (IOError, UnicodeDecodeError) as e:
-        # Handle errors related to opening or reading the file itself
         print(
             f"Error reading or decoding requirements file {requirements_filepath}: {e}",
             file=sys.stderr,

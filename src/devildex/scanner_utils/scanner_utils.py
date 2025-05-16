@@ -64,7 +64,6 @@ def _find_recursive_deduplicate_and_sort(
     recursive_finds: list[Path] = []
     for base_dir in base_dirs:
         if base_dir.is_dir():
-            # rglob returns a generator, so convert to list
             found_in_dir = list(base_dir.rglob(filename))
             if found_in_dir:
                 recursive_finds.extend(found_in_dir)
@@ -72,7 +71,6 @@ def _find_recursive_deduplicate_and_sort(
     if not recursive_finds:
         return []
 
-    # Deduplicate based on resolved paths and sort
     unique_paths_str = set()
     unique_files_final: list[Path] = []
     for p in recursive_finds:
@@ -82,7 +80,6 @@ def _find_recursive_deduplicate_and_sort(
                 unique_paths_str.add(resolved_path_str)
                 unique_files_final.append(p)
         except FileNotFoundError:
-            # This can happen if a path component is a broken symlink, for example.
             print(
                 f"    ⚠️ Path {p} could not be resolved during deduplication, skipping."
             )

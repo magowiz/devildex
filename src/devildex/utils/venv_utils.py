@@ -63,7 +63,7 @@ def _install_project_editable_in_venv(
             "Skipping editable install.",
             project_name,
         )
-        return True  # Skipped, not a failure
+        return True
     if not project_root_for_install.exists():
         logger.info(
             "Project root for installation '%s' does not exist"
@@ -71,7 +71,7 @@ def _install_project_editable_in_venv(
             project_root_for_install,
             project_name,
         )
-        return True  # Skipped, not a failure
+        return True
 
     if not _has_installable_project_files(project_root_for_install):
         logger.info(
@@ -80,7 +80,7 @@ def _install_project_editable_in_venv(
             project_root_for_install,
             project_name,
         )
-        return True  # Skipped, not a failure
+        return True
 
     logger.info(
         "Attempting to install project '%s' from '%s' "
@@ -157,8 +157,6 @@ def _install_doc_requirements_in_venv(
         )
         return True
 
-    # Overwrite the original file with filtered content.
-    # Consider writing to a temporary file if overwriting is undesirable.
     requirements_filename_to_use = doc_requirements_path.name
     try:
         with open(
@@ -216,23 +214,16 @@ def install_project_and_dependencies_in_venv(
 ) -> bool:
     """Installa il progetto e/o le sue dipendenze nel venv fornito."""
     if base_packages_to_install is None:
-        # Default to sphinx, but can be overridden by caller (e.g., with pdoc3)
         effective_base_packages = ["sphinx"]
     else:
         effective_base_packages = base_packages_to_install
-
-    # Step 1: Install base packages (critical)
     if not _install_base_packages_in_venv(
         pip_executable, project_name, effective_base_packages
     ):
         return False
-
-    # Step 2: Install the project itself in editable mode
-    # This helper returns True if skipped or successful, False if attempted and failed.
     if not _install_project_editable_in_venv(
         pip_executable, project_name, project_root_for_install
     ):
-        # If attempted and failed, the overall operation is considered a failure.
         return False
 
     if not _install_doc_requirements_in_venv(
@@ -331,7 +322,7 @@ def execute_command(
     cwd_str = str(cwd) if cwd else None
     command_str_for_log = " ".join(
         command
-    )  # Prepare for logging, even if command is empty
+    )
     try:
         current_env = _prepare_command_env(os.environ.copy(), env)
 
@@ -356,7 +347,7 @@ def execute_command(
             "Command not found: %s. Ensure it's in PATH or provide full path.",
             (
                 command[0] if command else "N/A"
-            ),  # Handle case where command list might be empty
+            ),
         )
 
         return "", f"Command not found: {command[0] if command else 'N/A'}", -1
@@ -373,22 +364,13 @@ def execute_command(
 
     except OSError as e:
 
-        # Catches other OS-level errors during execution that are not
-
-        # FileNotFoundError or PermissionError (which is a subclass of OSError).
-
         logger.error(
             "OS error during command execution '%s': %s", command_str_for_log, e
         )
 
-        return "", f"OS error: {e}", -4  # New error code for other OS errors
+        return "", f"OS error: {e}", -4
 
     except ValueError as e:
-
-        # This can be raised by subprocess.run if 'command' is an empty list,
-
-        # or other value-related issues with arguments.
-
         logger.error(
             "Value error during command setup or execution for '%s': %s",
             command_str_for_log,
@@ -396,4 +378,3 @@ def execute_command(
         )
 
         return "", f"Value error: {e}", -5  # New error code for value errors
-    # The general

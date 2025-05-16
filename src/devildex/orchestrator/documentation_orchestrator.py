@@ -49,7 +49,8 @@ class Orchestrator:
             },
         }
 
-    def _interpret_tuple_res(self, value):
+    @staticmethod
+    def _interpret_tuple_res(value):
         if isinstance(value, tuple):
             return value[0] and value[1]
         return value
@@ -61,8 +62,8 @@ class Orchestrator:
                 method = self._grabbers.get(self.detected_doc_type)["function"]
                 args = self._grabbers.get(self.detected_doc_type)["args"]
                 res = method(**args)
-                print(f" DETECTED FUCKING DOC TYPE: {self.detected_doc_type}")
-                print(f" RESULT FROM FUCKING GRABBER: {res}")
+                print(f" DETECTED DOC TYPE: {self.detected_doc_type}")
+                print(f" RESULT FROM GRABBER: {res}")
                 int_res = self._interpret_tuple_res(res)
                 self.last_operation_result = int_res
                 return int_res
