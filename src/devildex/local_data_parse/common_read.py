@@ -45,8 +45,6 @@ def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
         with open(pyproject_path, "r", encoding="utf-8") as f:
             return toml.load(f)
     except FileNotFoundError:
-        # Consider using logging if this module gets a logger instance
-        # print(f"Info: pyproject.toml not found at {pyproject_path}", file=sys.stderr)
         return None
     except toml.TomlDecodeError:
         print(
