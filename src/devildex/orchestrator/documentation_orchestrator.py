@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print("--- Orchestrator Usage Example ---")
 
     EXAMPLE_PROJECT_PATH_RTD = "/tmp/test_project_for_rtd"
-    EXAMPLE_RTD_URL = "https://example-docs.readthedocs.io"  # Or None
+    EXAMPLE_RTD_URL = "https://example-docs.readthedocs.io"
 
     EXAMPLE_PROJECT_PATH_LOCAL = "/tmp/test_project_local_scan"
 
