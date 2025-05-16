@@ -127,7 +127,7 @@ def _install_doc_requirements_in_venv(
                 "skipping dependency installation.",
                 project_name,
             )
-        else:  # This means doc_requirements_path was provided but does not exist
+        else:
             logger.warning(
                 "Documentation requirements file not found at '%s', skipping.",
                 doc_requirements_path,
@@ -294,17 +294,14 @@ def _handle_command_result(
     full_command_str = " ".join(command)
     effective_cwd = _get_effective_cwd(cwd_param)
 
-    # Initial debug prints
     print(f"DEBUG EXEC_CMD: Preparing to execute command[0]: {command[0]}")
     print(f"DEBUG EXEC_CMD: Full command list: {command}")
     print(f"DEBUG EXEC_CMD: Working directory (cwd): {effective_cwd}")
 
     logger.info("Executing: %s (cwd: %s)", full_command_str, effective_cwd)
 
-    # Sphinx-specific debug output
     _log_sphinx_specific_debug(description, process.stdout, process.stderr)
 
-    # Handle command result
     if process.returncode != 0:
         _log_command_failure_details(
             description, process.returncode, process.stdout, process.stderr
@@ -360,7 +357,7 @@ def execute_command(
             e,
         )
 
-        return "", f"Permission denied: {e}", -3  # New error code for permission issues
+        return "", f"Permission denied: {e}", -3
 
     except OSError as e:
 
@@ -377,4 +374,4 @@ def execute_command(
             e,
         )
 
-        return "", f"Value error: {e}", -5  # New error code for value errors
+        return "", f"Value error: {e}", -5

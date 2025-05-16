@@ -122,7 +122,7 @@ class DocStringsSrc:
                 )
 
             logger.debug("Successfully imported module '%s'.", module_name)
-            return module_candidate, None  # Success, real module
+            return module_candidate, None
 
         except ImportError as e:
             logger.debug(
@@ -755,9 +755,9 @@ class DocStringsSrc:
         """Logs details of a CalledProcessError."""
         logger.error("%s: Subprocess execution failed: %s", context_msg, cpe.cmd)
         logger.error("%s: Exit Code: %s", context_msg, cpe.returncode)
-        if cpe.stdout and cpe.stdout.strip():  # McCabe +1
+        if cpe.stdout and cpe.stdout.strip():
             logger.debug("%s: Stdout:\n%s", context_msg, cpe.stdout.strip())
-        if cpe.stderr and cpe.stderr.strip():  # McCabe +1
+        if cpe.stderr and cpe.stderr.strip():
             logger.error("%s: Stderr:\n%s", context_msg, cpe.stderr.strip())
 
     def run(self, url: str, project_name: str, version: str = ""):
