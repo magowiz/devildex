@@ -35,8 +35,8 @@ if __name__ == "__main__":
 
     print("Packages Python installed con URL di documentation:")
     for pkg_info in installed_docs_info:
+        d_url = pkg_info['docs_url']
         print(
             f"  - {pkg_info['name']} ({pkg_info['version']}): "
-            f"{pkg_info['docs_url'] if pkg_info['docs_url'] else
-               'URL documentation non trovato'}"
+            f"{(d_url if d_url else 'URL documentation non trovato')}"
         )

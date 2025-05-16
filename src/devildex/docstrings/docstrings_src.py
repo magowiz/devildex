@@ -385,7 +385,7 @@ class DocStringsSrc:
         )
         if base_output_dir_for_pdoc.exists():
             logger.info(
-                "DocStringsSrc: Removing existing base pdoc " "output directory: %s",
+                "DocStringsSrc: Removing existing base pdoc output directory: %s",
                 base_output_dir_for_pdoc,
             )
             try:
