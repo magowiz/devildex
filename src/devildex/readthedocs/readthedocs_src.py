@@ -123,7 +123,7 @@ def _update_templates_path_in_conf(
                 )
                 logger.info(
                     "  - Prepended '_templates' to templates_path in conf.py"
-                )  # Changed
+                )
                 conf_updated = True
             else:
                 raise ValueError("parsed value for templates_path is not a list")

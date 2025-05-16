@@ -735,14 +735,14 @@ class DocStringsSrc:
         self, project_name: str, version: str
     ) -> tuple[Path, Path, Path]:
         """Defines and returns standard paths used in the run method."""
-        cloned_repo_path = Path(project_name)  # Relative to CWD for cloning
+        cloned_repo_path = Path(project_name)
 
         final_docs_destination = self.docset_dir / project_name
-        if version:  # McCabe +1
+        if version:
             final_docs_destination /= version
 
         temp_output_dirname = f"tmp_pdoc_output_{project_name}"
-        if version:  # McCabe +1
+        if version:
             temp_output_dirname += f"_v{version}"
         pdoc_operation_basedir = self.docset_dir / temp_output_dirname
 

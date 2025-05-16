@@ -86,7 +86,7 @@ class DevilDexMainWindow(QMainWindow):
             res = scan_current_project()
             self.display_results(res)
         else:
-            print(f"Scan la project folder: {project_folder}")  # Placeholder
+            print(f"Scan la project folder: {project_folder}")
 
     def display_results(self, results_data):
         """Populates table with results."""
