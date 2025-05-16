@@ -246,8 +246,6 @@ def download_readthedocs_prebuilt_robust(
     file_url = _get_download_url(version_details, download_format)
     if not file_url:
         return None
-
-    # If all prerequisites are met, proceed with download preparations
     local_filename = _determine_local_filename(
         project_slug, chosen_version_slug, file_url, download_format
     )
