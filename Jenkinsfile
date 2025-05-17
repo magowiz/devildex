@@ -123,7 +123,7 @@ pipeline {
                         sh 'mkdir -p ~/.bazaar/'
                         withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
                         {
-                            sh "cp ${LAUNCHPAD_CONFIG_FILE_PATH} ~/.bazaar/launchpad.conf"
+                            sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         sh 'pip install -e . --timeout 10000'
                         sh 'touch app.log'
