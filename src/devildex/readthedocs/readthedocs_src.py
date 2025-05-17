@@ -121,9 +121,7 @@ def _update_templates_path_in_conf(
                 new_conf_content = new_conf_content.replace(
                     match.group(0), f"templates_path = {new_list_str_repr}", 1
                 )
-                logger.info(
-                    "  - Prepended '_templates' to templates_path in conf.py"
-                )
+                logger.info("  - Prepended '_templates' to templates_path in conf.py")
                 conf_updated = True
             else:
                 raise ValueError("parsed value for templates_path is not a list")

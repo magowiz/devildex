@@ -317,9 +317,7 @@ def execute_command(
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
     cwd_str = str(cwd) if cwd else None
-    command_str_for_log = " ".join(
-        command
-    )
+    command_str_for_log = " ".join(command)
     try:
         current_env = _prepare_command_env(os.environ.copy(), env)
 
@@ -342,9 +340,7 @@ def execute_command(
 
         logger.error(
             "Command not found: %s. Ensure it's in PATH or provide full path.",
-            (
-                command[0] if command else "N/A"
-            ),
+            (command[0] if command else "N/A"),
         )
 
         return "", f"Command not found: {command[0] if command else 'N/A'}", -1

@@ -24,7 +24,7 @@ CONFIG_FILE = "../../../devildex_config.ini"
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
-    def __init__(self, template_dir = None):
+    def __init__(self, template_dir=None):
         """Initialize il DocStringsSrc."""
         project_root = info.PROJECT_ROOT
         self.docset_dir = project_root / "docset"
@@ -32,10 +32,7 @@ class DocStringsSrc:
         self.template_dir = template_dir
 
     def _build_pdoc_command(
-            self,
-            python_executable: str,
-            project_name: str,
-            output_directory: Path
+        self, python_executable: str, project_name: str, output_directory: Path
     ) -> list[str]:
         """
         Costruisce la lista di argomenti per il comando pdoc.
@@ -52,8 +49,12 @@ class DocStringsSrc:
         ]
 
         if self.template_dir:
-            logger.info(f"Utilizzo della directory template personalizzata: {self.template_dir}")
-            pdoc_command_args.extend(["--template-dir", str(self.template_dir.resolve())])
+            logger.info(
+                f"Utilizzo della directory template personalizzata: {self.template_dir}"
+            )
+            pdoc_command_args.extend(
+                ["--template-dir", str(self.template_dir.resolve())]
+            )
 
         return pdoc_command_args
 
@@ -103,9 +104,7 @@ class DocStringsSrc:
         module_candidate: ModuleType | None, expected_name: str
     ) -> bool:
         """Checks if the imported object is a pdoc dummy module."""
-        if (
-            not module_candidate
-        ):
+        if not module_candidate:
             return True
         return (
             not hasattr(module_candidate, "__file__")
@@ -208,9 +207,7 @@ class DocStringsSrc:
                     module_name,
                     import_error,
                 )
-        elif (
-            not import_error
-        ):
+        elif not import_error:
             logger.debug(
                 "Module '%s' import resulted in dummy or non-specific "
                 "issue on attempt 1. "
@@ -491,7 +488,9 @@ class DocStringsSrc:
             )
             return False
 
-        pdoc_command = self._build_pdoc_command(i_venv.python_executable, project_name, final_pdoc_output_path)
+        pdoc_command = self._build_pdoc_command(
+            i_venv.python_executable, project_name, final_pdoc_output_path
+        )
 
         logger.info("DocStringsSrc: Executing pdoc: %s", " ".join(pdoc_command))
         stdout, stderr, returncode = execute_command(
@@ -662,9 +661,7 @@ class DocStringsSrc:
     @staticmethod
     def git_clone(repo_url, clone_dir_path, default_branch="master"):
         """Clone a git repository, trying specified branches in order."""
-        clone_dir_path_str = str(
-            clone_dir_path
-        )
+        clone_dir_path_str = str(clone_dir_path)
 
         branches_to_try = [default_branch]
         if default_branch.lower() != "main":
@@ -768,9 +765,7 @@ class DocStringsSrc:
         return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
 
     @staticmethod
-    def _log_subprocess_error(
-        cpe: subprocess.CalledProcessError, context_msg: str
-    ):
+    def _log_subprocess_error(cpe: subprocess.CalledProcessError, context_msg: str):
         """Logs details of a CalledProcessError."""
         logger.error("%s: Subprocess execution failed: %s", context_msg, cpe.cmd)
         logger.error("%s: Exit Code: %s", context_msg, cpe.returncode)

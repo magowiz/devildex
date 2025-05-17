@@ -9,11 +9,17 @@ from devildex.info import PROJECT_ROOT
 from devildex.readthedocs.readthedocs_src import build_sphinx_docs
 from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
-from devildex.utils.venv_utils import execute_command, install_project_and_dependencies_in_venv
+from devildex.utils.venv_utils import (
+    execute_command, install_project_and_dependencies_in_venv)
 
 ORIGINAL_DUMMY_PROJECT_PATH = PROJECT_ROOT / "tests" / "dummy_project"
-PDOC3_THEME_SOURCE = PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
-PYDOCTOR_THEME_SOURCE = PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
+PDOC3_THEME_SOURCE = (
+    PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
+)
+PYDOCTOR_THEME_SOURCE = (
+    PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
+)
+
 
 @pytest.fixture
 def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
@@ -25,7 +31,7 @@ def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
     project_source_name = ORIGINAL_DUMMY_PROJECT_PATH.name
     if create_nested_structure:
         base_dir_name = "base_dir"
-        container_path = tmp_path /base_dir_name
+        container_path = tmp_path / base_dir_name
         actual_project_copy_destination = container_path / project_source_name
         if actual_project_copy_destination.exists():
             shutil.rmtree(actual_project_copy_destination)
@@ -39,10 +45,13 @@ def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
 
         return direct_project_copy_destination
 
+
 def test_sphinx_theme(dummy_project_in_tmp_path: Path):
-    conf_path = Path(dummy_project_in_tmp_path / 'docs' / 'source' / 'conf.py')
-    t_man = ThemeManager(dummy_project_in_tmp_path, 'sphinx', sphinx_conf_file=conf_path)
-    sphinx_source_dir = dummy_project_in_tmp_path / 'docs' / 'source'
+    conf_path = Path(dummy_project_in_tmp_path / "docs" / "source" / "conf.py")
+    t_man = ThemeManager(
+        dummy_project_in_tmp_path, "sphinx", sphinx_conf_file=conf_path
+    )
+    sphinx_source_dir = dummy_project_in_tmp_path / "docs" / "source"
     t_man.sphinx_change_conf()
     project_slug_for_build = "dummy_project_test"
     version_identifier_for_build = "local_test"
@@ -50,7 +59,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
         isolated_source_path=str(sphinx_source_dir.resolve()),
         project_slug=project_slug_for_build,
         version_identifier=version_identifier_for_build,
-        original_clone_dir_path=str(dummy_project_in_tmp_path.resolve())
+        original_clone_dir_path=str(dummy_project_in_tmp_path.resolve()),
     )
 
     output_html_dir = Path(output_html_dir_str)
@@ -58,6 +67,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
 
     url_to_open = index_html_path.as_uri()
     webbrowser.open_new_tab(url_to_open)
+
 
 @pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
 def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
@@ -68,7 +78,7 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
     output_project_docs_path_str = doc_generator.generate_docs_from_folder(
         project_name="dummy_project",
         input_folder=str(project_root_for_pdoc3.resolve()),
-        output_folder=str(pdoc_build_root_dir.resolve())
+        output_folder=str(pdoc_build_root_dir.resolve()),
     )
 
     output_project_docs_path = Path(output_project_docs_path_str)
@@ -79,17 +89,19 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
 
 
 def _minimal_build_pydoctor_docs(
-        project_name_for_pydoctor: str,
-        qualified_module_to_document: str,
-        source_project_path: Path,
-        pydoctor_build_root_output_dir: Path
+    project_name_for_pydoctor: str,
+    qualified_module_to_document: str,
+    source_project_path: Path,
+    pydoctor_build_root_output_dir: Path,
 ) -> str | None:
     actual_docs_output_dir = pydoctor_build_root_output_dir
     if actual_docs_output_dir.exists():
         shutil.rmtree(actual_docs_output_dir)
     actual_docs_output_dir.mkdir(parents=True, exist_ok=True)
 
-    with IsolatedVenvManager(project_name=f"pydoctor_test_{project_name_for_pydoctor}") as i_venv:
+    with IsolatedVenvManager(
+        project_name=f"pydoctor_test_{project_name_for_pydoctor}"
+    ) as i_venv:
         install_project_and_dependencies_in_venv(
             pip_executable=i_venv.pip_executable,
             project_name=project_name_for_pydoctor,
@@ -99,11 +111,13 @@ def _minimal_build_pydoctor_docs(
         )
 
         pydoctor_command = [
-            i_venv.python_executable, "-m", "pydoctor",
+            i_venv.python_executable,
+            "-m",
+            "pydoctor",
             f"--project-name={project_name_for_pydoctor}",
             f"--html-output={str(pydoctor_build_root_output_dir.resolve())}",
             f"--template-dir={str(PYDOCTOR_THEME_SOURCE.resolve())}",
-            qualified_module_to_document
+            qualified_module_to_document,
         ]
 
         _stdout, _stderr, returncode = execute_command(
@@ -113,6 +127,7 @@ def _minimal_build_pydoctor_docs(
         if returncode == 0 and index_html_path.exists():
             return str(actual_docs_output_dir.resolve())
     return None
+
 
 @pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
 def test_pydoctor_theme(dummy_project_in_tmp_path: Path):
@@ -125,7 +140,7 @@ def test_pydoctor_theme(dummy_project_in_tmp_path: Path):
         project_name_for_pydoctor=project_name_for_pydoctor_docs,
         qualified_module_to_document=module_file_to_doc_pydoctor,
         source_project_path=project_root_for_pydoctor,
-        pydoctor_build_root_output_dir=pydoctor_build_root_dir
+        pydoctor_build_root_output_dir=pydoctor_build_root_dir,
     )
 
     output_project_docs_path = Path(output_project_docs_path_str)
