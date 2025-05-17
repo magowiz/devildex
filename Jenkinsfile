@@ -113,7 +113,7 @@ pipeline {
                     environment {
                         PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                         PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                        LP_USER_ID = credentials('launchpad_id')
+                        LP_USER_ID = credentials('launchpad_id_conf_file')
                     }
                     options {
                         throttle(['pytest_telenium'])
@@ -121,8 +121,10 @@ pipeline {
                     }
                     steps {
                         sh 'mkdir -p ~/.bazaar/'
-                        sh 'echo "[launchpad.net]" > ~/.bazaar/launchpad.conf'
-                        sh "echo 'nickname = $LP_USER_ID' >> ~/.bazaar/launchpad.conf"
+                        withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
+                        {
+                            sh "cp ${LAUNCHPAD_CONFIG_FILE_PATH} ~/.bazaar/launchpad.conf"
+                        }
                         sh 'pip install -e . --timeout 10000'
                         sh 'touch app.log'
                         sh 'echo $PWD > pwd.log'
