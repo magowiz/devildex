@@ -1,0 +1,10 @@
+    /* /home/magowiz/MEGA/projects/devildex/src/devildex/theming/devildex_pydoctor_theme/extra.css */
+    body {
+        background-color: lightcoral !important; /* Applica lo sfondo desiderato */
+        font-family: sans-serif; /* Esempio di altro stile base */
+    }
+
+    /* Puoi aggiungere qui altre regole CSS per personalizzare ulteriormente l'aspetto */
+    h1, h2, h3 {
+        color: navy;
+    }

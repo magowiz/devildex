@@ -13,6 +13,7 @@ from devildex.utils.venv_utils import execute_command, install_project_and_depen
 
 ORIGINAL_DUMMY_PROJECT_PATH = PROJECT_ROOT / "tests" / "dummy_project"
 PDOC3_THEME_SOURCE = PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
+PYDOCTOR_THEME_SOURCE = PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
 
 @pytest.fixture
 def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
@@ -21,12 +22,10 @@ def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
     sottodirectory di tmp_path e restituisce il percorso a questa copia.
     """
     create_nested_structure = getattr(request, "param", False)
-    copied_dummy_project_dir = tmp_path / "copied_dummy_project"
     project_source_name = ORIGINAL_DUMMY_PROJECT_PATH.name
     if create_nested_structure:
         base_dir_name = "base_dir"
         container_path = tmp_path /base_dir_name
-        container_path.mkdir(parents=True, exist_ok=True)
         actual_project_copy_destination = container_path / project_source_name
         if actual_project_copy_destination.exists():
             shutil.rmtree(actual_project_copy_destination)
@@ -62,7 +61,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
 
 @pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
 def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
-    doc_generator = DocStringsSrc(template_dir='themes/devildex_template')
+    doc_generator = DocStringsSrc(template_dir=PDOC3_THEME_SOURCE)
     pdoc_build_root_dir = dummy_project_in_tmp_path / "pdoc3_docs_output"
     project_root_for_pdoc3 = dummy_project_in_tmp_path
     pdoc_build_root_dir.mkdir(parents=True, exist_ok=True)
@@ -81,15 +80,14 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
 
 def _minimal_build_pydoctor_docs(
         project_name_for_pydoctor: str,
-        module_file_to_document: str,
+        qualified_module_to_document: str,
         source_project_path: Path,
         pydoctor_build_root_output_dir: Path
 ) -> str | None:
-    actual_project_docs_output_dir = pydoctor_build_root_output_dir / project_name_for_pydoctor
-
-    if actual_project_docs_output_dir.exists():
-        shutil.rmtree(actual_project_docs_output_dir)
-    pydoctor_build_root_output_dir.mkdir(parents=True, exist_ok=True)
+    actual_docs_output_dir = pydoctor_build_root_output_dir
+    if actual_docs_output_dir.exists():
+        shutil.rmtree(actual_docs_output_dir)
+    actual_docs_output_dir.mkdir(parents=True, exist_ok=True)
 
     with IsolatedVenvManager(project_name=f"pydoctor_test_{project_name_for_pydoctor}") as i_venv:
         install_project_and_dependencies_in_venv(
@@ -100,33 +98,32 @@ def _minimal_build_pydoctor_docs(
             base_packages_to_install=["pydoctor"],
         )
 
-        target_py_file_for_pydoctor = source_project_path / f"{module_file_to_document}.py"
-
         pydoctor_command = [
             i_venv.python_executable, "-m", "pydoctor",
             f"--project-name={project_name_for_pydoctor}",
             f"--html-output={str(pydoctor_build_root_output_dir.resolve())}",
-            str(target_py_file_for_pydoctor.resolve())
+            f"--template-dir={str(PYDOCTOR_THEME_SOURCE.resolve())}",
+            qualified_module_to_document
         ]
 
         _stdout, _stderr, returncode = execute_command(
             pydoctor_command, "PyDoctor Build", cwd=source_project_path
         )
-
-        if returncode == 0 and (actual_project_docs_output_dir / "index.html").exists():
-            return str(actual_project_docs_output_dir.resolve())
+        index_html_path = actual_docs_output_dir / "index.html"
+        if returncode == 0 and index_html_path.exists():
+            return str(actual_docs_output_dir.resolve())
     return None
 
-
+@pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
 def test_pydoctor_theme(dummy_project_in_tmp_path: Path):
     project_name_for_pydoctor_docs = "DummyPyDoc"
-    module_file_to_doc_pydoctor = "module1"
+    module_file_to_doc_pydoctor = "dummy_project"
     pydoctor_build_root_dir = dummy_project_in_tmp_path / "pydoctor_docs_output"
     project_root_for_pydoctor = dummy_project_in_tmp_path
 
     output_project_docs_path_str = _minimal_build_pydoctor_docs(
         project_name_for_pydoctor=project_name_for_pydoctor_docs,
-        module_file_to_document=module_file_to_doc_pydoctor,
+        qualified_module_to_document=module_file_to_doc_pydoctor,
         source_project_path=project_root_for_pydoctor,
         pydoctor_build_root_output_dir=pydoctor_build_root_dir
     )
