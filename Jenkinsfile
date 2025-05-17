@@ -102,6 +102,9 @@ pipeline {
                             changelog "$LINT_TAG_REGEX"
                         }
                     }
+                    options {
+                        retry(2)
+                    }
                     agent {
                         dockerfile {
                             reuseNode true
@@ -149,6 +152,7 @@ pipeline {
                             archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
                             archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
                             archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
+                            cleanWs()
                         }
                     }
         }
