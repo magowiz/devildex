@@ -1,0 +1,21 @@
+# File: /home/magowiz/MEGA/projects/devildex/src/devildex/theming/sphinx/devildex_sphinx_theme/theme.toml
+
+[theme]
+# Se il tuo tema si basa sui template di base di Sphinx (consigliato per iniziare),
+# usa "basic". Se fornisci TUTTI i template Jinja da zero, potresti usare "none".
+inherit = "basic"
+
+# Il foglio di stile principale per questo tema.
+# Sphinx si aspetterà di trovare questo file in:
+# devildex_sphinx_theme/static/devildex.css
+stylesheet = "devildex.css"
+
+# Opzionale: Specifica lo stile Pygments predefinito per l'evidenziazione della sintassi.
+# Altri valori comuni sono "friendly", "monokai", ecc.
+# pygments_style = "sphinx"
+
+# Opzionale: Qui puoi definire opzioni specifiche per il tuo tema che
+# possono essere configurate nel conf.py dell'utente.
+# [options]
+# show_sidebar = true
+# custom_logo = ""

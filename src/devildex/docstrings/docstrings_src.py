@@ -24,11 +24,38 @@ CONFIG_FILE = "../../../devildex_config.ini"
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
-    def __init__(self):
+    def __init__(self, template_dir = None):
         """Initialize il DocStringsSrc."""
         project_root = info.PROJECT_ROOT
         self.docset_dir = project_root / "docset"
         self.docset_dir.mkdir(parents=True, exist_ok=True)
+        self.template_dir = template_dir
+
+    def _build_pdoc_command(
+            self,
+            python_executable: str,
+            project_name: str,
+            output_directory: Path
+    ) -> list[str]:
+        """
+        Costruisce la lista di argomenti per il comando pdoc.
+        Include --template-dir se self.template_dir è impostato.
+        """
+        pdoc_command_args = [
+            python_executable,
+            "-m",
+            "pdoc",
+            "--html",
+            project_name,
+            "-o",
+            str(output_directory.resolve()),
+        ]
+
+        if self.template_dir:
+            logger.info(f"Utilizzo della directory template personalizzata: {self.template_dir}")
+            pdoc_command_args.extend(["--template-dir", str(self.template_dir.resolve())])
+
+        return pdoc_command_args
 
     @staticmethod
     def _attempt_install_missing_dependency(
@@ -434,8 +461,8 @@ class DocStringsSrc:
         )
         return None
 
-    @staticmethod
     def _execute_pdoc_build_in_venv(
+        self,
         i_venv: IsolatedVenvManager,
         project_name: str,
         source_project_path: Path,
@@ -464,15 +491,7 @@ class DocStringsSrc:
             )
             return False
 
-        pdoc_command = [
-            i_venv.python_executable,
-            "-m",
-            "pdoc",
-            "--html",
-            project_name,
-            "-o",
-            str(final_pdoc_output_path.resolve()),
-        ]
+        pdoc_command = self._build_pdoc_command(i_venv.python_executable, project_name, final_pdoc_output_path)
 
         logger.info("DocStringsSrc: Executing pdoc: %s", " ".join(pdoc_command))
         stdout, stderr, returncode = execute_command(
