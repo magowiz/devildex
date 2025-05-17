@@ -102,9 +102,6 @@ pipeline {
                             changelog "$LINT_TAG_REGEX"
                         }
                     }
-                    options {
-                        retry(2)
-                    }
                     agent {
                         dockerfile {
                             reuseNode true
@@ -119,6 +116,7 @@ pipeline {
                     }
                     options {
                         throttle(['pytest_telenium'])
+                        retry(2)
                     }
                     steps {
                         sh 'pip install -e . --timeout 10000'
