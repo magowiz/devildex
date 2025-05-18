@@ -1,4 +1,5 @@
 """documentation orchestrator module."""
+
 from pathlib import Path
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
@@ -13,7 +14,14 @@ from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 class Orchestrator:
     """Implement orchestrator class which detects doc type and perform right action."""
 
-    def __init__(self, project_name, project_path, project_url=None, rtd_url=None, base_output_dir=None):
+    def __init__(
+        self,
+        project_name,
+        project_path,
+        project_url=None,
+        rtd_url=None,
+        base_output_dir=None,
+    ):
         """Implement class constructor."""
         self.detected_doc_type = None
         self.project_name = project_name
@@ -38,13 +46,16 @@ class Orchestrator:
                 "args": {
                     "project_url": self.project_url,
                     "project_name": self.project_name,
-                    "output_dir": str(self.base_output_dir)
+                    "output_dir": str(self.base_output_dir),
                 },
             },
             "readthedocs": {
                 "function": download_readthedocs_prebuilt_robust,
-                "args": {"rtd_url": self.rtd_url, "project_name": self.project_name,
-                         "download_folder": str(self.base_output_dir)},
+                "args": {
+                    "rtd_url": self.rtd_url,
+                    "project_name": self.project_name,
+                    "download_folder": str(self.base_output_dir),
+                },
             },
             "docstrings": {
                 "function": self.doc_strings.generate_docs_from_folder,

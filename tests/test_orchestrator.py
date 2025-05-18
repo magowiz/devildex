@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from devildex.orchestrator.documentation_orchestrator import Orchestrator
 from devildex.info import PROJECT_ROOT
+from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 PACKAGES_TO_TEST = [
     {
@@ -134,7 +134,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         project_path=str(clone_target_dir),
         rtd_url=rtd_url,
         project_url=project_url_for_orchestrator,
-        base_output_dir=orchestrator_base_output_for_test
+        base_output_dir=orchestrator_base_output_for_test,
     )
 
     orchestrator.start_scan()

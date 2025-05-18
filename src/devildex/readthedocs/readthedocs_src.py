@@ -556,7 +556,7 @@ def build_sphinx_docs(
     project_slug: str,
     version_identifier: str,
     original_clone_dir_path: str,
-    base_output_dir: Path
+    base_output_dir: Path,
 ) -> str | None:
     """Execute sphinx-build in a temporary, isolated virtual environment."""
     logger.info(
@@ -575,7 +575,7 @@ def build_sphinx_docs(
         project_install_root=clone_root_p,
         project_slug=project_slug,
         version_identifier=version_identifier,
-        base_output_dir=base_output_dir
+        base_output_dir=base_output_dir,
     )
     if not sctx.conf_py_file.exists():
         logger.error("Critical Error: conf.py not found in %s.", sctx.source_dir)
@@ -881,7 +881,7 @@ def _process_documentation(
     clone_dir_path: Path,
     project_ctx: ProjectContext,
     customization: CustomizationSettings,
-    base_output_dir: Path | None = None
+    base_output_dir: Path | None = None,
 ) -> tuple[str | None, str | None]:
     """Isolate documentation source, apply customizations and build it."""
     logger.info(
@@ -908,7 +908,7 @@ def _process_documentation(
             project_ctx.slug,
             project_ctx.version,
             str(clone_dir_path),
-            base_output_dir=base_output_dir
+            base_output_dir=base_output_dir,
         )
     else:
         logger.warning(
@@ -921,9 +921,11 @@ def _process_documentation(
 
 
 def download_readthedocs_source_and_build(
-    project_name: str, project_url: str, existing_clone_path: str | None = None,
-        output_dir: Path | None = None,
-clone_base_dir_override: Path | None = None
+    project_name: str,
+    project_url: str,
+    existing_clone_path: str | None = None,
+    output_dir: Path | None = None,
+    clone_base_dir_override: Path | None = None,
 ) -> tuple[str | None, str | None]:
     """Scarica sorgenti da RTD, clona, isola sorgenti doc, esegue Sphinx e pulisce."""
     logger.info(
@@ -974,10 +976,14 @@ clone_base_dir_override: Path | None = None
     if output_dir:
         final_sphinx_build_destination = output_dir
     else:
-        final_sphinx_build_destination = PROJECT_ROOT / "devildex_sphinx_build_output_default"  # Puoi scegliere un nome diverso
+        final_sphinx_build_destination = (
+            PROJECT_ROOT / "devildex_sphinx_build_output_default"
+        )  # Puoi scegliere un nome diverso
     isolated_source_path, build_output_path = _process_documentation(
-        clone_dir_path, project_context, customization_settings,
-        base_output_dir=final_sphinx_build_destination
+        clone_dir_path,
+        project_context,
+        customization_settings,
+        base_output_dir=final_sphinx_build_destination,
     )
 
     _cleanup(str(clone_dir_path))

@@ -212,7 +212,7 @@ def download_readthedocs_prebuilt_robust(
     project_name,
     download_folder="rtd_prebuilt_downloads",
     preferred_versions=("stable", "latest"),
-    download_format="htmlzip"
+    download_format="htmlzip",
 ) -> str | None:
     """Download a pre-packaged documentation from Read the Docs.
 

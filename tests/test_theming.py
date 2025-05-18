@@ -61,7 +61,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
         project_slug=project_slug_for_build,
         version_identifier=version_identifier_for_build,
         original_clone_dir_path=str(dummy_project_in_tmp_path.resolve()),
-        base_output_dir=test_base_output_directory
+        base_output_dir=test_base_output_directory,
     )
 
     output_html_dir = Path(output_html_dir_str)
