@@ -38,18 +38,20 @@ class Orchestrator:
                 "args": {
                     "project_url": self.project_url,
                     "project_name": self.project_name,
+                    "output_dir": str(self.base_output_dir)
                 },
             },
             "readthedocs": {
                 "function": download_readthedocs_prebuilt_robust,
-                "args": {"rtd_url": self.rtd_url, "project_name": self.project_name},
+                "args": {"rtd_url": self.rtd_url, "project_name": self.project_name,
+                         "download_folder": str(self.base_output_dir)},
             },
             "docstrings": {
                 "function": self.doc_strings.generate_docs_from_folder,
                 "args": {
                     "input_folder": self.project_path,
                     "project_name": self.project_name,
-                    "output_folder": str(self.base_output_dir),
+                    "output_folder": self.base_output_dir,
                 },
             },
         }

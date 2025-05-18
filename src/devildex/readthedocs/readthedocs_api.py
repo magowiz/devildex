@@ -2,6 +2,7 @@
 
 import os
 from json import JSONDecodeError
+from pathlib import Path
 
 import requests
 
@@ -211,8 +212,8 @@ def download_readthedocs_prebuilt_robust(
     project_name,
     download_folder="rtd_prebuilt_downloads",
     preferred_versions=("stable", "latest"),
-    download_format="htmlzip",
-):
+    download_format="htmlzip"
+) -> str | None:
     """Download a pre-packaged documentation from Read the Docs.
 
     Args:
@@ -251,7 +252,7 @@ def download_readthedocs_prebuilt_robust(
     )
     output_dir = download_folder
     os.makedirs(output_dir, exist_ok=True)
-    local_filepath = os.path.join(output_dir, local_filename)
+    local_filepath = Path(download_folder) / local_filename
 
     if _download_file(file_url, local_filepath):
         final_downloaded_path = local_filepath

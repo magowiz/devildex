@@ -536,6 +536,7 @@ class SphinxBuildContext:
     project_install_root: Path
     project_slug: str
     version_identifier: str
+    base_output_dir: Path
 
     @property
     def conf_py_file(self) -> Path:
@@ -546,7 +547,7 @@ class SphinxBuildContext:
     def final_output_dir(self) -> Path:
         """The final, resolved path for the Sphinx HTML output."""
         return (
-            PROJECT_ROOT / "docset" / self.project_slug / self.version_identifier
+            Path(self.base_output_dir) / self.project_slug / self.version_identifier
         ).resolve()
 
 
@@ -555,6 +556,7 @@ def build_sphinx_docs(
     project_slug: str,
     version_identifier: str,
     original_clone_dir_path: str,
+    base_output_dir: Path
 ) -> str | None:
     """Execute sphinx-build in a temporary, isolated virtual environment."""
     logger.info(
@@ -573,6 +575,7 @@ def build_sphinx_docs(
         project_install_root=clone_root_p,
         project_slug=project_slug,
         version_identifier=version_identifier,
+        base_output_dir=base_output_dir
     )
     if not sctx.conf_py_file.exists():
         logger.error("Critical Error: conf.py not found in %s.", sctx.source_dir)
@@ -697,6 +700,7 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
 
 def run_clone(repo_url, default_branch, clone_dir_path, bzr):
     """Perform a clone for matching vcs."""
+    successful_clone = False
     print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
     fallback_branches = ["master", "main"]
     cmd_git = [
@@ -719,6 +723,8 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
                 text=True,
                 encoding="utf-8",
             )
+            if result.returncode == 0:
+                successful_clone = True
             if result.returncode != 0:
                 for default_branch in fallback_branches:  # pylint: disable=R1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
@@ -731,7 +737,7 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
                             "--branch",
                             default_branch,
                             repo_url,
-                            clone_dir_path,
+                            str(clone_dir_path),
                         ],
                         check=False,
                         capture_output=True,
@@ -739,21 +745,26 @@ def run_clone(repo_url, default_branch, clone_dir_path, bzr):
                         encoding="utf-8",
                     )
                     if result.returncode == 0:
+                        successful_clone = True
                         break
         else:
-            subprocess.run(
+            result = subprocess.run(
                 cmd_bzr,
                 check=True,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
             )
+            if result.returncode == 0:
+                successful_clone = True
         print("git clone Command executed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error during execution of git clone command:\n{e.stderr}")
         return None, None
     except FileNotFoundError:
         print("Error: 'git' command not found. Be sure that Git is installed.")
+        return None, None
+    if not successful_clone:
         return None, None
     return (
         default_branch
@@ -870,6 +881,7 @@ def _process_documentation(
     clone_dir_path: Path,
     project_ctx: ProjectContext,
     customization: CustomizationSettings,
+    base_output_dir: Path | None = None
 ) -> tuple[str | None, str | None]:
     """Isolate documentation source, apply customizations and build it."""
     logger.info(
@@ -896,6 +908,7 @@ def _process_documentation(
             project_ctx.slug,
             project_ctx.version,
             str(clone_dir_path),
+            base_output_dir=base_output_dir
         )
     else:
         logger.warning(
@@ -908,7 +921,9 @@ def _process_documentation(
 
 
 def download_readthedocs_source_and_build(
-    project_name: str, project_url: str, existing_clone_path: str | None = None
+    project_name: str, project_url: str, existing_clone_path: str | None = None,
+        output_dir: Path | None = None,
+clone_base_dir_override: Path | None = None
 ) -> tuple[str | None, str | None]:
     """Scarica sorgenti da RTD, clona, isola sorgenti doc, esegue Sphinx e pulisce."""
     logger.info(
@@ -928,8 +943,10 @@ def download_readthedocs_source_and_build(
     initial_default_branch, repo_url = _extract_repo_url_branch(
         api_project_detail_url, project_slug
     )
-
-    base_output_dir = PROJECT_ROOT / "rtd_source_clones_temp"
+    if clone_base_dir_override:
+        base_output_dir = clone_base_dir_override
+    else:
+        base_output_dir = PROJECT_ROOT / "rtd_source_clones_temp"
     base_output_dir.mkdir(parents=True, exist_ok=True)
 
     bzr = bool(repo_url and repo_url.startswith("lp:"))
@@ -954,9 +971,13 @@ def download_readthedocs_source_and_build(
     customization_settings = CustomizationSettings(
         theme=custom_theme, banner_text=custom_banner
     )
-
+    if output_dir:
+        final_sphinx_build_destination = output_dir
+    else:
+        final_sphinx_build_destination = PROJECT_ROOT / "devildex_sphinx_build_output_default"  # Puoi scegliere un nome diverso
     isolated_source_path, build_output_path = _process_documentation(
-        clone_dir_path, project_context, customization_settings
+        clone_dir_path, project_context, customization_settings,
+        base_output_dir=final_sphinx_build_destination
     )
 
     _cleanup(str(clone_dir_path))

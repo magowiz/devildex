@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
+from devildex.info import PROJECT_ROOT
 
 PACKAGES_TO_TEST = [
     {
@@ -112,7 +113,7 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
     expected_preferred_doc_type = package_info["expected_preferred_type"]
     expected_entry_point_filename = package_info.get("expected_entry_point")
 
-    clone_target_dir = tmp_path / project_name
+    clone_target_dir = tmp_path / f"source_clone_{project_name}"
     print(f"\nCloning {repo_url}  to {clone_target_dir} for project {project_name}...")
     try:
         subprocess.run(
@@ -126,13 +127,14 @@ def test_orchestrator_documentation_retrieval(package_info, tmp_path):
         print("Direct tag clone failed for , trying default branch then checkout...")
     except FileNotFoundError:
         pytest.fail("Git command not found. Ensure git is installed and in PATH.")
-
+    orchestrator_base_output_for_test = tmp_path / f"orchestrator_output_{project_name}"
     print(f"Initializing Orchestrator for {project_name} at {clone_target_dir}")
     orchestrator = Orchestrator(
         project_name=project_name,
         project_path=str(clone_target_dir),
         rtd_url=rtd_url,
         project_url=project_url_for_orchestrator,
+        base_output_dir=orchestrator_base_output_for_test
     )
 
     orchestrator.start_scan()

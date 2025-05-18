@@ -55,11 +55,13 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
     t_man.sphinx_change_conf()
     project_slug_for_build = "dummy_project_test"
     version_identifier_for_build = "local_test"
+    test_base_output_directory = dummy_project_in_tmp_path / "test_sphinx_build_output"
     output_html_dir_str = build_sphinx_docs(
         isolated_source_path=str(sphinx_source_dir.resolve()),
         project_slug=project_slug_for_build,
         version_identifier=version_identifier_for_build,
         original_clone_dir_path=str(dummy_project_in_tmp_path.resolve()),
+        base_output_dir=test_base_output_directory
     )
 
     output_html_dir = Path(output_html_dir_str)
