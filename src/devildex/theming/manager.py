@@ -1,4 +1,5 @@
 """theme manager module."""
+
 import ast
 from pathlib import Path
 from typing import Union
