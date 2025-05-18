@@ -11,11 +11,12 @@ from pathlib import Path
 from types import ModuleType
 
 import pdoc  # type: ignore[import-untyped]
-
 from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = "../../../devildex_config.ini"
@@ -54,7 +55,7 @@ class DocStringsSrc:
         if self.template_dir:
             logger.info(
                 "Utilizzo della directory template personalizzata: %s",
-                self.template_dir
+                self.template_dir,
             )
             pdoc_command_args.extend(
                 ["--template-dir", str(self.template_dir.resolve())]
