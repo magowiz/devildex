@@ -6,10 +6,12 @@ import re
 import shutil
 from pathlib import Path
 
-from devildex.scanner_utils.scanner_utils import (check_content_patterns,
-                                                  count_matching_strings,
-                                                  find_config_files,
-                                                  read_file_content_robustly)
+from devildex.scanner_utils.scanner_utils import (
+    check_content_patterns,
+    count_matching_strings,
+    find_config_files,
+    read_file_content_robustly,
+)
 
 
 def is_sphinx_project(project_path: str) -> bool:
