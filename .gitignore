@@ -2,3 +2,4 @@ build
 main.build
 rtd*
 docset
+megalinter-reports/
