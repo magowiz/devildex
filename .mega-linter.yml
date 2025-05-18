@@ -21,3 +21,6 @@ APPLY_FIXES: all
 SHOW_ELAPSED_TIME: true
 # Uncomment if you want MegaLinter to detect errors but not block CI to pass
 # DISABLE_ERRORS: true
+
+EXCLUDED_DIRECTORIES:
+  - source
