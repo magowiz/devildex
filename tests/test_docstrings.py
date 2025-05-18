@@ -1,6 +1,5 @@
 """test docstrings."""
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -52,48 +51,50 @@ PACKAGES_TO_TEST = [
     },
 ]
 
-TEST_DOCS_OUTPUT_BASE = Path("docset")
 
 
-@pytest.fixture(scope="session", autouse=True)
-def manage_test_output_directory():
-    """Fixture to handle output directory."""
-    if TEST_DOCS_OUTPUT_BASE.exists():
-        shutil.rmtree(TEST_DOCS_OUTPUT_BASE)
-    TEST_DOCS_OUTPUT_BASE.mkdir(parents=True, exist_ok=True)
-    yield
+@pytest.fixture(scope="function")  # Scope modificato a 'function'
+def manage_test_output_directory(tmp_path: Path) -> Path:  # Ora accetta tmp_path e restituisce un Path
+    """
+    Fixture per creare e fornire una directory di output isolata per la documentazione,
+    all'interno dello spazio temporaneo di un test specifico.
+    """
+    test_specific_doc_output_dir = tmp_path / "doc_gen_output"
+    test_specific_doc_output_dir.mkdir(parents=True, exist_ok=True) # Assicuriamoci che sia creata
 
+    yield test_specific_doc_output_dir
 
 @pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)
-def test_documentation_generation_for_package(package_info, tmp_path):
+def test_documentation_generation_for_package(package_info, tmp_path, manage_test_output_directory, monkeypatch):
     """Test documentation generation for a package."""
     repo_url = package_info["repo_url"]
     project_name = package_info["project_name"]
     version_tag = package_info.get("version_tag")
     expected_entry_point = package_info.get("expected_entry_point")
 
-    test_clone_base_path = tmp_path / "cloned_projects"
-    test_clone_base_path.mkdir()
-    test_venv_base_path = tmp_path / "venvs"
-    test_venv_base_path.mkdir()
+    clone_cwd = tmp_path / "clone_area"
+    clone_cwd.mkdir(parents=True, exist_ok=True)
+    monkeypatch.chdir(clone_cwd)
 
+    current_test_docs_output_base = manage_test_output_directory
     print(
         f"\n[Testing] Pacchetto: {project_name}, Versione: {version_tag or 'default'}"
     )
-    print(f"Output Base Docs: {TEST_DOCS_OUTPUT_BASE.resolve()}")
-    print(f"Clone Base Path (temp): {test_clone_base_path.resolve()}")
-    print(f"Venv Base Path (temp): {test_venv_base_path.resolve()}")
-    doc_generator = DocStringsSrc()
+    print(
+        f"Output Base Docs (isolato per questo test): {current_test_docs_output_base.resolve()}")  # Leggermente modificato per chiarezza
+    print(f"Current Working Directory (per il clone): {Path.cwd().resolve()}")  # AGGIUNTO: mostra la CWD modificata
+
+    doc_generator = DocStringsSrc(output_dir=str(current_test_docs_output_base))
     try:
         doc_generator.run(url=repo_url, project_name=project_name)
     except Exception as e:
         pytest.fail(
-            f"L'esecuzione di doc_pipeline.run per {project_name} ha fallito con "
+            f"L'esecuzione di doc_generator.run per {project_name} ha fallito con "
             f"un'eccezione: {e}\n"
             f"Controlla i log precedenti per dettagli."
         )
 
-    final_project_version_docs_dir = TEST_DOCS_OUTPUT_BASE / project_name
+    final_project_version_docs_dir = current_test_docs_output_base / project_name
 
     assert final_project_version_docs_dir.exists(), (
         "La directory finale della documentazione versionata non esiste: "

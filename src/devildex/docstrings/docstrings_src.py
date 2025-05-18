@@ -24,10 +24,13 @@ CONFIG_FILE = "../../../devildex_config.ini"
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
-    def __init__(self, template_dir=None):
+    def __init__(self, template_dir=None, output_dir: Path | str | None = None):
         """Initialize il DocStringsSrc."""
         project_root = info.PROJECT_ROOT
-        self.docset_dir = project_root / "docset"
+        if output_dir:
+            self.docset_dir = Path(output_dir).resolve()
+        else:
+            self.docset_dir = (project_root / "docset").resolve()
         self.docset_dir.mkdir(parents=True, exist_ok=True)
         self.template_dir = template_dir
 

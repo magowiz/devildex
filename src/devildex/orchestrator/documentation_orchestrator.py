@@ -1,4 +1,5 @@
 """documentation orchestrator module."""
+from pathlib import Path
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.info import PROJECT_ROOT
@@ -12,7 +13,7 @@ from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 class Orchestrator:
     """Implement orchestrator class which detects doc type and perform right action."""
 
-    def __init__(self, project_name, project_path, project_url=None, rtd_url=None):
+    def __init__(self, project_name, project_path, project_url=None, rtd_url=None, base_output_dir=None):
         """Implement class constructor."""
         self.detected_doc_type = None
         self.project_name = project_name
@@ -21,11 +22,15 @@ class Orchestrator:
         self.rtd_url = rtd_url
         self.doc_strings = DocStringsSrc()
         self.last_operation_result = None
+        if base_output_dir:
+            self.base_output_dir = Path(base_output_dir).resolve()
+        else:
+            self.base_output_dir = (PROJECT_ROOT / "docset").resolve()
+        self.base_output_dir.mkdir(parents=True, exist_ok=True)
 
     @property
     def _grabbers(self):
         """Property to dynamically build the grabbers configuration."""
-        pdoc_output_base_for_docstrings = PROJECT_ROOT / "docset"
 
         return {
             "sphinx": {
@@ -44,7 +49,7 @@ class Orchestrator:
                 "args": {
                     "input_folder": self.project_path,
                     "project_name": self.project_name,
-                    "output_folder": str(pdoc_output_base_for_docstrings),
+                    "output_folder": str(self.base_output_dir),
                 },
             },
         }
