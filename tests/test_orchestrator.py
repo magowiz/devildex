@@ -2,8 +2,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
-from devildex.info import PROJECT_ROOT
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 PACKAGES_TO_TEST = [
