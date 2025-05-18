@@ -193,6 +193,9 @@ pipeline {
                 }
                 stages {
                     stage('Build cx_Freeze') {
+                        options {
+                            retry(2)
+                        }
                         agent {
                             dockerfile {
                                 filename 'Dockerfile'
@@ -235,6 +238,9 @@ pipeline {
                         }
                     }
                     stage('Build Nuitka') {
+                        options {
+                            retry(2)
+                        }
                         agent {
                             dockerfile {
                                 filename 'Dockerfile'
@@ -279,6 +285,9 @@ pipeline {
                         }
                     }
                     stage('Build PyOxidizer') {
+                        options {
+                            retry(2)
+                        }
                         agent {
                             dockerfile {
                                 filename 'Dockerfile'
