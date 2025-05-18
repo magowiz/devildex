@@ -69,7 +69,7 @@ pipeline {
             agent {
                 docker {
                     label 'heracles'
-                    image 'oxsecurity/megalinter-python:v8.4.0'
+                    image 'oxsecurity/megalinter-python:v8'
                     args "-u root -e VALIDATE_ALL_CODEBASE=true -v \${WORKSPACE}:/tmp/lint --entrypoint=''\
                           -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket"
                     reuseNode true
