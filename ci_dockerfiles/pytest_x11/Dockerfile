@@ -1,7 +1,38 @@
-FROM python:3.12-slim
-RUN apt-get update && apt-get install --no-install-recommends -y lftp curl xvfb xdg-utils jq gcc git libsdl2-dev \
-     ffmpeg libavcodec-dev libavfilter-dev libavdevice-dev libmtdev-dev xclip xauth  libxcb-xinerama0 python3-launchpadlib bzr \
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    python3.12-dev \
+    git \
+    curl \
+    lftp \
+    xvfb \
+    xdg-utils \
+    jq \
+    gcc \
+    libsdl2-dev \
+    ffmpeg \
+    libavcodec-dev \
+    libavfilter-dev \
+    libavdevice-dev \
+    libmtdev-dev \
+    xclip \
+    xauth \
+    libxcb-xinerama0 \
+    python3-launchpadlib bzr \
     && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir poetry
+    && rm -rf /var/lib/apt/lists/*
+
+
+RUN python3 -m pip install --no-cache-dir --upgrade pip
+
+RUN python3 -m pip install --no-cache-dir poetry
 RUN poetry self add poetry-plugin-export
