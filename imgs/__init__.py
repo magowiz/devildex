@@ -1,1 +1,0 @@
-"""package containing program images."""
