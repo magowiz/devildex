@@ -39,7 +39,6 @@ class Orchestrator:
     @property
     def _grabbers(self):
         """Property to dynamically build the grabbers configuration."""
-
         return {
             "sphinx": {
                 "function": download_readthedocs_source_and_build,

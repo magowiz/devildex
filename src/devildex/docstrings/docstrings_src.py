@@ -37,8 +37,8 @@ class DocStringsSrc:
     def _build_pdoc_command(
         self, python_executable: str, project_name: str, output_directory: Path
     ) -> list[str]:
-        """
-        Costruisce la lista di argomenti per il comando pdoc.
+        """Costruisce la lista di argomenti per il comando pdoc.
+
         Include --template-dir se self.template_dir è impostato.
         """
         pdoc_command_args = [
@@ -53,7 +53,8 @@ class DocStringsSrc:
 
         if self.template_dir:
             logger.info(
-                f"Utilizzo della directory template personalizzata: {self.template_dir}"
+                "Utilizzo della directory template personalizzata: %s",
+                self.template_dir
             )
             pdoc_command_args.extend(
                 ["--template-dir", str(self.template_dir.resolve())]

@@ -1,3 +1,4 @@
+"""theme manager module."""
 import ast
 from pathlib import Path
 from typing import Union
@@ -6,6 +7,7 @@ from devildex.info import PROJECT_ROOT
 
 
 class ThemeManager:
+    """Class that implements themes."""
 
     def __init__(
         self,
@@ -13,6 +15,7 @@ class ThemeManager:
         doc_type: str,
         sphinx_conf_file: Union[Path | None] = None,
     ):
+        """Initialize ThemeManager."""
         self.project_path = project_path
         self.doc_type = doc_type
         self.sphinx_conf_file = sphinx_conf_file
@@ -32,6 +35,7 @@ class ThemeManager:
         ]
 
     def sphinx_change_conf(self):
+        """Patch sphinx configuration."""
         if self.doc_type != "sphinx":
             return
         conf_file = self.sphinx_conf_file
@@ -55,12 +59,11 @@ class ThemeManager:
                         node.value = ast.Constant(value=value)
                         var_found = True
                         break
-                    else:
-                        node.value = ast.List(
-                            elts=[ast.Constant(value=s) for s in value], ctx=ast.Load()
-                        )
-                        var_found = True
-                        break
+                    node.value = ast.List(
+                        elts=[ast.Constant(value=s) for s in value], ctx=ast.Load()
+                    )
+                    var_found = True
+                    break
             if not var_found:
                 if isinstance(value, str):
                     new_assignment = ast.Assign(
