@@ -52,7 +52,7 @@ pipeline {
                             filename 'Dockerfile'
                             dir 'ci_dockerfiles/generate_doc'
                     }
-             }
+            }
             steps {
                         pythonGenerateDocsSphinx(packager: 'poetry')
             }
@@ -63,7 +63,7 @@ pipeline {
                                          reportName: 'Documentation', reportTitles: '',
                                          useWrapperFileDirectly: true])
                         }
-             }
+            }
         }
         stage('megalinter') {
             agent {
