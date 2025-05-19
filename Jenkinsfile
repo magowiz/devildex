@@ -121,6 +121,7 @@ pipeline {
                         retry(2)
                     }
                     steps {
+                        sh 'echo "Variabile SHELL: $SHELL"'
                         sh 'mkdir -p ~/.bazaar/'
                         withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
                         {
