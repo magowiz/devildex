@@ -27,7 +27,7 @@ RUN apt-get update && \
     xclip \
     xauth \
     libxcb-xinerama0 \
-    python3-launchpadlib bzr \
+    python3-launchpadlib bzr python-is-python3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
