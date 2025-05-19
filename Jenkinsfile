@@ -125,6 +125,7 @@ pipeline {
                         {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
+                        withPythonEnv('python3.13') {
                         sh 'pip install -e . --timeout 10000'
                         sh 'touch app.log'
                         sh 'echo $PWD > pwd.log'
@@ -142,6 +143,7 @@ pipeline {
                             stash includes: 'coverage_report_xml/coverage.xml',
                                   name: 'coverageReportXML', allowEmpty: true
                         }
+                    }
                     }
                     post {
                         always {
