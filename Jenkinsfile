@@ -136,7 +136,10 @@ pipeline {
                             sh 'python -m pip install -e . --timeout 10000'
                             sh 'touch app.log'
                             sh 'echo $PWD > pwd.log'
-                            pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.13',
+                            sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                            sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
+                            sh 'sed -i /^packaging/d requirements.txt'
+                            pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
                                    skipMarkers: '')
                             script {
                                 def exists = fileExists 'core'
