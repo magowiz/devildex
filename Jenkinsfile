@@ -126,7 +126,7 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         withPythonEnv('python3.12') {
-                        sh 'pip install -e . --timeout 10000'
+                        sh 'python -m pip install -e . --timeout 10000'
                         sh 'touch app.log'
                         sh 'echo $PWD > pwd.log'
                         pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
