@@ -114,6 +114,7 @@ pipeline {
                         PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                         PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                         LP_USER_ID = credentials('launchpad_id_conf_file')
+                        PATH = "/root/.local/bin:${env.PATH}"
                     }
                     options {
                         throttle(['pytest_telenium'])
@@ -126,30 +127,29 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         withPythonEnv('python3.12') {
-                            withEnv(['PATH+EXTRA=/root/.local/bin']) {
-                                sh 'echo $PATH'
-                                sh 'find / -name poetry'
-                                sh 'mkdir -p /usr/local/bin/'
-                                sh 'ln -s $(which python3.12) /usr/local/bin/python3.12'
-                                sh 'mkdir -p /root/.config/pip/'
-                                sh 'cp pip.conf /root/.config/pip/pip.conf'
-                                sh 'python -m pip install -e . --timeout 10000'
-                                sh 'touch app.log'
-                                sh 'echo $PWD > pwd.log'
-                                pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
-                                       skipMarkers: '')
-                                script {
-                                    def exists = fileExists 'core'
-                                    if (exists) {
-                                echo 'core found'
-                                sh 'pip install pystack'
-                                sh 'pystack core core /usr/local/bin/python'
-                                sh 'mv core oldcore'
-                                sh 'pip list | grep pytest'
-                                    }
-                                    stash includes: 'coverage_report_xml/coverage.xml',
-                                          name: 'coverageReportXML', allowEmpty: true
+                            sh 'echo $PATH'
+                            sh 'find / -name poetry'
+                            sh 'mkdir -p /usr/local/bin/'
+                            sh 'ln -s $(which python3.12) /usr/local/bin/python3.12'
+                            sh 'mkdir -p /root/.config/pip/'
+                            sh 'cp pip.conf /root/.config/pip/pip.conf'
+                            sh 'python -m pip install -e . --timeout 10000'
+                            sh 'touch app.log'
+                            sh 'echo $PWD > pwd.log'
+                            pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
+                                   skipMarkers: '')
+                            script {
+                                def exists = fileExists 'core'
+                                if (exists) {
+                            echo 'core found'
+                            sh 'pip install pystack'
+                            sh 'pystack core core /usr/local/bin/python'
+                            sh 'mv core oldcore'
+                            sh 'pip list | grep pytest'
                                 }
+                                stash includes: 'coverage_report_xml/coverage.xml',
+                                      name: 'coverageReportXML', allowEmpty: true
+
                             }
                         }
                     }
