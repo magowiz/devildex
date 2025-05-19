@@ -133,8 +133,9 @@ pipeline {
                         sh 'python -m pip install -e . --timeout 10000'
                         sh 'touch app.log'
                         sh 'echo $PWD > pwd.log'
-                        sh 'pip install poetry'
-                        sh 'poetry self add poetry-plugin-export'
+                        sh 'python3 -m pip install --break-system-packages --no-cache-dir pipx'
+                        sh 'pipx install poetry'
+                        sh 'pipx inject poetry poetry-plugin-shell'
                         pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
                                skipMarkers: '')
                         script {
