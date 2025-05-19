@@ -126,8 +126,8 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         withPythonEnv('python3.12') {
-                        sh 'which python'
-                        sh 'which python3'
+                        sh 'mkdir -p /root/.config/pip/'
+                        sh 'cp pip.conf /root/.config/pip/pip.conf'
                         sh 'python -m pip install -e . --timeout 10000'
                         sh 'touch app.log'
                         sh 'echo $PWD > pwd.log'
