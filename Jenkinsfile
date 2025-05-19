@@ -127,8 +127,6 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         withPythonEnv('python3.12') {
-                            sh 'echo $PATH'
-                            sh 'find / -name poetry'
                             sh 'mkdir -p /usr/local/bin/'
                             sh 'ln -s $(which python3.12) /usr/local/bin/python3.12'
                             sh 'mkdir -p /root/.config/pip/'
