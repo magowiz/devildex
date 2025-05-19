@@ -1,37 +1,42 @@
-FROM ubuntu:24.04
+FROM archlinux:base-2025.05.15
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
+ARG PYTHON_VERSION_REQ=3.13
+ARG POETRY_VERSION=1.8.2
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y \
-    python3.12 \
-    python3.12-venv \
-    python3-pip \
-    python3.12-dev \
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+    base-devel \
+    python \
+    python-pip \
+    python-virtualenv \
+    python-pipx \
     git \
     curl \
     lftp \
-    xvfb \
+    xorg-x11-server-xvfb \
     xdg-utils \
     jq \
-    gcc \
-    libsdl2-dev \
-    ffmpeg \
-    libavcodec-dev \
-    libavfilter-dev \
-    libavdevice-dev \
-    libmtdev-dev \
+    sdl2 \
+    libmtdev \
     xclip \
-    xauth \
-    libxcb-xinerama0 \
-    python3-launchpadlib bzr python-is-python3 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    xorg-xauth \
+    patchelf \
+    glib2 \
+    mingw-w64-gcc \
+    && rm -rf /var/cache/pacman/pkg/*
 
 
-RUN python3 -m pip install --break-system-packages --no-cache-dir pipx
-RUN pipx install poetry
-RUN pipx inject poetry poetry-plugin-export
+RUN python -m pip install --no-cache-dir --upgrade pip
+
+
+RUN pipx install poetry==${POETRY_VERSION}
+ENV PATH="/root/.local/bin:${PATH}"
+
+RUN poetry self add poetry-plugin-export
+
+WORKDIR /app
