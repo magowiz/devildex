@@ -126,6 +126,7 @@ pipeline {
                         {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
+                        sh 'echo $PATH'
                         withPythonEnv('python3.12') {
                             sh 'mkdir -p /usr/local/bin/'
                             sh 'ln -s $(which python3.12) /usr/local/bin/python3.12'
