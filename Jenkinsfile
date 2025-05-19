@@ -126,7 +126,8 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         withPythonEnv('python3.12') {
-                        sh 'which python3.12'
+                        sh 'mkdir -p /usr/local/bin/'
+                        sh 'ln -s $(which python3.12) /usr/local/bin/python3.12'
                         sh 'mkdir -p /root/.config/pip/'
                         sh 'cp pip.conf /root/.config/pip/pip.conf'
                         sh 'python -m pip install -e . --timeout 10000'
