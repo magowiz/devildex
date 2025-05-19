@@ -128,15 +128,15 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         sh 'echo $PATH'
-                        withPythonEnv('python3.12') {
+                        withPythonEnv('python3.13') {
                             sh 'mkdir -p /usr/local/bin/'
-                            sh 'ln -s $(which python3.12) /usr/local/bin/python3.12'
+                            sh 'ln -s $(which python3.13) /usr/local/bin/python3.13'
                             sh 'mkdir -p /root/.config/pip/'
                             sh 'cp pip.conf /root/.config/pip/pip.conf'
                             sh 'python -m pip install -e . --timeout 10000'
                             sh 'touch app.log'
                             sh 'echo $PWD > pwd.log'
-                            pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.12',
+                            pyTestXvfb(buildType: 'poetry', pythonInterpreter: '/usr/local/bin/python3.13',
                                    skipMarkers: '')
                             script {
                                 def exists = fileExists 'core'
