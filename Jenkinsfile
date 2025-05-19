@@ -139,6 +139,7 @@ pipeline {
                             sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                             sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
                             sh 'sed -i /^packaging/d requirements.txt'
+                            sh 'sed -i /^packaging/d requirements-test.txt'
                             pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
                                    skipMarkers: '')
                             script {
