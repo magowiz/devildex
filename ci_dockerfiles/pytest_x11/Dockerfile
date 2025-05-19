@@ -34,4 +34,4 @@ RUN apt-get update && \
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir pipx
 RUN pipx install poetry
-RUN pipx inject poetry poetry-plugin-shell
+RUN pipx inject poetry poetry-plugin-export
