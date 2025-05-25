@@ -3,3 +3,4 @@ main.build
 rtd*
 docset
 megalinter-reports/
+__pycache__
