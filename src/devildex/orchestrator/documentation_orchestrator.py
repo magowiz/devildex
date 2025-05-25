@@ -22,7 +22,10 @@ class Orchestrator:
         """Implement class constructor."""
         self.package_details = package_details
         self.detected_doc_type = None
-        self.doc_strings = DocStringsSrc()
+        PDOC3_THEME_PATH = (
+                PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
+        )
+        self.doc_strings = DocStringsSrc(template_dir=PDOC3_THEME_PATH)
         self.last_operation_result = None
         if base_output_dir:
             self.base_output_dir = Path(base_output_dir).resolve()

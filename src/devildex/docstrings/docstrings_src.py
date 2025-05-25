@@ -19,7 +19,6 @@ from devildex.utils.venv_utils import (
 )
 
 logger = logging.getLogger(__name__)
-CONFIG_FILE = "../../../devildex_config.ini"
 
 
 class DocStringsSrc:
