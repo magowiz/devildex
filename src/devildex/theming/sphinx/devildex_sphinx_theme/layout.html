@@ -38,5 +38,32 @@
     {# Se vuoi includere anche l'header del tema base (probabilmente no se metti una navbar completa) #}
     {# {{ super() }} #}
 {%- endblock %}
+{# src/devildex/theming/sphinx/devildex_sphinx_theme/layout.html #}
 
+{# (Assicurati che all'inizio del file ci sia l'estensione del tema base, es: {% extends "basic/layout.html" %}) #}
+
+{# ... altri blocchi del tuo layout.html ... #}
+
+{%- block scripts %}
+    {# 1. Includi gli script del tema genitore (MOLTO IMPORTANTE) #}
+    {{ super() }}
+
+    {# 2. Includi Bootstrap JavaScript (che contiene anche Popper.js) #}
+    {# Questo percorso assume che bootstrap.bundle.min.js sia in:
+       [tuo_tema]/static/bootstrap/js/bootstrap.bundle.min.js #}
+    <script src="{{ pathto('_static/bootstrap/js/bootstrap.bundle.min.js', 1) }}"></script>
+
+    {# 3. Includi il tuo file JavaScript personalizzato (devildex.js) #}
+    {#    Scegli UNO dei seguenti percorsi, a seconda di dove hai messo devildex.js: #}
+
+    {#    Opzione A: Se devildex.js è in [tuo_tema]/static/js/devildex.js #}
+    <script src="{{ pathto('_static/js/devildex.js', 1) }}"></script>
+
+    {#    Opzione B: Se devildex.js è direttamente in [tuo_tema]/static/devildex.js
+                  (come appariva nell'HTML generato che mi hai mostrato prima) #}
+    {# <script src="{{ pathto('_static/devildex.js', 1) }}"></script> #}
+
+{%- endblock %}
+
+{# ... altri blocchi del tuo layout.html, come il footer ... #}
 {# ... resto del layout.html ... #}
