@@ -24,7 +24,6 @@ class ThemeManager:
         self.settings = {
             "html_theme": "devildex_sphinx_theme",
             "html_theme_path": [str(theme_container_dir.resolve())],
-            "html_css_files": ["devildex.css"],
             "html_js_files": ["devildex.js"],
         }
         self.new_theme_name = "devildex"
