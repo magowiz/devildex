@@ -23,8 +23,7 @@ class ThemeManager:
         theme_container_dir = PROJECT_ROOT / "src" / "devildex" / "theming" / "sphinx"
         self.settings = {
             "html_theme": "devildex_sphinx_theme",
-            "html_theme_path": [str(theme_container_dir.resolve())],
-            "html_js_files": ["devildex.js"],
+            "html_theme_path": [str(theme_container_dir.resolve())]
         }
         self.new_theme_name = "devildex"
         self.potential_sphinx_conf_paths = [
