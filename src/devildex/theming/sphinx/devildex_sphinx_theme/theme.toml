@@ -8,7 +8,7 @@ inherit = "basic"
 # Il foglio di stile principale per questo tema.
 # Sphinx si aspetterà di trovare questo file in:
 # devildex_sphinx_theme/static/devildex.css
-stylesheet = "devildex.css"
+stylesheet = "bootstrap/css/bootstrap.min.css, css/devildex.css"
 
 # Opzionale: Specifica lo stile Pygments predefinito per l'evidenziazione della sintassi.
 # Altri valori comuni sono "friendly", "monokai", ecc.

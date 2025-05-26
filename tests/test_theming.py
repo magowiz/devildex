@@ -69,6 +69,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
     index_html_path = output_html_dir / "index.html"
 
     url_to_open = index_html_path.as_uri()
+    print(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)
 
 
@@ -88,6 +89,7 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
     index_html_path = output_project_docs_path / "index.html"
 
     url_to_open = index_html_path.as_uri()
+    print(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)
 
 
@@ -150,4 +152,5 @@ def test_pydoctor_theme(dummy_project_in_tmp_path: Path):
     index_html_path = output_project_docs_path / "index.html"
 
     url_to_open = index_html_path.as_uri()
+    print(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)

@@ -1,0 +1,42 @@
+{# Esempio di inserimento in layout.html #}
+{%- extends "basic/layout.html" %} {# O il tuo tema base preferito #}
+
+{# ... altri blocchi come 'scripts', 'css' ... #}
+
+{# Sovrascrivi il blocco 'header' o inserisci la navbar prima del 'body' del tema base #}
+{%- block header %}
+    {# La tua nuova navbar Devildex #}
+    <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar">
+      <div class="container-fluid">
+        {# Titolo del Progetto (preso da Sphinx) che linka alla pagina principale #}
+        <a class="navbar-brand" href="{{ pathto(master_doc) }}">{{ project }}</a>
+        
+        {# Se in futuro vorrai aggiungere link di navigazione che collassano su mobile, avrai bisogno di un toggler.
+           Per ora, se c'è solo il titolo, potrebbe non essere strettamente necessario, ma è buona norma includerlo
+           per espansioni future.
+        #}
+        {#
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent" aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="devildexNavbarContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            {# Esempio di link:
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Altro Link</a>
+            </li>
+            #}
+          </ul>
+        </div>
+        #}
+      </div>
+    </nav>
+    
+    {# Se vuoi includere anche l'header del tema base (probabilmente no se metti una navbar completa) #}
+    {# {{ super() }} #}
+{%- endblock %}
+
+{# ... resto del layout.html ... #}
