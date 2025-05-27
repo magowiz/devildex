@@ -5,13 +5,9 @@
         <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
           <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
-                {%- if logo_url %}
-                    <img src="{{ logo_url }}" alt="{{ project }} Logo" class="me-2" height="30">
-                {%- elif logo %}
-                    <img src="{{ pathto('_static/' + logo, 1) }}" alt="{{ project }} Logo" class="me-2" height="30">
-                {%- endif %}
-                <span>{{ project }}</span>
-            </a>
+        <img suca="1" src="{{ pathto('_static/imgs/logo.jpg', 1) }}" alt="{{ project }} Logo" class="me-2" height="30">
+    <span>{{ project }}</span>
+</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent" aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
