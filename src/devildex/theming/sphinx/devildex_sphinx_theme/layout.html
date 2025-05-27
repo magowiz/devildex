@@ -1,67 +1,44 @@
-{# Esempio di inserimento in layout.html #}
 {%- extends "basic/layout.html" %} {# O il tuo tema base preferito #}
-
-{# ... altri blocchi come 'scripts', 'css' ... #}
-
-{# Sovrascrivi il blocco 'header' o inserisci la navbar prima del 'body' del tema base #}
 {%- block header %}
-    {# La tua nuova navbar Devildex #}
     <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark">
       <div class="container-fluid">
-        {# Titolo del Progetto (preso da Sphinx) che linka alla pagina principale #}
-        {# Nel tuo layout.html, dentro il blocco header #}
 <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
     <img src="{{ pathto('_static/imgs/logo.jpg', 1) }}" alt="{{ project }} Logo"
          class="me-2"
          height="100">
     <span>{{ project }}</span>
 </a>
-        {# Se in futuro vorrai aggiungere link di navigazione che collassano su mobile, avrai bisogno di un toggler.
-           Per ora, se c'è solo il titolo, potrebbe non essere strettamente necessario, ma è buona norma includerlo
-           per espansioni future.
-        #}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent" aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="devildexNavbarContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">Home</a>
-            </li>
+            {%- set globaltoc = toctree(maxdepth=2, collapse=False, includehidden=True, titles_only=True) %}
+            {%- if globaltoc %}
+                {{ globaltoc }}
+            {%- else %}
+                <li class="nav-item">
+                  <a class="nav-link active" aria-current="page" href="{{ pathto(master_doc) }}">Home</a>
+                </li>
+            {%- endif %}
           </ul>
+          <form class="d-flex ms-auto" role="search" action="{{ pathto('search') }}" method="get">
+            <input class="form-control me-2" type="search" name="q" placeholder="Cerca documenti..." aria-label="Search">
+            <input type="hidden" name="check_keywords" value="yes">
+            <input type="hidden" name="area" value="default">
+            <button class="btn btn-outline-success" type="submit">Cerca</button>
+          </form>
+          #}
         </div>
       </div>
     </nav>
-    
-    {# Se vuoi includere anche l'header del tema base (probabilmente no se metti una navbar completa) #}
     {# {{ super() }} #}
 {%- endblock %}
-{# src/devildex/theming/sphinx/devildex_sphinx_theme/layout.html #}
-
-{# (Assicurati che all'inizio del file ci sia l'estensione del tema base, es: {% extends "basic/layout.html" %}) #}
-
-{# ... altri blocchi del tuo layout.html ... #}
 
 {%- block scripts %}
-    {# 1. Includi gli script del tema genitore (MOLTO IMPORTANTE) #}
-    {{ super() }}
-
-    {# 2. Includi Bootstrap JavaScript (che contiene anche Popper.js) #}
-    {# Questo percorso assume che bootstrap.bundle.min.js sia in:
-       [tuo_tema]/static/bootstrap/js/bootstrap.bundle.min.js #}
     <script src="{{ pathto('_static/bootstrap/js/bootstrap.bundle.min.js', 1) }}"></script>
-
-    {# 3. Includi il tuo file JavaScript personalizzato (devildex.js) #}
-    {#    Scegli UNO dei seguenti percorsi, a seconda di dove hai messo devildex.js: #}
-
-    {#    Opzione A: Se devildex.js è in [tuo_tema]/static/js/devildex.js #}
     <script src="{{ pathto('_static/js/devildex.js', 1) }}"></script>
-
-    {#    Opzione B: Se devildex.js è direttamente in [tuo_tema]/static/devildex.js
-                  (come appariva nell'HTML generato che mi hai mostrato prima) #}
     {# <script src="{{ pathto('_static/devildex.js', 1) }}"></script> #}
 
 {%- endblock %}
-
-{# ... altri blocchi del tuo layout.html, come il footer ... #}
-{# ... resto del layout.html ... #}
