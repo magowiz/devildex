@@ -6,14 +6,16 @@
 {# Sovrascrivi il blocco 'header' o inserisci la navbar prima del 'body' del tema base #}
 {%- block header %}
     {# La tua nuova navbar Devildex #}
-    <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar">
+    <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark">
       <div class="container-fluid">
         {# Titolo del Progetto (preso da Sphinx) che linka alla pagina principale #}
-        <a class="navbar-brand" href="{{ pathto(master_doc) }}">
-            <img src="{{ pathto('_static/imgs/logo.jpg', 1) }}" alt="{{ project }} Logo" style="height: 120px; width: auto; margin-right: 10px; vertical-align: middle;">
-
-          {{ project }}</a>
-        
+        {# Nel tuo layout.html, dentro il blocco header #}
+<a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
+    <img src="{{ pathto('_static/imgs/logo.jpg', 1) }}" alt="{{ project }} Logo"
+         class="me-2"
+         height="100">
+    <span>{{ project }}</span>
+</a>
         {# Se in futuro vorrai aggiungere link di navigazione che collassano su mobile, avrai bisogno di un toggler.
            Per ora, se c'è solo il titolo, potrebbe non essere strettamente necessario, ma è buona norma includerlo
            per espansioni future.
