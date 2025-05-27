@@ -1,133 +1,116 @@
-{%- extends "basic/layout.html" %} {# Estendiamo il tema base di Sphinx #}
+    {%- extends "basic/layout.html" %} {# Estendiamo il tema base di Sphinx #}
 
-{# Blocco Header con la Navbar Bootstrap #}
-{%- block header %}
-    {# Aggiunto sticky-top per navbar fissa in alto #}
-    <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
-      <div class="container-fluid">
-        {# Link del brand/logo #}
-        <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
-            {%- if logo_url %} {# Usa logo_url se definito in conf.py #}
-                <img src="{{ logo_url }}" alt="{{ project }} Logo"
-                     class="me-2"
-                     height="30"> {# Altezza ridotta per navbar standard #}
-            {%- elif logo %} {# Fallback per la variabile 'logo' da conf.py #}
-                <img src="{{ pathto('_static/' + logo, 1) }}" alt="{{ project }} Logo"
-                     class="me-2"
-                     height="30">
-            {%- else %}
-                 {# Nessun logo fornito, puoi mettere un placeholder o nulla #}
+    {# Blocco Header con la Navbar Bootstrap - NESSUNA MODIFICA QUI #}
+    {%- block header %}
+        <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
+          <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
+                {%- if logo_url %}
+                    <img src="{{ logo_url }}" alt="{{ project }} Logo" class="me-2" height="30">
+                {%- elif logo %}
+                    <img src="{{ pathto('_static/' + logo, 1) }}" alt="{{ project }} Logo" class="me-2" height="30">
+                {%- endif %}
+                <span>{{ project }}</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent" aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="devildexNavbarContent">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {%- set globaltoc = toctree(maxdepth=2, collapse=False, includehidden=True, titles_only=True) %}
+                {%- if globaltoc %}
+                    {{ globaltoc }}
+                {%- else %}
+                    <li class="nav-item">
+                      <a class="nav-link {% if pagename == master_doc %}active{% endif %}" aria-current="page" href="{{ pathto(master_doc) }}">Home</a>
+                    </li>
+                {%- endif %}
+              </ul>
+              {%- if pagename != "search" %}
+              <form class="d-flex ms-auto" role="search" action="{{ pathto('search') }}" method="get">
+                <input class="form-control me-2" type="search" name="q" placeholder="Cerca documenti..." aria-label="Search">
+                <input type="hidden" name="check_keywords" value="yes">
+                <input type="hidden" name="area" value="default">
+                <button class="btn btn-outline-light" type="submit">Cerca</button>
+              </form>
+              {%- endif %}
+            </div>
+          </div>
+        </nav>
+    {%- endblock %}
+
+    {# Rimuoviamo le barre di navigazione "related" del tema base - NESSUNA MODIFICA QUI #}
+    {%- block relbar1 %}{% endblock %}
+    {%- block relbar2 %}{% endblock %}
+
+    {# MODIFICATO: Sovrascriviamo il blocco 'content' invece di 'document' #}
+        {# MODIFICATO: Sovrascriviamo il blocco 'content' invece di 'document' #}
+    {%- block content %}
+    <main role="main" class="container mt-4 mb-4"> {# Contenitore principale Bootstrap #}
+        <div class="row"> {# Riga Bootstrap #}
+            {# Colonna per il contenuto principale #}
+            {# La larghezza della colonna dipende se la sidebar è visualizzata (cioè, NON è la pagina index o search) #}
+            <div class="col-lg-{% if pagename != master_doc and pagename != 'search' %}9{% else %}12{% endif %} col-md-{% if pagename != master_doc and pagename != 'search' %}8{% else %}12{% endif %}">
+                {# Inseriamo qui il contenuto del blocco 'body' del tema base. #}
+                {# Il blocco 'body' è dove Sphinx mette il contenuto principale della pagina. #}
+                {%- block body %}{{ super() }}{% endblock %}
+            </div>
+
+            {# Colonna per la sidebar, se NON è la pagina index o search #}
+            {%- if pagename != master_doc and pagename != 'search' %} {# NUOVA CONDIZIONE #}
+            <div class="col-lg-3 col-md-4">
+                <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation" aria-label="Main navigation">
+                    <div class="sphinxsidebarwrapper pt-3">
+                        {# Includiamo i blocchi standard della sidebar definiti in basic/layout.html #}
+                        {# chiamando super() su ciascuno di essi. Sphinx li popolerà. #}
+                        {%- block sidebarlogo %}{{ super() }}{% endblock %}
+                        {%- block sidebartoc %}{{ super() }}{% endblock %}
+                        {%- block sidebarrel %}{{ super() }}{% endblock %}
+                        {%- block sidebarsourcelink %}{{ super() }}{% endblock %}
+                        {%- if customsidebar %}{% include customsidebar %}{%- endif %} {# Per sidebar personalizzate dall'utente #}
+                        {%- block sidebarsearch %}{{ super() }}{% endblock %}
+                    </div>
+                </aside>
+            </div>
             {%- endif %}
-            <span>{{ project }}</span>
-        </a>
-        {# Toggler per navbar responsive #}
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent" aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        {# Contenuto della navbar (link, ricerca) #}
-        <div class="collapse navbar-collapse" id="devildexNavbarContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            {# Inserisce qui la toctree globale generata da Sphinx #}
-            {# maxdepth=2 per mostrare 2 livelli, titles_only=True per solo i titoli #}
-            {%- set globaltoc = toctree(maxdepth=2, collapse=False, includehidden=True, titles_only=True) %}
-            {%- if globaltoc %}
-                {{ globaltoc }}
-            {%- else %}
-                {# Fallback se non c'è una toctree globale, mostra un link alla home #}
-                <li class="nav-item">
-                  <a class="nav-link {% if pagename == master_doc %}active{% endif %}" aria-current="page" href="{{ pathto(master_doc) }}">Home</a>
-                </li>
-            {%- endif %}
-          </ul>
-          {# Form di ricerca, nascosta nella pagina di ricerca stessa #}
-          {%- if pagename != "search" %}
-          <form class="d-flex ms-auto" role="search" action="{{ pathto('search') }}" method="get">
-            <input class="form-control me-2" type="search" name="q" placeholder="Cerca documenti..." aria-label="Search">
-            <input type="hidden" name="check_keywords" value="yes">
-            <input type="hidden" name="area" value="default">
-            {# Cambiato in outline-light per contrasto su bg-dark #}
-            <button class="btn btn-outline-light" type="submit">Cerca</button>
-          </form>
-          {%- endif %}
+        </div>
+    </main>
+    {# Non chiamare {{ super() }} per il blocco 'content' qui, altrimenti il tema base #}
+    {# aggiungerebbe la sua sidebar originale e il div.clearer di nuovo. #}
+    {%- endblock %}
+    {# Stilizziamo il footer con Bootstrap - NESSUNA MODIFICA QUI #}
+    {%- block footer %}
+    <footer class="footer mt-auto py-3 bg-dark text-light border-top">
+      <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <small>
+                    {%- if show_copyright %}
+                        {%- if hasdoc('copyright') %}
+                            {% trans path=pathto('copyright'), copyright=copyright|e %}&#169; <a href="{{ path }}" class="text-light">Copyright</a> {{ copyright }}.{% endtrans %}
+                        {%- else %}
+                            {% trans copyright=copyright|e %}&#169; Copyright {{ copyright }}.{% endtrans %}
+                        {%- endif %}
+                    {%- endif %}
+                    {%- if show_copyright and last_updated %}<br/>{% endif %}
+                    {%- if last_updated %}
+                        {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+                    {%- endif %}
+                    {%- if (show_copyright or last_updated) and show_sphinx %}<br/>{% endif %}
+                    {%- if show_sphinx %}
+                        {% trans sphinx_version=sphinx_version|e %}Created using <a href="https://www.sphinx-doc.org/" class="text-light">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+                    {%- endif %}
+                </small>
+            </div>
         </div>
       </div>
-    </nav>
-    {# {{ super() }} #} {# Commentato per non mostrare l'header del tema base #}
-{%- endblock %}
+    </footer>
+    {%- endblock %}
 
-{# Rimuoviamo le barre di navigazione "related" del tema base #}
-{%- block relbar1 %}{% endblock %}
-{%- block relbar2 %}{% endblock %}
-
-{# Sovrascriviamo il blocco 'document' per inserire la nostra struttura Bootstrap #}
-{%- block document %}
-{# Contenitore principale Bootstrap con margini verticali #}
-<main role="main" class="container mt-4 mb-4">
-    <div class="row">
-        {# Colonna per il contenuto principale #}
-        {# La larghezza della colonna dipende se la sidebar è visualizzata o meno #}
-        <div class="col-lg-{% if display_sidebar %}9{% else %}12{% endif %} col-md-{% if display_sidebar %}8{% else %}12{% endif %}">
-            {# Inseriamo qui il contenuto del blocco 'body' del tema base #}
-            {# Questo blocco 'body' in basic/layout.html contiene il contenuto della pagina .rst #}
-            {%- block body %}{{ super() }}{% endblock %}
-        </div>
-
-        {# Colonna per la sidebar, se presente e voluta #}
-        {# display_sidebar è una variabile di contesto di Sphinx #}
-        {%- if display_sidebar %}
-        <div class="col-lg-3 col-md-4">
-            {# Aggiustato per sticky sidebar, top: 5rem è un esempio, potrebbe necessitare di aggiustamenti CSS #}
-            <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation" aria-label="Main navigation">
-                <div class="sphinxsidebarwrapper pt-3">
-                    {# Inseriamo qui il contenuto del blocco 'sidebar' del tema base #}
-                    {# Questo blocco 'sidebar' in basic/layout.html contiene i toctree locali, searchbox, ecc. #}
-                    {# Potresti voler personalizzare cosa mostrare qui #}
-                    {%- block sidebar %}
-                        {{ super() }}
-                    {% endblock %}
-                </div>
-            </aside>
-        </div>
-        {%- endif %}
-    </div>
-</main>
-{%- endblock %}
-
-{# Stilizziamo il footer con Bootstrap #}
-{%- block footer %}
-<footer class="footer mt-auto py-3 bg-dark text-light border-top">
-  <div class="container">
-    <div class="row">
-        <div class="col-12 text-center">
-            <small>
-                {%- if show_copyright %}
-                    {%- if hasdoc('copyright') %}
-                        {% trans path=pathto('copyright'), copyright=copyright|e %}&#169; <a href="{{ path }}" class="text-light">Copyright</a> {{ copyright }}.{% endtrans %}
-                    {%- else %}
-                        {% trans copyright=copyright|e %}&#169; Copyright {{ copyright }}.{% endtrans %}
-                    {%- endif %}
-                {%- endif %}
-                {%- if show_copyright and last_updated %}<br/>{% endif %}
-                {%- if last_updated %}
-                    {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-                {%- endif %}
-                {%- if (show_copyright or last_updated) and show_sphinx %}<br/>{% endif %}
-                {%- if show_sphinx %}
-                    {% trans sphinx_version=sphinx_version|e %}Created using <a href="https://www.sphinx-doc.org/" class="text-light">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
-                {%- endif %}
-            </small>
-        </div>
-    </div>
-  </div>
-</footer>
-{%- endblock %}
-
-{# Blocco Scripts #}
-{%- block scripts %}
-    {# Carichiamo lo script bundle di Bootstrap (include Popper.js) #}
-    <script src="{{ pathto('_static/bootstrap/js/bootstrap.bundle.min.js', 1) }}"></script>
-    {# Carichiamo il tuo script JS personalizzato #}
-    <script src="{{ pathto('_static/js/devildex.js', 1) }}"></script>
-    {# Includiamo gli script di base di Sphinx (es. searchtools.js) #}
-    {{ super() }}
-{%- endblock %}
+    {# Blocco Scripts - NESSUNA MODIFICA QUI #}
+    {%- block scripts %}
+        <script src="{{ pathto('_static/bootstrap/js/bootstrap.bundle.min.js', 1) }}"></script>
+        <script src="{{ pathto('_static/js/devildex.js', 1) }}"></script>
+        {{ super() }} {# Includiamo gli script di base di Sphinx (es. searchtools.js) #}
+    {%- endblock %}
+    
