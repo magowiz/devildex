@@ -1,19 +1,1 @@
-            body {
-                background-color: lightcoral !important;
-                margin-top: 60px !important; /* Spazio per il banner */
-            }
 
-            #devildex-sphinx-banner {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                background-color: black;
-                color: white;
-                text-align: center;
-                padding: 15px 0;
-                font-size: 1.8em;
-                font-weight: bold;
-                z-index: 10000;
-                box-sizing: border-box;
-            }
