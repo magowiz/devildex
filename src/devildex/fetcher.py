@@ -9,8 +9,10 @@ import zipfile
 
 import requests
 
-from devildex.local_data_parse.common_read import get_explicit_dependencies_from_project_config
-from devildex.local_data_parse.venv_inventory import get_installed_packages_with_project_urls
+from devildex.local_data_parse.common_read import \
+    get_explicit_dependencies_from_project_config
+from devildex.local_data_parse.venv_inventory import \
+    get_installed_packages_with_project_urls
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +101,8 @@ class PackageSourceFetcher:
         # Per ora, proviamo se current_urls_to_check è semplicemente vuoto.
         if not current_urls_to_check:
             logger.warning(
-                f"I Project URLs per {self.package_name} v{self.package_version} sono vuoti localmente. Tentativo di fetch da PyPI JSON API.")
+                f"I Project URLs per {self.package_name} v{self.package_version} sono vuoti localmente. Tentativo di fetch da PyPI JSON API."
+            )
             try:
                 api_url = f"https://pypi.org/pypi/{self.package_name}/{self.package_version}/json"
                 response = requests.get(api_url, timeout=15)  # Timeout ragionevole
@@ -108,20 +111,31 @@ class PackageSourceFetcher:
                 # L'API JSON di PyPI restituisce project_urls come dizionario sotto 'info'
                 fetched_pypi_urls = pypi_data.get("info", {}).get("project_urls", {})
                 if fetched_pypi_urls:
-                    logger.info(f"Recuperati con successo i project_urls da PyPI JSON API per {self.package_name}.")
-                    current_urls_to_check = fetched_pypi_urls  # Usa questi URL più freschi/completi
+                    logger.info(
+                        f"Recuperati con successo i project_urls da PyPI JSON API per {self.package_name}."
+                    )
+                    current_urls_to_check = (
+                        fetched_pypi_urls  # Usa questi URL più freschi/completi
+                    )
                     source_of_urls = "PyPI API"
                 else:
-                    logger.warning(f"Nessun project_urls trovato nell'API JSON di PyPI per {self.package_name}.")
+                    logger.warning(
+                        f"Nessun project_urls trovato nell'API JSON di PyPI per {self.package_name}."
+                    )
             except requests.RequestException as e:
-                logger.error(f"Fallito il recupero dei project_urls da PyPI JSON API per {self.package_name}: {e}")
-            except ValueError:  # Eredita da JSONDecodeError
-                logger.error(f"Fallita l'analisi JSON dei project_urls da PyPI per {self.package_name}")
+                logger.error(
+                    f"Fallito il recupero dei project_urls da PyPI JSON API per {self.package_name}: {e}"
+                )
+            except ValueError:
+                logger.error(
+                    f"Fallita l'analisi JSON dei project_urls da PyPI per {self.package_name}"
+                )
 
-            if not current_urls_to_check:  # Assicurati che sia un dizionario per le chiamate .get() successive
+            if (
+                not current_urls_to_check
+            ):
                 current_urls_to_check = {}
 
-        # Ora procedi con la logica per trovare l'URL VCS, usando current_urls_to_check
         preferred_labels = ["Source Code", "Source", "Repository"]
         for label in preferred_labels:
             url = current_urls_to_check.get(label)
@@ -133,15 +147,20 @@ class PackageSourceFetcher:
         homepage_url = current_urls_to_check.get("Homepage")
         if homepage_url and self._is_valid_vcs_url(homepage_url):
             self._determined_vcs_url = homepage_url
-            logger.info(f"URL VCS determinato (Homepage da {source_of_urls}): {homepage_url}")
+            logger.info(
+                f"URL VCS determinato (Homepage da {source_of_urls}): {homepage_url}"
+            )
             return homepage_url
 
         docs_url = current_urls_to_check.get("Documentation")
         if docs_url and "readthedocs.io" in docs_url:
             logger.info(
-                f"Trovato URL ReadTheDocs ({docs_url} da {source_of_urls}). L'inferenza avanzata dell'URL VCS da RTD non è implementata in questa versione.")
+                f"Trovato URL ReadTheDocs ({docs_url} da {source_of_urls}). L'inferenza avanzata dell'URL VCS da RTD non è implementata in questa versione."
+            )
 
-        logger.warning(f"Nessun URL VCS valido trovato per {self.package_name} usando le fonti URL {source_of_urls}.")
+        logger.warning(
+            f"Nessun URL VCS valido trovato per {self.package_name} usando le fonti URL {source_of_urls}."
+        )
         return None
 
     def _is_valid_vcs_url(self, url: str) -> bool:
@@ -520,15 +539,17 @@ class PackageSourceFetcher:
         self._cleanup_target_dir_content()
         return False, False, None
 
+
 def _pprint_(data):
-    print(json.dumps(data,
-                    sort_keys = True, indent = 4))
+    print(json.dumps(data, sort_keys=True, indent=4))
+
+
 def main():
     explicit = get_explicit_dependencies_from_project_config()
     pkg_info = get_installed_packages_with_project_urls(explicit=explicit)
     _pprint_(pkg_info)
     for p_info in pkg_info:
-        pf_obj = PackageSourceFetcher('suca',p_info)
+        pf_obj = PackageSourceFetcher("suca", p_info)
         result = pf_obj.fetch()
         if result[0]:
             resp = result[2]
@@ -536,7 +557,8 @@ def main():
                 resp = "MASTER : " + resp
             print(resp)
         else:
-            print('failed')
+            print("failed")
+
 
 if __name__ == "__main__":
     main()

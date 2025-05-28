@@ -6,8 +6,10 @@ from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
 from devildex.models import PackageDetails
-from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
-from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
+from devildex.readthedocs.readthedocs_api import \
+    download_readthedocs_prebuilt_robust
+from devildex.readthedocs.readthedocs_src import \
+    download_readthedocs_source_and_build
 from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 
 
@@ -23,7 +25,7 @@ class Orchestrator:
         self.package_details = package_details
         self.detected_doc_type = None
         PDOC3_THEME_PATH = (
-                PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
+            PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
         )
         self.doc_strings = DocStringsSrc(template_dir=PDOC3_THEME_PATH)
         self.last_operation_result = None
@@ -77,7 +79,9 @@ class Orchestrator:
                 fetch_successful, _is_master_branch, fetched_path_str = fetcher.fetch()
 
                 if fetch_successful and fetched_path_str:
-                    print(f"Orchestrator: Fetch successful. Sources at: {fetched_path_str}")
+                    print(
+                        f"Orchestrator: Fetch successful. Sources at: {fetched_path_str}"
+                    )
                     source_path_candidate = Path(fetched_path_str).resolve()
                 else:
                     print(
@@ -90,9 +94,15 @@ class Orchestrator:
                 )
                 source_path_candidate = None
 
-        if source_path_candidate and source_path_candidate.exists() and source_path_candidate.is_dir():
+        if (
+            source_path_candidate
+            and source_path_candidate.exists()
+            and source_path_candidate.is_dir()
+        ):
             self._effective_source_path = source_path_candidate
-            print(f"Orchestrator: Effective source path set to: {self._effective_source_path}")
+            print(
+                f"Orchestrator: Effective source path set to: {self._effective_source_path}"
+            )
             return True
         else:
             print(
@@ -101,16 +111,24 @@ class Orchestrator:
             self._effective_source_path = None
             return False
 
-
     @property
     def _grabbers(self):
         """Property to dynamically build the grabbers configuration."""
-        initial_path_str = str(
-            self.package_details.initial_source_path) if self.package_details.initial_source_path else None
-        effective_source_path_str = str(self._effective_source_path) if self._effective_source_path else None
+        initial_path_str = (
+            str(self.package_details.initial_source_path)
+            if self.package_details.initial_source_path
+            else None
+        )
+        effective_source_path_str = (
+            str(self._effective_source_path) if self._effective_source_path else None
+        )
 
         existing_clone_path_for_sphinx: Path | None = None
-        if self._effective_source_path and self._effective_source_path.exists() and self._effective_source_path.is_dir():
+        if (
+            self._effective_source_path
+            and self._effective_source_path.exists()
+            and self._effective_source_path.is_dir()
+        ):
             existing_clone_path_for_sphinx = self._effective_source_path
 
         return {
@@ -121,7 +139,7 @@ class Orchestrator:
                     "project_name": self.package_details.name,
                     "output_dir": self.base_output_dir,
                     "clone_base_dir_override": self.base_output_dir / "temp_clones",
-                    "existing_clone_path": existing_clone_path_for_sphinx
+                    "existing_clone_path": existing_clone_path_for_sphinx,
                 },
             },
             "readthedocs": {
@@ -174,7 +192,9 @@ class Orchestrator:
         """Start the scanning process."""
         self.detected_doc_type = "unknown"
         if not self.fetch_repo():
-            print("Orchestrator: Failed to fetch or find repository sources. Scan cannot proceed.")
+            print(
+                "Orchestrator: Failed to fetch or find repository sources. Scan cannot proceed."
+            )
             self.detected_doc_type = "unknown"
             return
         if self._effective_source_path:
@@ -188,13 +208,16 @@ class Orchestrator:
 
             if self.detected_doc_type == "unknown":
                 print(
-                    f"Orchestrator: Scan of '{scan_path_str}' did not identify a specific doc type (Sphinx, Docstrings).")
+                    f"Orchestrator: Scan of '{scan_path_str}' did not identify a specific doc type (Sphinx, Docstrings)."
+                )
 
             print(
-                f"Orchestrator: Scan complete. Detected doc type from source files: '{self.detected_doc_type}' for path {self._effective_source_path}")
+                f"Orchestrator: Scan complete. Detected doc type from source files: '{self.detected_doc_type}' for path {self._effective_source_path}"
+            )
         else:
             print(
-                "Orchestrator ERROR: _effective_source_path is not set even after fetch_repo reported success. This should not happen.")
+                "Orchestrator ERROR: _effective_source_path is not set even after fetch_repo reported success. This should not happen."
+            )
             self.detected_doc_type = "unknown"
 
     def get_detected_doc_type(self):

@@ -12,13 +12,12 @@ from pathlib import Path
 from typing import Any, Callable
 
 import requests
+
 from devildex.info import PROJECT_ROOT, VERSION
 from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command,
-    install_project_and_dependencies_in_venv,
-)
+    execute_command, install_project_and_dependencies_in_venv)
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -27,15 +26,6 @@ if not logger.hasHandlers():
     )
 
 CONF_SPHINX_FILE = "conf.py"
-
-
-
-
-
-
-
-
-
 
 
 def find_doc_source_in_clone(repo_path):
@@ -504,8 +494,6 @@ class ProjectContext:
     version: str
 
 
-
-
 def _process_documentation(
     clone_dir_path: Path,
     project_ctx: ProjectContext,
@@ -531,7 +519,7 @@ def _process_documentation(
         theme_manager = ThemeManager(
             project_path=clone_dir_path,
             doc_type="sphinx",
-            sphinx_conf_file=conf_py_file
+            sphinx_conf_file=conf_py_file,
         )
         theme_manager.sphinx_change_conf()
         build_output_path = build_sphinx_docs(

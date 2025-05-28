@@ -2,8 +2,6 @@
 
 from cx_Freeze import Executable, setup
 
-# Dependencies are automatically detected, but it might need
-
 build_options = {"packages": [], "excludes": []}
 
 BASE = "gui"

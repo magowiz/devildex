@@ -3,7 +3,8 @@
 import logging
 from pathlib import Path
 
-from pip_requirements_parser import RequirementsFile  # type: ignore[import-untyped]
+from pip_requirements_parser import \
+    RequirementsFile  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
