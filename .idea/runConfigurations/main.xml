@@ -5,15 +5,15 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="LD_LIBRARY_PATH" value="$USER_HOME$/.cache/pypoetry/virtualenvs/devildex-SWe2t81R-py3.13/lib/python3.13/site-packages/PySide6/Qt/lib/:$LD_LIBRARY_PATH" />
       <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="LD_LIBRARY_PATH" value="$USER_HOME$/.cache/pypoetry/virtualenvs/devildex-SWe2t81R-py3.13/lib/python3.13/site-packages/PySide6/Qt/lib/:$LD_LIBRARY_PATH" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/devildex/main.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
