@@ -313,7 +313,7 @@ pipeline {
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
                                     echo "Starting Nuitka build for Linux on host ${env.ARCH}"
                                     sh "python -m nuitka src/devildex/main.py --standalone --onefile \
-                                        --output-dir=dist/${env.ARCH}/linux/nuitka --enable-plugin=pyside6"
+                                        --output-dir=dist/${env.ARCH}/linux/nuitka"
                                     sh "mv dist/${env.ARCH}/linux/nuitka/main.bin \
                                         ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
                                 }
