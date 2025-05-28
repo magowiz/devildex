@@ -1,135 +1,82 @@
 """main application module."""
 
-import sys
+import os
 
-from local_data_parse.common_read import get_explicit_dependencies_from_project_config
-from local_data_parse.venv_inventory import get_installed_packages_with_docs_urls
+import webview
+from local_data_parse.common_read import \
+    get_explicit_dependencies_from_project_config
+from local_data_parse.venv_inventory import \
+    get_installed_packages_with_project_urls
 
 # pylint: disable=E0611
-from PyQt6.QtCore import QUrl
-from PyQt6.QtGui import QDesktopServices
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QApplication,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QMainWindow,
-    QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QWidget,
-)
 
 
 def scan_current_project():
     """Scan current project for explicit dependencies."""
     explicit = get_explicit_dependencies_from_project_config()
-    docr = get_installed_packages_with_docs_urls(explicit=explicit)
+    docr = get_installed_packages_with_project_urls(explicit=explicit)
     return docr
 
 
-class DevilDexMainWindow(QMainWindow):
-    """Main window class."""
+class Api:
 
-    def __init__(self):
-        """Build main window."""
-        super().__init__()
+    def handle_select_project(self):
+        """Simula la selezione di un progetto. In un'app reale, aprirebbe un dialogo nativo."""
+        active_window = webview.active_window()
+        if active_window:
+            try:
+                result = active_window.create_file_dialog(
+                    webview.FOLDER_DIALOG, allow_multiple=False
+                )
 
-        self.setWindowTitle("DevilDex - Python Documentation ")
-        self.setGeometry(100, 100, 800, 600)
+                if result and len(result) > 0:
+                    selected_path = result[0]
+                    print(f"Python: Selected folder - {selected_path}")
+                    active_window.evaluate_js(
+                        f"update_status_from_python('Elaborating folder: {os.path.basename(selected_path)}...')"
+                    )
+                    return {
+                        "path": selected_path,
+                        "message": "Project Path received!",
+                    }
+                else:
+                    print("Python: No folder selected or dialog canceled.")
+                    return {"path": None, "message": "No project selected."}
+            except Exception as e:
+                print(f"Error in file dialog: {e}")
+                return {"path": None, "message": f"Error: {e}"}
+        return {"path": None, "message": "The window is not available."}
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+    @staticmethod
+    def some_other_python_function(param):
+        print(f"Python: some_other_python_function called with: {param}")
+        active_window = webview.active_window()
+        if active_window:
+            active_window.evaluate_js(
+                f"typeof update_status_from_python === 'function' && update_status_from_python('some_other_python_function has received: {param}')"
+            )
+        return f"Python has received '{param}'"
 
-        main_layout = QVBoxLayout(central_widget)
 
-        folder_layout = QHBoxLayout()
-
-        self.folder_label = QLabel("Project Folder:")
-        self.folder_path_edit = QLineEdit()
-        self.browse_button = QPushButton("Sfoglia...")
-
-        folder_layout.addWidget(self.folder_label)
-        folder_layout.addWidget(self.folder_path_edit)
-        folder_layout.addWidget(self.browse_button)
-
-        main_layout.addLayout(folder_layout)
-
-        self.scan_button = QPushButton("Scan Project")
-        main_layout.addWidget(self.scan_button)
-
-        self.results_table = QTableWidget()
-        self.results_table.setColumnCount(3)
-        self.results_table.setHorizontalHeaderLabels(
-            ["Package Name", "Version", "Documentation URL"]
-        )
-
-        self.results_table.horizontalHeader().setStretchLastSection(True)
-        self.results_table.setSortingEnabled(True)
-
-        main_layout.addWidget(self.results_table)
-
-        self.browse_button.clicked.connect(self.browse_folder)
-        self.scan_button.clicked.connect(self.scan_project)
-        self.results_table.cellClicked.connect(self.open_url_from_table)
-
-    def browse_folder(self):
-        """Open a file dialog to select project folder."""
-        folder_selected = QFileDialog.getExistingDirectory(
-            self, "Select Project Folder"
-        )
-        if folder_selected:
-            self.folder_path_edit.setText(folder_selected)
-
-    def scan_project(self):
-        """Scan of project in specified folder or in current env."""
-        project_folder = self.folder_path_edit.text()
-
-        self.results_table.setRowCount(0)
-
-        if not project_folder:
-            res = scan_current_project()
-            self.display_results(res)
-        else:
-            print(f"Scan la project folder: {project_folder}")
-
-    def display_results(self, results_data):
-        """Populates table with results."""
-        self.results_table.setRowCount(len(results_data))
-
-        for row_index, pkg_info in enumerate(results_data):
-            name_item = QTableWidgetItem(pkg_info.get("name", "N/A"))
-            version_item = QTableWidgetItem(pkg_info.get("version", "N/A"))
-            url_item = QTableWidgetItem(pkg_info.get("docs_url", "N/A"))
-
-            name_item.setFlags(name_item.flags() ^ Qt.ItemIsEditable)
-            version_item.setFlags(version_item.flags() ^ Qt.ItemIsEditable)
-            url_item.setFlags(url_item.flags() ^ Qt.ItemIsEditable)
-
-            self.results_table.setItem(row_index, 0, name_item)
-            self.results_table.setItem(row_index, 1, version_item)
-            self.results_table.setItem(row_index, 2, url_item)
-
-    def open_url_from_table(self, row, column):
-        """Opens the URL in the documentation URL column if clicked."""
-        doc_url_column_index = 2
-
-        if column == doc_url_column_index:
-            item = self.results_table.item(row, column)
-            if item is not None:
-                url_text = item.text()
-                if url_text and url_text != "N/A":
-                    url = QUrl(url_text)
-                    QDesktopServices.openUrl(url)
+def get_gui_path(file_name="index.html"):
+    return os.path.join(os.path.dirname(__file__), "gui", file_name)
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    main_window = DevilDexMainWindow()
-    main_window.show()
-
-    sys.exit(app.exec())
+    api_instance = Api()
+    gui_file_url = get_gui_path()
+    if not os.path.exists(gui_file_url):
+        if not gui_file_url.startswith("file://"):
+            gui_file_url = "file://" + os.path.abspath(gui_file_url)
+    print(f"Loading GUI from: {gui_file_url}")
+    window = webview.create_window(
+        "DevilDex",
+        gui_file_url,
+        js_api=api_instance,
+        width=900,
+        height=700,
+        resizable=True,
+        confirm_close=True,
+    )
+    webview.start()
+    print("Application closed.")

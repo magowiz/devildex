@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevilDex</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            padding: 20px;
+            font-family: sans-serif;
+        }
+        .placeholder-docview {
+            border: 1px dashed #ccc;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            margin-top: 20px;
+        }
+
+        .header-bar {
+            background-color: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-bar h3 {
+            margin: 0;
+            color: #333;
+        }
+        .content-area {
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="header-bar">
+            <h3>DevilDex</h3>
+        </div>
+
+        <div class="content-area">
+            <p>Welcome to DevilDex!</p>
+
+            <button id="selectProjectBtn" class="btn btn-primary">
+                Select Project
+            </button>
+
+            <div id="projectPathDisplay" class="alert alert-info mt-3" role="alert" style="display: none;">
+                No project selected.
+            </div>
+
+            <div id="statusMessage" class="mt-2"></div>
+
+            <h4>View Docset Area:</h4>
+            <div class="placeholder-docview" id="docViewArea">
+                Here docset will be show.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+        window.addEventListener('pywebviewready', function() {
+            console.log("PyWebView API ready.");
+
+            const selectProjectBtn = document.getElementById('selectProjectBtn');
+            const projectPathDisplay = document.getElementById('projectPathDisplay');
+            const statusMessage = document.getElementById('statusMessage');
+
+            selectProjectBtn.addEventListener('click', async () => {
+                try {
+                    statusMessage.textContent = 'Calling Python...';
+                    const result = await window.pywebview.api.handle_select_project();
+
+                    if (result && result.path) {
+                        projectPathDisplay.textContent = `Selected Project Path: ${result.path}`;
+                        projectPathDisplay.style.display = 'block';
+                        statusMessage.textContent = result.message;
+
+                        const docViewArea = document.getElementById('docViewArea');
+                        docViewArea.innerHTML = `<iframe src="about:blank" style="width:100%; height:100%; border:none;" title="Docset View"></iframe>`;
+                        const iframe = docViewArea.querySelector('iframe');
+                        iframe.contentWindow.document.open();
+                        iframe.contentWindow.document.write('<body style=\'font-family: sans-serif; padding: 20px;\'><h1>Docset Content for ' + result.path + '</h1><p>This is a placeholder.</p></body>');
+                        iframe.contentWindow.document.close();
+
+                    } else if (result && result.message) {
+                        projectPathDisplay.style.display = 'none';
+                        statusMessage.textContent = result.message;
+                    } else {
+                         projectPathDisplay.style.display = 'none';
+                        statusMessage.textContent = 'Operation canceled or no path received.';
+                    }
+                } catch (e) {
+                    console.error("Error while calling pywebview.api.handle_select_project:", e);
+                    statusMessage.textContent = 'Error: ' + e;
+                }
+            });
+        });
+
+        function update_status_from_python(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.textContent = `Message from Python: ${message}`;
+            }
+        }
+    </script>
+</body>
+</html>
