@@ -385,7 +385,8 @@ pipeline {
                                 cleanWs()
                             }
                         }
-                                            stage('Build PyInstaller') {
+                    }
+                    stage('Build PyInstaller') {
                         options {
                             retry(2)
                         }
@@ -429,10 +430,8 @@ pipeline {
                             }
                         }
                     }
-                    }
                 }
             }
         }
     }
-}
 }
