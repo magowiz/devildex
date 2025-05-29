@@ -13,6 +13,8 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_HOME="/opt/poetry" \
     PATH="/root/.local/bin:/opt/poetry/bin:${PATH}"
 
+RUN newMirror='mirror://mirrors.ubuntu.com/mirrors.txt' && sed -i "s|deb [a-z]*://[^ ]* |deb ${newMirror} |g" /etc/apt/sources.list
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
