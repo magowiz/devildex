@@ -330,6 +330,7 @@ pipeline {
                                 cleanWs()
                             }
                         }
+                    }
                     stage('Build PyOxidizer') {
                         options {
                             retry(2)
@@ -434,5 +435,4 @@ pipeline {
             }
         }
     }
-}
 }
