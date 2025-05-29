@@ -32,3 +32,5 @@ RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_V
 RUN poetry self add poetry-plugin-export
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y pkg-config cmake build-essential
