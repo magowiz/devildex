@@ -24,8 +24,8 @@ RUN dnf update -y && \
     patchelf \
     glib2-devel \
     cmake \
-    && dnf clean all \
-RUN dnf update -y && dnf install -y cairo-devel
+    && dnf clean all
+
 
 
 RUN python -m pip install --no-cache-dir --upgrade pip pipx
@@ -34,3 +34,4 @@ RUN pipx install poetry
 ENV PATH="/root/.local/bin:${PATH}"
 
 RUN poetry self add poetry-plugin-export
+RUN dnf update -y && dnf install -y cairo-devel && dnf clean all
