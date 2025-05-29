@@ -24,7 +24,8 @@ RUN dnf update -y && \
     patchelf \
     glib2-devel \
     cmake \
-    && dnf clean all
+    && dnf clean all \
+RUN dnf update -y && dnf install -y cairo-devel
 
 
 RUN python -m pip install --no-cache-dir --upgrade pip pipx
