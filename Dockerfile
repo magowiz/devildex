@@ -15,6 +15,17 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
 
 RUN sed -i -E 's|^(URIs:[[:space:]]*)http://|\1https://|g' /etc/apt/sources.list.d/ubuntu.sources
 
+RUN echo 'Acquire::https::Verify-Peer "false";' > /etc/apt/apt.conf.d/99temporarily-unsafe-ssl && \
+    echo 'Acquire::https::Verify-Host "false";' >> /etc/apt/apt.conf.d/99temporarily-unsafe-ssl && \
+    echo "Updating package lists with SSL verification disabled (unsafe)..." && \
+    apt-get update -o Debug::Acquire::https=true && \
+    echo "Reinstalling ca-certificates..." && \
+    apt-get install -y --reinstall ca-certificates apt-transport-https && \
+    update-ca-certificates --fresh && \
+    echo "CRITICAL: Removing temporary unsafe SSL setting for APT..." && \
+    rm /etc/apt/apt.conf.d/99temporarily-unsafe-ssl
+
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
