@@ -34,3 +34,4 @@ RUN poetry self add poetry-plugin-export
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y pkg-config cmake build-essential
+RUN apt-get update && apt-get install -y libcairo2-dev
