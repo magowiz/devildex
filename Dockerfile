@@ -26,8 +26,7 @@ RUN echo 'Acquire::https::Verify-Peer "false";' > /etc/apt/apt.conf.d/99temporar
     rm /etc/apt/apt.conf.d/99temporarily-unsafe-ssl
 
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN APT_CMD="apt-get install -y --no-install-recommends \
     python3 \
     python3-venv \
     python3-pip \
@@ -39,7 +38,26 @@ RUN apt-get update && \
     patchelf \
     libglib2.0-0 \
     pkg-config cmake build-essential libcairo2-dev \
-    pipx python3-gi python3-gi-cairo gir1.2-gtk-4.0 libgirepository1.0-dev libglib2.0-dev gir1.2-glib-2.0-dev && \
+    pipx python3-gi python3-gi-cairo gir1.2-gtk-4.0 libgirepository1.0-dev libglib2.0-dev gir1.2-glib-2.0-dev" && \
+    MAX_TENTATIVI=5 && \
+    DELAY_TRA_TENTATIVI=2 && \
+ apt-get update && \
+    for TENTATIVO_CORRENTE in $(seq 1 ${MAX_TENTATIVI}); do \
+      echo "INFO: Tentativo ${TENTATIVO_CORRENTE}/${MAX_TENTATIVI} di installare i pacchetti..."; \
+      if $APT_CMD ; then \
+        INSTALL_RIUSCITA=true; \
+        echo "INFO: Installazione pacchetti riuscita al tentativo ${TENTATIVO_CORRENTE}."; \
+        break; \ # Esce dal loop se l'installazione ha successo
+      else \
+        CODICE_USCITA_APT=$?; \
+        echo "ATTENZIONE: Tentativo ${TENTATIVO_CORRENTE} fallito con codice ${CODICE_USCITA_APT}."; \
+        if [ "${TENTATIVO_CORRENTE}" -lt "${MAX_TENTATIVI}" ]; then \
+          echo "INFO: Nuovo tentativo tra ${DELAY_TRA_TENTATIVI} secondi..."; \
+          sleep "${DELAY_TRA_TENTATIVI}"; \
+        fi; \
+      fi; \
+    done;
+     && \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
