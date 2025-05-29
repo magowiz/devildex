@@ -56,9 +56,8 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
           sleep "${DELAY_TRA_TENTATIVI}"; \
         fi; \
       fi; \
-    done;
-     && \
-    rm -rf /var/lib/apt/lists/*
+    done; \
+     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
 RUN poetry self add poetry-plugin-export
