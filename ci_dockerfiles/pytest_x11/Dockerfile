@@ -36,3 +36,4 @@ ENV PATH="/root/.local/bin:${PATH}"
 RUN poetry self add poetry-plugin-export
 RUN dnf update -y && dnf install -y cairo-devel && dnf clean all
 RUN dnf update -y && dnf install -y cairo-gobject-devel && dnf clean all
+RUN dnf update -y && dnf install -y gawk && dnf clean all
