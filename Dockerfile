@@ -25,6 +25,7 @@ RUN apt-get update && \
     python3-dev \
     patchelf \
     libglib2.0-0 \
+    pkg-config cmake build-essential libcairo2-dev \
     pipx && \
     rm -rf /var/lib/apt/lists/*
 
@@ -32,6 +33,3 @@ RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_V
 RUN poetry self add poetry-plugin-export
 
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y pkg-config cmake build-essential
-RUN apt-get update && apt-get install -y libcairo2-dev
