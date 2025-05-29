@@ -13,14 +13,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_HOME="/opt/poetry" \
     PATH="/root/.local/bin:/opt/poetry/bin:${PATH}"
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends apt-transport-mirror ca-certificates && \
-    CODENAME=$(lsb_release -cs) && \
-    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt ${CODENAME} main restricted universe multiverse" > /etc/apt/sources.list && \
-    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt ${CODENAME}-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt ${CODENAME}-backports main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt ${CODENAME}-security main restricted universe multiverse" >> /etc/apt/sources.list
-
+RUN sed -i -E 's|^(URIs:[[:space:]]*)http://|\1https://|g' /etc/apt/sources.list.d/ubuntu.sources
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
