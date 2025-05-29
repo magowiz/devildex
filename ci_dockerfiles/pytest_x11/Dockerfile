@@ -23,6 +23,7 @@ RUN dnf update -y && \
     xorg-x11-xauth \
     patchelf \
     glib2-devel \
+    cmake \
     && dnf clean all
 
 
