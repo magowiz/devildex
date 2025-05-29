@@ -26,7 +26,7 @@ RUN apt-get update && \
     patchelf \
     libglib2.0-0 \
     pkg-config cmake build-essential libcairo2-dev \
-    pipx && \
+    pipx python3-gi python3-gi-cairo gir1.2-gtk-4.0&& \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
