@@ -47,7 +47,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
       if $APT_CMD ; then \
         INSTALL_RIUSCITA=true; \
         echo "INFO: Installazione pacchetti riuscita al tentativo ${TENTATIVO_CORRENTE}."; \
-        break; \ # Esce dal loop se l'installazione ha successo
+        break; \
       else \
         CODICE_USCITA_APT=$?; \
         echo "ATTENZIONE: Tentativo ${TENTATIVO_CORRENTE} fallito con codice ${CODICE_USCITA_APT}."; \
