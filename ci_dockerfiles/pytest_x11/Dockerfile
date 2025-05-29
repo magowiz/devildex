@@ -23,7 +23,7 @@ RUN dnf update -y && \
     xorg-x11-xauth \
     patchelf \
     glib2-devel \
-    cmake \
+    cmake cairo-devel cairo-gobject-devel gawk \
     && dnf clean all
 
 
@@ -34,6 +34,3 @@ RUN pipx install poetry
 ENV PATH="/root/.local/bin:${PATH}"
 
 RUN poetry self add poetry-plugin-export
-RUN dnf update -y && dnf install -y cairo-devel && dnf clean all
-RUN dnf update -y && dnf install -y cairo-gobject-devel && dnf clean all
-RUN dnf update -y && dnf install -y gawk && dnf clean all
