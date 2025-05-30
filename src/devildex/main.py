@@ -3,15 +3,13 @@
 import os
 
 import webview
-from local_data_parse.common_read import \
-    get_explicit_dependencies_from_project_config
-from local_data_parse.venv_inventory import \
-    get_installed_packages_with_project_urls
+from local_data_parse.common_read import get_explicit_dependencies_from_project_config
+from local_data_parse.venv_inventory import get_installed_packages_with_project_urls
 
 # pylint: disable=E0611
 
 
-def scan_current_project():
+def scan_current_project() -> dict:
     """Scan current project for explicit dependencies."""
     explicit = get_explicit_dependencies_from_project_config()
     docr = get_installed_packages_with_project_urls(explicit=explicit)
@@ -19,8 +17,10 @@ def scan_current_project():
 
 
 class Api:
+    """Api class."""
 
-    def handle_select_project(self):
+    @staticmethod
+    def handle_select_project() -> dict:
         """Simula la selezione di un progetto. In un'app reale, aprirebbe un dialogo nativo."""
         active_window = webview.active_window()
         if active_window:
@@ -48,7 +48,8 @@ class Api:
         return {"path": None, "message": "The window is not available."}
 
     @staticmethod
-    def some_other_python_function(param):
+    def some_other_python_function(param: str) -> str:
+        """Run js function from python."""
         print(f"Python: some_other_python_function called with: {param}")
         active_window = webview.active_window()
         if active_window:
@@ -58,7 +59,8 @@ class Api:
         return f"Python has received '{param}'"
 
 
-def get_gui_path(file_name="index.html"):
+def get_gui_path(file_name:str = "index.html") -> str:
+    """Get GUI path."""
     return os.path.join(os.path.dirname(__file__), "gui", file_name)
 
 

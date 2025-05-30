@@ -33,7 +33,7 @@ class ThemeManager:
             self.project_path / "doc" / "conf.py",
         ]
 
-    def sphinx_change_conf(self):
+    def sphinx_change_conf(self) -> None:
         """Patch sphinx configuration."""
         if self.doc_type != "sphinx":
             return

@@ -6,13 +6,16 @@ import shutil
 import subprocess
 import tarfile
 import zipfile
+from pathlib import Path
 
 import requests
 
-from devildex.local_data_parse.common_read import \
-    get_explicit_dependencies_from_project_config
-from devildex.local_data_parse.venv_inventory import \
-    get_installed_packages_with_project_urls
+from devildex.local_data_parse.common_read import (
+    get_explicit_dependencies_from_project_config,
+)
+from devildex.local_data_parse.venv_inventory import (
+    get_installed_packages_with_project_urls,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,11 +70,11 @@ class PackageSourceFetcher:
             return True
         except OSError as e:
             logger.error(
-                f"Errore nella creazione o accesso alla directory di destinazione {self.download_target_path}: {e}"
+                f"Errore nella creazione o accesso alla directory di destination {self.download_target_path}: {e}"
             )
             return False
 
-    def _cleanup_target_dir_content(self):
+    def _cleanup_target_dir_content(self) -> None:
         if not self.download_target_path.exists():
             return
         logger.info(
@@ -170,6 +173,34 @@ class PackageSourceFetcher:
             host in url for host in ["github.com", "gitlab.com", "bitbucket.org"]
         ) or url.endswith(".git")
 
+    @staticmethod
+    def _extract_archive(archive_filename: pathlib.Path, temp_extract_dir: Path) -> bool | None:
+        logger.info(f"Estrazione di {archive_filename} in {temp_extract_dir}...")
+        if str(archive_filename).lower().endswith(".zip"):
+            with zipfile.ZipFile(archive_filename, "r") as zip_ref:
+                zip_ref.extractall(temp_extract_dir)
+                return None
+        elif (
+            str(archive_filename)
+            .lower()
+            .endswith((".tar.gz", ".tgz", ".tar.bz2", ".tar"))
+        ):
+            with tarfile.open(archive_filename, "r:*") as tar_ref:
+                tar_ref.extractall(temp_extract_dir)
+                return None
+        else:
+            logger.error(f"Tipo di archivio non supportato: {archive_filename}")
+            return False
+
+    @staticmethod
+    def _download_file(filename: Path, url: str) -> None:
+        logger.info(f"Download dell'archivio da {url} a {filename}")
+        response = requests.get(url, stream=True, timeout=60)
+        response.raise_for_status()
+        with open(filename, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
     def _download_and_extract_archive(
         self, url: str, temp_base_dir: pathlib.Path
     ) -> bool:
@@ -180,29 +211,12 @@ class PackageSourceFetcher:
             temp_base_dir.mkdir(parents=True, exist_ok=True)
             temp_extract_dir.mkdir(parents=True, exist_ok=True)
 
-            logger.info(f"Download dell'archivio da {url} a {archive_filename}")
-            response = requests.get(url, stream=True, timeout=60)
-            response.raise_for_status()
-            with open(archive_filename, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+            self._download_file(archive_filename, url)
             logger.info(f"Archivio scaricato: {archive_filename}")
 
-            logger.info(f"Estrazione di {archive_filename} in {temp_extract_dir}...")
-            if str(archive_filename).lower().endswith(".zip"):
-                with zipfile.ZipFile(archive_filename, "r") as zip_ref:
-                    zip_ref.extractall(temp_extract_dir)
-            elif (
-                str(archive_filename)
-                .lower()
-                .endswith((".tar.gz", ".tgz", ".tar.bz2", ".tar"))
-            ):
-                with tarfile.open(archive_filename, "r:*") as tar_ref:
-                    tar_ref.extractall(temp_extract_dir)
-            else:
-                logger.error(f"Tipo di archivio non supportato: {archive_filename}")
-                return False
-
+            res = self._extract_archive(archive_filename, temp_extract_dir)
+            if not res and isinstance(res, bool):
+                return res
             logger.info(
                 f"Archivio estratto in {temp_extract_dir}. Spostamento del contenuto..."
             )
@@ -244,8 +258,9 @@ class PackageSourceFetcher:
                 shutil.rmtree(temp_base_dir)
         return False
 
+    @staticmethod
     def _run_git_command(
-        self, command_list: list, cwd: pathlib.Path | None = None, check_errors=True
+        command_list: list, cwd: pathlib.Path | None = None, check_errors=True
     ) -> subprocess.CompletedProcess | None:
         cmd_str = " ".join(command_list)
         logger.info(
@@ -448,9 +463,8 @@ class PackageSourceFetcher:
                     f"Contenuto del tag copiato con successo in {self.download_target_path}."
                 )
                 return True
-        else:
-            if temp_clone_dir.exists():
-                shutil.rmtree(temp_clone_dir)
+        elif temp_clone_dir.exists():
+            shutil.rmtree(temp_clone_dir)
 
         logger.warning(
             f"Impossibile trovare o fare checkout di un tag corrispondente alla versione {self.package_version} in {repo_url}."
@@ -540,11 +554,11 @@ class PackageSourceFetcher:
         return False, False, None
 
 
-def _pprint_(data):
+def _pprint_(data) -> None:
     print(json.dumps(data, sort_keys=True, indent=4))
 
 
-def main():
+def main() -> None:
     explicit = get_explicit_dependencies_from_project_config()
     pkg_info = get_installed_packages_with_project_urls(explicit=explicit)
     _pprint_(pkg_info)

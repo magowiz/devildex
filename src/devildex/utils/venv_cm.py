@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 class IsolatedVenvManager:
     """A context manager to create and manage a Python virtual environment."""
 
-    def __init__(self, project_name: str, base_temp_dir: Path | None = None):
-        """Initializes the IsolatedVenvManager."""
+    def __init__(self, project_name: str, base_temp_dir: Path | None = None) -> None:
+        """Initialize the IsolatedVenvManager."""
         self.project_name = project_name
         self.base_temp_dir = base_temp_dir or Path(tempfile.gettempdir())
         self.venv_path: Path | None = None
         self.python_executable: str | None = None
         self.pip_executable: str | None = None
 
-    def _create_venv(self):
-        """Creates the virtual environment."""
+    def _create_venv(self) -> None:
+        """Create the virtual environment."""
         self.venv_path = Path(
             tempfile.mkdtemp(
                 prefix=f"devildex_venv_{self.project_name}_", dir=self.base_temp_dir
@@ -83,7 +83,7 @@ class IsolatedVenvManager:
             self._cleanup()
             raise
 
-    def _upgrade_pip(self):
+    def _upgrade_pip(self) -> None:
         """Upgrades pip within the created virtual environment."""
         if not self.pip_executable:
             logger.warning("Pip executable not set, cannot upgrade pip.")
@@ -103,8 +103,8 @@ class IsolatedVenvManager:
                 "Failed to upgrade pip in venv '%s': %s", self.venv_path, e.stderr
             )
 
-    def _cleanup(self):
-        """Removes the temporary virtual environment directory."""
+    def _cleanup(self) -> None:
+        """Remove the temporary virtual environment directory."""
         if self.venv_path and self.venv_path.exists():
             logger.info(
                 "Cleaning up temporary venv for '%s' at: %s",
@@ -140,6 +140,7 @@ class IsolatedVenvManager:
             RuntimeError: If the virtual environment cannot be properly
                           initialized (e.g., Python or pip executables
                           are not found after creation).
+
         """
         self._create_venv()
         if not self.python_executable or not self.pip_executable:
@@ -149,7 +150,7 @@ class IsolatedVenvManager:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Cleans up resources when exiting the context.
+        """Clean up resources when exiting the context.
 
         This method is called automatically when the 'with' statement block is exited.
         It ensures that the temporary virtual environment is removed.
@@ -165,6 +166,7 @@ class IsolatedVenvManager:
         Returns:
             False, indicating that any exception that occurred within the 'with'
             block should not be suppressed and should be re-raised.
+
         """
         _ = exc_type, exc_val, exc_tb
         self._cleanup()
