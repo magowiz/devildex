@@ -1,23 +1,21 @@
 """readthedocs source handling module."""
 
-import ast
-import configparser
 import logging
 import os
-import re
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
 
 import requests
 
-from devildex.info import PROJECT_ROOT, VERSION
+from devildex.info import PROJECT_ROOT
 from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -28,8 +26,8 @@ if not logger.hasHandlers():
 CONF_SPHINX_FILE = "conf.py"
 
 
-def find_doc_source_in_clone(repo_path):
-    """Identifies the documentation source directory within a cloned repository.
+def find_doc_source_in_clone(repo_path: Path) -> Path:
+    """Identify the documentation source directory within a cloned repository.
 
     It does NOT copy any files.
 
@@ -39,6 +37,7 @@ def find_doc_source_in_clone(repo_path):
     Returns:
         str: The path to the documentation source directory (containing conf.py),
              or None if not found.
+
     """
     print(f"\nSearching for documentation source directory in: {repo_path}")
     potential_doc_dirs = ["docs", "doc", "Doc"]
@@ -63,6 +62,7 @@ def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
     Returns:
         str: The path to the documentation source directory (containing conf.py),
              or None if not found.
+
     """
     for doc_dir_name in potential_doc_dirs:
         current_path = os.path.join(repo_path, doc_dir_name)

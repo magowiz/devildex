@@ -15,7 +15,9 @@ import pdoc  # type: ignore[import-untyped]
 from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
-    def __init__(self, template_dir=None, output_dir: Path | str | None = None):
+    def __init__(self, template_dir:Path=None, output_dir: Path | str | None = None) -> None:
         """Initialize il DocStringsSrc."""
         project_root = info.PROJECT_ROOT
         if output_dir:
@@ -65,7 +67,7 @@ class DocStringsSrc:
     def _attempt_install_missing_dependency(
         missing_module_name: str, venv_python_interpreter: str
     ) -> bool:
-        """Attempts to install a missing dependency using pip in the venv.
+        """Attempt to install a missing dependency using pip in the venv.
 
         Returns True if installation was successful, False otherwise.
         """
@@ -106,7 +108,7 @@ class DocStringsSrc:
     def _is_pdoc_dummy_module(
         module_candidate: ModuleType | None, expected_name: str
     ) -> bool:
-        """Checks if the imported object is a pdoc dummy module."""
+        """Check if the imported object is a pdoc dummy module."""
         if not module_candidate:
             return True
         return (
@@ -119,22 +121,23 @@ class DocStringsSrc:
         )
 
     @staticmethod
-    def _log_traceback():
+    def _log_traceback() -> None:
         logger.debug("Traceback:", exc_info=True)
 
     def _perform_single_import(
         self, module_name: str
     ) -> tuple[ModuleType | None, Exception | None]:
-        """Performs a single attempt to import the module using pdoc.
+        """Perform a single attempt to import the module using pdoc.
 
         Returns:
-            - (module_object, None) on successful import of a real module.
+            - module_object: on successful import of a real module.
             - (None, exception_object) if ModuleNotFoundError or ImportError occurs
               directly from pdoc.import_module (less common with skip_errors=True
               for simple missing deps, but possible for other import issues).
             - (None, None) if a dummy module is imported or another unexpected
               error occurs within pdoc.import_module that doesn't result in
               a direct ImportError/ModuleNotFoundError.
+
         """
         try:
             module_candidate = pdoc.import_module(
@@ -173,7 +176,7 @@ class DocStringsSrc:
     def _attempt_import_with_retry(
         self, module_name: str, venv_python_interpreter: str | None
     ) -> tuple[ModuleType | None, bool]:
-        """Attempts to import a module, retrying once after attempting to install.
+        """Attempt to import a module, retrying once after attempting to install.
 
         a missing dependency if a venv interpreter is provided and a specific
         ImportError/ModuleNotFoundError was raised by pdoc.
@@ -236,7 +239,7 @@ class DocStringsSrc:
     def _wrap_module_with_pdoc(
         module_obj: ModuleType, context: pdoc.Context
     ) -> pdoc.Module:
-        """Wraps a valid module object with pdoc.Module.
+        """Wrap a valid module object with pdoc.Module.
 
         Returns the pdoc.Module instance.
         Raises an exception if pdoc.Module() fails.
@@ -251,7 +254,7 @@ class DocStringsSrc:
     def _process_package_submodules(
         self, package_module_obj: ModuleType, context: pdoc.Context
     ) -> list[pdoc.Module]:
-        """Iterates through a package's submodules, attempts to import and wrap each.
+        """Iterate through a package's submodules, attempts to import and wrap each.
 
         Returns a list of successfully wrapped pdoc.Module instances for submodules.
         """
@@ -307,7 +310,7 @@ class DocStringsSrc:
         context: pdoc.Context,
         venv_python_interpreter: str | None,
     ) -> list[pdoc.Module]:
-        """Attempts to import and wrap a module or its submodules with pdoc.
+        """Attempt to import and wrap a module or its submodules with pdoc.
 
         optionally attempting to install missing dependencies.
         Returns a list of successfully wrapped pdoc.Module instances.
@@ -370,7 +373,7 @@ class DocStringsSrc:
 
         return processed_pdoc_modules
 
-    def get_docset_dir(self):
+    def get_docset_dir(self)-> Path:
         """Get docset dir."""
         return self.docset_dir
 
@@ -398,7 +401,7 @@ class DocStringsSrc:
     def _prepare_pdoc_output_directory(
         project_name: str, base_output_str: str
     ) -> Path | None:
-        """Prepares the output directory for pdoc, cleaning if necessary."""
+        """Prepare the output directory for pdoc, cleaning if necessary."""
         base_output_dir_for_pdoc = Path(base_output_str)
         final_project_pdoc_output_dir = base_output_dir_for_pdoc / project_name
 
@@ -439,7 +442,7 @@ class DocStringsSrc:
     def _find_pdoc_project_requirements(
         source_project_path: Path, project_name: str
     ) -> Path | None:
-        """Finds a suitable requirements file for the project."""
+        """Find a suitable requirements file for the project."""
         candidate_req_paths = [
             source_project_path / "requirements.txt",
             source_project_path / "dev-requirements.txt",
@@ -521,7 +524,7 @@ class DocStringsSrc:
     def _validate_pdoc_output(
         pdoc_base_output_dir: Path, project_name: str
     ) -> str | None:
-        """Checks if pdoc output directory and content are valid.
+        """Check if pdoc output directory and content are valid.
 
         Args:
             pdoc_base_output_dir: The base directory where pdoc was
@@ -531,6 +534,7 @@ class DocStringsSrc:
         Returns:
             The path to the actual documentation content as a string if valid,
             otherwise None.
+
         """
         actual_docs_path = pdoc_base_output_dir / project_name
         if (
@@ -637,7 +641,7 @@ class DocStringsSrc:
         return False
 
     @staticmethod
-    def cleanup_folder(folder_or_list: Path | str | list[Path | str]):
+    def cleanup_folder(folder_or_list: Path | str | list[Path | str]) -> None:
         """Clean una single folder/file o una lista di folders/files.
 
         Handles sia strings che objects pathlib.Path.
@@ -662,7 +666,7 @@ class DocStringsSrc:
                     pass
 
     @staticmethod
-    def git_clone(repo_url, clone_dir_path, default_branch="master"):
+    def git_clone(repo_url: str, clone_dir_path: Path, default_branch:str ="master") -> None:
         """Clone a git repository, trying specified branches in order."""
         clone_dir_path_str = str(clone_dir_path)
 
@@ -738,8 +742,8 @@ class DocStringsSrc:
 
     def _handle_successful_doc_move(
         self, generated_content_path_str: str, final_docs_destination: Path
-    ):
-        """Handles moving generated docs to their final destination."""
+    ) -> None:
+        """Handle moving generated docs to their final destination."""
         logger.info(
             "Documentation generated by isolated build at: %s",
             generated_content_path_str,
@@ -753,7 +757,7 @@ class DocStringsSrc:
     def _define_run_paths(
         self, project_name: str, version: str
     ) -> tuple[Path, Path, Path]:
-        """Defines and returns standard paths used in the run method."""
+        """Define and returns standard paths used in the run method."""
         cloned_repo_path = Path(project_name)
 
         final_docs_destination = self.docset_dir / project_name
@@ -768,8 +772,8 @@ class DocStringsSrc:
         return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
 
     @staticmethod
-    def _log_subprocess_error(cpe: subprocess.CalledProcessError, context_msg: str):
-        """Logs details of a CalledProcessError."""
+    def _log_subprocess_error(cpe: subprocess.CalledProcessError, context_msg: str) -> None:
+        """Log details of a CalledProcessError."""
         logger.error("%s: Subprocess execution failed: %s", context_msg, cpe.cmd)
         logger.error("%s: Exit Code: %s", context_msg, cpe.returncode)
         if cpe.stdout and cpe.stdout.strip():
@@ -777,11 +781,10 @@ class DocStringsSrc:
         if cpe.stderr and cpe.stderr.strip():
             logger.error("%s: Stderr:\n%s", context_msg, cpe.stderr.strip())
 
-    def run(self, url: str, project_name: str, version: str = ""):
-        """Main execution logic to clone, generate docs, and move to final location."""
+    def run(self, url: str, project_name: str, version: str = "") -> str| None:
+        """Clone, generate docs, and move to final location."""
         cloned_repo_path: Path | None = None
         pdoc_operation_basedir: Path | None = None
-        generation_outcome: str | bool = False
 
         try:
             cloned_repo_path, final_docs_destination, pdoc_operation_basedir = (
