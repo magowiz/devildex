@@ -35,3 +35,5 @@ PACKAGES_DATA = [
         ],
     },
 ]
+
+COLUMNS_ORDER = ['id', 'name', 'description', 'status']
