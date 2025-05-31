@@ -12,7 +12,7 @@ dependencies = [
     "pip-requirements-parser (>=32.0.1,<33.0.0)",
     "pdoc3 (>=0.11.6,<0.12.0)",
     "requests (>=2.32.3,<3.0.0)",
-    "kivymd @ https://github.com/kivymd/KivyMD/archive/master.zip",
+    "flet[all] (>=0.28.3,<0.29.0)",
 ]
 
 
@@ -24,13 +24,6 @@ build-backend = "poetry.core.masonry.api"
 cx-freeze = "^8.2.0"
 nuitka = "^2.6.9"
 pyoxidizer = "^0.24.0"
-
-
-[tool.poetry.group.lint.dependencies]
-black = "^25.1.0"
-pylama = {extras = ["all"], version = "^8.4.1"}
-isort = "^6.0.1"
-pydocstyle = "==6.1.*"
 
 
 [tool.poetry.group.test.dependencies]
@@ -49,4 +42,8 @@ sphinx = "^8.2.3"
 myst-parser = "^4.0.1"
 sphinxcontrib-programoutput = "^0.18"
 sphinx-copybutton = "^0.5.2"
+
+
+[tool.poetry.group.lint.dependencies]
+ruff = "^0.11.12"
 

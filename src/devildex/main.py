@@ -1,84 +1,59 @@
-"""main application module."""
-
-import os
-
-import webview
-from local_data_parse.common_read import get_explicit_dependencies_from_project_config
-from local_data_parse.venv_inventory import get_installed_packages_with_project_urls
-
-# pylint: disable=E0611
+import flet as ft
 
 
-def scan_current_project() -> dict:
-    """Scan current project for explicit dependencies."""
-    explicit = get_explicit_dependencies_from_project_config()
-    docr = get_installed_packages_with_project_urls(explicit=explicit)
-    return docr
+def main(page: ft.Page):
+    page.title = "Flet WebView Esempio"
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
+    # URL della pagina web da visualizzare
+    url_da_mostrare = "https://flet.dev" # Puoi cambiarlo con qualsiasi URL
 
-class Api:
-    """Api class."""
-
-    @staticmethod
-    def handle_select_project() -> dict:
-        """Simula la selezione di un progetto. In un'app reale, aprirebbe un dialogo nativo."""
-        active_window = webview.active_window()
-        if active_window:
-            try:
-                result = active_window.create_file_dialog(
-                    webview.FOLDER_DIALOG, allow_multiple=False
-                )
-
-                if result and len(result) > 0:
-                    selected_path = result[0]
-                    print(f"Python: Selected folder - {selected_path}")
-                    active_window.evaluate_js(
-                        f"update_status_from_python('Elaborating folder: {os.path.basename(selected_path)}...')"
-                    )
-                    return {
-                        "path": selected_path,
-                        "message": "Project Path received!",
-                    }
-                else:
-                    print("Python: No folder selected or dialog canceled.")
-                    return {"path": None, "message": "No project selected."}
-            except Exception as e:
-                print(f"Error in file dialog: {e}")
-                return {"path": None, "message": f"Error: {e}"}
-        return {"path": None, "message": "The window is not available."}
-
-    @staticmethod
-    def some_other_python_function(param: str) -> str:
-        """Run js function from python."""
-        print(f"Python: some_other_python_function called with: {param}")
-        active_window = webview.active_window()
-        if active_window:
-            active_window.evaluate_js(
-                f"typeof update_status_from_python === 'function' && update_status_from_python('some_other_python_function has received: {param}')"
-            )
-        return f"Python has received '{param}'"
-
-
-def get_gui_path(file_name:str = "index.html") -> str:
-    """Get GUI path."""
-    return os.path.join(os.path.dirname(__file__), "gui", file_name)
-
-
-if __name__ == "__main__":
-    api_instance = Api()
-    gui_file_url = get_gui_path()
-    if not os.path.exists(gui_file_url):
-        if not gui_file_url.startswith("file://"):
-            gui_file_url = "file://" + os.path.abspath(gui_file_url)
-    print(f"Loading GUI from: {gui_file_url}")
-    window = webview.create_window(
-        "DevilDex",
-        gui_file_url,
-        js_api=api_instance,
-        width=900,
-        height=700,
-        resizable=True,
-        confirm_close=True,
+    # Creazione del controllo WebView
+    webview_control = ft.WebView(
+        url_da_mostrare,
+        expand=True,  # Fa sì che il WebView occupi lo spazio disponibile
+        # Puoi specificare anche larghezza e altezza se non vuoi che si espanda
+        # width=800,
+        # height=600,
+        on_page_started=lambda e: print(f"WebView: Caricamento pagina iniziato - {e.data}"),
+        on_page_ended=lambda e: print(f"WebView: Caricamento pagina terminato - {e.data}"),
+        on_page_error=lambda e: print(f"WebView: Errore caricamento pagina - {e.data}"),
     )
-    webview.start()
-    print("Application closed.")
+
+    # Aggiungiamo un campo di testo e un bottone per cambiare l'URL dinamicamente
+    txt_url = ft.TextField(label="Inserisci URL", value=url_da_mostrare, width=400)
+
+    def cambia_url(e):
+        nuovo_url = txt_url.value
+        if nuovo_url:
+            print(f"WebView: Cambio URL a: {nuovo_url}")
+            webview_control.url = nuovo_url # Imposta il nuovo URL
+            webview_control.update()      # Aggiorna il controllo WebView
+            page.update()                 # Aggiorna la pagina per riflettere le modifiche
+        else:
+            print("WebView: URL non valido.")
+
+    btn_carica = ft.ElevatedButton("Carica URL", on_click=cambia_url)
+
+    page.add(
+        ft.Column(
+            [
+                ft.Row([txt_url, btn_carica], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Container( # Usiamo un Container per dare dimensioni al WebView se expand=True
+                    content=webview_control,
+                    width=800,  # Larghezza desiderata per il contenitore del WebView
+                    height=600, # Altezza desiderata
+                    bgcolor=ft.colors.BLACK12, # Colore di sfondo per vedere i bordi
+                    padding=5
+                )
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=20
+        )
+    )
+
+# Avvia l'applicazione Flet
+# Se vuoi eseguirla come app web: ft.app(target=main, view=ft.WEB_BROWSER)
+# Per un'app desktop (predefinito):
+ft.app(target=main)
