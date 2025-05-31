@@ -11,8 +11,8 @@ dependencies = [
     "toml (>=0.10.2,<0.11.0)",
     "pip-requirements-parser (>=32.0.1,<33.0.0)",
     "pdoc3 (>=0.11.6,<0.12.0)",
-    "pywebview[gtk] (>=5.4,<6.0)",
     "requests (>=2.32.3,<3.0.0)",
+    "kivymd @ https://github.com/kivymd/KivyMD/archive/master.zip",
 ]
 
 
