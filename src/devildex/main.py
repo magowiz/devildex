@@ -1,59 +1,139 @@
-import flet as ft
+
+import wx
+import wx.html2
 
 
-def main(page: ft.Page):
-    page.title = "Flet WebView Esempio"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+class DevilDexCore():
+    def __init__(self):
+        pass
 
-    # URL della pagina web da visualizzare
-    url_da_mostrare = "https://flet.dev" # Puoi cambiarlo con qualsiasi URL
 
-    # Creazione del controllo WebView
-    webview_control = ft.WebView(
-        url_da_mostrare,
-        expand=True,  # Fa sì che il WebView occupi lo spazio disponibile
-        # Puoi specificare anche larghezza e altezza se non vuoi che si espanda
-        # width=800,
-        # height=600,
-        on_page_started=lambda e: print(f"WebView: Caricamento pagina iniziato - {e.data}"),
-        on_page_ended=lambda e: print(f"WebView: Caricamento pagina terminato - {e.data}"),
-        on_page_error=lambda e: print(f"WebView: Errore caricamento pagina - {e.data}"),
-    )
 
-    # Aggiungiamo un campo di testo e un bottone per cambiare l'URL dinamicamente
-    txt_url = ft.TextField(label="Inserisci URL", value=url_da_mostrare, width=400)
+class DevilDexApp(wx.App):
+    def __init__(self, core: DevilDexCore| None = None, initial_url: str| None = None):
+        self.core = core
+        self.home_url = "https://www.google.com"
+        self.initial_url = initial_url
+        self.main_frame = None
+        self.webview = None
+        self.back_button = None
+        self.forward_button = None
+        self.home_button = None
+        self.panel = None
+        self.main_panel_sizer = None
+        self.view_doc_btn = None
+        super(DevilDexApp, self).__init__(redirect=False)
+        self.MainLoop()
 
-    def cambia_url(e):
-        nuovo_url = txt_url.value
-        if nuovo_url:
-            print(f"WebView: Cambio URL a: {nuovo_url}")
-            webview_control.url = nuovo_url # Imposta il nuovo URL
-            webview_control.update()      # Aggiorna il controllo WebView
-            page.update()                 # Aggiorna la pagina per riflettere le modifiche
-        else:
-            print("WebView: URL non valido.")
 
-    btn_carica = ft.ElevatedButton("Carica URL", on_click=cambia_url)
+    def show_document(self, event=None):
+        self.main_panel_sizer.Clear(True)
+        self.webview = None
+        self.back_button = None
+        self.forward_button = None
+        self.home_button = None
+        button_sizer = self._setup_navigation_panel(self.panel)
+        self.main_panel_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
+        self.webview = wx.html2.WebView.New(self.panel)
+        self.main_panel_sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 5)
+        self.update_navigation_buttons_state()
+        self.webview.Bind(wx.html2.EVT_WEBVIEW_NAVIGATED, self.on_webview_navigated)
+        if self.initial_url:
+            self.load_url(self.initial_url)
+        self.panel.Layout()
 
-    page.add(
-        ft.Column(
-            [
-                ft.Row([txt_url, btn_carica], alignment=ft.MainAxisAlignment.CENTER),
-                ft.Container( # Usiamo un Container per dare dimensioni al WebView se expand=True
-                    content=webview_control,
-                    width=800,  # Larghezza desiderata per il contenitore del WebView
-                    height=600, # Altezza desiderata
-                    bgcolor=ft.colors.BLACK12, # Colore di sfondo per vedere i bordi
-                    padding=5
-                )
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=20
+    def OnInit(self):
+        window_title = "DevilDex"
+        self.main_frame = wx.Frame(parent=None, title=window_title, size=(1280, 900))
+        self.panel = wx.Panel(self.main_frame)
+        self.main_panel_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel.SetSizer(self.main_panel_sizer)
+        self.main_frame.Centre()
+        self.SetTopWindow(self.main_frame)
+        self.view_doc_btn = wx.Button(self.panel, label="Avvia Browser")
+        self.main_panel_sizer.AddStretchSpacer(1)
+        self.main_panel_sizer.Add(
+            self.view_doc_btn, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 20
         )
-    )
+        self.main_panel_sizer.AddStretchSpacer(1)
+        self.view_doc_btn.Bind(
+            wx.EVT_BUTTON, self.show_document
+        )
+        self.main_frame.Show(True)
+        return True
 
-# Avvia l'applicazione Flet
-# Se vuoi eseguirla come app web: ft.app(target=main, view=ft.WEB_BROWSER)
-# Per un'app desktop (predefinito):
-ft.app(target=main)
+    def go_home(self, event=None):
+        self.main_panel_sizer.Clear(True)
+        self.webview = None
+        self.back_button = None
+        self.forward_button = None
+        self.home_button = None
+        self.view_doc_btn = wx.Button(self.panel, label="Avvia Browser")
+        self.main_panel_sizer.AddStretchSpacer(1)
+        self.main_panel_sizer.Add(
+            self.view_doc_btn, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 20
+        )
+        self.main_panel_sizer.AddStretchSpacer(1)
+        self.view_doc_btn.Bind(wx.EVT_BUTTON, self.show_document)
+        self.panel.Layout()
+
+
+
+    def _setup_navigation_panel(self, panel):
+        icon_size = wx.DefaultSize
+        back_icon = wx.ArtProvider.GetBitmap(wx.ART_GO_BACK, wx.ART_BUTTON, icon_size)
+        forward_icon = wx.ArtProvider.GetBitmap(
+            wx.ART_GO_FORWARD, wx.ART_BUTTON, icon_size
+        )
+        home_icon = wx.ArtProvider.GetBitmap(wx.ART_GO_HOME, wx.ART_BUTTON, icon_size)
+        self.back_button = wx.Button(panel)
+        self.forward_button = wx.Button(panel)
+        self.home_button = wx.Button(panel)
+        if back_icon.IsOk():
+            self.back_button.SetBitmap(back_icon, wx.LEFT)
+        if forward_icon.IsOk():
+            self.forward_button.SetBitmap(forward_icon, wx.LEFT)
+        if home_icon.IsOk():
+            self.home_button.SetBitmap(home_icon, wx.LEFT)
+        self.back_button.Bind(wx.EVT_BUTTON, self.on_back)
+        self.forward_button.Bind(wx.EVT_BUTTON, self.on_forward)
+        self.home_button.Bind(wx.EVT_BUTTON, self.go_home)
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer.Add(self.back_button, 0, wx.ALL, 5)
+        button_sizer.Add(self.forward_button, 0, wx.ALL, 5)
+        button_sizer.Add(self.home_button, 0, wx.ALL, 5)
+        return button_sizer
+
+    def on_webview_navigated(self, event):
+        self.update_navigation_buttons_state()
+        event.Skip()
+
+    def update_navigation_buttons_state(self):
+        if self.webview and self.back_button and self.forward_button:
+            self.back_button.Enable(self.webview.CanGoBack())
+            self.forward_button.Enable(self.webview.CanGoForward())
+
+    def on_back(self, event):
+        if self.webview.CanGoBack():
+            self.webview.GoBack()
+
+    def on_forward(self, event):
+        if self.webview.CanGoForward():
+            self.webview.GoForward()
+
+    def load_url(self, url_to_load: str):
+        if self.webview:
+            self.webview.LoadURL(url_to_load)
+
+    def display_page(self, url: str):
+        self.load_url(url)
+        if self.main_frame and not self.main_frame.IsShown():
+            self.main_frame.Show(True)
+
+
+def main():
+    core = DevilDexCore()
+    DevilDexApp(core=core, initial_url='https://www.gazzetta.it')
+
+if __name__ == "__main__":
+    main()
