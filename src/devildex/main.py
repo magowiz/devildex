@@ -10,6 +10,8 @@ class DevilDexCore():
 
 
 class DevilDexApp(wx.App):
+    """Main Application."""
+
     def __init__(self, core: DevilDexCore| None = None, initial_url: str| None = None):
         self.core = core
         self.home_url = "https://www.google.com"
@@ -26,7 +28,9 @@ class DevilDexApp(wx.App):
         self.MainLoop()
 
 
-    def show_document(self, event=None):
+    def show_document(self, event: wx.CommandEvent| None = None):
+        if event:
+            event.Skip()
         self.main_panel_sizer.Clear(True)
         self.webview = None
         self.back_button = None
@@ -62,7 +66,9 @@ class DevilDexApp(wx.App):
         self.main_frame.Show(True)
         return True
 
-    def go_home(self, event=None):
+    def go_home(self, event: wx.CommandEvent| None =None):
+        if event:
+            event.Skip()
         self.main_panel_sizer.Clear(True)
         self.webview = None
         self.back_button = None
@@ -79,7 +85,7 @@ class DevilDexApp(wx.App):
 
 
 
-    def _setup_navigation_panel(self, panel):
+    def _setup_navigation_panel(self, panel: wx.Panel) -> wx.Sizer:
         icon_size = wx.DefaultSize
         back_icon = wx.ArtProvider.GetBitmap(wx.ART_GO_BACK, wx.ART_BUTTON, icon_size)
         forward_icon = wx.ArtProvider.GetBitmap(
@@ -104,7 +110,7 @@ class DevilDexApp(wx.App):
         button_sizer.Add(self.home_button, 0, wx.ALL, 5)
         return button_sizer
 
-    def on_webview_navigated(self, event):
+    def on_webview_navigated(self, event: wx.CommandEvent):
         self.update_navigation_buttons_state()
         event.Skip()
 
@@ -113,11 +119,15 @@ class DevilDexApp(wx.App):
             self.back_button.Enable(self.webview.CanGoBack())
             self.forward_button.Enable(self.webview.CanGoForward())
 
-    def on_back(self, event):
+    def on_back(self, event: wx.CommandEvent):
+        if event:
+            event.Skip()
         if self.webview.CanGoBack():
             self.webview.GoBack()
 
-    def on_forward(self, event):
+    def on_forward(self, event: wx.CommandEvent):
+        if event:
+            event.Skip()
         if self.webview.CanGoForward():
             self.webview.GoForward()
 
