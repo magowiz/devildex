@@ -91,11 +91,11 @@ class DevilDexApp(wx.App):
         )
 
         if not self.arrow_down_bmp.IsOk():
-            print("Attenzione: Impossibile caricare l'icona freccia GIÙ.")
+            print("Warning: Unable to load  the icon arrow GIÙ.")
             self.arrow_down_bmp = None
         if not self.arrow_up_bmp.IsOk():
-            print("Attenzione: Impossibile caricare l'icona freccia SU.")
-            self.arrow_up_bmp = None  # Resetta se non valida
+            print("Warning: Unable to load the icon arrow SU.")
+            self.arrow_up_bmp = None
 
         self._setup_initial_view()
         self.main_frame.Show(True)
