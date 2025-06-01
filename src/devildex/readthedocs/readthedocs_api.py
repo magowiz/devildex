@@ -6,8 +6,9 @@ from pathlib import Path
 
 import requests
 
+FILENAME_MAX_LENGTH = 60
 
-def _fetch_available_versions(project_slug):
+def _fetch_available_versions(project_slug: str) -> list[dict] | None:
     """Fetch ALL available versions for a project from RTD API, handling pagination."""
     all_versions_results = []
     next_page_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
@@ -54,7 +55,7 @@ def _fetch_available_versions(project_slug):
     return all_versions_results
 
 
-def _choose_best_version(available_versions, preferred_versions):
+def _choose_best_version(available_versions: list[dict], preferred_versions: list[str]) -> str | None:
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
     if not available_versions:
         print("Error: No versions available for choice (list is empty or None).")
@@ -90,7 +91,7 @@ def _choose_best_version(available_versions, preferred_versions):
     return None
 
 
-def _fetch_version_details(project_slug, version_slug):
+def _fetch_version_details(project_slug: str, version_slug: str) -> dict | None:
     """Fetch a specific version details from RTD API."""
     api_version_detail_url = f"https://readthedocs.org/api/v3/versions/{version_slug}/"
     print(
@@ -119,7 +120,7 @@ def _fetch_version_details(project_slug, version_slug):
         return None
 
 
-def _get_download_url(version_details, download_format) -> str:
+def _get_download_url(version_details: dict, download_format: str) -> str:
     """Extract download URL for specific format from version details."""
     if not version_details:
         print("Error: version details not available to search for the download URL.")
@@ -169,7 +170,7 @@ def _determine_local_filename(
     file_extension = download_format.replace("htmlzip", "zip")
     filename_from_url = download_url.split("/")[-1]
 
-    if "." in filename_from_url and len(filename_from_url) <= 60:
+    if "." in filename_from_url and len(filename_from_url) <= FILENAME_MAX_LENGTH:
         local_filename = filename_from_url
     else:
         local_filename = f"{project_slug}-{version_slug}.{file_extension}"

@@ -7,7 +7,7 @@ import toml
 from packaging.requirements import InvalidRequirement, Requirement
 
 
-def find_pyproject_toml(start_path="."):
+def find_pyproject_toml(start_path: str = ".") -> str | None:
     """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
 
     Returns il absolute path o None se non trovato.
@@ -23,7 +23,7 @@ def find_pyproject_toml(start_path="."):
         current_path = parent_path
 
 
-def add_deps_from_section(section_data, explicit_deps: set) -> None:
+def add_deps_from_section(section_data: dict, explicit_deps: set) -> None:
     """Add read dependencies from a specific section to explicit deps."""
     if isinstance(section_data, dict):
         for name in section_data.keys():
@@ -33,7 +33,7 @@ def add_deps_from_section(section_data, explicit_deps: set) -> None:
 
 
 def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
-    """Reads and parses a pyproject.toml file.
+    """Read and parses a pyproject.toml file.
 
     Args:
         pyproject_path: The path to the pyproject.toml file.
@@ -103,7 +103,7 @@ def get_explicit_poetry_dependencies(pyproject_path: str | None) -> set[str]:
 
 
 def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | None:
-    """Parses a single line from a requirements file.
+    """Parse a single line from a requirements file.
 
     Args:
         line_content: The content of the line to parse.
@@ -137,7 +137,7 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
 def get_explicit_package_names_from_requirements(
     requirements_filepath: str | None,
 ) -> set[str]:
-    """Reads a requirements.txt file and returns a set with explicit package names.
+    """Read a requirements.txt file and returns a set with explicit package names.
 
     Uses packaging.requirements for robust parsing.
 
@@ -180,7 +180,7 @@ def get_explicit_package_names_from_requirements(
     return explicit_package_names
 
 
-def find_requirements_txt(start_path="."):
+def find_requirements_txt(start_path: str = ".") -> str | None:
     """Cerca requirements.txt nella directory start_path e nelle sue parent directories.
 
     Returns il absolute path or None if not found.
@@ -197,7 +197,7 @@ def find_requirements_txt(start_path="."):
         current_path = parent_path
 
 
-def get_explicit_dependencies_from_project_config(start_path="."):
+def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[str]:
     """Cerca i file di configuration del project (pyproject.toml o requirements.txt).
 
     a starting from start_path e returns un set con i nomi delle explicit dependencies.

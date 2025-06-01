@@ -1,3 +1,4 @@
+"""sample data module."""
 PACKAGES_DATA = [
     {
         "id": "pkg1",

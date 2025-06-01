@@ -71,7 +71,7 @@ def manage_test_output_directory(
 @pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)
 def test_documentation_generation_for_package(
     package_info, tmp_path, manage_test_output_directory, monkeypatch
-):
+) -> None:
     """Test documentation generation for a package."""
     repo_url = package_info["repo_url"]
     project_name = package_info["project_name"]

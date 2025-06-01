@@ -191,6 +191,7 @@ PACKAGES_TO_TEST = [
 
 @pytest.mark.parametrize("package_config", PACKAGES_TO_TEST)
 def test_orchestrator_documentation_retrieval(package_config, tmp_path) -> None:
+    """Test orchestrator retrieval."""
     details_data_from_config = package_config["details_data"].copy()
     repo_url_for_clone = package_config["repo_url_for_clone"]
     expected_preferred_doc_type = package_config["expected_preferred_type"]

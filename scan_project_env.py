@@ -1,3 +1,4 @@
+"""scan project env module."""
 import os
 import sys
 from pathlib import Path
@@ -23,7 +24,7 @@ def find_pyproject_toml(start_path: str=".") -> Path | None:
         current_path = parent_path
 
 
-def _read_project_data_toml(pyproject_path):
+def _read_project_data_toml(pyproject_path: Path | str) -> set | dict:
     try:
         with open(pyproject_path, "r", encoding="utf-8") as f:
             pyproject_data = toml.load(f)
@@ -42,7 +43,7 @@ def _read_project_data_toml(pyproject_path):
     return pyproject_data
 
 
-def get_explicit_poetry_dependencies(pyproject_path: Path):
+def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
     """Read pyproject.toml e returns un set con i nomi delle direct dependencies.
 
     (from tool.poetry.dependencies and tool.poetry.group.*.dependencies sections).
@@ -50,7 +51,7 @@ def get_explicit_poetry_dependencies(pyproject_path: Path):
     pyproject_data = _read_project_data_toml(pyproject_path)
     explicit_deps = set()
 
-    def add_deps_from_section(section_data):
+    def add_deps_from_section(section_data: dict) -> None:
         if isinstance(section_data, dict):
             for name in section_data.keys():
                 normalized_name = name.lower().replace("_", "-")

@@ -16,7 +16,7 @@ class AnotherSimpleClass:
     It's also quite simple.
     """
 
-    def __init__(self, name: str = "World"):
+    def __init__(self, name: str = "World") -> None:
         """Initialize the class."""
         self.name = name
 

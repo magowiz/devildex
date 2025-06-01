@@ -4,10 +4,11 @@ import importlib.metadata
 
 from devildex.models import PackageDetails
 
+PART_LENGTH = 2
 
-def get_installed_packages_with_project_urls(explicit=None):
-    """
-    Restituisce una lista di oggetti PackageDetails per tutti i pacchetti installati
+def get_installed_packages_with_project_urls(explicit: list | None = None):
+    """Restituisce una lista di oggetti PackageDetails per tutti i pacchetti installati.
+
     (o per quelli specificati esplicitamente), includendo nome, versione
     e un dizionario dei loro Project-URL.
     """
@@ -26,13 +27,9 @@ def get_installed_packages_with_project_urls(explicit=None):
         if project_url_entries:
             for url_entry in project_url_entries:
                 try:
-                    # Dividiamo la stringa "Etichetta, URL" in due parti sulla prima virgola.
-                    # Usiamo strip() per rimuovere spazi bianchi accidentali.
                     parts = [part.strip() for part in url_entry.split(",", 1)]
-                    if len(parts) == 2:
+                    if len(parts) == PART_LENGTH:
                         label, url_value = parts
-                        # Usiamo l'etichetta originale come chiave nel nostro dizionario
-                        # Questo preserva la specificità (es. "Documentation", "Source Code")
                         current_project_urls[label] = url_value
                     else:
                         print(

@@ -17,15 +17,15 @@ class Orchestrator:
     def __init__(
         self,
         package_details: PackageDetails,
-        base_output_dir=None,
-    ):
+        base_output_dir: str = None,
+    ) -> None:
         """Implement class constructor."""
         self.package_details = package_details
         self.detected_doc_type = None
-        PDOC3_THEME_PATH = (
+        pdoc3_theme_path = (
             PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
         )
-        self.doc_strings = DocStringsSrc(template_dir=PDOC3_THEME_PATH)
+        self.doc_strings = DocStringsSrc(template_dir=pdoc3_theme_path)
         self.last_operation_result = None
         if base_output_dir:
             self.base_output_dir = Path(base_output_dir).resolve()
@@ -36,7 +36,8 @@ class Orchestrator:
         self._effective_source_path = None
 
     def fetch_repo(self) -> bool:
-        """Ensures that project sources are available, either from an initial path
+        """Ensure that project sources are available, either from an initial path.
+
         or by fetching them. Sets self._effective_source_path.
 
         Returns:
@@ -110,7 +111,7 @@ class Orchestrator:
             return False
 
     @property
-    def _grabbers(self):
+    def _grabbers(self) -> dict:
         """Property to dynamically build the grabbers configuration."""
         effective_source_path_str = (
             str(self._effective_source_path) if self._effective_source_path else None
@@ -153,7 +154,7 @@ class Orchestrator:
         }
 
     @staticmethod
-    def _interpret_tuple_res(value) -> str | None:
+    def _interpret_tuple_res(value: tuple[str, bool] | str) -> str | None:
         if isinstance(value, tuple):
             return value[0] and value[1]
         return value
@@ -213,11 +214,11 @@ class Orchestrator:
             )
             self.detected_doc_type = "unknown"
 
-    def get_detected_doc_type(self):
+    def get_detected_doc_type(self) -> str:
         """Get detected document type."""
         return self.detected_doc_type
 
-    def get_last_operation_result(self):
+    def get_last_operation_result(self) -> str | bool:
         """Get last operation result."""
         return self.last_operation_result
 

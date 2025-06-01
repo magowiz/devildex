@@ -313,7 +313,7 @@ def _handle_command_result(
 
 
 def execute_command(
-    command: list[str], description: str, cwd: str | Path | None = None, env=None
+    command: list[str], description: str, cwd: str | Path | None = None, env : dict = None
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
     cwd_str = str(cwd) if cwd else None

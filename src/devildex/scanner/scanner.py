@@ -13,6 +13,7 @@ from devildex.scanner_utils.scanner_utils import (
     read_file_content_robustly,
 )
 
+SCORE_MAX = 3
 
 def is_sphinx_project(project_path: str) -> bool:
     """Scan project path to determine if it is a Sphinx project.
@@ -87,7 +88,7 @@ def is_sphinx_project(project_path: str) -> bool:
 
         score = count_matching_strings(content, common_sphinx_vars)
 
-        if score >= 3:
+        if score >= SCORE_MAX:
             print(
                 f"    ✅ Found {score} common configuration Sphinx variables."
                 " Good indication."

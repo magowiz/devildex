@@ -15,7 +15,7 @@ class ThemeManager:
         project_path: Path,
         doc_type: str,
         sphinx_conf_file: Union[Path | None] = None,
-    ):
+    ) -> None:
         """Initialize ThemeManager."""
         self.project_path = project_path
         self.doc_type = doc_type
