@@ -49,8 +49,8 @@ def find_doc_source_in_clone(repo_path: Path) -> Path:
     return doc_source_path
 
 
-def _find_doc_dir_in_repo(repo_path, potential_doc_dirs: list) -> str:
-    """Finds the first potential documentation directory that contains a conf.py file.
+def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str:
+    """Find the first potential documentation directory that contains a conf.py file.
 
     Also checks the repository root if no specific doc directory is found.
 
@@ -284,7 +284,7 @@ def build_sphinx_docs(
     return str(sctx.final_output_dir) if build_successful else None
 
 
-def _cleanup(clone_dir_path):
+def _cleanup(clone_dir_path: Path) -> None:
     if os.path.exists(clone_dir_path):
         print(f"\nDeleting repository cloned directory: {clone_dir_path}")
         try:
@@ -297,7 +297,7 @@ def _cleanup(clone_dir_path):
             )
 
 
-def _extract_repo_url_branch(api_project_detail_url, project_slug) -> tuple[str, str]:
+def _extract_repo_url_branch(api_project_detail_url: str, project_slug: str) -> tuple[str, str]:
     repo_url = None
     default_branch = "main"
     try:
@@ -323,7 +323,7 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug) -> tuple[str,
     return default_branch, repo_url
 
 
-def run_clone(repo_url: str, default_branch, clone_dir_path, bzr: bool):
+def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: bool) -> tuple[str|None, str|None]| str:
     """Perform a clone for matching vcs."""
     successful_clone = False
     print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
@@ -605,7 +605,7 @@ def download_readthedocs_source_and_build(
     return _download_handle_result(isolated_source_path, build_output_path)
 
 
-def _download_handle_result(isolated_source_path, build_output_path: Path):
+def _download_handle_result(isolated_source_path: Path, build_output_path: Path)-> tuple[Path|None, Path|None]:
     if isolated_source_path and build_output_path:
         print(f"\nIsolated source documentation in: {isolated_source_path}")
         print(f"Build HTML Sphinx generata in:    {build_output_path}")

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+
 from devildex.docstrings.docstrings_src import DocStringsSrc
 
 PACKAGES_TO_TEST = [
@@ -55,8 +56,8 @@ PACKAGES_TO_TEST = [
 def manage_test_output_directory(
     tmp_path: Path,
 ) -> Path:  # Ora accetta tmp_path e restituisce un Path
-    """
-    Fixture per creare e fornire una directory di output isolata per la documentazione,
+    """Fixture per creare e fornire una directory di output isolata per la documentazione.
+
     all'interno dello spazio temporaneo di un test specifico.
     """
     test_specific_doc_output_dir = tmp_path / "doc_gen_output"

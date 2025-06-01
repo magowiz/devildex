@@ -3,8 +3,7 @@
 import logging
 from pathlib import Path
 
-from pip_requirements_parser import \
-    RequirementsFile  # type: ignore[import-untyped]
+from pip_requirements_parser import RequirementsFile  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,7 @@ def _process_requirements_obj(
     file_path_for_logging: Path,
     lines_to_explicitly_remove: set[str],
 ) -> list[str]:
-    """Processes a RequirementsFile to extract valid lines and log invalid ones."""
+    """Process a RequirementsFile to extract valid lines and log invalid ones."""
     valid_lines: list[str] = []
 
     for req in requirements_file_obj.requirements:
@@ -60,6 +59,7 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
                           può essere letto, la libreria non è disponibile, o si
                           verifica un errore imprevisto. Restituisce una lista
                           vuota se non ci sono requisiti validi.
+
     """
     if RequirementsFile is None:
         logger.error(

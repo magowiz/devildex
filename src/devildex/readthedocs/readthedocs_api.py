@@ -163,8 +163,8 @@ def _get_download_url(version_details, download_format) -> str:
 
 
 def _determine_local_filename(
-    project_slug, version_slug, download_url, download_format
-):
+    project_slug: str, version_slug: str, download_url: str, download_format: str
+) -> str:
     """Determine local file name which makes sense for download."""
     file_extension = download_format.replace("htmlzip", "zip")
     filename_from_url = download_url.split("/")[-1]
@@ -177,7 +177,7 @@ def _determine_local_filename(
     return local_filename
 
 
-def _download_file(file_url, local_filepath):
+def _download_file(file_url: str, local_filepath: Path) -> bool | None:
     """Download file from URL into a local path."""
     print(f"Download file in: {local_filepath}")
     download_successful = False
@@ -210,9 +210,9 @@ def _download_file(file_url, local_filepath):
 
 def download_readthedocs_prebuilt_robust(
     project_name: str,
-    download_folder="rtd_prebuilt_downloads",
-    preferred_versions=("stable", "latest"),
-    download_format="htmlzip",
+    download_folder: str = "rtd_prebuilt_downloads",
+    preferred_versions: tuple[str] = ("stable", "latest"),
+    download_format: str = "htmlzip",
 ) -> str | None:
     """Download a pre-packaged documentation from Read the Docs.
 

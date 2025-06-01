@@ -12,6 +12,7 @@ def read_file_content_robustly(filepath: Path) -> str | None:
 
     Returns:
         file content as a string, or None in case of error.
+
     """
     try:
         with open(filepath, "r", encoding="utf-8") as f:
@@ -41,6 +42,7 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
 
     Returns:
         a list of Path objects of the found files.
+
     """
     direct_found_files: list[Path] = []
     for base_dir in base_dirs:
@@ -57,7 +59,7 @@ def find_config_files(base_dirs: list[Path], filename: str) -> list[Path]:
 def _find_recursive_deduplicate_and_sort(
     base_dirs: list[Path], filename: str
 ) -> list[Path]:
-    """Performs a recursive search for filename in base_dirs.
+    """Perform a recursive search for filename in base_dirs.
 
     then deduplicates (by resolved path) and sorts the results.
     """
@@ -89,7 +91,7 @@ def _find_recursive_deduplicate_and_sort(
 
 
 def check_content_patterns(
-    content: str, checks: list[tuple[str, str]], re_flags=0
+    content: str, checks: list[tuple[str, str]], re_flags: re.RegexFlag = 0
 ) -> str | None:
     """Verify if a string content matches one of given pattern regex.
 
@@ -100,6 +102,7 @@ def check_content_patterns(
 
     Returns:
         success message of first matching pattern, o None if nothing matches.
+
     """
     for pattern, message in checks:
         if re.search(pattern, content, re_flags):
@@ -116,6 +119,7 @@ def count_matching_strings(content: str, search_strings: list[str]) -> int:
 
     Returns:
         number of strings found in content.
+
     """
     count = 0
     for s in search_strings:

@@ -125,7 +125,7 @@ class IsolatedVenvManager:
         self.pip_executable = None
 
     def __enter__(self) -> "IsolatedVenvManager":
-        """Sets up the isolated virtual environment.
+        """Set up the isolated virtual environment.
 
         This method is called when entering the 'with' statement. It creates
         the temporary virtual environment, sets up the paths to Python and pip

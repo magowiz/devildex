@@ -45,7 +45,7 @@ def _install_base_packages_in_venv(
 
 
 def _has_installable_project_files(project_root: Path) -> bool:
-    """Checks if standard project installation files exist."""
+    """Check if standard project installation files exist."""
     return (
         (project_root / "setup.py").exists()
         or (project_root / "setup.cfg").exists()
@@ -247,7 +247,7 @@ def _prepare_command_env(
 def _log_command_failure_details(
     description: str, returncode: int, stdout_text: str | None, stderr_text: str | None
 ) -> None:
-    """Logs details and prints debug info for a failed command."""
+    """Log details and prints debug info for a failed command."""
     logger.warning("%s failed. Return code: %s", description, returncode)
     if stdout_text and stdout_text.strip():
         logger.debug("Stdout:\n%s", stdout_text.strip())
@@ -259,8 +259,8 @@ def _log_command_failure_details(
 
 def _log_command_success_details(
     description: str, stdout_text: str | None, stderr_text: str | None
-):
-    """Logs details for a successfully executed command."""
+) -> None:
+    """Log details for a successfully executed command."""
     logger.info("%s completed successfully.", description)
     if stdout_text and stdout_text.strip():
         logger.debug("Stdout (success):\n%s", stdout_text.strip())
@@ -270,8 +270,8 @@ def _log_command_success_details(
 
 def _log_sphinx_specific_debug(
     description: str, stdout_text: str | None, stderr_text: str | None
-):
-    """Prints Sphinx-specific debug STDOUT and STDERR if applicable."""
+) -> None:
+    """Print Sphinx-specific debug STDOUT and STDERR if applicable."""
     if "sphinx" in description.lower():
         actual_stdout = stdout_text.strip() if stdout_text else "<empty>"
         actual_stderr = stderr_text.strip() if stderr_text else "<empty>"
@@ -280,7 +280,7 @@ def _log_sphinx_specific_debug(
 
 
 def _get_effective_cwd(cwd_param: str | None) -> str:
-    """Returns the CWD string to use for logging, defaulting to '.'."""
+    """Return the CWD string to use for logging, defaulting to '.'."""
     return cwd_param or "."
 
 

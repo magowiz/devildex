@@ -3,7 +3,9 @@ import wx.grid
 
 
 class MyFrame(wx.Frame):
-    def __init__(self, parent, title):
+    """MyFrame example class."""
+
+    def __init__(self, parent, title: str):
         super(MyFrame, self).__init__(parent, title=title, size=(400, 300))
 
         panel = wx.Panel(self)
