@@ -114,10 +114,8 @@ class DevilDexApp(wx.App):
             wx.ART_GO_UP, wx.ART_BUTTON, icon_size
         )
         if not self.arrow_down_bmp.IsOk():
-            print("Warning: Unable to load  the icon arrow GIÙ.")
             self.arrow_down_bmp = None
         if not self.arrow_up_bmp.IsOk():
-            print("Warning: Unable to load the icon arrow SU.")
             self.arrow_up_bmp = None
         self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
         self.animation_timer = wx.Timer(
@@ -195,13 +193,7 @@ class DevilDexApp(wx.App):
                         row_idx, self.docset_status_col_grid_idx, current_frame_char
                     )
                 except wx.wxAssertionError as e:  # type: ignore
-                    print(
-                        f"Error wxAssertionError updating la cella di animation [{row_idx},{self.docset_status_col_grid_idx}]: {e}"
-                    )
-                except Exception as e:
-                    print(
-                        f"Error generic updating la cella di animation [{row_idx},{self.docset_status_col_grid_idx}]: {e}"
-                    )
+                    pass
         if event:
             event.Skip()
 
@@ -374,14 +366,8 @@ class DevilDexApp(wx.App):
     ) -> None:
         """Update the data grid and source data for the completed generation task."""
         if not self.data_grid:
-            print(
-                "WARN: data_grid non disponibile for status update."
-            )
             return
         if self.docset_status_col_grid_idx == -1:
-            print(
-                "WARN: docset_status_col_grid_idx non valido for update."
-            )
             return
 
         if 0 <= row_idx < self.data_grid.GetNumberRows():
@@ -395,21 +381,9 @@ class DevilDexApp(wx.App):
                     self.current_grid_source_data[row_idx]["docset_status"] = (
                         status_text
                     )
-                else:
-                    print(
-                        f"WARN: row_idx {row_idx} out of range per current_grid_source_data"
-                    )
                 self.data_grid.ForceRefresh()
             except wx.wxAssertionError as e:  # type: ignore
-                print(
-                    f"Error wxAssertionError setting final status [{row_idx},{self.docset_status_col_grid_idx}]: {e}"
-                )
-            except Exception as e:
-                print(
-                    f"generic Error setting final status [{row_idx},{self.docset_status_col_grid_idx}]: {e}"
-                )
-        else:
-            print(f"WARN: row_idx {row_idx} non valido per grid update.")
+                pass
 
     def _on_generation_complete(
         self,
@@ -423,17 +397,11 @@ class DevilDexApp(wx.App):
         Questo method is executed in main GUI thread using wx.CallAfter.
         """
         if not package_id:
-            print(
-                "ERROR CRITICAL: missing package_id in _on_generation_complete. Unable to update UI."
-            )
             self._stop_animation_timer_if_no_tasks()
             self._update_action_buttons_state()
             return
 
         row_idx_to_update = self.active_generation_tasks.pop(package_id, -1)
-        print(
-            f"Completing generation per ID: {package_id}, Riga: {row_idx_to_update}, Success: {success}"
-        )
 
         self._stop_animation_timer_if_no_tasks()
         self._log_generation_outcome_and_notify(success, message, package_name)
@@ -443,11 +411,6 @@ class DevilDexApp(wx.App):
         if row_idx_to_update != -1:
             self._update_grid_with_generation_status(
                 row_idx_to_update, final_status_text
-            )
-        else:
-            print(
-                f"WARN: package_id '{package_id}' non trovato in active_generation_tasks durante il completion. "
-                f"unable to update la grid per questo task."
             )
 
         self._update_action_buttons_state()
@@ -463,14 +426,11 @@ class DevilDexApp(wx.App):
 
 
         if not package_id_for_completion:
-            error_message = "Error critical nel thread: package_id missing nei dati del package."
-            print(f"THREAD ERROR: {error_message}")
             return
 
         try:
             if not self.core:
                 error_message = "Error nel thread: Instance Core non disponibile."
-                print(f"THREAD ERROR: {error_message}")
                 wx.CallAfter(
                     self._on_generation_complete,
                     False,
@@ -490,7 +450,6 @@ class DevilDexApp(wx.App):
 
         except Exception as e:
             error_message = f"Unexpected Exception durante la generation per '{package_name_for_msg}' nel thread: {e}"
-            print(f"THREAD ERROR: {error_message}")
             wx.CallAfter(
                 self._on_generation_complete,
                 False,
@@ -500,7 +459,6 @@ class DevilDexApp(wx.App):
             )
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
         """Handle regenerate docset action."""
-        print(f"Action: Regenerate Docset per riga {self.selected_row_index}")
         sel_data = self.get_selected_row()
         if sel_data:
             print(sel_data)
@@ -508,7 +466,6 @@ class DevilDexApp(wx.App):
 
     def on_view_log(self, event: wx.CommandEvent) -> None:
         """Handle view log action."""
-        print(f"Action: View Log for row {self.selected_row_index}")
         sel_data = self.get_selected_row()
         if sel_data:
             print(sel_data)
@@ -519,9 +476,6 @@ class DevilDexApp(wx.App):
     def on_delete_docset(self, event: wx.CommandEvent) -> None:
         """Handle delete docset action."""
         print(f"Action: Delete Docset per riga {self.selected_row_index}")
-        sel_data = self.get_selected_row()
-        if sel_data:
-            print(sel_data)
         event.Skip()
 
     def on_log_toggle_button_click(self, event: wx.CommandEvent) -> None:
@@ -532,9 +486,6 @@ class DevilDexApp(wx.App):
     def on_grid_cell_click(self, event: wx.grid.GridEvent) -> None:
         """Handle click on a grid cell."""
         if not self.data_grid or not self.custom_row_highlight_attr:
-            print(
-                "ERROR: data_grid o custom_row_highlight_attr not initialized in on_grid_cell_click."
-            )
             if event:
                 event.Skip()
             return
@@ -553,19 +504,10 @@ class DevilDexApp(wx.App):
             self.data_grid.SetRowAttr(clicked_row, self.custom_row_highlight_attr)
             self.custom_highlighted_row_index = clicked_row
             self.selected_row_index = clicked_row
-        else:
-            print(
-                f"Warning: clicked row {clicked_row} non valida, not applying arrow/color."
-            )
         self.data_grid.ForceRefresh()
-        print("--- Click sulla cell ---")
-        print(f"Row (index): {clicked_row}")
-        print(f"Column (index): {clicked_column}")
         cell_content = self.data_grid.GetCellValue(
             clicked_row, clicked_column
         )
-        print(f"Content clicked cell: '{cell_content}'")
-
         grid_row_data = []
         if self.data_grid:
             num_columns = self.data_grid.GetNumberCols()
@@ -573,19 +515,7 @@ class DevilDexApp(wx.App):
                 grid_row_data.append(
                     self.data_grid.GetCellValue(clicked_row, col_idx)
                 )
-            print(f"Row Data (from grid): {grid_row_data}")
 
-        if 0 <= clicked_row < len(self.current_grid_source_data):
-            original_row_dictionary = self.current_grid_source_data[clicked_row]
-            print(f"Dati riga (original dictionary): {original_row_dictionary}")
-
-            if "package_name" in original_row_dictionary:
-                print(
-                    f"Value di 'package_name' dal dictionary: {original_row_dictionary['name']}"
-                )
-        else:
-            print("Error: riga index non valido per current_grid_source_data.")
-        print("--------------------------")
         self._update_action_buttons_state()
         event.Skip()
 
@@ -816,10 +746,6 @@ class DevilDexApp(wx.App):
         package_id = package_data.get("id")
         package_name = package_data.get("name", "N/D")
 
-        print(
-            f"Start generation per: {package_name} (ID: {package_id}, Riga: {row_index})"
-        )
-
         self.active_generation_tasks[package_id] = row_index
         self._update_action_buttons_state()
         if (
@@ -828,29 +754,17 @@ class DevilDexApp(wx.App):
             and 0 <= row_index < self.data_grid.GetNumberRows()
             and 0 <= row_index < len(self.current_grid_source_data)
         ):
-            try:
-                first_animation_frame = self.animation_frames[0]
-                self.data_grid.SetCellValue(
-                    row_index,
-                    self.docset_status_col_grid_idx,
-                    first_animation_frame,
-                )
-                self.current_grid_source_data[row_index][
-                    "docset_status"
-                ] = first_animation_frame
-                self.data_grid.ForceRefresh()
-            except wx.wxAssertionError as e:  # type: ignore
-                print(
-                    f"Error wxAssertionError setting animation initial frame: {e}"
-                )
-            except Exception as e:
-                print(
-                    f"Error generic setting il frame initial di animation: {e}"
-                )
-        else:
-            print(
-                "WARN: Unable to set up initial animation frame, grid or indexes invalid."
+
+            first_animation_frame = self.animation_frames[0]
+            self.data_grid.SetCellValue(
+                row_index,
+                self.docset_status_col_grid_idx,
+                first_animation_frame,
             )
+            self.current_grid_source_data[row_index][
+                "docset_status"
+            ] = first_animation_frame
+            self.data_grid.ForceRefresh()
 
         if self.animation_timer and not self.animation_timer.IsRunning():
             self.animation_timer.Start(150)
