@@ -26,11 +26,11 @@ RUN dnf update -y && \
     cmake cairo-devel cairo-gobject-devel gawk \
     && dnf clean all
 
-
+ENV PATH="/root/.local/bin:${PATH}"
 
 RUN python -m pip install --no-cache-dir --upgrade pip pipx && \
     pipx install poetry && \
     poetry self add poetry-plugin-export \
 
-ENV PATH="/root/.local/bin:${PATH}"
+
 
