@@ -45,7 +45,6 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
     for TENTATIVO_CORRENTE in $(seq 1 ${MAX_TENTATIVI}); do \
       echo "INFO: Tentativo ${TENTATIVO_CORRENTE}/${MAX_TENTATIVI} di installare i pacchetti..."; \
       if $APT_CMD ; then \
-        INSTALL_RIUSCITA=true; \
         echo "INFO: Installazione pacchetti riuscita al tentativo ${TENTATIVO_CORRENTE}."; \
         break; \
       else \
