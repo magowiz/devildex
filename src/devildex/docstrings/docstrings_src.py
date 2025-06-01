@@ -19,6 +19,8 @@ from devildex.utils.venv_utils import (
     install_project_and_dependencies_in_venv,
 )
 
+GIT_FULL_PATH = shutil.which('git')
+
 logger = logging.getLogger(__name__)
 
 
@@ -684,9 +686,9 @@ class DocStringsSrc:
                 clone_dir_path_str,
             )
             try:
-                subprocess.run(
+                subprocess.run(  # noqa: S603
                     [
-                        "git",
+                        GIT_FULL_PATH,
                         "clone",
                         "--depth",
                         "1",

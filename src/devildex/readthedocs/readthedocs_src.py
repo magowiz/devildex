@@ -351,7 +351,7 @@ def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: boo
             if result.returncode == 0:
                 successful_clone = True
             if result.returncode != 0:
-                for default_branch in fallback_branches:  # pylint: disable=R1704
+                for default_branch in fallback_branches:  # pylint: disable=R1704  # noqa: PLR1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
                     result = subprocess.run(  # noqa: S603
                         [

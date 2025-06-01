@@ -30,7 +30,7 @@ class PackageSourceFetcher:
 
         if not self.package_name or not self.package_version:
             raise ValueError(
-                "Nome del pacchetto e versione devono essere forniti in package_info_dict."
+                "Nome del pacchetto e version devono essere forniti in package_info_dict."
             )
 
         sane_pkg_name = self._sanitize_path_component(self.package_name)
