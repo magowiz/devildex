@@ -28,9 +28,9 @@ RUN dnf update -y && \
 
 
 
-RUN python -m pip install --no-cache-dir --upgrade pip pipx
+RUN python -m pip install --no-cache-dir --upgrade pip pipx && \
+    pipx install poetry && \
+    poetry self add poetry-plugin-export \
 
-RUN pipx install poetry
 ENV PATH="/root/.local/bin:${PATH}"
 
-RUN poetry self add poetry-plugin-export
