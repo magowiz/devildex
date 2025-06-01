@@ -30,7 +30,8 @@ class PackageSourceFetcher:
 
         if not self.package_name or not self.package_version:
             raise ValueError(
-                "Nome del pacchetto e version devono essere forniti in package_info_dict."
+                "Nome del pacchetto e version devono essere "
+                "forniti in package_info_dict."
             )
 
         sane_pkg_name = self._sanitize_path_component(self.package_name)
@@ -42,7 +43,8 @@ class PackageSourceFetcher:
 
         self._determined_vcs_url: str | None = None
         logger.debug(
-            f"Fetcher inizializzato per {self.package_name} v{self.package_version}. Target: {self.download_target_path}"
+            f"Fetcher inizializzato per {self.package_name} v{self.package_version}."
+            f" Target: {self.download_target_path}"
         )
 
     @staticmethod
@@ -60,7 +62,8 @@ class PackageSourceFetcher:
         try:
             self.download_target_path.mkdir(parents=True, exist_ok=True)
             logger.info(
-                f"Directory di destinazione assicurata/creata: {self.download_target_path}"
+                "Directory di destinazione assicurata/creata: "
+                f"{self.download_target_path}"
             )
             return True
         except OSError:
@@ -70,7 +73,8 @@ class PackageSourceFetcher:
         if not self.download_target_path.exists():
             return
         logger.info(
-            f"Pulizia del contenuto della directory di destinazione: {self.download_target_path}"
+            "Pulizia del contenuto della directory di destinazione: "
+            f"{self.download_target_path}"
         )
         try:
             for item in self.download_target_path.iterdir():
@@ -80,13 +84,15 @@ class PackageSourceFetcher:
                     item.unlink()
         except OSError as e:
             logger.error(
-                f"Errore durante la pulizia della directory {self.download_target_path}: {e}"
+                "Errore durante la pulizia della directory "
+                f"{self.download_target_path}: {e}"
             )
 
     def _fetch_project_urls_from_pypi(self) -> dict | None:
         """Fetch project_urls from PyPI JSON API for the current package."""
         logger.info(
-            f"Tentativo di fetch dei project_urls da PyPI JSON API per {self.package_name}."
+            "Tentativo di fetch dei project_urls da PyPI JSON"
+            f" API per {self.package_name}."
         )
         try:
             api_url = f"https://pypi.org/pypi/{self.package_name}/{self.package_version}/json"
@@ -288,7 +294,7 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _run_git_command(
-            command_list: list[str], cwd: pathlib.Path | None = None, check_errors: bool = True # Type hint for list
+            command_list: list[str], cwd: pathlib.Path | None = None, check_errors: bool = True
     ) -> subprocess.CompletedProcess | None:
         try:
             git_exe = shutil.which("git")
@@ -376,8 +382,8 @@ class PackageSourceFetcher:
             archive_urls_to_try = [
                 f"https://github.com/{repo_path_segment}/archive/refs/tags/{tag_for_url}.tar.gz",
                 f"https://github.com/{repo_path_segment}/archive/refs/tags/{tag_for_url}.zip",
-                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.tar.gz",  # Older format
-                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.zip",    # Older format
+                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.tar.gz",
+                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.zip",
             ]
             for archive_url in archive_urls_to_try:
                 temp_dir_for_archive_download = (
@@ -409,7 +415,7 @@ class PackageSourceFetcher:
                         "--branch",
                         tag,
                         repo_url,
-                        str(self.download_target_path), # Clone directly into the final destination
+                        str(self.download_target_path),
                     ]
             ):
                 self._cleanup_git_dir_from_path(self.download_target_path)
@@ -431,7 +437,7 @@ class PackageSourceFetcher:
                     continue
                 target_item_path = destination_dir / item.name
                 if item.is_dir():
-                    shutil.copytree(item, target_item_path, dirs_exist_ok=True) # dirs_exist_ok since dest is clean
+                    shutil.copytree(item, target_item_path, dirs_exist_ok=True)
                 else:
                     shutil.copy2(item, target_item_path)
             return True
@@ -454,26 +460,23 @@ class PackageSourceFetcher:
         try:
             if temp_clone_dir.exists():
                 shutil.rmtree(temp_clone_dir)
-            # No need to mkdir for temp_clone_dir, git clone will create it.
 
             if not self._run_git_command(
                     ["git", "clone", repo_url, str(temp_clone_dir)]
             ):
-                # Error logged by _run_git_command
-                return False # Initial clone failed
+                return False
             cloned_successfully = True
 
             for tag in tag_variations:
                 checkout_process = self._run_git_command(
                     ["git", "-C", str(temp_clone_dir), "checkout", tag],
-                    check_errors=False, # Checkout might fail if tag doesn't exist
+                    check_errors=False,
                 )
                 if checkout_process and checkout_process.returncode == 0:
                     logger.info(
                         f"Checkout del tag '{tag}' riuscito in {temp_clone_dir}."
                     )
-                    # Now copy to final destination
-                    self._cleanup_target_dir_content() # Clean self.download_target_path
+                    self._cleanup_target_dir_content()
                     if not self._ensure_target_dir_exists():
                         break
 
@@ -491,20 +494,19 @@ class PackageSourceFetcher:
 
     def _fetch_from_vcs_tag(self, repo_url: str) -> bool:
         logger.info(
-            f"Tentativo di fetch del tag '{self.package_version}' da VCS: {repo_url}"
+            f"Tentativo di fetch del tag '{self.package_version}' "
+            f"da VCS: {repo_url}"
         )
-        # Generate a unique list of tag variations, preserving order for common ones
         tag_variations_set = {
             self.package_version,
             f"v{self.package_version}",
             f"refs/tags/{self.package_version}",
             f"refs/tags/v{self.package_version}",
-            f"{self.package_name}-{self.package_version}", # Common in some projects
-            f"{self.package_name}/{self.package_version}", # e.g. some gitlab tags
+            f"{self.package_name}-{self.package_version}",
+            f"{self.package_name}/{self.package_version}",
             f"{self.package_name}/v{self.package_version}",
             f"release-{self.package_version}",
         }
-        # If version already starts with 'v', add the non-'v' version
         if self.package_version.startswith("v") and len(self.package_version) > 1:
             tag_variations_set.add(self.package_version[1:])
 
@@ -518,7 +520,6 @@ class PackageSourceFetcher:
         if self._try_fetch_tag_github_archive(repo_url, ordered_tag_variations):
             return True
 
-        # These methods write to self.download_target_path, so they handle cleanup/setup
         if self._try_fetch_tag_shallow_clone(repo_url, ordered_tag_variations):
             return True
 
@@ -533,7 +534,8 @@ class PackageSourceFetcher:
         )
         self._cleanup_target_dir_content() # Clean target before clone
         if not self._ensure_target_dir_exists():
-            logger.error("Impossibile preparare la directory di destinazione per VCS main branch clone.")
+            logger.error("Impossibile preparare la directory di destinazione "
+                         "per VCS main branch clone.")
             return False
 
         if self._run_git_command(
@@ -553,7 +555,8 @@ class PackageSourceFetcher:
             tuple[bool, bool, str | None]:
                 - fetch_successful: True se il fetch ha avuto successo, False altrimenti.
                 - is_master_branch_fetched: True se è stato fatto il fetch del branch principale/default.
-                - path_to_return: Il percorso alla directory dei sorgenti scaricati se il fetch ha successo, None altrimenti.
+                - path_to_return: Il percorso alla directory dei sorgenti scaricati
+                    se il fetch ha successo, None altrimenti.
 
         """
         fetch_successful = False
@@ -603,14 +606,17 @@ def _pprint_(data: dict | list) -> None:
 def main() -> None:
     """Test purpose."""
     test_packages = [
-        {"name": "requests", "version": "2.25.1", "project_urls": {"Source Code": "https://github.com/psf/requests"}},
+        {"name": "requests", "version": "2.25.1", "project_urls":
+            {"Source Code": "https://github.com/psf/requests"}},
         {"name": "nonexistentpackage", "version": "1.0.0"},
-        {"name": "flask", "version": "2.0.1", "project_urls": {"Repository": "https://github.com/pallets/flask"}},
+        {"name": "flask", "version": "2.0.1", "project_urls":
+            {"Repository": "https://github.com/pallets/flask"}},
     ]
 
     for p_info in test_packages:
         print(f"\n>>> Testing fetch for: {p_info['name']} v{p_info['version']}")
-        fetcher_obj = PackageSourceFetcher(base_save_path="devildex_fetcher_test_output", package_info_dict=p_info)
+        fetcher_obj = PackageSourceFetcher(
+            base_save_path="devildex_fetcher_test_output", package_info_dict=p_info)
         success, is_master, path_str = fetcher_obj.fetch()
         if success:
             print(f"    SUCCESS: Path: {path_str}, Is Master: {is_master}")
@@ -618,6 +624,7 @@ def main() -> None:
             print(f"    FAILED to fetch {p_info['name']}")
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s '
+                                                   '- %(levelname)s - %(message)s')
     Path("devildex_fetcher_test_output").mkdir(exist_ok=True)
     main()
