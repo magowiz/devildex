@@ -45,7 +45,6 @@ class DevilDexApp(wx.App):
         self.panel: Optional[wx.Panel] = None
         self.main_panel_sizer: Optional[wx.BoxSizer] = None
         self.data_grid: wx.grid.Grid | None = None
-        self.view_doc_btn: Optional[wx.Button] = None
         self.current_grid_source_data: list[dict] = []
         self.open_action_button: wx.Button | None = None
         self.generate_action_button: wx.Button | None = None
@@ -70,21 +69,39 @@ class DevilDexApp(wx.App):
         self.package_display_label: Optional[wx.StaticText] = (
             None
         )
+        self.arrow_up_bmp_scaled: Optional[wx.Bitmap] = None
+        self.arrow_down_bmp_scaled: Optional[wx.Bitmap] = None
+
         super().__init__(redirect=False)
         self.MainLoop()
 
 
-    def show_document(self, event: wx.CommandEvent| None = None) -> None:
+    def show_document(self, event: wx.CommandEvent| None = None, package_data_to_show:Optional[dict]=None) -> None:
         """Show the document view."""
         if event:
             event.Skip()
         self._clear_main_panel()
+        self.package_display_label = wx.StaticText(
+            self.panel, label="Loading document..."
+        )
+        font = self.package_display_label.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        self.package_display_label.SetFont(font)
+        self.main_panel_sizer.Add(
+            self.package_display_label, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        )
+
         button_sizer = self._setup_navigation_panel(self.panel)
         self.main_panel_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
         self.webview = wx.html2.WebView.New(self.panel)
         self.main_panel_sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 5)
         self.update_navigation_buttons_state()
         self.webview.Bind(wx.html2.EVT_WEBVIEW_NAVIGATED, self.on_webview_navigated)
+        new_label_text = "Viewing documentation"
+        if package_data_to_show:
+            package_name = package_data_to_show.get("name", "Unknown Package")
+            new_label_text = package_name
+        self.package_display_label.SetLabel(new_label_text)
         if self.initial_url:
             self.load_url(self.initial_url)
         self.panel.Layout()
@@ -106,17 +123,53 @@ class DevilDexApp(wx.App):
         self.custom_row_highlight_attr.SetTextColour(
             wx.BLACK
         )
-        icon_size = (16, 16)
+        original_icon_size = (16, 16)
+        scaled_icon_height = 8
+        scaled_icon_width = scaled_icon_height
+        scaled_icon_target_size = (scaled_icon_width, scaled_icon_height)
+
         self.arrow_down_bmp = wx.ArtProvider.GetBitmap(
-            wx.ART_GO_DOWN, wx.ART_BUTTON, icon_size
+            wx.ART_GO_DOWN, wx.ART_BUTTON, original_icon_size
         )
         self.arrow_up_bmp = wx.ArtProvider.GetBitmap(
-            wx.ART_GO_UP, wx.ART_BUTTON, icon_size
+            wx.ART_GO_UP, wx.ART_BUTTON, original_icon_size
         )
-        if not self.arrow_down_bmp.IsOk():
-            self.arrow_down_bmp = None
-        if not self.arrow_up_bmp.IsOk():
-            self.arrow_up_bmp = None
+        art_down_bitmap = wx.ArtProvider.GetBitmap(
+            wx.ART_GO_DOWN, wx.ART_OTHER, original_icon_size
+        )
+
+        if art_down_bitmap.IsOk():
+            img_down = (
+                art_down_bitmap.ConvertToImage()
+            )
+            if img_down.IsOk():
+                img_down.Rescale(
+                    scaled_icon_target_size[0],
+                    scaled_icon_target_size[1],
+                    wx.IMAGE_QUALITY_HIGH,
+                )
+                self.arrow_down_bmp_scaled = wx.Bitmap(img_down)
+            else:
+                self.arrow_down_bmp_scaled = None
+        else:
+            self.arrow_down_bmp_scaled = None
+
+        art_up_bitmap = wx.ArtProvider.GetBitmap(
+            wx.ART_GO_UP, wx.ART_OTHER, original_icon_size
+        )
+        if art_up_bitmap.IsOk():
+            img_up = art_up_bitmap.ConvertToImage()
+            if img_up.IsOk():
+                img_up.Rescale(
+                    scaled_icon_target_size[0],
+                    scaled_icon_target_size[1],
+                    wx.IMAGE_QUALITY_HIGH,
+                )
+                self.arrow_up_bmp_scaled = wx.Bitmap(img_up)
+            else:
+                self.arrow_up_bmp_scaled = None
+        else:
+            self.arrow_up_bmp_scaled = None
         self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
         self.animation_timer = wx.Timer(
             self
@@ -187,13 +240,9 @@ class DevilDexApp(wx.App):
                 0 <= row_idx < self.data_grid.GetNumberRows()
                 and self.docset_status_col_grid_idx != -1
             ):
-                try:
-
-                    self.data_grid.SetCellValue(
-                        row_idx, self.docset_status_col_grid_idx, current_frame_char
-                    )
-                except wx.wxAssertionError as e:  # type: ignore
-                    pass
+                self.data_grid.SetCellValue(
+                    row_idx, self.docset_status_col_grid_idx, current_frame_char
+                )
         if event:
             event.Skip()
 
@@ -208,8 +257,6 @@ class DevilDexApp(wx.App):
         """Configura la initial window."""
         self._clear_main_panel()
         self.is_log_panel_visible = False
-        self.view_doc_btn = wx.Button(self.panel, label="Start Browser")
-        self.view_doc_btn.Bind(wx.EVT_BUTTON, self.show_document)
 
         content_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -225,31 +272,43 @@ class DevilDexApp(wx.App):
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.TE_RICH2,
         )
         self.log_text_ctrl.SetMinSize(wx.Size(-1, 100))
-        initial_bmp = wx.NullBitmap
-        if self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
-            initial_bmp = self.arrow_down_bmp
-        button_size = wx.Size(22, 22)
+        initial_bmp_to_use = wx.NullBitmap
+        if (
+            self.arrow_down_bmp_scaled and self.arrow_down_bmp_scaled.IsOk()
+        ):
+            initial_bmp_to_use = self.arrow_down_bmp_scaled
+        elif (
+            self.arrow_down_bmp and self.arrow_down_bmp.IsOk()
+        ):
+            initial_bmp_to_use = self.arrow_down_bmp
+
+        button_fixed_size = wx.Size(50, 20)
+
         self.log_toggle_button = wx.BitmapButton(
             self.panel,
             id=wx.ID_ANY,
-            bitmap=initial_bmp,
-            size=button_size
+            bitmap=initial_bmp_to_use,
+            size=button_fixed_size,
+            style=wx.BU_EXACTFIT,
         )
         self.log_toggle_button.Bind(wx.EVT_BUTTON, self.on_log_toggle_button_click)
-
         bottom_bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         bottom_bar_sizer.AddStretchSpacer(1)
         button_padding = 0
         bottom_bar_sizer.Add(
-            self.log_toggle_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, button_padding
+            self.log_toggle_button,
+            proportion=0,
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=button_padding,
         )
+        sizer_internal_vertical_padding = 0
+        desired_bar_height = (
+            button_fixed_size.GetHeight() + sizer_internal_vertical_padding
+        )
+        bottom_bar_sizer.SetMinSize(wx.Size(-1, desired_bar_height))
+
         bottom_bar_sizer.AddStretchSpacer(1)
-
-        self.main_panel_sizer.Add(
-            self.view_doc_btn, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.TOP | wx.BOTTOM, 10
-        )
-
         self.main_panel_sizer.Add(
             content_sizer, 1, wx.EXPAND | wx.ALL, 0
         )
@@ -294,7 +353,7 @@ class DevilDexApp(wx.App):
         sel_data = self.get_selected_row()
         if sel_data:
             print(sel_data)
-            self.show_document()
+            self.show_document(package_data_to_show=sel_data)
         event.Skip()
 
 
@@ -371,19 +430,17 @@ class DevilDexApp(wx.App):
             return
 
         if 0 <= row_idx < self.data_grid.GetNumberRows():
-            try:
-                self.data_grid.SetCellValue(
-                    row_idx,
-                    self.docset_status_col_grid_idx,
-                    status_text,
+            self.data_grid.SetCellValue(
+                row_idx,
+                self.docset_status_col_grid_idx,
+                status_text,
+            )
+            if 0 <= row_idx < len(self.current_grid_source_data):
+                self.current_grid_source_data[row_idx]["docset_status"] = (
+                    status_text
                 )
-                if 0 <= row_idx < len(self.current_grid_source_data):
-                    self.current_grid_source_data[row_idx]["docset_status"] = (
-                        status_text
-                    )
-                self.data_grid.ForceRefresh()
-            except wx.wxAssertionError as e:  # type: ignore
-                pass
+            self.data_grid.ForceRefresh()
+
 
     def _on_generation_complete(
         self,
@@ -490,7 +547,6 @@ class DevilDexApp(wx.App):
                 event.Skip()
             return
         clicked_row = event.GetRow()
-        clicked_column = event.GetCol()
         if (
             self.custom_highlighted_row_index is not None
             and self.custom_highlighted_row_index != clicked_row
@@ -505,9 +561,6 @@ class DevilDexApp(wx.App):
             self.custom_highlighted_row_index = clicked_row
             self.selected_row_index = clicked_row
         self.data_grid.ForceRefresh()
-        cell_content = self.data_grid.GetCellValue(
-            clicked_row, clicked_column
-        )
         grid_row_data = []
         if self.data_grid:
             num_columns = self.data_grid.GetNumberCols()
@@ -574,17 +627,21 @@ class DevilDexApp(wx.App):
         if not self.log_toggle_button:
             return
 
+        target_bmp_to_use = wx.NullBitmap
+
         if self.is_log_panel_visible:
-            target_bmp = self.arrow_up_bmp
-        else:
-            target_bmp = self.arrow_down_bmp
+            if self.arrow_down_bmp_scaled and self.arrow_down_bmp_scaled.IsOk():
+                target_bmp_to_use = self.arrow_down_bmp_scaled
+            elif self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
+                target_bmp_to_use = self.arrow_down_bmp
+        elif self.arrow_up_bmp_scaled and self.arrow_up_bmp_scaled.IsOk():
+            target_bmp_to_use = self.arrow_up_bmp_scaled
+        elif self.arrow_up_bmp and self.arrow_up_bmp.IsOk():
+            target_bmp_to_use = self.arrow_up_bmp
 
-        if target_bmp and target_bmp.IsOk():
-            if isinstance(self.log_toggle_button, wx.BitmapButton):
-                self.log_toggle_button.SetBitmap(target_bmp)
-        elif isinstance(self.log_toggle_button, wx.BitmapButton):
-            self.log_toggle_button.SetBitmap(wx.NullBitmap)
 
+        if isinstance(self.log_toggle_button, wx.BitmapButton):
+            self.log_toggle_button.SetBitmap(target_bmp_to_use)
 
     def update_grid(self, data: Optional[List[Dict]] = None) -> None:
         """Populate self.data_grid con i dati."""
@@ -643,7 +700,6 @@ class DevilDexApp(wx.App):
         """Clear il main_panel_sizer e empties references to widget."""
         if self.main_panel_sizer and self.main_panel_sizer.GetItemCount() > 0:
             self.main_panel_sizer.Clear(True)
-        self.view_doc_btn = None
         self.webview = None
         self.back_button = None
         self.forward_button = None
@@ -659,7 +715,7 @@ class DevilDexApp(wx.App):
         self.log_text_ctrl = None
         self.log_toggle_button = None
         self.is_log_panel_visible = False
-
+        self.package_display_label = None
         if self.panel:
             self.panel.Layout()
         if self.main_frame:
@@ -691,8 +747,6 @@ class DevilDexApp(wx.App):
                     if button_widget:
                         button_widget.Enable(False)
         disable_if_any_task_running = self.is_task_running
-        if self.view_doc_btn:
-            self.view_doc_btn.Enable(not disable_if_any_task_running)
         if self.home_button:
             self.home_button.Enable(not disable_if_any_task_running)
 
@@ -744,7 +798,6 @@ class DevilDexApp(wx.App):
     def _initiate_generation_task(self, package_data: dict, row_index: int) -> None:
         """Initiate the UI updates and starts the generation thread for the given package."""
         package_id = package_data.get("id")
-        package_name = package_data.get("name", "N/D")
 
         self.active_generation_tasks[package_id] = row_index
         self._update_action_buttons_state()
@@ -790,7 +843,7 @@ class DevilDexApp(wx.App):
                 "regenerate_action_button",
                 self.on_regenerate_docset,
             ),
-            ("View Error Log ❗", "view_log_action_button", self.on_view_log),
+            ("View Error Log 📄", "view_log_action_button", self.on_view_log),
             ("Delete Docset 🗑️", "delete_action_button", self.on_delete_docset),
         ]
 
