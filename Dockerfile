@@ -20,7 +20,7 @@ RUN echo 'Acquire::https::Verify-Peer "false";' > /etc/apt/apt.conf.d/99temporar
     echo "Updating package lists with SSL verification disabled (unsafe)..." && \
     apt-get update -o Debug::Acquire::https=true && \
     echo "Reinstalling ca-certificates..." && \
-    apt-get install -y --reinstall ca-certificates apt-transport-https && \
+    apt-get install --no-install-recommends -y --reinstall ca-certificates apt-transport-https && \
     update-ca-certificates --fresh && \
     echo "CRITICAL: Removing temporary unsafe SSL setting for APT..." && \
     rm /etc/apt/apt.conf.d/99temporarily-unsafe-ssl
