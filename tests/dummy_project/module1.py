@@ -3,8 +3,7 @@
 
 
 def a_simple_function():
-    """
-    This is a docstring for a_simple_function.
+    """This is a docstring for a_simple_function.
 
     It doesn't do much!
     """
@@ -12,8 +11,7 @@ def a_simple_function():
 
 
 class AnotherSimpleClass:
-    """
-    This is a docstring for AnotherSimpleClass.
+    """This is a docstring for AnotherSimpleClass.
 
     It's also quite simple.
     """
@@ -22,6 +20,6 @@ class AnotherSimpleClass:
         """Initializes the class."""
         self.name = name
 
-    def greet(self):
+    def greet(self) -> str:
         """Greets someone."""
         return f"Hello, {self.name}, from AnotherSimpleClass!"

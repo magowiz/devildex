@@ -1,3 +1,4 @@
+"""models module."""
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
@@ -19,7 +20,6 @@ class PackageDetails:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PackageDetails":
         """Crea un'istanza di PackageDetails da un dizionario."""
-
         return cls(
             name=data.get("name", ""),
             version=data.get("version", ""),

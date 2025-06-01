@@ -6,10 +6,8 @@ from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
 from devildex.models import PackageDetails
-from devildex.readthedocs.readthedocs_api import \
-    download_readthedocs_prebuilt_robust
-from devildex.readthedocs.readthedocs_src import \
-    download_readthedocs_source_and_build
+from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
+from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 
 
@@ -38,12 +36,12 @@ class Orchestrator:
         self._effective_source_path = None
 
     def fetch_repo(self) -> bool:
-        """
-        Ensures that project sources are available, either from an initial path
+        """Ensures that project sources are available, either from an initial path
         or by fetching them. Sets self._effective_source_path.
 
         Returns:
             bool: True if sources are now available at self._effective_source_path, False otherwise.
+
         """
         self._effective_source_path = None
         source_path_candidate: Path | None = None
@@ -188,7 +186,7 @@ class Orchestrator:
             print("scan cannot detect any doc, unable to grab")
         return self.last_operation_result
 
-    def start_scan(self):
+    def start_scan(self) -> None:
         """Start the scanning process."""
         self.detected_doc_type = "unknown"
         if not self.fetch_repo():

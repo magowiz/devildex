@@ -246,7 +246,7 @@ def _prepare_command_env(
 
 def _log_command_failure_details(
     description: str, returncode: int, stdout_text: str | None, stderr_text: str | None
-):
+) -> None:
     """Logs details and prints debug info for a failed command."""
     logger.warning("%s failed. Return code: %s", description, returncode)
     if stdout_text and stdout_text.strip():

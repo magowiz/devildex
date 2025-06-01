@@ -49,7 +49,7 @@ def find_doc_source_in_clone(repo_path: Path) -> Path:
     return doc_source_path
 
 
-def _find_doc_dir_in_repo(repo_path, potential_doc_dirs):
+def _find_doc_dir_in_repo(repo_path, potential_doc_dirs: list) -> str:
     """Finds the first potential documentation directory that contains a conf.py file.
 
     Also checks the repository root if no specific doc directory is found.
@@ -297,7 +297,7 @@ def _cleanup(clone_dir_path):
             )
 
 
-def _extract_repo_url_branch(api_project_detail_url, project_slug):
+def _extract_repo_url_branch(api_project_detail_url, project_slug) -> tuple[str, str]:
     repo_url = None
     default_branch = "main"
     try:
@@ -323,7 +323,7 @@ def _extract_repo_url_branch(api_project_detail_url, project_slug):
     return default_branch, repo_url
 
 
-def run_clone(repo_url, default_branch, clone_dir_path, bzr):
+def run_clone(repo_url: str, default_branch, clone_dir_path, bzr: bool):
     """Perform a clone for matching vcs."""
     successful_clone = False
     print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
@@ -605,7 +605,7 @@ def download_readthedocs_source_and_build(
     return _download_handle_result(isolated_source_path, build_output_path)
 
 
-def _download_handle_result(isolated_source_path, build_output_path):
+def _download_handle_result(isolated_source_path, build_output_path: Path):
     if isolated_source_path and build_output_path:
         print(f"\nIsolated source documentation in: {isolated_source_path}")
         print(f"Build HTML Sphinx generata in:    {build_output_path}")

@@ -124,7 +124,7 @@ class IsolatedVenvManager:
         self.python_executable = None
         self.pip_executable = None
 
-    def __enter__(self):
+    def __enter__(self) -> "IsolatedVenvManager":
         """Sets up the isolated virtual environment.
 
         This method is called when entering the 'with' statement. It creates
@@ -149,7 +149,7 @@ class IsolatedVenvManager:
             )
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         """Clean up resources when exiting the context.
 
         This method is called automatically when the 'with' statement block is exited.

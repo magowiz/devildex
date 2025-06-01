@@ -6,10 +6,12 @@ import re
 import shutil
 from pathlib import Path
 
-from devildex.scanner_utils.scanner_utils import (check_content_patterns,
-                                                  count_matching_strings,
-                                                  find_config_files,
-                                                  read_file_content_robustly)
+from devildex.scanner_utils.scanner_utils import (
+    check_content_patterns,
+    count_matching_strings,
+    find_config_files,
+    read_file_content_robustly,
+)
 
 
 def is_sphinx_project(project_path: str) -> bool:
@@ -20,6 +22,7 @@ def is_sphinx_project(project_path: str) -> bool:
 
     Returns:
         True if il project is identified as Sphinx, False otherwise.
+
     """
     project_dir = Path(project_path)
 
@@ -192,7 +195,7 @@ LOG_LEVEL = "INFO"
 
 
 def _check_file_for_docstrings(file_path: Path) -> bool:
-    """Checks a single Python file for module, function, or class docstrings.
+    """Check a single Python file for module, function, or class docstrings.
 
     Returns True if any docstring is found, False otherwise.
     """

@@ -23,7 +23,7 @@ def find_pyproject_toml(start_path="."):
         current_path = parent_path
 
 
-def add_deps_from_section(section_data, explicit_deps):
+def add_deps_from_section(section_data, explicit_deps: set) -> None:
     """Add read dependencies from a specific section to explicit deps."""
     if isinstance(section_data, dict):
         for name in section_data.keys():
@@ -40,6 +40,7 @@ def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
 
     Returns:
         A dictionary with the parsed TOML data, or None if an error occurs.
+
     """
     try:
         with open(pyproject_path, "r", encoding="utf-8") as f:
@@ -73,6 +74,7 @@ def get_explicit_poetry_dependencies(pyproject_path: str | None) -> set[str]:
         set[str]: A set di strings containing explicit dependencies names.
                   Returns un empty set if file not exist, not readable,
                   not a valid Poetry project, or haven't got explicit dependencies.
+
     """
     explicit_deps: set[str] = set()
     if not pyproject_path:
@@ -109,6 +111,7 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
 
     Returns:
         The package name if successfully parsed, otherwise None.
+
     """
     stripped_line = line_content.strip()
     if (
@@ -147,6 +150,7 @@ def get_explicit_package_names_from_requirements(
         or contains no valid requirements.
         May raise exceptions for critical unrecoverable errors not related to
         individual line parsing or basic file I/O.
+
     """
     explicit_package_names: set[str] = set()
 
@@ -207,6 +211,7 @@ def get_explicit_dependencies_from_project_config(start_path="."):
              Returns an empty set if no valid configuration file is found
              o if there are read/parsing errors.
              Stampa warning/error su stderr.
+
     """
     pyproject_path = find_pyproject_toml(start_path)
     if pyproject_path:

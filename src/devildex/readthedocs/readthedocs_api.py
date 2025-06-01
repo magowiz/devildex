@@ -119,7 +119,7 @@ def _fetch_version_details(project_slug, version_slug):
         return None
 
 
-def _get_download_url(version_details, download_format):
+def _get_download_url(version_details, download_format) -> str:
     """Extract download URL for specific format from version details."""
     if not version_details:
         print("Error: version details not available to search for the download URL.")
@@ -209,7 +209,7 @@ def _download_file(file_url, local_filepath):
 
 
 def download_readthedocs_prebuilt_robust(
-    project_name,
+    project_name: str,
     download_folder="rtd_prebuilt_downloads",
     preferred_versions=("stable", "latest"),
     download_format="htmlzip",
@@ -225,6 +225,7 @@ def download_readthedocs_prebuilt_robust(
 
     Returns:
         str: Il path downloaded file, o None in caso di failure.
+
     """
     final_downloaded_path = None
 

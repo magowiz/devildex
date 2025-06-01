@@ -1,14 +1,16 @@
 import os
 import sys
+from pathlib import Path
 
 import toml
 
 
-def find_pyproject_toml(start_path="."):
+def find_pyproject_toml(start_path: str=".") -> Path | None:
     """Cerca pyproject.toml nella current directory or nelle parent directory.
 
     Returns:
         absolute path or None se non trovato.
+
     """
     current_path = os.path.abspath(start_path)
     while True:
@@ -40,11 +42,11 @@ def _read_project_data_toml(pyproject_path):
     return pyproject_data
 
 
-def get_explicit_poetry_dependencies(pyproject_path):
-    """Read pyproject.toml e returns un set con i nomi delle direct dependencies
+def get_explicit_poetry_dependencies(pyproject_path: Path):
+    """Read pyproject.toml e returns un set con i nomi delle direct dependencies.
+
     (from tool.poetry.dependencies and tool.poetry.group.*.dependencies sections).
     """
-
     pyproject_data = _read_project_data_toml(pyproject_path)
     explicit_deps = set()
 
