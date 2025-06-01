@@ -45,7 +45,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
  apt-get update && \
     for TENTATIVO_CORRENTE in $(seq 1 ${MAX_TENTATIVI}); do \
       echo "INFO: Tentativo ${TENTATIVO_CORRENTE}/${MAX_TENTATIVI} di installare i pacchetti..."; \
-      if $APT_CMD ; then \
+      if "$APT_CMD" ; then \
         echo "INFO: Installazione pacchetti riuscita al tentativo ${TENTATIVO_CORRENTE}."; \
         break; \
       else \
@@ -58,7 +58,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
       fi; \
     done \
      && rm -rf /var/lib/apt/lists/*
-
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
 RUN poetry self add poetry-plugin-export
 
