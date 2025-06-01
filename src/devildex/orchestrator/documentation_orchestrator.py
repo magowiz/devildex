@@ -112,11 +112,6 @@ class Orchestrator:
     @property
     def _grabbers(self):
         """Property to dynamically build the grabbers configuration."""
-        initial_path_str = (
-            str(self.package_details.initial_source_path)
-            if self.package_details.initial_source_path
-            else None
-        )
         effective_source_path_str = (
             str(self._effective_source_path) if self._effective_source_path else None
         )
