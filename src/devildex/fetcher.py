@@ -1,3 +1,4 @@
+"""fetching module."""
 import json
 import logging
 import pathlib
@@ -21,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class PackageSourceFetcher:
-    def __init__(self, base_save_path: str, package_info_dict: dict):
+    """Class that implement fetching mechanisms for packages."""
+
+    def __init__(self, base_save_path: str, package_info_dict: dict) -> None:
+        """Construct a PackageSourceFetcher object."""
         self.base_save_path = pathlib.Path(base_save_path)
 
         self.package_name = package_info_dict.get("name")
@@ -45,7 +49,8 @@ class PackageSourceFetcher:
             f"Fetcher inizializzato per {self.package_name} v{self.package_version}. Target: {self.download_target_path}"
         )
 
-    def _sanitize_path_component(self, name: str) -> str:
+    @staticmethod
+    def _sanitize_path_component(name: str) -> str:
         if not name:
             return "unknown_component"
         name = re.sub(r'[<>:"/\\|?*\s]+', "_", name)
@@ -166,7 +171,8 @@ class PackageSourceFetcher:
         )
         return None
 
-    def _is_valid_vcs_url(self, url: str) -> bool:
+    @staticmethod
+    def _is_valid_vcs_url(url: str) -> bool:
         if not url:
             return False
         return any(
@@ -260,7 +266,7 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _run_git_command(
-        command_list: list, cwd: pathlib.Path | None = None, check_errors=True
+        command_list: list, cwd: pathlib.Path | None = None, check_errors: bool =True
     ) -> subprocess.CompletedProcess | None:
         cmd_str = " ".join(command_list)
         logger.info(
@@ -295,7 +301,8 @@ class PackageSourceFetcher:
             )
         return None
 
-    def _cleanup_git_dir_from_path(self, path_to_clean: pathlib.Path) -> bool:
+    @staticmethod
+    def _cleanup_git_dir_from_path(path_to_clean: pathlib.Path) -> bool:
         git_dir = path_to_clean / ".git"
         if git_dir.is_dir():
             logger.info(f"Rimozione della directory .git da {path_to_clean}")
@@ -489,6 +496,7 @@ class PackageSourceFetcher:
         return False
 
     def fetch(self) -> tuple[bool, bool, str | None]:
+        """Fetch repository."""
         master = False
         logger.info(
             f"--- Inizio fetch per {self.package_name} v{self.package_version} ---"
@@ -554,11 +562,12 @@ class PackageSourceFetcher:
         return False, False, None
 
 
-def _pprint_(data) -> None:
+def _pprint_(data: dict | list) -> None:
     print(json.dumps(data, sort_keys=True, indent=4))
 
 
 def main() -> None:
+    """Test purpose."""
     explicit = get_explicit_dependencies_from_project_config()
     pkg_info = get_installed_packages_with_project_urls(explicit=explicit)
     _pprint_(pkg_info)

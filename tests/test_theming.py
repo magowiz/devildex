@@ -1,8 +1,10 @@
+"""module that tests theming features."""
 import shutil
 import webbrowser
 from pathlib import Path
 
 import pytest
+
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.info import PROJECT_ROOT
 from devildex.readthedocs.readthedocs_src import build_sphinx_docs
@@ -24,8 +26,8 @@ PYDOCTOR_THEME_SOURCE = (
 
 @pytest.fixture
 def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
-    """
-    Fixture che copia il contenuto di 'tests/dummy_project' in una
+    """Fixture che copia il contenuto di 'tests/dummy_project' in una.
+
     sottodirectory di tmp_path e restituisce il percorso a questa copia.
     """
     create_nested_structure = getattr(request, "param", False)
@@ -47,7 +49,8 @@ def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
         return direct_project_copy_destination
 
 
-def test_sphinx_theme(dummy_project_in_tmp_path: Path):
+def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
+    """Test applying a sphinx theme."""
     conf_path = Path(dummy_project_in_tmp_path / "docs" / "source" / "conf.py")
     t_man = ThemeManager(
         dummy_project_in_tmp_path, "sphinx", sphinx_conf_file=conf_path
@@ -74,7 +77,8 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path):
 
 
 @pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
-def test_pdoc3_theme(dummy_project_in_tmp_path: Path):
+def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
+    """Test applying a pdoc3 theme."""
     doc_generator = DocStringsSrc(template_dir=PDOC3_THEME_SOURCE)
     pdoc_build_root_dir = dummy_project_in_tmp_path / "pdoc3_docs_output"
     project_root_for_pdoc3 = dummy_project_in_tmp_path
@@ -135,7 +139,8 @@ def _minimal_build_pydoctor_docs(
 
 
 @pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
-def test_pydoctor_theme(dummy_project_in_tmp_path: Path):
+def test_pydoctor_theme(dummy_project_in_tmp_path: Path) -> None:
+    """Test applying a pydoctor theme."""
     project_name_for_pydoctor_docs = "DummyPyDoc"
     module_file_to_doc_pydoctor = "dummy_project"
     pydoctor_build_root_dir = dummy_project_in_tmp_path / "pydoctor_docs_output"
