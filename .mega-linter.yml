@@ -24,3 +24,4 @@ SHOW_ELAPSED_TIME: true
 
 EXCLUDED_DIRECTORIES:
   - source
+  - src/devildex/theming/common_assets/bootstrap
