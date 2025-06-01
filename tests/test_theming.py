@@ -4,6 +4,7 @@ import webbrowser
 from pathlib import Path
 
 import pytest
+from pytest import FixtureRequest
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.info import PROJECT_ROOT
@@ -25,7 +26,7 @@ PYDOCTOR_THEME_SOURCE = (
 
 
 @pytest.fixture
-def dummy_project_in_tmp_path(tmp_path: Path, request) -> Path:
+def dummy_project_in_tmp_path(tmp_path: Path, request: FixtureRequest) -> Path:
     """Fixture che copia il contenuto di 'tests/dummy_project' in una.
 
     sottodirectory di tmp_path e restituisce il percorso a questa copia.

@@ -1,3 +1,5 @@
+"""test orchestrator module."""
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -188,69 +190,41 @@ PACKAGES_TO_TEST = [
     },
 ]
 
+GIT_FULL_PATH = shutil.which("git")
 
 @pytest.mark.parametrize("package_config", PACKAGES_TO_TEST)
-def test_orchestrator_documentation_retrieval(package_config, tmp_path) -> None:
+def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Path) -> None:
     """Test orchestrator retrieval."""
     details_data_from_config = package_config["details_data"].copy()
     repo_url_for_clone = package_config["repo_url_for_clone"]
     expected_preferred_doc_type = package_config["expected_preferred_type"]
     expected_entry_point_filename = package_config.get("expected_entry_point")
     expect_success = package_config.get("expect_grab_success", True)
-
     package_name_for_paths = details_data_from_config['name']
     clone_target_dir = tmp_path / f"source_clone_{package_name_for_paths}"
-    print(f"\nCloning {repo_url_for_clone} to {clone_target_dir} for package {package_name_for_paths}...")
-    try:
-        subprocess.run(
-            ["git", "clone", "--depth", "1", repo_url_for_clone, str(clone_target_dir)],
-            check=True,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-        )
-    except subprocess.CalledProcessError as e:
-        pytest.fail(f"Git clone failed for {repo_url_for_clone}: {e.stderr}")
-    except FileNotFoundError:
-        pytest.fail("Git command not found. Ensure git is installed and in PATH.")
-
+    subprocess.run(  # noqa: S603
+        [GIT_FULL_PATH, "clone", "--depth", "1", repo_url_for_clone, str(clone_target_dir)],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
     orchestrator_base_output_for_test = tmp_path / f"orchestrator_output_{package_name_for_paths}"
     details_data_from_config["initial_source_path"] = str(clone_target_dir)
     package_details_for_test = PackageDetails.from_dict(details_data_from_config)
-    print(f"Initializing Orchestrator for {package_details_for_test.name} at {clone_target_dir}")
     orchestrator = Orchestrator(
         package_details=package_details_for_test,
         base_output_dir=orchestrator_base_output_for_test
     )
-
     orchestrator.start_scan()
     detected_doc_type = orchestrator.get_detected_doc_type()
-    print(
-        f"Project: {package_details_for_test.name}, Detected documentation type by "
-        f"Orchestrator: {detected_doc_type}"
-    )
-
     assert (
         detected_doc_type == expected_preferred_doc_type
     ), f"For {package_details_for_test.name}, expected preferred type '{expected_preferred_doc_type}'"
     f" but Orchestrator detected '{detected_doc_type}'"
-
-    print(
-        f"Orchestrator attempting to grab/build docs for {package_details_for_test.name} "
-        f"using type: {detected_doc_type}..."
-    )
     output_docs_root_path_str = orchestrator.grab_build_doc()
-    print(
-        "DEBUG: Path returned by grab_build_doc for "
-        f"{package_details_for_test.name}: {output_docs_root_path_str}"
-    )
 
     operation_result = orchestrator.get_last_operation_result()
-
-    print(
-        f"Project: {package_details_for_test.name}, Orchestrator grab_build_doc result:"
-        f" {operation_result}, Output path from return: {output_docs_root_path_str}"
-    )
 
     if expect_success:
         assert (
@@ -276,7 +250,6 @@ def test_orchestrator_documentation_retrieval(package_config, tmp_path) -> None:
             output_docs_root_path.is_dir()
         ), f"Output path '{output_docs_root_path}' from "
         f"Orchestrator is not a directory for {package_details_for_test.name}"
-
         assert (
             expected_entry_point_filename is not None
         ), "expected_entry_point_filename is missing in test "
@@ -300,8 +273,3 @@ def test_orchestrator_documentation_retrieval(package_config, tmp_path) -> None:
             output_docs_root_path_str is None
         ), f"Expected grab_build_doc to return None for {package_details_for_test.name} "
         f"due to expected failure, but got: {output_docs_root_path_str}"
-
-    print(
-        f"Successfully processed and verified {package_details_for_test.name} with "
-        "type {detected_doc_type}."
-    )

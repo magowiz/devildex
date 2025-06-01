@@ -24,7 +24,7 @@ if not logger.hasHandlers():
     )
 
 CONF_SPHINX_FILE = "conf.py"
-
+GIT_FULL_PATH = shutil.which('git')
 
 def find_doc_source_in_clone(repo_path: Path) -> Path:
     """Identify the documentation source directory within a cloned repository.
@@ -341,7 +341,7 @@ def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: boo
     cmd_bzr = ["bzr", "branch", repo_url, str(clone_dir_path)]
     try:
         if not bzr:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 cmd_git,
                 check=False,
                 capture_output=True,
@@ -353,9 +353,9 @@ def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: boo
             if result.returncode != 0:
                 for default_branch in fallback_branches:  # pylint: disable=R1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
-                    result = subprocess.run(
+                    result = subprocess.run(  # noqa: S603
                         [
-                            "git",
+                            GIT_FULL_PATH,
                             "clone",
                             "--depth",
                             "1",
@@ -373,7 +373,7 @@ def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: boo
                         successful_clone = True
                         break
         else:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 cmd_bzr,
                 check=True,
                 capture_output=True,

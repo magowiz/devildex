@@ -316,12 +316,13 @@ def execute_command(
     command: list[str], description: str, cwd: str | Path | None = None, env : dict = None
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
+    if not command:
+        return "", "Lista comandi vuota", -1
     cwd_str = str(cwd) if cwd else None
     command_str_for_log = " ".join(command)
     try:
         current_env = _prepare_command_env(os.environ.copy(), env)
-
-        process = subprocess.run(
+        process = subprocess.run(  # noqa: S602, S603
             command,
             capture_output=True,
             text=True,
@@ -329,7 +330,7 @@ def execute_command(
             cwd=cwd_str,
             encoding="utf-8",
             errors="replace",
-            env=current_env,
+            env=current_env
         )
 
         ret_code = _handle_command_result(process, command, description, cwd_str)

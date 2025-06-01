@@ -6,6 +6,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import TracebackType
+from typing import Optional, Type
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,7 @@ class IsolatedVenvManager:
         print(f"DEBUG VENV_CM: Attempting to create venv at: {self.venv_path}")
 
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 [sys.executable, "-m", "venv", str(self.venv_path)],
                 check=True,
                 capture_output=True,
@@ -90,7 +92,7 @@ class IsolatedVenvManager:
             return
         try:
             logger.info("Upgrading pip in venv: %s", self.venv_path)
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 [self.python_executable, "-m", "pip", "install", "--upgrade", "pip"],
                 check=True,
                 capture_output=True,
@@ -149,7 +151,7 @@ class IsolatedVenvManager:
             )
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]) -> bool:
         """Clean up resources when exiting the context.
 
         This method is called automatically when the 'with' statement block is exited.

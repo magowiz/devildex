@@ -1,6 +1,7 @@
 """scanner module."""
 
 import ast
+import logging
 import os
 import re
 import shutil
@@ -211,9 +212,9 @@ def _check_file_for_docstrings(file_path: Path) -> bool:
                 if ast.get_docstring(node):
                     return True
     except SyntaxError:
-        pass
+        logging.error("syntax error exception")
     except Exception:  # pylint: disable=broad-except
-        pass
+        logging.error("generic exception")
     return False
 
 

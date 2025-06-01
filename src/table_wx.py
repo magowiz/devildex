@@ -1,4 +1,6 @@
 """module with example wx.grid.Grid."""
+from typing import Optional
+
 import wx
 import wx.grid
 
@@ -6,7 +8,8 @@ import wx.grid
 class MyFrame(wx.Frame):
     """MyFrame example class."""
 
-    def __init__(self, parent, title: str) -> None:
+    def __init__(self, parent: Optional[wx.Window], title: str) -> None:
+        """MyFrame constructor."""
         super(MyFrame, self).__init__(parent, title=title, size=(400, 300))
 
         panel = wx.Panel(self)

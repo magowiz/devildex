@@ -17,7 +17,7 @@ class Orchestrator:
     def __init__(
         self,
         package_details: PackageDetails,
-        base_output_dir: str = None,
+        base_output_dir: Path | str = None,
     ) -> None:
         """Implement class constructor."""
         self.package_details = package_details
@@ -221,73 +221,3 @@ class Orchestrator:
     def get_last_operation_result(self) -> str | bool:
         """Get last operation result."""
         return self.last_operation_result
-
-
-if __name__ == "__main__":
-    print("--- Orchestrator Usage Example ---")
-
-    EXAMPLE_PROJECT_PATH_RTD = "/tmp/test_project_for_rtd"
-    EXAMPLE_RTD_URL = "https://example-docs.readthedocs.io"
-
-    EXAMPLE_PROJECT_PATH_LOCAL = "/tmp/test_project_local_scan"
-
-    EXAMPLE_PROJECT_PATH_UNKNOWN = "/tmp/test_project_unknown"
-
-    print(f"\n--- Scenario 1: Project with ReadTheDocs URL ({EXAMPLE_RTD_URL}) ---")
-    orchestrator1 = Orchestrator(
-        project_name="test_project_rtd",
-        project_path=EXAMPLE_PROJECT_PATH_RTD,
-        rtd_url=EXAMPLE_RTD_URL,
-    )
-
-    print("Starting scan...")
-    orchestrator1.start_scan()
-    print(f"Detected type: {orchestrator1.get_detected_doc_type()}")
-
-    print("Starting grab/build documentation...")
-    orchestrator1.grab_build_doc()
-    print(f"Operation outcome: {orchestrator1.get_last_operation_result()}")
-
-    print(
-        "\n--- Scenario 2: Project without RTD URL (path: "
-        f"{EXAMPLE_PROJECT_PATH_LOCAL}) ---"
-    )
-    orchestrator2 = Orchestrator(
-        project_path=EXAMPLE_PROJECT_PATH_LOCAL,
-        rtd_url=None,
-        project_name="test_project_local",
-    )
-
-    print("Starting scan...")
-    orchestrator2.start_scan()
-    print(f"Detected type: {orchestrator2.get_detected_doc_type()}")
-
-    print("Starting grab/build documentation...")
-    orchestrator2.grab_build_doc()
-    print(f"Operation outcome: {orchestrator2.get_last_operation_result()}")
-    print(
-        "\n--- Scenario 3: Project with no detectable documentation "
-        f"({EXAMPLE_PROJECT_PATH_UNKNOWN}) ---"
-    )
-    orchestrator3 = Orchestrator(
-        project_path=EXAMPLE_PROJECT_PATH_UNKNOWN, project_name="test_project_unknown"
-    )
-
-    print("Starting scan...")
-    orchestrator3.start_scan()
-    print(f"Detected type: {orchestrator3.get_detected_doc_type()}")
-
-    print("Starting grab/build documentation...")
-    orchestrator3.grab_build_doc()
-    print(f"Operation outcome: {orchestrator3.get_last_operation_result()}")
-
-    print("\n--- Scenario 4: Calling grab_build_doc() before start_scan() ---")
-    orchestrator4 = Orchestrator(
-        project_path="/tmp/another_project_no_scan",
-        project_name="another_project_no_scan",
-    )
-    print("Attempting grab/build documentation without prior scan...")
-    orchestrator4.grab_build_doc()
-    print(f"Operation outcome: {orchestrator4.get_last_operation_result()}")
-
-    print("\n--- End of Orchestrator Usage Example ---")

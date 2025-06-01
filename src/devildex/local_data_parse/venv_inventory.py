@@ -6,7 +6,7 @@ from devildex.models import PackageDetails
 
 PART_LENGTH = 2
 
-def get_installed_packages_with_project_urls(explicit: list | None = None):
+def get_installed_packages_with_project_urls(explicit: set | None = None) -> list:
     """Restituisce una lista di oggetti PackageDetails per tutti i pacchetti installati.
 
     (o per quelli specificati esplicitamente), includendo nome, versione
@@ -47,22 +47,3 @@ def get_installed_packages_with_project_urls(explicit: list | None = None):
         package_list.append(pkg_details)
 
     return package_list
-
-
-if __name__ == "__main__":
-
-    installed_packages_details: list[PackageDetails] = (
-        get_installed_packages_with_project_urls()
-    )
-
-    print("Pacchetti Python installati (come oggetti PackageDetails):")
-    for pkg_detail in installed_packages_details:  # Rinominato per chiarezza
-        print(
-            f"\n  Pacchetto: {pkg_detail.name} ({pkg_detail.version})"
-        )  # Accedi come attributi
-        if pkg_detail.project_urls:
-            print("    Project-URL:")
-            for label, url in pkg_detail.project_urls.items():
-                print(f"      - {label}: {url}")
-        else:
-            print("    - Nessun Project-URL trovato.")
