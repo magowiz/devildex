@@ -12,16 +12,15 @@ PACKAGES_TO_TEST = [
     {
         "details_data": {
             "name": "black",
-            "version": "24.4.2", # Versione specifica per il test del fetcher
+            "version": "24.4.2",
             "project_urls": {
                 "Source Code": "https://github.com/psf/black.git",
                 "Documentation": "https://black.readthedocs.io/",
             },
-            # vcs_url e rtd_url possono essere qui o derivati/sovrascritti nel test
             "vcs_url": "https://github.com/psf/black.git",
             "rtd_url": "https://black.readthedocs.io/",
         },
-        "repo_url_for_clone": "https://github.com/psf/black.git", # Usato per il clone iniziale nel test
+        "repo_url_for_clone": "https://github.com/psf/black.git",
         "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html"
     },
@@ -60,10 +59,11 @@ PACKAGES_TO_TEST = [
             "name": "project-slug-intended-to-fail-rtd",
             "version": "1.0.0",
             "project_urls": {
-                "Source Code": "https://github.com/psf/black.git", # Sorgente valido
-                "Documentation": "https://this-rtd-project-should-not-exist.readthedocs.io/",
+                "Source Code": "https://github.com/psf/black.git",
+                "Documentation":
+                    "https://this-rtd-project-should-not-exist.readthedocs.io/",
             },
-            "vcs_url": "https://github.com/psf/black.git", # Sorgente valido
+            "vcs_url": "https://github.com/psf/black.git",
             "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",
         },
         "repo_url_for_clone": "https://github.com/psf/black.git",
@@ -203,13 +203,16 @@ def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Pa
     package_name_for_paths = details_data_from_config['name']
     clone_target_dir = tmp_path / f"source_clone_{package_name_for_paths}"
     subprocess.run(  # noqa: S603
-        [GIT_FULL_PATH, "clone", "--depth", "1", repo_url_for_clone, str(clone_target_dir)],
+        [GIT_FULL_PATH,
+         "clone", "--depth", "1", repo_url_for_clone,
+         str(clone_target_dir)],
         check=True,
         capture_output=True,
         text=True,
         encoding="utf-8",
     )
-    orchestrator_base_output_for_test = tmp_path / f"orchestrator_output_{package_name_for_paths}"
+    orchestrator_base_output_for_test = (tmp_path /
+                                         f"orchestrator_output_{package_name_for_paths}")
     details_data_from_config["initial_source_path"] = str(clone_target_dir)
     package_details_for_test = PackageDetails.from_dict(details_data_from_config)
     orchestrator = Orchestrator(
@@ -220,7 +223,8 @@ def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Pa
     detected_doc_type = orchestrator.get_detected_doc_type()
     assert (
         detected_doc_type == expected_preferred_doc_type
-    ), f"For {package_details_for_test.name}, expected preferred type '{expected_preferred_doc_type}'"
+    ), (f"For {package_details_for_test.name}, expected preferred type "
+        f"'{expected_preferred_doc_type}'")
     f" but Orchestrator detected '{detected_doc_type}'"
     output_docs_root_path_str = orchestrator.grab_build_doc()
 
@@ -233,7 +237,8 @@ def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Pa
         f"(detected type: {detected_doc_type}). Result: {operation_result}"
         assert isinstance(
             operation_result, str
-        ), f"Expected a path string from successful grab_build_doc for {package_details_for_test.name},"
+        ), ("Expected a path string from successful grab_build_doc for"
+            f" {package_details_for_test.name},")
         f" got {type(operation_result)}. Value: {operation_result}"
         assert (
             output_docs_root_path_str == operation_result
@@ -266,7 +271,8 @@ def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Pa
     else:
         assert (
             operation_result is None
-        ), f"Expected grab_build_doc to result in None for {package_details_for_test.name} due to "
+        ), ("Expected grab_build_doc to result in None for "
+            f"{package_details_for_test.name} due to ")
         f"expected failure, but got type {type(operation_result)}"
         f" with value: {operation_result}"
         assert (
