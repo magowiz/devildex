@@ -41,6 +41,11 @@ class DevilDexApp(wx.App):
         self.custom_highlighted_row_index: Optional[int] = None
         self.custom_row_highlight_attr: Optional[wx.grid.GridCellAttr] = None
         self.indicator_col_idx = 0
+        self.log_text_ctrl: Optional[wx.TextCtrl] = None
+        self.is_log_panel_visible: bool = False
+        self.log_toggle_button: Optional[wx.Button] = None
+        self.arrow_up_bmp: Optional[wx.Bitmap] = None
+        self.arrow_down_bmp: Optional[wx.Bitmap] = None
         super().__init__(redirect=False)
         self.MainLoop()
 
@@ -77,6 +82,20 @@ class DevilDexApp(wx.App):
         self.custom_row_highlight_attr.SetTextColour(
             wx.BLACK
         )
+        icon_size = (16, 16)
+        self.arrow_down_bmp = wx.ArtProvider.GetBitmap(
+            wx.ART_GO_DOWN, wx.ART_BUTTON, icon_size
+        )
+        self.arrow_up_bmp = wx.ArtProvider.GetBitmap(
+            wx.ART_GO_UP, wx.ART_BUTTON, icon_size
+        )
+
+        if not self.arrow_down_bmp.IsOk():
+            print("Attenzione: Impossibile caricare l'icona freccia GIÙ.")
+            self.arrow_down_bmp = None
+        if not self.arrow_up_bmp.IsOk():
+            print("Attenzione: Impossibile caricare l'icona freccia SU.")
+            self.arrow_up_bmp = None  # Resetta se non valida
 
         self._setup_initial_view()
         self.main_frame.Show(True)
@@ -89,34 +108,88 @@ class DevilDexApp(wx.App):
         self._setup_initial_view()
 
     def _setup_initial_view(self) -> None:
-        """Configura la initial window (per ora solo il button)."""
+        """Configura la initial window."""
         self._clear_main_panel()
-        content_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.is_log_panel_visible = False
         self.view_doc_btn = wx.Button(self.panel, label="Start Browser")
+        self.view_doc_btn.Bind(wx.EVT_BUTTON, self.show_document)
+
+        content_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.data_grid = wx.grid.Grid(self.panel)
+        self.data_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_grid_cell_click)
+        content_sizer.Add(self.data_grid, 1, wx.EXPAND | wx.ALL, 5)
+
+        action_buttons_sizer = self._setup_action_buttons_panel(self.panel)
+        content_sizer.Add(action_buttons_sizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        self.log_text_ctrl = wx.TextCtrl(
+            self.panel,
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.TE_RICH2,
+        )
+        self.log_text_ctrl.SetMinSize(wx.Size(-1, 100))
+        initial_bmp = wx.NullBitmap
+        if self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
+            initial_bmp = self.arrow_down_bmp
+        button_size = wx.Size(22, 22)
+        self.log_toggle_button = wx.BitmapButton(
+            self.panel,
+            id=wx.ID_ANY,
+            bitmap=initial_bmp,
+            size=button_size
+        )
+        self.log_toggle_button.Bind(wx.EVT_BUTTON, self.on_log_toggle_button_click)
+
+        bottom_bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        bottom_bar_sizer.AddStretchSpacer(1)
+        button_padding = 0
+        bottom_bar_sizer.Add(
+            self.log_toggle_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, button_padding
+        )
+        bottom_bar_sizer.AddStretchSpacer(1)
+
         self.main_panel_sizer.Add(
             self.view_doc_btn, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.TOP | wx.BOTTOM, 10
         )
-        self.view_doc_btn.Bind(
-            wx.EVT_BUTTON, self.show_document
-        )
-        self.data_grid = wx.grid.Grid(self.panel)
-        content_sizer.Add(
-            self.data_grid, 1, wx.EXPAND | wx.ALL, 5
-        )
-        self.data_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_grid_cell_click)
-        self.update_grid()
-        action_buttons_sizer = self._setup_action_buttons_panel(self.panel)
-        content_sizer.Add(
-            action_buttons_sizer, 0, wx.EXPAND | wx.ALL, 5
-        )
+
         self.main_panel_sizer.Add(
             content_sizer, 1, wx.EXPAND | wx.ALL, 0
         )
+
+        self.main_panel_sizer.Add(
+            self.log_text_ctrl, 0, wx.EXPAND | wx.ALL, 5
+        )
+        self.log_text_ctrl.Show(self.is_log_panel_visible)
+
+        self.main_panel_sizer.Add(
+            bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0
+        )
+
+        self.update_grid()
+        self._update_log_toggle_button_icon()
 
         if self.panel:
             self.panel.Layout()
         if self.main_frame:
             self.main_frame.Layout()
+
+
+    def _set_log_panel_visibility(self, visible: bool) -> None:
+        if not self.log_text_ctrl or not self.panel:
+            return
+
+        self.is_log_panel_visible = visible
+        self.log_text_ctrl.Show(self.is_log_panel_visible)
+
+        item = self.main_panel_sizer.GetItem(self.log_text_ctrl)
+        if item:
+            item.Show(self.is_log_panel_visible)
+
+        self.panel.Layout()
+        self._update_log_toggle_button_icon()
+
+
 
     def on_open_docset(self, event: wx.CommandEvent) -> None:
         """Handle open docset action."""
@@ -148,6 +221,8 @@ class DevilDexApp(wx.App):
         sel_data = self.get_selected_row()
         if sel_data:
             print(sel_data)
+            if not self.is_log_panel_visible:
+                self._set_log_panel_visibility(True)
         event.Skip()
 
     def on_delete_docset(self, event: wx.CommandEvent) -> None:
@@ -156,6 +231,11 @@ class DevilDexApp(wx.App):
         sel_data = self.get_selected_row()
         if sel_data:
             print(sel_data)
+        event.Skip()
+
+    def on_log_toggle_button_click(self, event: wx.CommandEvent) -> None:
+        """Toggle visibility of the log panel."""
+        self._set_log_panel_visibility(not self.is_log_panel_visible)
         event.Skip()
 
     def on_grid_cell_click(self, event: wx.grid.GridEvent) -> None:
@@ -278,6 +358,23 @@ class DevilDexApp(wx.App):
             return self.current_grid_source_data[self.selected_row_index]
         return None
 
+    def _update_log_toggle_button_icon(self) -> None:
+        if not self.log_toggle_button:
+            return
+
+        target_bmp: Optional[wx.Bitmap] = None
+
+        if self.is_log_panel_visible:
+            target_bmp = self.arrow_up_bmp
+        else:
+            target_bmp = self.arrow_down_bmp
+
+        if target_bmp and target_bmp.IsOk():
+            if isinstance(self.log_toggle_button, wx.BitmapButton):
+                self.log_toggle_button.SetBitmap(target_bmp)
+        elif isinstance(self.log_toggle_button, wx.BitmapButton):
+            self.log_toggle_button.SetBitmap(wx.NullBitmap)
+
 
     def update_grid(self, data: Optional[List[Dict]] = None) -> None:
         """Populate self.data_grid con i dati."""
@@ -349,6 +446,10 @@ class DevilDexApp(wx.App):
         self.regenerate_action_button = None
         self.view_log_action_button = None
         self.delete_action_button = None
+        self.log_text_ctrl = None
+        self.log_toggle_button = None
+        self.is_log_panel_visible = False
+
         if self.panel:
             self.panel.Layout()
         if self.main_frame:
