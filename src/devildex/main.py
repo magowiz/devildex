@@ -1,4 +1,6 @@
 """main application."""
+import threading
+import time
 from typing import Dict, List, Optional
 
 import wx.grid
@@ -13,6 +15,17 @@ class DevilDexCore:
     def __init__(self) -> None:
         """Initialize a new DevilDexCore instance."""
         pass
+
+    def generate_docset(self, package_data: dict) -> tuple[bool, str]:
+        """Simula la generazione di un docset.
+        Restituisce (successo, messaggio).
+        """
+        package_name = package_data.get("name", "N/D")
+        print(f"CORE: Starting generazione per {package_name}...")
+        time.sleep(10)
+        print(f"CORE: Fine generazione per {package_name}.")
+        return True, f"Docset per '{package_name}' generato con successo."
+
 
 class DevilDexApp(wx.App):
     """Main Application."""
@@ -46,6 +59,16 @@ class DevilDexApp(wx.App):
         self.log_toggle_button: Optional[wx.Button] = None
         self.arrow_up_bmp: Optional[wx.Bitmap] = None
         self.arrow_down_bmp: Optional[wx.Bitmap] = None
+        self.is_task_running: bool = False
+        self.stato_docset_col_grid_idx: int = -1
+        self.animation_timer: Optional[wx.Timer] = None
+        self.animation_frames: List[str] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+        self.current_animation_frame_idx: int = 0
+        self.active_generation_tasks: Dict[str, int] = {}
+        self.package_display_label: Optional[wx.StaticText] = (
+            None
+        )
+
         super().__init__(redirect=False)
         self.MainLoop()
 
@@ -96,10 +119,51 @@ class DevilDexApp(wx.App):
         if not self.arrow_up_bmp.IsOk():
             print("Warning: Unable to load the icon arrow SU.")
             self.arrow_up_bmp = None
+        self.stato_docset_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
+        self.animation_timer = wx.Timer(
+            self
+        )
+        self.Bind(wx.EVT_TIMER, self._on_animation_tick, self.animation_timer)
 
         self._setup_initial_view()
         self.main_frame.Show(True)
         return True
+
+
+    def _on_animation_tick(self, event: wx.TimerEvent) -> None:
+        """Aggiorna i frame dell'animazione per le righe in generazione."""
+        if not self.data_grid or not self.active_generation_tasks:
+            if event:
+                event.Skip()
+            return
+
+
+        self.current_animation_frame_idx = (
+            self.current_animation_frame_idx + 1
+        ) % len(self.animation_frames)
+        current_frame_char = self.animation_frames[self.current_animation_frame_idx]
+
+        for package_id, row_idx in list(self.active_generation_tasks.items()):
+            if (
+                0 <= row_idx < self.data_grid.GetNumberRows()
+                and self.stato_docset_col_grid_idx != -1
+            ):
+                try:
+
+                    self.data_grid.SetCellValue(
+                        row_idx, self.stato_docset_col_grid_idx, current_frame_char
+                    )
+                except wx.wxAssertionError as e:
+                    print(
+                        f"Errore wxAssertionError nell'aggiornare la cella di animazione [{row_idx},{self.stato_docset_col_grid_idx}]: {e}"
+                    )
+                except Exception as e:
+                    print(
+                        f"Errore generico nell'aggiornare la cella di animazione [{row_idx},{self.stato_docset_col_grid_idx}]: {e}"
+                    )
+        if event:
+            event.Skip()
+
 
     def go_home(self, event: wx.CommandEvent| None =None) -> None:
         """Go to initial view."""
@@ -197,16 +261,282 @@ class DevilDexApp(wx.App):
         sel_data = self.get_selected_row()
         if sel_data:
             print(sel_data)
+            self.show_document()
         event.Skip()
+
+
 
     def on_generate_docset(self, event: wx.CommandEvent) -> None:
         """Handle generate docset action."""
-        print(f"Action: Genera Docset per riga {self.selected_row_index}")
-        sel_data = self.get_selected_row()
-        if sel_data:
-            print(sel_data)
-        event.Skip()
+        if self.selected_row_index is None:
+            wx.MessageBox(
+                "Please select a package from the grid.",
+                "No Selection",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            if event:
+                event.Skip()
+            return
 
+        selected_package_data = self.get_selected_row()
+        if not selected_package_data:
+            wx.MessageBox(
+                "Selected package data not found.",
+                "Internal Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            if event:
+                event.Skip()
+            return
+
+        package_id = selected_package_data.get("id")
+        package_name = selected_package_data.get("name", "N/D")
+
+        if not package_id:
+            wx.MessageBox(
+                "Package ID missing for the selected row.",
+                "Data Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            if event:
+                event.Skip()
+            return
+
+        if package_id in self.active_generation_tasks:
+            wx.MessageBox(
+                f"Generation for '{package_name}' is already in progress.",
+                "Generation Active",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            if event:
+                event.Skip()
+            return
+
+        current_status = selected_package_data.get("docset_status", "Not Available")
+        if current_status == "📖 Available":
+            wx.MessageBox(
+                f"The docset for '{package_name}' is already available.",
+                "Already Available",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            if event:
+                event.Skip()
+            return
+
+        if not self.core:
+            wx.MessageBox(
+                "Il componente Core non è inizializzato. Impossibile generare.",
+                "Errore Critico",
+                wx.OK | wx.ICON_ERROR,
+            )
+            if event:
+                event.Skip()
+            return
+
+        print(
+            f"Avvio generazione per: {package_name} (ID: {package_id}, Riga: {self.selected_row_index})"
+        )
+        self.active_generation_tasks[package_id] = self.selected_row_index
+        self._update_action_buttons_state()
+
+        if (
+            self.data_grid
+            and self.stato_docset_col_grid_idx != -1
+            and 0 <= self.selected_row_index < self.data_grid.GetNumberRows()
+            and 0 <= self.selected_row_index < len(self.current_grid_source_data)
+        ):
+            try:
+                first_animation_frame = self.animation_frames[0]
+                self.data_grid.SetCellValue(
+                    self.selected_row_index,
+                    self.stato_docset_col_grid_idx,
+                    first_animation_frame,
+                )
+                self.current_grid_source_data[self.selected_row_index][
+                    "docset_status"
+                ] = first_animation_frame
+                self.data_grid.ForceRefresh()
+    
+            except wx.wxAssertionError as e:
+                print(
+                    f"Errore wxAssertionError nell'impostare il frame iniziale di animazione: {e}"
+                )
+            except Exception as e:
+                print(
+                    f"Errore generico nell'impostare il frame iniziale di animazione: {e}"
+                )
+        else:
+            print(
+                "WARN: Impossibile impostare il frame di animazione iniziale, griglia o indici non validi."
+            )
+
+        if self.animation_timer and not self.animation_timer.IsRunning():
+            self.animation_timer.Start(
+                150
+            )
+
+        thread_package_data = selected_package_data.copy()
+        worker = threading.Thread(
+            target=self._perform_generation_in_thread, args=(thread_package_data,)
+        )
+        worker.daemon = (
+            True
+        )
+        worker.start()
+
+        if event:
+            event.Skip()
+
+
+    def _on_generation_complete(
+        self,
+        success: bool,
+        message: str,
+        package_name: Optional[str],
+        package_id: Optional[str],
+    ) -> None:
+        """Gestisce il completamento di un task di generazione.
+        Questo metodo viene eseguito nel thread GUI principale tramite wx.CallAfter.
+        """
+        if not package_id:
+            print(
+                "ERRORE CRITICO: package_id mancante in _on_generation_complete. Impossibile aggiornare la UI."
+            )
+            if self.animation_timer and not self.active_generation_tasks:
+                self.animation_timer.Stop()
+                self.current_animation_frame_idx = 0
+            self._update_action_buttons_state()
+            return
+
+        row_idx_to_update = self.active_generation_tasks.pop(package_id, -1)
+
+        print(
+            f"Completamento generazione per ID: {package_id}, Riga: {row_idx_to_update}, Successo: {success}"
+        )
+
+        if self.animation_timer and not self.active_generation_tasks:
+            self.animation_timer.Stop()
+            self.current_animation_frame_idx = 0  # Resetta per la prossima volta
+            print("Nessun task attivo rimasto, timer di animazione fermato.")
+
+        if success:
+            final_status_text = "📖 Available"
+            log_message_to_append = f"SUCCESSO: Generazione per '{package_name}' completata. {message}\n"
+        else:
+            final_status_text = "❌ Error"
+            log_message_to_append = (
+                f"ERRORE: Generazione per '{package_name}' fallita. {message}\n"
+            )
+            wx.MessageBox(
+                f"Errore durante la generazione per '{package_name}':\n{message}",
+                "Errore di Generazione",
+                wx.OK | wx.ICON_ERROR,
+            )
+
+        if self.log_text_ctrl:
+            self.log_text_ctrl.AppendText(log_message_to_append)
+        else:
+            print(
+                f"LOG (controllo non disponibile): {log_message_to_append.strip()}"
+            )
+
+        # Aggiorna la cella nella griglia e i dati sorgente
+        if (
+            self.data_grid
+            and self.stato_docset_col_grid_idx != -1
+            and row_idx_to_update != -1
+        ):
+            if 0 <= row_idx_to_update < self.data_grid.GetNumberRows():
+                try:
+                    self.data_grid.SetCellValue(
+                        row_idx_to_update,
+                        self.stato_docset_col_grid_idx,
+                        final_status_text,
+                    )
+
+                    if 0 <= row_idx_to_update < len(self.current_grid_source_data):
+                        self.current_grid_source_data[row_idx_to_update][
+                            "docset_status"
+                        ] = final_status_text
+                    else:
+                        print(
+                            f"WARN: row_idx_to_update {row_idx_to_update} fuori range per current_grid_source_data"
+                        )
+                    self.data_grid.ForceRefresh()
+                except wx.wxAssertionError as e:
+                    print(
+                        f"Errore wxAssertionError nell'impostare lo stato finale [{row_idx_to_update},{self.stato_docset_col_grid_idx}]: {e}"
+                    )
+                except Exception as e:
+                    print(
+                        f"Errore generico nell'impostare lo stato finale [{row_idx_to_update},{self.stato_docset_col_grid_idx}]: {e}"
+                    )
+            else:
+                print(
+                    f"WARN: row_idx_to_update {row_idx_to_update} non valido per l'aggiornamento della griglia."
+                )
+        else:
+            if row_idx_to_update == -1:
+                print(
+                    f"WARN: package_id '{package_id}' non trovato in active_generation_tasks durante il completamento. Impossibile aggiornare la griglia per questo task."
+                )
+            if not self.data_grid:
+                print("WARN: data_grid non disponibile in _on_generation_complete.")
+            if self.stato_docset_col_grid_idx == -1:
+                print(
+                    "WARN: stato_docset_col_grid_idx non valido in _on_generation_complete."
+                )
+
+        self._update_action_buttons_state()
+
+    def _perform_generation_in_thread(self, package_data: dict) -> None:
+        """Esegue la generazione del docset in un thread separato.
+        Chiama il core e invia il risultato alla GUI tramite wx.CallAfter.
+        """
+        package_name_for_msg = package_data.get("name", "N/D")
+        package_id_for_completion = package_data.get("id")
+
+
+        if not package_id_for_completion:
+            error_message = "Errore critico nel thread: package_id mancante nei dati del pacchetto."
+            print(f"THREAD ERROR: {error_message}")
+            return
+
+        try:
+            if not self.core:
+                # Questo è un caso grave, il core dovrebbe essere sempre disponibile
+                error_message = "Errore nel thread: Istanza Core non disponibile."
+                print(f"THREAD ERROR: {error_message}")
+                wx.CallAfter(
+                    self._on_generation_complete,
+                    False,  # success
+                    error_message,  # message
+                    package_name_for_msg,
+                    package_id_for_completion,
+                )  # package_id
+                return
+
+            success, message = self.core.generate_docset(package_data)
+
+            # Invia il risultato al thread principale della GUI
+            wx.CallAfter(
+                self._on_generation_complete,
+                success,
+                message,
+                package_name_for_msg,
+                package_id_for_completion,
+            )
+
+        except Exception as e:
+            error_message = f"Eccezione imprevista durante la generazione per '{package_name_for_msg}' nel thread: {e}"
+            print(f"THREAD ERROR: {error_message}")
+            wx.CallAfter(
+                self._on_generation_complete,
+                False,
+                error_message,
+                package_name_for_msg,
+                package_id_for_completion,
+            )
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
         """Handle regenerate docset action."""
         print(f"Action: Regenerate Docset per riga {self.selected_row_index}")
@@ -297,7 +627,7 @@ class DevilDexApp(wx.App):
 
             if "package_name" in original_row_dictionary:
                 print(
-                    f"Value di 'package_name' dal dictionary: {original_row_dictionary['nome_pacchetto']}"
+                    f"Value di 'package_name' dal dictionary: {original_row_dictionary['name']}"
                 )
         else:
             print("Error: riga index non valido per current_grid_source_data.")
@@ -361,8 +691,6 @@ class DevilDexApp(wx.App):
     def _update_log_toggle_button_icon(self) -> None:
         if not self.log_toggle_button:
             return
-
-        target_bmp: Optional[wx.Bitmap] = None
 
         if self.is_log_panel_visible:
             target_bmp = self.arrow_up_bmp
@@ -455,25 +783,82 @@ class DevilDexApp(wx.App):
         if self.main_frame:
             self.main_frame.Layout()
 
+        # In main.py, dentro la classe DevilDexApp
+
     def _update_action_buttons_state(self) -> None:
         """Update state (enabled/disabled) of action buttons."""
-        buttons_are_conditionally_enabled = self.selected_row_index is not None
-        action_buttons_references = [
-            self.open_action_button,
-            self.generate_action_button,
-            self.regenerate_action_button,
-            self.view_log_action_button,
-            self.delete_action_button,
-        ]
-        if not buttons_are_conditionally_enabled:
-            print("No row selected, disabling action buttons.")
+        self.is_task_running = bool(self.active_generation_tasks)
+
+        action_buttons_to_update = {
+            "open": self.open_action_button,
+            "generate": self.generate_action_button,
+            "regenerate": self.regenerate_action_button,
+            "log": self.view_log_action_button,
+            "delete": self.delete_action_button,
+        }
+
+        # Prima, disabilita tutti i pulsanti di azione se nessuna riga è selezionata
+        if self.selected_row_index is None:
+            for button in action_buttons_to_update.values():
+                if button:
+                    button.Enable(False)
         else:
-            print(
-                f"selected row: {self.selected_row_index}. Enable tutti i action buttons (temporarily)."
+            selected_package_data = self.get_selected_row()
+            selected_package_id = (
+                selected_package_data.get("id") if selected_package_data else None
             )
-        for button in action_buttons_references:
-            if button:
-                button.Enable(buttons_are_conditionally_enabled)
+            current_docset_status = (
+                selected_package_data.get("docset_status", "Not Available")
+                if selected_package_data
+                else "Not Available"
+            )
+
+            is_generating_this_row = (
+                selected_package_id in self.active_generation_tasks
+            )
+
+
+            if action_buttons_to_update["open"]:
+                can_open = (
+                    current_docset_status == "📖 Available"
+                    and not is_generating_this_row
+                )
+                action_buttons_to_update["open"].Enable(can_open)
+
+            if action_buttons_to_update["generate"]:
+                can_generate = (
+                    not is_generating_this_row
+                    and current_docset_status not in ["📖 Available"]
+                    and current_docset_status not in self.animation_frames
+                )
+                action_buttons_to_update["generate"].Enable(can_generate)
+
+            if action_buttons_to_update["regenerate"]:
+                can_regenerate = (
+                    not is_generating_this_row
+                    and current_docset_status in ["📖 Available", "❌ Error"]
+                )
+                action_buttons_to_update["regenerate"].Enable(can_regenerate)
+
+            if action_buttons_to_update["log"]:
+                action_buttons_to_update["log"].Enable(
+                    True
+                )
+
+            if action_buttons_to_update["delete"]:
+                can_delete = (
+                    not is_generating_this_row
+                    and current_docset_status in ["📖 Available", "❌ Error"]
+                )
+                action_buttons_to_update["delete"].Enable(can_delete)
+
+        disable_if_any_task_running = self.is_task_running
+
+        if self.view_doc_btn:
+            self.view_doc_btn.Enable(not disable_if_any_task_running)
+        if self.home_button:
+            self.home_button.Enable(not disable_if_any_task_running)
+
 
     def _setup_action_buttons_panel(self, parent: wx.Window) -> wx.Sizer:
         action_box = wx.StaticBox(parent, label="Docset Actions")
