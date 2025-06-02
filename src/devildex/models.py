@@ -1,4 +1,5 @@
 """models module."""
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
@@ -11,9 +12,7 @@ class PackageDetails:
     name: str
     version: str
     project_urls: Dict[str, str] = field(default_factory=dict)
-    initial_source_path: Path | str | None = (
-        None
-    )
+    initial_source_path: Path | str | None = None
     vcs_url: str | None = None
     rtd_url: str | None = None
 
