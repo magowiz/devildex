@@ -153,7 +153,6 @@ pipeline {
                                 }
                                 stash includes: 'coverage_report_xml/coverage.xml',
                                       name: 'coverageReportXML', allowEmpty: true
-
                             }
                         }
                     }
@@ -212,24 +211,24 @@ pipeline {
             }
             steps {
                 script {
-                    echo "--- Starting Python Wheel Build ---"
+                    echo '--- Starting Python Wheel Build ---'
                     withPythonEnv('python3.13') {
                         sh 'poetry build --format wheel'
                     }
-                    echo "--- Python Wheel Build Finished ---"
+                    echo '--- Python Wheel Build Finished ---'
                 }
             }
             post {
                 success {
-                    archiveArtifacts artifacts: "dist/*.whl", followSymlinks: false, allowEmptyArchive: false
+                    archiveArtifacts artifacts: 'dist/*.whl', followSymlinks: false, allowEmptyArchive: false
                     cleanWs()
                 }
                 failure {
-                    echo "Python Wheel Build Failed"
+                    echo 'Python Wheel Build Failed'
                     cleanWs()
                 }
             }
-        }
+                }
         stage('Build Packages Multi-Arch') {
             matrix {
                 axes {
