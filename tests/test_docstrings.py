@@ -72,7 +72,10 @@ def manage_test_output_directory(
 
 @pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)
 def test_documentation_generation_for_package(
-    package_info: Dict[str, Any], tmp_path: Path, manage_test_output_directory: Path, monkeypatch: MonkeyPatch  # noqa: B008
+    package_info: Dict[str, Any],
+    tmp_path: Path,
+    manage_test_output_directory: Path,
+    monkeypatch: MonkeyPatch,  # noqa: B008
 ) -> None:
     """Test documentation generation for a package."""
     repo_url = package_info["repo_url"]
@@ -91,9 +94,7 @@ def test_documentation_generation_for_package(
     print(
         f"Output Base Docs (isolato per questo test): {current_test_docs_output_base.resolve()}"
     )
-    print(
-        f"Current Working Directory (per il clone): {Path.cwd().resolve()}"
-    )
+    print(f"Current Working Directory (per il clone): {Path.cwd().resolve()}")
 
     doc_generator = DocStringsSrc(output_dir=str(current_test_docs_output_base))
     try:
