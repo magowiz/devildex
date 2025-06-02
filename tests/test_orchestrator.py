@@ -81,7 +81,6 @@ PACKAGES_TO_TEST = [
                 "Source Code": "https://github.com/Textualize/rich.git",
             },
             "vcs_url": "https://github.com/Textualize/rich.git",
-            # rtd_url può essere omesso se non c'è, PackageDetails userà None
         },
         "repo_url_for_clone": "https://github.com/Textualize/rich.git",
         "expected_preferred_type": "sphinx",
