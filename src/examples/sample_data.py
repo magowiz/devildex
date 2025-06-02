@@ -1,14 +1,13 @@
-# /home/magowiz/MEGA/projects/devildex/src/examples/sample_data.py
 """sample data module."""
 
 PACKAGES_DATA = [
     {
-        "id": "real_pkg_black", # ID univoco per la GUI
+        "id": "real_pkg_black",
         "name": "black",
         "version": "24.4.2",
         "description": "The uncompromising Python code formatter",
         "status": "Not Installed",
-        "project_urls": { # Dati da PACKAGES_TO_TEST
+        "project_urls": {
             "Source Code": "https://github.com/psf/black.git",
             "Documentation": "https://black.readthedocs.io/",
         },
