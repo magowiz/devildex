@@ -5,9 +5,9 @@ PACKAGES_DATA = [
     {
         "id": "real_pkg_black", # ID univoco per la GUI
         "name": "black",
-        "version": "24.4.2", # Versione specifica
-        "description": "The uncompromising Python code formatter", # Descrizione (puoi aggiungerla)
-        "status": "Not Installed", # O "Installed" se vuoi simulare che sia già presente
+        "version": "24.4.2",
+        "description": "The uncompromising Python code formatter",
+        "status": "Not Installed",
         "project_urls": { # Dati da PACKAGES_TO_TEST
             "Source Code": "https://github.com/psf/black.git",
             "Documentation": "https://black.readthedocs.io/",
