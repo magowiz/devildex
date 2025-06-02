@@ -34,11 +34,13 @@ def get_installed_packages_with_project_urls(explicit: set | None = None) -> lis
                         current_project_urls[label] = url_value
                     else:
                         print(
-                            f"Attenzione: Impossibile analizzare la voce Project-URL per {package_name}: '{url_entry}'"
+                            "Attenzione: Impossibile analizzare la voce "
+                            f"Project-URL per {package_name}: '{url_entry}'"
                         )
                 except Exception as e:
                     print(
-                        f"Errore nell'analizzare la voce Project-URL '{url_entry}' per {package_name}: {e}"
+                        "Errore nell'analizzare la voce Project-URL "
+                        f"'{url_entry}' per {package_name}: {e}"
                     )
         pkg_details = PackageDetails(
             name=package_name,

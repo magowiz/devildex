@@ -382,7 +382,7 @@ class DevilDexApp(wx.App):
     def _log_generation_outcome_and_notify(
         self, success: bool, message: str, package_name: Optional[str]
     ) -> None:
-        """Log the generation outcome and notifies the user via message box on failure."""
+        """Log the generation outcome and notifies the user via message box."""
         if success:
             log_message_to_append = (
                 f"SUCCESS: Generation for '{package_name}' completed. {message}\n"
@@ -481,7 +481,8 @@ class DevilDexApp(wx.App):
             )
 
         except Exception as e:
-            error_message = f"Unexpected Exception durante la generation per '{package_name_for_msg}' nel thread: {e}"
+            error_message = ("Unexpected Exception durante la generation per "
+                             f"'{package_name_for_msg}' nel thread: {e}")
             wx.CallAfter(
                 self._on_generation_complete,
                 False,
@@ -761,7 +762,7 @@ class DevilDexApp(wx.App):
         return True
 
     def _initiate_generation_task(self, package_data: dict, row_index: int) -> None:
-        """Initiate the UI updates and starts the generation thread for the given package."""
+        """Initiate the UI updates and starts the generation thread."""
         package_id = package_data.get("id")
 
         self.active_generation_tasks[package_id] = row_index

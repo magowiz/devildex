@@ -54,11 +54,11 @@ PACKAGES_TO_TEST = [
 ]
 
 
-@pytest.fixture(scope="function")  # Scope modificato a 'function'
+@pytest.fixture(scope="function")
 def manage_test_output_directory(
     tmp_path: Path,
-) -> Path:  # Ora accetta tmp_path e restituisce un Path
-    """Fixture per creare e fornire una directory di output isolata per la documentazione.
+) -> Path:
+    """Fixture per creare e fornire una directory di output documentazione.
 
     all'interno dello spazio temporaneo di un test specifico.
     """
@@ -92,7 +92,8 @@ def test_documentation_generation_for_package(
         f"\n[Testing] Pacchetto: {project_name}, Versione: {version_tag or 'default'}"
     )
     print(
-        f"Output Base Docs (isolato per questo test): {current_test_docs_output_base.resolve()}"
+        "Output Base Docs (isolato per questo test): "
+        f"{current_test_docs_output_base.resolve()}"
     )
     print(f"Current Working Directory (per il clone): {Path.cwd().resolve()}")
 

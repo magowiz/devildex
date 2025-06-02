@@ -83,7 +83,8 @@ class Orchestrator:
 
                 if fetch_successful and fetched_path_str:
                     print(
-                        f"Orchestrator: Fetch successful. Sources at: {fetched_path_str}"
+                        "Orchestrator: Fetch successful. Sources "
+                        f"at: {fetched_path_str}"
                     )
                     source_path_candidate = Path(fetched_path_str).resolve()
                 else:
@@ -106,7 +107,8 @@ class Orchestrator:
         ):
             self._effective_source_path = source_path_candidate
             print(
-                f"Orchestrator: Effective source path set to: {self._effective_source_path}"
+                "Orchestrator: Effective source path set to: "
+                f"{self._effective_source_path}"
             )
             return True
         else:
@@ -195,7 +197,8 @@ class Orchestrator:
         self.detected_doc_type = "unknown"
         if not self.fetch_repo():
             print(
-                "Orchestrator: Failed to fetch or find repository sources. Scan cannot proceed."
+                "Orchestrator: Failed to fetch or find repository sources."
+                " Scan cannot proceed."
             )
             self.detected_doc_type = "unknown"
             return
