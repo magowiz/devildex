@@ -19,7 +19,7 @@ from devildex.utils.venv_utils import (
     install_project_and_dependencies_in_venv,
 )
 
-GIT_FULL_PATH = shutil.which('git')
+GIT_FULL_PATH = shutil.which("git")
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ logger = logging.getLogger(__name__)
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
-    def __init__(self, template_dir:Path=None, output_dir: Path | str | None = None) -> None:
+    def __init__(
+        self, template_dir: Path = None, output_dir: Path | str | None = None
+    ) -> None:
         """Initialize il DocStringsSrc."""
         project_root = info.PROJECT_ROOT
         if output_dir:
@@ -375,7 +377,7 @@ class DocStringsSrc:
 
         return processed_pdoc_modules
 
-    def get_docset_dir(self)-> Path:
+    def get_docset_dir(self) -> Path:
         """Get docset dir."""
         return self.docset_dir
 
@@ -668,7 +670,9 @@ class DocStringsSrc:
                     pass
 
     @staticmethod
-    def git_clone(repo_url: str, clone_dir_path: Path, default_branch:str ="master") -> None:
+    def git_clone(
+        repo_url: str, clone_dir_path: Path, default_branch: str = "master"
+    ) -> None:
         """Clone a git repository, trying specified branches in order."""
         clone_dir_path_str = str(clone_dir_path)
 
@@ -774,7 +778,9 @@ class DocStringsSrc:
         return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
 
     @staticmethod
-    def _log_subprocess_error(cpe: subprocess.CalledProcessError, context_msg: str) -> None:
+    def _log_subprocess_error(
+        cpe: subprocess.CalledProcessError, context_msg: str
+    ) -> None:
         """Log details of a CalledProcessError."""
         logger.error("%s: Subprocess execution failed: %s", context_msg, cpe.cmd)
         logger.error("%s: Exit Code: %s", context_msg, cpe.returncode)
@@ -783,7 +789,7 @@ class DocStringsSrc:
         if cpe.stderr and cpe.stderr.strip():
             logger.error("%s: Stderr:\n%s", context_msg, cpe.stderr.strip())
 
-    def run(self, url: str, project_name: str, version: str = "") -> str| None:
+    def run(self, url: str, project_name: str, version: str = "") -> str | None:
         """Clone, generate docs, and move to final location."""
         cloned_repo_path: Path | None = None
         pdoc_operation_basedir: Path | None = None
