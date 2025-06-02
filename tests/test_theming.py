@@ -1,4 +1,5 @@
 """module that tests theming features."""
+
 import shutil
 import webbrowser
 from pathlib import Path
