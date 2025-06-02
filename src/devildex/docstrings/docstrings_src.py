@@ -721,7 +721,6 @@ class DocStringsSrc:
                 logger.info(
                     "Successfully cloned branch '%s' from %s.", branch_name, repo_url
                 )
-                return
             except subprocess.CalledProcessError as e:
                 last_error = e
                 logger.warning(
