@@ -1,4 +1,5 @@
 """module with example wx.grid.Grid."""
+
 from typing import Optional
 
 import wx
@@ -15,9 +16,15 @@ class MyFrame(wx.Frame):
         panel = wx.Panel(self)
         self.grid = wx.grid.Grid(panel)
 
-        sample_data_as_list_of_dicts = [{"id": "pkg1",  "description": "Libreria Core del sistema", "name": "Pacchetto Alpha"}]
+        sample_data_as_list_of_dicts = [
+            {
+                "id": "pkg1",
+                "description": "Libreria Core del sistema",
+                "name": "Pacchetto Alpha",
+            }
+        ]
 
-        column_names_in_order = ['id', 'name', 'description']
+        column_names_in_order = ["id", "name", "description"]
 
         num_rows = len(sample_data_as_list_of_dicts)
         num_cols = len(column_names_in_order)
@@ -41,7 +48,8 @@ class MyFrame(wx.Frame):
         self.Centre()
         self.Show(True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app = wx.App(False)
     frame = MyFrame(None, "Esempio wx.grid.Grid")
     app.MainLoop()
