@@ -1,13 +1,15 @@
 """main application."""
 
 import threading
-import time
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import wx
 import wx.grid
 import wx.html2
 
+from devildex.models import PackageDetails
+from devildex.orchestrator.documentation_orchestrator import Orchestrator
 from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA
 
 
@@ -16,19 +18,57 @@ class DevilDexCore:
 
     def __init__(self) -> None:
         """Initialize a new DevilDexCore instance."""
-        pass
+        self.docset_base_output_path = Path("devildex_docsets")
+        self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
 
     def generate_docset(self, package_data: dict) -> tuple[bool, str]:
-        """Simula la generation di un docset.
+        """Generate a docset using Orchestrator.
 
         Returns (success, message).
         """
-        package_name = package_data.get("name", "N/D")
-        print(f"CORE: Starting generation per {package_name}...")
-        time.sleep(10)
-        print(f"CORE: Fine generation per {package_name}.")
-        return True, f"Docset per '{package_name}' successfully generated."
-
+        package_name = package_data.get("name")
+        package_version = package_data.get("version")
+        project_urls = package_data.get("project_urls")
+        if not package_name or not package_version:
+            error_msg = "Nome del pacchetto o versione mancante nei dati di input."
+            return False, error_msg
+        details = PackageDetails(
+            name=str(package_name),
+            version=str(package_version),
+            project_urls=project_urls if isinstance(project_urls, dict) else {},
+        )
+        orchestrator = Orchestrator(
+            package_details=details,
+            base_output_dir=self.docset_base_output_path,
+        )
+        orchestrator.start_scan()
+        detected_type = orchestrator.get_detected_doc_type()
+        if detected_type == "unknown":
+            last_op_msg = orchestrator.get_last_operation_result()
+            msg = (
+                f"Impossibile determinare il tipo di documentazione per {details.name}."
+            )
+            if isinstance(last_op_msg, str) and last_op_msg:
+                msg += f" Dettaglio: {last_op_msg}"
+            return False, msg
+        generation_result = orchestrator.grab_build_doc()
+        if isinstance(generation_result, str):
+            success_msg = f"Docset per '{details.name}' generato con successo. Percorso: {generation_result}"
+            return True, generation_result
+        elif generation_result is False:
+            last_op_detail = orchestrator.get_last_operation_result()
+            error_msg = f"Fallimento nella generazione del docset per {details.name}."
+            if isinstance(last_op_detail, str) and last_op_detail:
+                error_msg += f" Dettagli: {last_op_detail}"
+            elif last_op_detail is False:
+                error_msg += " L'operazione specifica è fallita."
+            return False, error_msg
+        else:
+            unexpected_msg = (
+                f"Risultato inaspettato ({type(generation_result)}) "
+                f"dalla generazione del docset per {details.name}."
+            )
+            return False, unexpected_msg
 
 class DevilDexApp(wx.App):
     """Main Application."""
@@ -330,14 +370,93 @@ class DevilDexApp(wx.App):
         self.panel.Layout()
         self._update_log_toggle_button_icon()
 
+
+
     def on_open_docset(self, event: wx.CommandEvent) -> None:
         """Handle open docset action."""
-        print(f"Action: Apri Docset per riga {self.selected_row_index}")
-        sel_data = self.get_selected_row()
-        if sel_data:
-            print(sel_data)
-            self.show_document(package_data_to_show=sel_data)
+        if self.selected_row_index is None:
+            wx.MessageBox(
+                "Please select a package from the grid to open its docset.",
+                "No Selection",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            event.Skip()
+            return
+
+        selected_package_data = self.get_selected_row()
+
+        if not selected_package_data:
+            wx.MessageBox(
+                "Could not retrieve data for the selected row.",
+                "Internal Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            event.Skip()
+            return
+
+        docset_path_str = selected_package_data.get("docset_path")
+        package_name_for_display = selected_package_data.get(
+            "name", "Selected Package"
+        )
+
+        if not docset_path_str:
+            wx.MessageBox(
+                f"Docset path not found for '{package_name_for_display}'.\n"
+                "Please generate the docset first.",
+                "Docset Not Available",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            event.Skip()
+            return
+
+        docset_path = Path(docset_path_str)
+        # Assumiamo che il file principale sia index.html
+        # Potremmo rendere questo più configurabile in futuro
+        index_file_path = docset_path / "index.html"
+
+        if not index_file_path.exists() or not index_file_path.is_file():
+            # Fallback: prova a cercare un qualsiasi file .html se index.html non c'è
+            html_files = list(docset_path.glob("*.html"))
+            if html_files:
+                index_file_path = html_files[0]  # Prendi il primo file HTML trovato
+                print(
+                    f"GUI: 'index.html' not found in {docset_path}, using '{index_file_path.name}' as fallback."
+                )
+            else:
+                wx.MessageBox(
+                    f"Could not find 'index.html' or any other HTML file in the docset directory for '{package_name_for_display}'.\n"
+                    f"Path checked: {docset_path}",
+                    "Docset Entry Point Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                event.Skip()
+                return
+
+        # Prepara i dati del pacchetto da passare a show_document
+        # per aggiornare correttamente l'etichetta del nome del pacchetto.
+        package_data_for_view = {
+            "name": package_name_for_display,
+            # Aggiungi altri dati se show_document ne avesse bisogno
+        }
+
+        # Mostra la vista del documento e carica l'URL locale
+        self.show_document(package_data_to_show=package_data_for_view)
+        if self.webview:
+            # Converti il percorso del file in un URL file://
+            local_url = index_file_path.as_uri()
+            print(f"GUI: Loading local docset URL: {local_url}")
+            self.load_url(local_url)
+        else:
+            print("GUI ERROR: WebView component not available to load URL.")
+            wx.MessageBox(
+                "WebView component is not available. Cannot open docset.",
+                "Internal Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+
         event.Skip()
+
+    # ... resto della classe ...
 
     def on_generate_docset(self, event: wx.CommandEvent) -> None:
         """Handle generate docset action."""
@@ -419,10 +538,11 @@ class DevilDexApp(wx.App):
                 self.current_grid_source_data[row_idx]["docset_status"] = status_text
             self.data_grid.ForceRefresh()
 
+
     def _on_generation_complete(
         self,
         success: bool,
-        message: str,
+        message: str,  # Questo è il percorso se success è True
         package_name: Optional[str],
         package_id: Optional[str],
     ) -> None:
@@ -446,6 +566,15 @@ class DevilDexApp(wx.App):
             self._update_grid_with_generation_status(
                 row_idx_to_update, final_status_text
             )
+            if success and 0 <= row_idx_to_update < len(
+                self.current_grid_source_data
+            ):
+                self.current_grid_source_data[row_idx_to_update]["docset_path"] = (
+                    message
+                )
+                print(
+                    f"GUI: Docset path '{message}' stored for package '{package_name}' at row {row_idx_to_update}"
+                )
 
         self._update_action_buttons_state()
 
