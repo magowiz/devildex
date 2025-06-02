@@ -8,6 +8,7 @@ import requests
 
 FILENAME_MAX_LENGTH = 60
 
+
 def _fetch_available_versions(project_slug: str) -> list[dict] | None:
     """Fetch ALL available versions for a project from RTD API, handling pagination."""
     all_versions_results = []
@@ -55,7 +56,9 @@ def _fetch_available_versions(project_slug: str) -> list[dict] | None:
     return all_versions_results
 
 
-def _choose_best_version(available_versions: list[dict], preferred_versions: list[str]) -> str | None:
+def _choose_best_version(
+    available_versions: list[dict], preferred_versions: list[str]
+) -> str | None:
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
     if not available_versions:
         print("Error: No versions available for choice (list is empty or None).")
