@@ -541,7 +541,8 @@ class DevilDexApp(wx.App):
             if html_files:
                 index_file_path = html_files[0]
                 print(
-                    f"GUI: 'index.html' not found in {docset_path}, using '{index_file_path.name}' as fallback."
+                    f"GUI: 'index.html' not found in {docset_path}, using
+                    f'{index_file_path.name}' as fallback."
                 )
             else:
                 wx.MessageBox(
