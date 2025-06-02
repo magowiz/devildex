@@ -63,4 +63,3 @@ html_theme_options = {
 html_theme = "alabaster"
 html_static_path = ["_static"]
 sys.path.insert(0, os.path.dirname(os.path.abspath(".")))
-print(os.path.dirname(os.path.abspath("..")))
