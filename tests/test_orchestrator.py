@@ -1,4 +1,5 @@
 """test orchestrator module."""
+
 import shutil
 import subprocess
 from pathlib import Path
@@ -22,7 +23,7 @@ PACKAGES_TO_TEST = [
         },
         "repo_url_for_clone": "https://github.com/psf/black.git",
         "expected_preferred_type": "sphinx",
-        "expected_entry_point": "index.html"
+        "expected_entry_point": "index.html",
     },
     {
         "details_data": {
@@ -60,8 +61,7 @@ PACKAGES_TO_TEST = [
             "version": "1.0.0",
             "project_urls": {
                 "Source Code": "https://github.com/psf/black.git",
-                "Documentation":
-                    "https://this-rtd-project-should-not-exist.readthedocs.io/",
+                "Documentation": "https://this-rtd-project-should-not-exist.readthedocs.io/",
             },
             "vcs_url": "https://github.com/psf/black.git",
             "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",
@@ -141,7 +141,7 @@ PACKAGES_TO_TEST = [
         },
         "repo_url_for_clone": "https://github.com/numpy/numpy.git",
         "expected_preferred_type": "sphinx",
-        "expect_grab_success": False
+        "expect_grab_success": False,
     },
     {
         "details_data": {
@@ -156,7 +156,7 @@ PACKAGES_TO_TEST = [
         },
         "repo_url_for_clone": "https://github.com/pallets/click.git",
         "expected_preferred_type": "sphinx",
-        "expect_grab_success": False
+        "expect_grab_success": False,
     },
     {
         "details_data": {
@@ -192,39 +192,48 @@ PACKAGES_TO_TEST = [
 
 GIT_FULL_PATH = shutil.which("git")
 
+
 @pytest.mark.parametrize("package_config", PACKAGES_TO_TEST)
-def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Path) -> None:
+def test_orchestrator_documentation_retrieval(
+    package_config: dict, tmp_path: Path
+) -> None:
     """Test orchestrator retrieval."""
     details_data_from_config = package_config["details_data"].copy()
     repo_url_for_clone = package_config["repo_url_for_clone"]
     expected_preferred_doc_type = package_config["expected_preferred_type"]
     expected_entry_point_filename = package_config.get("expected_entry_point")
     expect_success = package_config.get("expect_grab_success", True)
-    package_name_for_paths = details_data_from_config['name']
+    package_name_for_paths = details_data_from_config["name"]
     clone_target_dir = tmp_path / f"source_clone_{package_name_for_paths}"
     subprocess.run(  # noqa: S603
-        [GIT_FULL_PATH,
-         "clone", "--depth", "1", repo_url_for_clone,
-         str(clone_target_dir)],
+        [
+            GIT_FULL_PATH,
+            "clone",
+            "--depth",
+            "1",
+            repo_url_for_clone,
+            str(clone_target_dir),
+        ],
         check=True,
         capture_output=True,
         text=True,
         encoding="utf-8",
     )
-    orchestrator_base_output_for_test = (tmp_path /
-                                         f"orchestrator_output_{package_name_for_paths}")
+    orchestrator_base_output_for_test = (
+        tmp_path / f"orchestrator_output_{package_name_for_paths}"
+    )
     details_data_from_config["initial_source_path"] = str(clone_target_dir)
     package_details_for_test = PackageDetails.from_dict(details_data_from_config)
     orchestrator = Orchestrator(
         package_details=package_details_for_test,
-        base_output_dir=orchestrator_base_output_for_test
+        base_output_dir=orchestrator_base_output_for_test,
     )
     orchestrator.start_scan()
     detected_doc_type = orchestrator.get_detected_doc_type()
-    assert (
-        detected_doc_type == expected_preferred_doc_type
-    ), (f"For {package_details_for_test.name}, expected preferred type "
-        f"'{expected_preferred_doc_type}'")
+    assert detected_doc_type == expected_preferred_doc_type, (
+        f"For {package_details_for_test.name}, expected preferred type "
+        f"'{expected_preferred_doc_type}'"
+    )
     f" but Orchestrator detected '{detected_doc_type}'"
     output_docs_root_path_str = orchestrator.grab_build_doc()
 
@@ -235,10 +244,10 @@ def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Pa
             operation_result is not False
         ), f"Orchestrator's grab_build_doc failed for {package_details_for_test.name} "
         f"(detected type: {detected_doc_type}). Result: {operation_result}"
-        assert isinstance(
-            operation_result, str
-        ), ("Expected a path string from successful grab_build_doc for"
-            f" {package_details_for_test.name},")
+        assert isinstance(operation_result, str), (
+            "Expected a path string from successful grab_build_doc for"
+            f" {package_details_for_test.name},"
+        )
         f" got {type(operation_result)}. Value: {operation_result}"
         assert (
             output_docs_root_path_str == operation_result
@@ -269,10 +278,10 @@ def test_orchestrator_documentation_retrieval(package_config: dict, tmp_path: Pa
         assert len(html_files) > 0, "No HTML files found in output for "
         f"{package_details_for_test.name} at {output_docs_root_path}"
     else:
-        assert (
-            operation_result is None
-        ), ("Expected grab_build_doc to result in None for "
-            f"{package_details_for_test.name} due to ")
+        assert operation_result is None, (
+            "Expected grab_build_doc to result in None for "
+            f"{package_details_for_test.name} due to "
+        )
         f"expected failure, but got type {type(operation_result)}"
         f" with value: {operation_result}"
         assert (
