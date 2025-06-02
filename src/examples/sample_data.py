@@ -1,4 +1,5 @@
 """sample data module."""
+
 PACKAGES_DATA = [
     {
         "id": "pkg1",
@@ -16,7 +17,9 @@ PACKAGES_DATA = [
         "name": "Beta Module",
         "description": "File management utility",  # Tradotto
         "status": "Not Installed",
-        "versions": [{"ver_id": "pkg2_v1", "version_str": "2.3.0", "date": "2023-06-01"}],
+        "versions": [
+            {"ver_id": "pkg2_v1", "version_str": "2.3.0", "date": "2023-06-01"}
+        ],
     },
     {
         "id": "pkg3",
@@ -37,6 +40,6 @@ PACKAGES_DATA = [
     },
 ]
 
-COLUMNS_ORDER = ['id', 'name', 'description', 'status', 'docset_status']
+COLUMNS_ORDER = ["id", "name", "description", "status", "docset_status"]
 for item in PACKAGES_DATA:
-    item['docset_status'] = "Not Available"
+    item["docset_status"] = "Not Available"
