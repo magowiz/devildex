@@ -42,7 +42,7 @@ class ThemeManager:
             conf_file = next(
                 (p for p in self.potential_sphinx_conf_paths if p.is_file()), None
             )
-        with open(conf_file, "r", encoding="utf-8") as f:
+        with open(conf_file, encoding="utf-8") as f:
             source_code = f.read()
         tree = ast.parse(source_code, filename=str(conf_file))
         for var, value in self.settings.items():

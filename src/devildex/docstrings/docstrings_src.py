@@ -1,5 +1,5 @@
 """docstrings pdoc3 module."""
-
+import contextlib
 import importlib
 import logging
 import os
@@ -9,6 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Optional
 
 import pdoc  # type: ignore[import-untyped]
 
@@ -23,12 +24,28 @@ GIT_FULL_PATH = shutil.which("git")
 
 logger = logging.getLogger(__name__)
 
+class GitCloneFailedUnknownReasonError(RuntimeError):
+    """Exception raised when a git clone operation fails for an unknown reason.
 
+    after attempting to clone specified branches.
+    """
+
+    def __init__(self, repo_url: str, branches_tried: list[str]) -> None:
+        """Construct a GitCloneFailedUnknownReasonError object."""
+        self.repo_url = repo_url
+        self.branches_tried = branches_tried
+        # Construct the exact message that was causing the TRY003 warning
+        message = (
+            f"Could not clone repository {self.repo_url} from branches "
+            f"{', '.join(self.branches_tried)}. "
+            "Unknown reason if no specific git error was logged."
+        )
+        super().__init__(message)
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
     def __init__(
-        self, template_dir: Path = None, output_dir: Path | str | None = None
+        self, template_dir: Optional[Path] = None, output_dir: Path | str | None = None
     ) -> None:
         """Initialize il DocStringsSrc."""
         project_root = info.PROJECT_ROOT
@@ -158,7 +175,7 @@ class DocStringsSrc:
                 )
 
             logger.debug("Successfully imported module '%s'.", module_name)
-            return module_candidate, None
+
 
         except ImportError as e:
             logger.debug(
@@ -168,14 +185,15 @@ class DocStringsSrc:
             )
             return None, e
 
-        except Exception as e:
-            logger.error(
-                "Unexpected error during pdoc.import_module for '%s': %s",
-                module_name,
-                e,
+        except Exception:
+            logger.exception(
+                "Unexpected error during pdoc.import_module for '%s'",
+                module_name
             )
             self._log_traceback()
             return None, None
+        else:
+            return module_candidate, None
 
     def _attempt_import_with_retry(
         self, module_name: str, venv_python_interpreter: str | None
@@ -424,20 +442,18 @@ class DocStringsSrc:
             )
             try:
                 shutil.rmtree(base_output_dir_for_pdoc)
-            except OSError as e:
-                logger.error(
-                    "DocStringsSrc: Error removing %s: %s",
+            except OSError:
+                logger.exception(
+                    "DocStringsSrc: Error removing %s",
                     base_output_dir_for_pdoc,
-                    e,
                 )
                 return None
         try:
             base_output_dir_for_pdoc.mkdir(parents=True, exist_ok=True)
-        except OSError as e:
-            logger.error(
-                "DocStringsSrc: Error creating base output directory %s: %s",
+        except OSError:
+            logger.exception(
+                "DocStringsSrc: Error creating base output directory %s",
                 base_output_dir_for_pdoc,
-                e,
             )
             return None
         return base_output_dir_for_pdoc
@@ -592,12 +608,11 @@ class DocStringsSrc:
                     requirements_file_to_install,
                     pdoc_base_output_dir,
                 )
-        except RuntimeError as e:
-            logger.error(
+        except RuntimeError:
+            logger.exception(
                 "DocStringsSrc: Critical error during isolated pdoc "
-                "build setup for %s: %s",
+                "build setup for %s",
                 project_name,
-                e,
             )
         except (KeyboardInterrupt, SystemExit):
             logger.warning(
@@ -636,11 +651,10 @@ class DocStringsSrc:
             )
             try:
                 shutil.rmtree(pdoc_base_output_dir)
-            except OSError as e_clean:
-                logger.error(
-                    "DocStringsSrc: Error cleaning up pdoc output directory %s: %s",
-                    pdoc_base_output_dir,
-                    e_clean,
+            except OSError:
+                logger.exception(
+                    "DocStringsSrc: Error cleaning up pdoc output directory %s",
+                    pdoc_base_output_dir
                 )
         return False
 
@@ -664,10 +678,8 @@ class DocStringsSrc:
             if item_path.is_dir():
                 shutil.rmtree(item_path, ignore_errors=True)
             elif item_path.is_file():
-                try:
-                    item_path.unlink(missing_ok=True)
-                except FileNotFoundError:
-                    pass
+                with contextlib.suppress(FileNotFoundError):
+                    item_path.unlink()
 
     @staticmethod
     def git_clone(
@@ -718,14 +730,14 @@ class DocStringsSrc:
                     repo_url,
                     e.stderr.strip() if e.stderr else "N/A",
                 )
-            except FileNotFoundError:
+            except FileNotFoundError as e:
                 logger.critical(
                     "Git command not found. Ensure git is installed and "
                     "in your system's PATH."
                 )
-                raise RuntimeError(
-                    f"Git command not found. Cannot clone repository {repo_url}."
-                ) from None
+                raise GitCloneFailedUnknownReasonError(repo_url, branches_to_try) from e
+            else:
+                return
         msg = (
             f"Could not clone repository {repo_url} from branches "
             f"{', '.join(branches_to_try)}."
@@ -733,7 +745,7 @@ class DocStringsSrc:
         logger.error(msg)
         if last_error:
             raise RuntimeError(msg) from last_error
-        raise RuntimeError(f"{msg} Unknown reason if no specific git error was logged.")
+        raise GitCloneFailedUnknownReasonError(repo_url, branches_to_try)
 
     @staticmethod
     def _extract_missing_module_name(error_message: str) -> str | None:
@@ -823,10 +835,10 @@ class DocStringsSrc:
                 )
         except subprocess.CalledProcessError as cpe:
             self._log_subprocess_error(cpe, f"Run phase for {project_name}")
-        except RuntimeError as e:
-            logger.error("Runtime error during run for %s: %s", project_name, e)
-        except OSError as e:
-            logger.error("OS error during run for %s: %s", project_name, e)
+        except RuntimeError:
+            logger.exception("Runtime error during run for %s", project_name)
+        except OSError:
+            logger.exception("OS error during run for %s", project_name)
             self._log_traceback()
         except (KeyboardInterrupt, SystemExit):
             logger.warning(

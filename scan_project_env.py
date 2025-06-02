@@ -1,12 +1,12 @@
 """scan project env module."""
-
+import logging
 import os
 import sys
 from pathlib import Path
 
 import toml
 
-
+logger = logging.getLogger(__name__)
 def find_pyproject_toml(start_path: str = ".") -> Path | None:
     """Cerca pyproject.toml nella current directory or nelle parent directory.
 
@@ -27,16 +27,16 @@ def find_pyproject_toml(start_path: str = ".") -> Path | None:
 
 def _read_project_data_toml(pyproject_path: Path | str) -> set | dict:
     try:
-        with open(pyproject_path, "r", encoding="utf-8") as f:
+        with open(pyproject_path, encoding="utf-8") as f:
             pyproject_data = toml.load(f)
     except FileNotFoundError:
-        print(
+        logger.exception(
             f"Error: File pyproject.toml non trovato a {pyproject_path}.",
             file=sys.stderr,
         )
         return set()
     except toml.TomlDecodeError:
-        print(
+        logger.exception(
             f"Error: Unable to decode TOML file: {pyproject_path}.",
             file=sys.stderr,
         )
@@ -54,7 +54,7 @@ def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
 
     def add_deps_from_section(section_data: dict) -> None:
         if isinstance(section_data, dict):
-            for name in section_data.keys():
+            for name in section_data:
                 normalized_name = name.lower().replace("_", "-")
                 if normalized_name != "python":
                     explicit_deps.add(normalized_name)
@@ -71,7 +71,7 @@ def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
         and "poetry" in pyproject_data["tool"]
         and "group" in pyproject_data["tool"]["poetry"]
     ):
-        for group_name, group_data in pyproject_data["tool"]["poetry"]["group"].items():
+        for _, group_data in pyproject_data["tool"]["poetry"]["group"].items():
             if isinstance(group_data, dict) and "dependencies" in group_data:
                 add_deps_from_section(group_data["dependencies"])
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     pyproject_path1 = find_pyproject_toml(".")
 
     if not pyproject_path1:
-        print(
+        logger.error(
             "Error: pyproject.toml non trovato. "
             "Unable to determine explicit dependencies.",
             file=sys.stderr,
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     explicit_package_names = get_explicit_poetry_dependencies(pyproject_path1)
 
     if not explicit_package_names:
-        print(
+        logger.warning(
             "Warning: No explicit dependencies found in "
             "pyproject.toml (other than python).",
             file=sys.stderr,

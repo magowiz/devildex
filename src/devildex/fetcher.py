@@ -14,6 +14,15 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+class MissingPackageInfoError(ValueError):
+    """Custom exception for when package name or version is missing."""
+
+    def __init__(self) -> None:
+        """Construct a MissingPackageInfoError object."""
+        super().__init__(
+            "Nome del pacchetto e version devono essere "
+            "forniti in package_info_dict."
+        )
 
 class PackageSourceFetcher:
     """Class that implement fetching mechanisms for packages."""
@@ -27,10 +36,7 @@ class PackageSourceFetcher:
         self.project_urls = package_info_dict.get("project_urls", {})
 
         if not self.package_name or not self.package_version:
-            raise ValueError(
-                "Nome del pacchetto e version devono essere "
-                "forniti in package_info_dict."
-            )
+            raise MissingPackageInfoError()
 
         sane_pkg_name = self._sanitize_path_component(self.package_name)
         sane_pkg_version = self._sanitize_path_component(self.package_version)
@@ -63,9 +69,10 @@ class PackageSourceFetcher:
                 "Directory di destinazione assicurata/creata: "
                 f"{self.download_target_path}"
             )
-            return True
         except OSError:
             return False
+        else:
+            return True
 
     def _cleanup_target_dir_content(self) -> None:
         if not self.download_target_path.exists():
@@ -80,10 +87,10 @@ class PackageSourceFetcher:
                     shutil.rmtree(item)
                 else:
                     item.unlink()
-        except OSError as e:
-            logger.error(
+        except OSError:
+            logger.exception(
                 "Errore durante la pulizia della directory "
-                f"{self.download_target_path}: {e}"
+                f"{self.download_target_path}"
             )
 
     def _fetch_project_urls_from_pypi(self) -> dict | None:
@@ -163,9 +170,7 @@ class PackageSourceFetcher:
     @staticmethod
     def _is_member_name_safe(member_name: str) -> bool:
         """Check if member name is safe (no '..' or absolute paths)."""
-        if ".." in member_name or member_name.startswith(("/", "\\")):
-            return False
-        return True
+        return not (".." in member_name or member_name.startswith(("/", "\\")))
 
     @staticmethod
     def _extract_zip_safely(
@@ -190,10 +195,11 @@ class PackageSourceFetcher:
                         zip_ref.extract(member_info, path=temp_extract_dir_abs)
                     else:
                         member_dest_path.mkdir(parents=True, exist_ok=True)
-            return True
+
         except (zipfile.BadZipFile, OSError, Exception):
             return False
-
+        else:
+            return True
     @staticmethod
     def _extract_tar_safely(
         archive_filename: pathlib.Path, temp_extract_dir_abs: Path
@@ -216,9 +222,10 @@ class PackageSourceFetcher:
                         )
                     elif member.issym() or member.islnk():
                         pass
-            return True
         except (tarfile.TarError, tarfile.ReadError, OSError, Exception):
             return False
+        else:
+            return True
 
     @staticmethod
     def _extract_archive(
@@ -271,9 +278,11 @@ class PackageSourceFetcher:
             for item in source_dir.iterdir():
                 destination_item_path = destination_dir / item.name
                 shutil.move(str(item), str(destination_item_path))
-            return True
+
         except Exception:
             return False
+        else:
+            return True
 
     def _download_and_extract_archive(
         self, url: str, temp_base_dir: pathlib.Path
@@ -326,7 +335,7 @@ class PackageSourceFetcher:
             actual_command = (
                 [git_exe] + command_list[1:]
                 if command_list[0] == "git"
-                else [git_exe] + command_list
+                else [git_exe, *command_list]
             )
 
             process = subprocess.run(  # noqa: S603
@@ -344,9 +353,11 @@ class PackageSourceFetcher:
                 logger.warning(f"Git stderr:\n{process.stderr.strip()}")
             elif process.stderr:
                 logger.debug(f"Git stderr (info):\n{process.stderr.strip()}")
-            return process
+
         except subprocess.CalledProcessError:
             pass
+        else:
+            return process
         return None
 
     @staticmethod
@@ -355,9 +366,11 @@ class PackageSourceFetcher:
         if git_dir.is_dir():
             try:
                 shutil.rmtree(git_dir)
-                return True
+
             except OSError:
                 return False
+            else:
+                return True
         elif git_dir.exists():
             return False
         return True
@@ -469,9 +482,11 @@ class PackageSourceFetcher:
                     shutil.copytree(item, target_item_path, dirs_exist_ok=True)
                 else:
                     shutil.copy2(item, target_item_path)
-            return True
+
         except Exception:
             return False
+        else:
+            return True
 
     def _try_fetch_tag_full_clone_checkout(
         self, repo_url: str, tag_variations: list[str]
@@ -517,9 +532,8 @@ class PackageSourceFetcher:
 
             return tag_checkout_and_copy_successful
         finally:
-            if cloned_successfully and temp_clone_dir.exists():
-                shutil.rmtree(temp_clone_dir)
-            elif not cloned_successfully and temp_clone_dir.exists():
+            if ((cloned_successfully and temp_clone_dir.exists()) or
+                    (not cloned_successfully and temp_clone_dir.exists())):
                 shutil.rmtree(temp_clone_dir)
 
     def _fetch_from_vcs_tag(self, repo_url: str) -> bool:
@@ -554,9 +568,7 @@ class PackageSourceFetcher:
         if self._try_fetch_tag_shallow_clone(repo_url, ordered_tag_variations):
             return True
 
-        if self._try_fetch_tag_full_clone_checkout(repo_url, ordered_tag_variations):
-            return True
-        return False
+        return self._try_fetch_tag_full_clone_checkout(repo_url, ordered_tag_variations)
 
     def _fetch_from_vcs_main(self, repo_url: str) -> bool:
         """Fetch the main/default branch from VCS into self.download_target_path."""
@@ -610,10 +622,9 @@ class PackageSourceFetcher:
             path_to_return = str(self.download_target_path)
         elif self.download_target_path.exists():
             pass
-        if not fetch_successful:
-            if self._fetch_from_pypi():
-                fetch_successful = True
-                path_to_return = str(self.download_target_path)
+        if not fetch_successful and self._fetch_from_pypi():
+            fetch_successful = True
+            path_to_return = str(self.download_target_path)
 
         if not fetch_successful:
             vcs_url = self._get_vcs_url()
@@ -636,7 +647,7 @@ class PackageSourceFetcher:
 
 
 def _pprint_(data: dict | list) -> None:
-    print(json.dumps(data, sort_keys=True, indent=4))
+    logger.info(json.dumps(data, sort_keys=True, indent=4))
 
 
 def main() -> None:
@@ -656,15 +667,15 @@ def main() -> None:
     ]
 
     for p_info in test_packages:
-        print(f"\n>>> Testing fetch for: {p_info['name']} v{p_info['version']}")
+        logger.info(f"\n>>> Testing fetch for: {p_info['name']} v{p_info['version']}")
         fetcher_obj = PackageSourceFetcher(
             base_save_path="devildex_fetcher_test_output", package_info_dict=p_info
         )
         success, is_master, path_str = fetcher_obj.fetch()
         if success:
-            print(f"    SUCCESS: Path: {path_str}, Is Master: {is_master}")
+            logger.info(f"    SUCCESS: Path: {path_str}, Is Master: {is_master}")
         else:
-            print(f"    FAILED to fetch {p_info['name']}")
+            logger.error(f"    FAILED to fetch {p_info['name']}")
 
 
 if __name__ == "__main__":

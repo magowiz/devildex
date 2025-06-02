@@ -11,7 +11,7 @@ class MyFrame(wx.Frame):
 
     def __init__(self, parent: Optional[wx.Window], title: str) -> None:
         """MyFrame constructor."""
-        super(MyFrame, self).__init__(parent, title=title, size=(400, 300))
+        super().__init__(parent, title=title, size=(400, 300))
 
         panel = wx.Panel(self)
         self.grid = wx.grid.Grid(panel)

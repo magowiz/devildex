@@ -32,7 +32,8 @@ indent-width = 4
 target-version = "py39"
 
 [lint]
-select = ["ERA", "E4", "E7", "E9", "F", "YTT", "ANN", "ASYNC", "S", "A", "FIX", "ICN", "C90", "I", "N", "D", "PL"]
+select = ["ERA", "E", "F", "YTT", "ANN", "ASYNC", "S", "A", "FIX", "ICN", "C90", "I", "N", "D", "PL",
+          "B", "SIM", "UP", "PT", "RUF", "W", "T20", "TRY"]
 ignore = ["D203", "D213"]
 fixable = ["ALL"]
 unfixable = []

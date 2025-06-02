@@ -1,9 +1,9 @@
 """main application."""
-
+import logging
 import shutil
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, ClassVar, Optional
 
 import wx
 import wx.grid
@@ -13,6 +13,7 @@ from devildex.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA
 
+logger = logging.getLogger(__name__)
 COL_WIDTH_ID = 160
 COL_WIDTH_NAME = 160
 COL_WIDTH_VERSION = 80
@@ -31,7 +32,7 @@ class DevilDexCore:
 
 
 
-    def list_package_dirs(self) -> List[str]:
+    def list_package_dirs(self) -> list[str]:
         """List i nomi delle directory di primo level nella folder base dei docset.
 
         These are potential folders root per i packages.
@@ -135,9 +136,9 @@ class DevilDexApp(wx.App):
         self.is_task_running: bool = False
         self.docset_status_col_grid_idx: int = -1
         self.animation_timer: Optional[wx.Timer] = None
-        self.animation_frames: List[str] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+        self.animation_frames: list[str] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
         self.current_animation_frame_idx: int = 0
-        self.active_generation_tasks: Dict[str, int] = {}
+        self.active_generation_tasks: dict[str, int] = {}
         self.package_display_label: Optional[wx.StaticText] = None
         self.arrow_up_bmp_scaled: Optional[wx.Bitmap] = None
         self.arrow_down_bmp_scaled: Optional[wx.Bitmap] = None
@@ -167,7 +168,7 @@ class DevilDexApp(wx.App):
 
         self.current_grid_source_data.
         """
-        matched_top_level_dir_names: Set[str] = self.scan_docset_dir(
+        matched_top_level_dir_names: set[str] = self.scan_docset_dir(
             self.current_grid_source_data
         )
         updated_count = 0
@@ -366,7 +367,7 @@ class DevilDexApp(wx.App):
         )
         current_frame_char = self.animation_frames[self.current_animation_frame_idx]
 
-        for package_id, row_idx in list(self.active_generation_tasks.items()):
+        for _, row_idx in list(self.active_generation_tasks.items()):
             if (
                 0 <= row_idx < self.data_grid.GetNumberRows()
                 and self.docset_status_col_grid_idx != -1
@@ -383,7 +384,7 @@ class DevilDexApp(wx.App):
             event.Skip()
         self._setup_initial_view()
 
-    COL_WIDTHS = {
+    COL_WIDTHS: ClassVar[dict[str, int]] = {
         "id": COL_WIDTH_ID,
         "name": COL_WIDTH_NAME,
         "version": COL_WIDTH_VERSION,
@@ -540,13 +541,14 @@ class DevilDexApp(wx.App):
             html_files = list(docset_path.glob("*.html"))
             if html_files:
                 index_file_path = html_files[0]
-                print(
+                logger.error(
                     f"GUI: 'index.html' not found in {docset_path}, using"
                     f"'{index_file_path.name}' as fallback."
                 )
             else:
                 wx.MessageBox(
-                    f"Could not find 'index.html' or any other HTML file in the docset directory for '{package_name_for_display}'.\n"
+                    "Could not find 'index.html' or any other HTML "
+                    f"file in the docset directory for '{package_name_for_display}'.\n"
                     f"Path checked: {docset_path}",
                     "Docset Entry Point Error",
                     wx.OK | wx.ICON_ERROR,
@@ -610,7 +612,7 @@ class DevilDexApp(wx.App):
         if self.animation_timer and not self.active_generation_tasks:
             self.animation_timer.Stop()
             self.current_animation_frame_idx = 0
-            print("No remaining active task, animation timer stopped.")
+            logger.debug("No remaining active task, animation timer stopped.")
 
     def _log_generation_outcome_and_notify(
         self, success: bool, message: str, package_name: Optional[str]
@@ -686,8 +688,9 @@ class DevilDexApp(wx.App):
                 self.current_grid_source_data[row_idx_to_update]["docset_path"] = (
                     message
                 )
-                print(
-                    f"GUI: Docset path '{message}' stored for package '{package_name}' at row {row_idx_to_update}"
+                logger.info(
+                    f"GUI: Docset path '{message}' stored for package "
+                    f"'{package_name}' at row {row_idx_to_update}"
                 )
 
         self._update_action_buttons_state()
@@ -737,7 +740,8 @@ class DevilDexApp(wx.App):
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
         """Handle regenerate docset action.
 
-        This will attempt to delete the existing docset (if one exists and user confirms via on_delete_docset)
+        This will attempt to delete the existing docset
+            (if one exists and user confirms via on_delete_docset)
         and then trigger a new generation.
         """
         if self.selected_row_index is None:
@@ -762,12 +766,14 @@ class DevilDexApp(wx.App):
             return
 
         package_name = selected_package_data_initial.get("name", "N/D")
-        current_status = selected_package_data_initial.get("docset_status", "Not Available")
+        current_status = selected_package_data_initial.get(
+            "docset_status", "Not Available")
         package_id = selected_package_data_initial.get("id")
 
         if package_id in self.active_generation_tasks:
             wx.MessageBox(
-                f"A task for '{package_name}' is already in progress. Cannot regenerate now.",
+                f"A task for '{package_name}' is already in progress. "
+                "Cannot regenerate now.",
                 "Task Active",
                 wx.OK | wx.ICON_INFORMATION,
             )
@@ -776,7 +782,8 @@ class DevilDexApp(wx.App):
             return
 
         # Log the intent to regenerate
-        log_msg = f"INFO: Regeneration requested for '{package_name}'. Current status: {current_status}.\n"
+        log_msg = (f"INFO: Regeneration requested for '{package_name}'. "
+                   f"Current status: {current_status}.\n")
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_msg)
         if current_status in ["📖 Available", "❌ Error"]:
@@ -791,7 +798,7 @@ class DevilDexApp(wx.App):
         """Handle view log action."""
         sel_data = self.get_selected_row()
         if sel_data:
-            print(sel_data)
+            logger.info(sel_data)
             if not self.is_log_panel_visible:
                 self._set_log_panel_visibility(True)
         event.Skip()
@@ -806,7 +813,8 @@ class DevilDexApp(wx.App):
         package_level_docset_dir = path_of_specific_docset_build.parent
         confirm_dialog = wx.MessageDialog(
             self.main_frame,
-            f"Are you sure you want to delete this specific docset build for '{package_name}'?\n"
+            "Are you sure you want to delete this specific docset build for"
+            f" '{package_name}'?\n"
             f"Path: {path_of_specific_docset_build}\n\n"
             f"If this is the last docset in the '{package_name}' directory, "
             f"the entire '{package_name}' directory will also be removed.\n\n"
@@ -842,7 +850,8 @@ class DevilDexApp(wx.App):
                 )
                 self.data_grid.ForceRefresh()
                 wx.MessageBox(
-                    f"The selected docset build for '{package_name}' has been processed.\n"
+                    f"The selected docset build for '{package_name}'"
+                    f" has been processed.\n"
                     "Check logs for details.",
                     "Deletion Processed",
                     wx.OK | wx.ICON_INFORMATION,
@@ -851,10 +860,12 @@ class DevilDexApp(wx.App):
             except OSError as e:
                 log_message += (
                     f"ERROR: Failed to delete files/directories for '{package_name}'. "
-                    f"Attempted path(s): '{path_of_specific_docset_build}' and possibly '{package_level_docset_dir}'. Error: {e}\n"
+                    f"Attempted path(s): '{path_of_specific_docset_build}' and possibly"
+                    f" '{package_level_docset_dir}'. Error: {e}\n"
                 )
                 wx.MessageBox(
-                    f"Could not complete the deletion process for '{package_name}'.\n"
+                    "Could not complete the deletion process for"
+                    f" '{package_name}'.\n"
                     f"Error: {e}",
                     "Deletion Failed",
                     wx.OK | wx.ICON_ERROR,

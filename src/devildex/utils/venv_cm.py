@@ -7,10 +7,18 @@ import sys
 import tempfile
 from pathlib import Path
 from types import TracebackType
-from typing import Optional, Type
+from typing import Optional
 
 logger = logging.getLogger(__name__)
+class VenvInitializationError(RuntimeError):
+    """Custom exception for errors during venv initialization."""
 
+    def __init__(self, project_name: str) -> None:
+        """Construct VenvInitializationError."""
+        self.project_name = project_name
+        super().__init__(
+            f"Venv for {self.project_name} was not properly initialized."
+        )
 
 class IsolatedVenvManager:
     """A context manager to create and manage a Python virtual environment."""
@@ -33,7 +41,7 @@ class IsolatedVenvManager:
         logger.info(
             "Creating temporary venv for '%s' at: %s", self.project_name, self.venv_path
         )
-        print(f"DEBUG VENV_CM: Attempting to create venv at: {self.venv_path}")
+        logger.debug(f"DEBUG VENV_CM: Attempting to create venv at: {self.venv_path}")
 
         try:
             subprocess.run(  # noqa: S603
@@ -50,16 +58,17 @@ class IsolatedVenvManager:
             self.pip_executable = str(
                 bin_dir / ("pip.exe" if sys.platform == "win32" else "pip")
             )
-            print(
+            logger.debug(
                 f"DEBUG VENV_CM: VENV CREATED. Python executable: "
                 f"{self.python_executable}"
             )
-            print(f"DEBUG VENV_CM: VENV CREATED. Pip executable: {self.pip_executable}")
-            print(
+            logger.debug("DEBUG VENV_CM: VENV CREATED. Pip executable:"
+                         f" {self.pip_executable}")
+            logger.debug(
                 "DEBUG VENV_CM: VENV CREATED. Does python exist? %s",
                 Path(self.python_executable).exists(),
             )
-            print(
+            logger.debug(
                 "DEBUG VENV_CM: VENV CREATED. Does pip exist? "
                 f"{Path(self.pip_executable).exists()}"
             )
@@ -70,17 +79,16 @@ class IsolatedVenvManager:
 
             self._upgrade_pip()
 
-        except subprocess.CalledProcessError as e:
-            logger.error(
-                "Failed to create venv for '%s': %s", self.project_name, e.stderr
+        except subprocess.CalledProcessError:
+            logger.exception(
+                "Failed to create venv for '%s'", self.project_name
             )
             self._cleanup()
             raise
-        except Exception as e:
-            logger.error(
-                "An unexpected error occurred during venv creation for '%s': %s",
+        except Exception:
+            logger.exception(
+                "An unexpected error occurred during venv creation for '%s'",
                 self.project_name,
-                e,
             )
             self._cleanup()
             raise
@@ -116,11 +124,10 @@ class IsolatedVenvManager:
             try:
                 shutil.rmtree(self.venv_path)
                 logger.info("Venv '%s' removed successfully.", self.venv_path)
-            except OSError as e:
-                logger.error(
-                    "Error removing venv '%s': %s. Manual cleanup might be needed.",
-                    self.venv_path,
-                    e,
+            except OSError:
+                logger.exception(
+                    "Error removing venv '%s'. Manual cleanup might be needed.",
+                    self.venv_path
                 )
         self.venv_path = None
         self.python_executable = None
@@ -146,14 +153,12 @@ class IsolatedVenvManager:
         """
         self._create_venv()
         if not self.python_executable or not self.pip_executable:
-            raise RuntimeError(
-                f"Venv for {self.project_name} was not properly initialized."
-            )
+            raise VenvInitializationError(self.project_name)
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> bool:

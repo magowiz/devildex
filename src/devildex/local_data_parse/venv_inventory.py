@@ -1,9 +1,11 @@
 """venv inventory module."""
 
 import importlib.metadata
+import logging
 
 from devildex.models import PackageDetails
 
+logger = logging.getLogger(__name__)
 PART_LENGTH = 2
 
 
@@ -33,14 +35,14 @@ def get_installed_packages_with_project_urls(explicit: set | None = None) -> lis
                         label, url_value = parts
                         current_project_urls[label] = url_value
                     else:
-                        print(
+                        logger.warning(
                             "Attenzione: Impossibile analizzare la voce "
                             f"Project-URL per {package_name}: '{url_entry}'"
                         )
-                except Exception as e:
-                    print(
+                except Exception:
+                    logger.exception(
                         "Errore nell'analizzare la voce Project-URL "
-                        f"'{url_entry}' per {package_name}: {e}"
+                        f"'{url_entry}' per {package_name}"
                     )
         pkg_details = PackageDetails(
             name=package_name,

@@ -1,11 +1,10 @@
 """module that tests theming features."""
-
+import logging
 import shutil
 import webbrowser
 from pathlib import Path
 
 import pytest
-from pytest import FixtureRequest
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.info import PROJECT_ROOT
@@ -24,10 +23,10 @@ PDOC3_THEME_SOURCE = (
 PYDOCTOR_THEME_SOURCE = (
     PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
 )
-
+logger = logging.getLogger(__name__)
 
 @pytest.fixture
-def dummy_project_in_tmp_path(tmp_path: Path, request: FixtureRequest) -> Path:
+def dummy_project_in_tmp_path(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
     """Fixture che copia il contenuto di 'tests/dummy_project' in una.
 
     sottodirectory di tmp_path e restituisce il percorso a questa copia.
@@ -74,7 +73,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
     index_html_path = output_html_dir / "index.html"
 
     url_to_open = index_html_path.as_uri()
-    print(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
+    logger.info(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)
 
 
@@ -95,7 +94,7 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
     index_html_path = output_project_docs_path / "index.html"
 
     url_to_open = index_html_path.as_uri()
-    print(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
+    logger.info(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)
 
 
@@ -126,8 +125,8 @@ def _minimal_build_pydoctor_docs(
             "-m",
             "pydoctor",
             f"--project-name={project_name_for_pydoctor}",
-            f"--html-output={str(pydoctor_build_root_output_dir.resolve())}",
-            f"--template-dir={str(PYDOCTOR_THEME_SOURCE.resolve())}",
+            f"--html-output={pydoctor_build_root_output_dir.resolve()!s}",
+            f"--template-dir={PYDOCTOR_THEME_SOURCE.resolve()!s}",
             qualified_module_to_document,
         ]
 
@@ -159,5 +158,5 @@ def test_pydoctor_theme(dummy_project_in_tmp_path: Path) -> None:
     index_html_path = output_project_docs_path / "index.html"
 
     url_to_open = index_html_path.as_uri()
-    print(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
+    logger.info("🔗 Apri manualmente questo URI: %s", url_to_open)
     webbrowser.open_new_tab(url_to_open)

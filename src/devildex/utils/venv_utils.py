@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict
+from typing import Optional
 
 from devildex.utils.deps_utils import filter_requirements_lines
 
@@ -25,7 +25,8 @@ def _install_base_packages_in_venv(
         "install",
         "--disable-pip-version-check",
         "--no-python-version-warning",
-    ] + packages_list
+        *packages_list
+    ]
     _, _, ret_code = execute_command(
         install_cmd, f"Install/Verify base packages for {project_name}"
     )
@@ -161,7 +162,7 @@ def _install_doc_requirements_in_venv(
     try:
         with open(
             doc_requirements_path.parent / requirements_filename_to_use,
-            "wt",
+            "w",
             encoding="utf-8",
         ) as req_file:
             for line in filtered_req_lines:
@@ -170,11 +171,10 @@ def _install_doc_requirements_in_venv(
             "Overwrote '%s' with filtered requirements for installation.",
             doc_requirements_path,
         )
-    except IOError as e:
-        logger.error(
-            "Failed to write filtered requirements to '%s': %s. Skipping install.",
+    except OSError:
+        logger.exception(
+            "Failed to write filtered requirements to '%s'. Skipping install.",
             doc_requirements_path,
-            e,
         )
         return False
 
@@ -217,26 +217,22 @@ def install_project_and_dependencies_in_venv(
         effective_base_packages = ["sphinx"]
     else:
         effective_base_packages = base_packages_to_install
-    if not _install_base_packages_in_venv(
-        pip_executable, project_name, effective_base_packages
-    ):
-        return False
-    if not _install_project_editable_in_venv(
-        pip_executable, project_name, project_root_for_install
-    ):
-        return False
-
-    if not _install_doc_requirements_in_venv(
-        pip_executable, project_name, doc_requirements_path
-    ):
-        return False
-
-    return True
+    return (
+        _install_base_packages_in_venv(
+            pip_executable, project_name, effective_base_packages
+        )
+        and _install_project_editable_in_venv(
+            pip_executable, project_name, project_root_for_install
+        )
+        and _install_doc_requirements_in_venv(
+            pip_executable, project_name, doc_requirements_path
+        )
+    )
 
 
 def _prepare_command_env(
-    base_env: Dict[str, str], additional_env: Dict[str, str] | None
-) -> Dict[str, str]:
+    base_env: dict[str, str], additional_env: dict[str, str] | None
+) -> dict[str, str]:
     """Prepara il dizionario dell'ambiente per il subprocess."""
     current_env = base_env.copy()
     if additional_env:
@@ -254,7 +250,8 @@ def _log_command_failure_details(
     if stderr_text and stderr_text.strip():
         stripped_stderr = stderr_text.strip()
         logger.debug("Stderr:\n%s", stripped_stderr)
-        print(f"DEBUG STDERR from FAILED command '{description}':\n{stripped_stderr}")
+        logger.debug(f"DEBUG STDERR from FAILED command '{description}':"
+                     f"\n{stripped_stderr}")
 
 
 def _log_command_success_details(
@@ -275,8 +272,8 @@ def _log_sphinx_specific_debug(
     if "sphinx" in description.lower():
         actual_stdout = stdout_text.strip() if stdout_text else "<empty>"
         actual_stderr = stderr_text.strip() if stderr_text else "<empty>"
-        print(f"DEBUG SPHINX STDOUT for '{description}':\n{actual_stdout}")
-        print(f"DEBUG SPHINX STDERR for '{description}':\n{actual_stderr}")
+        logger.debug(f"DEBUG SPHINX STDOUT for '{description}':\n{actual_stdout}")
+        logger.debug(f"DEBUG SPHINX STDERR for '{description}':\n{actual_stderr}")
 
 
 def _get_effective_cwd(cwd_param: str | None) -> str:
@@ -294,9 +291,9 @@ def _handle_command_result(
     full_command_str = " ".join(command)
     effective_cwd = _get_effective_cwd(cwd_param)
 
-    print(f"DEBUG EXEC_CMD: Preparing to execute command[0]: {command[0]}")
-    print(f"DEBUG EXEC_CMD: Full command list: {command}")
-    print(f"DEBUG EXEC_CMD: Working directory (cwd): {effective_cwd}")
+    logger.debug(f"DEBUG EXEC_CMD: Preparing to execute command[0]: {command[0]}")
+    logger.debug(f"DEBUG EXEC_CMD: Full command list: {command}")
+    logger.debug(f"DEBUG EXEC_CMD: Working directory (cwd): {effective_cwd}")
 
     logger.info("Executing: %s (cwd: %s)", full_command_str, effective_cwd)
 
@@ -316,7 +313,7 @@ def execute_command(
     command: list[str],
     description: str,
     cwd: str | Path | None = None,
-    env: dict = None,
+    env: Optional[dict] = None,
 ) -> tuple[str, str, int]:
     """Esegue un comando di shell e restituisce stdout, stderr e return code."""
     if not command:
@@ -325,7 +322,7 @@ def execute_command(
     command_str_for_log = " ".join(command)
     try:
         current_env = _prepare_command_env(os.environ.copy(), env)
-        process = subprocess.run(  # noqa: S602, S603
+        process = subprocess.run(  # noqa: S603
             command,
             capture_output=True,
             text=True,
@@ -338,11 +335,10 @@ def execute_command(
 
         ret_code = _handle_command_result(process, command, description, cwd_str)
 
-        return process.stdout, process.stderr, ret_code
+
 
     except FileNotFoundError:
-
-        logger.error(
+        logger.exception(
             "Command not found: %s. Ensure it's in PATH or provide full path.",
             (command[0] if command else "N/A"),
         )
@@ -350,28 +346,26 @@ def execute_command(
         return "", f"Command not found: {command[0] if command else 'N/A'}", -1
 
     except PermissionError as e:
-
-        logger.error(
-            "Permission denied during command execution '%s': %s",
+        logger.exception(
+            "Permission denied during command execution '%s'",
             command_str_for_log,
-            e,
         )
 
         return "", f"Permission denied: {e}", -3
 
     except OSError as e:
-
-        logger.error(
-            "OS error during command execution '%s': %s", command_str_for_log, e
+        logger.exception(
+            "OS error during command execution '%s'", command_str_for_log
         )
 
         return "", f"OS error: {e}", -4
 
     except ValueError as e:
-        logger.error(
-            "Value error during command setup or execution for '%s': %s",
-            command_str_for_log,
-            e,
+        logger.exception(
+            "Value error during command setup or execution for '%s'",
+            command_str_for_log
         )
 
         return "", f"Value error: {e}", -5
+    else:
+        return process.stdout, process.stderr, ret_code

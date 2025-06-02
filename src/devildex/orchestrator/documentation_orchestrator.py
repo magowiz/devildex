@@ -1,6 +1,7 @@
 """documentation orchestrator module."""
-
+import logging
 from pathlib import Path
+from typing import Optional
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
@@ -10,6 +11,7 @@ from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_r
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 
+logger = logging.getLogger(__name__)
 
 class Orchestrator:
     """Implement orchestrator class which detects doc type and perform right action."""
@@ -17,7 +19,7 @@ class Orchestrator:
     def __init__(
         self,
         package_details: PackageDetails,
-        base_output_dir: Path | str = None,
+        base_output_dir: Optional[Path | str] = None,
     ) -> None:
         """Implement class constructor."""
         self.package_details = package_details
@@ -51,16 +53,17 @@ class Orchestrator:
         if self.package_details.initial_source_path:
             candidate = Path(self.package_details.initial_source_path)
             if candidate.exists() and candidate.is_dir():
-                print(f"Orchestrator: Using provided initial_source_path: {candidate}")
+                logger.info("Orchestrator: Using provided initial_source_path:"
+                            f" {candidate}")
                 source_path_candidate = candidate.resolve()
             else:
-                print(
+                logger.warning(
                     "Orchestrator WARNING: Provided "
                     f"initial_source_path '{candidate}' is not valid or does not exist."
                 )
 
         if not source_path_candidate:
-            print(
+            logger.error(
                 "Orchestrator: No valid initial_source_path. "
                 "Attempting to fetch sources for "
                 f"{self.package_details.name} v{self.package_details.version}"
@@ -82,22 +85,22 @@ class Orchestrator:
                 fetch_successful, _is_master_branch, fetched_path_str = fetcher.fetch()
 
                 if fetch_successful and fetched_path_str:
-                    print(
+                    logger.info(
                         "Orchestrator: Fetch successful. Sources "
                         f"at: {fetched_path_str}"
                     )
                     source_path_candidate = Path(fetched_path_str).resolve()
                 else:
-                    print(
+                    logger.error(
                         f"Orchestrator: Fetch failed for {self.package_details.name}."
                         f" Fetcher returned: success={fetch_successful}, "
                         f"path={fetched_path_str}"
                     )
                     source_path_candidate = None
-            except Exception as e:
-                print(
+            except Exception:
+                logger.exception(
                     "Orchestrator: Exception during fetch for "
-                    f"{self.package_details.name}: {e}"
+                    f"{self.package_details.name}"
                 )
                 source_path_candidate = None
 
@@ -107,13 +110,13 @@ class Orchestrator:
             and source_path_candidate.is_dir()
         ):
             self._effective_source_path = source_path_candidate
-            print(
+            logger.info(
                 "Orchestrator: Effective source path set to: "
                 f"{self._effective_source_path}"
             )
             return True
         else:
-            print(
+            logger.error(
                 "Orchestrator ERROR: No valid source path available "
                 "(neither provided nor fetched). "
                 f"Evaluated path: {source_path_candidate}"
@@ -178,26 +181,28 @@ class Orchestrator:
                 method = grabber_config["function"]
                 args = grabber_config["args"]
                 res = method(**args)
-                print(f" DETECTED DOC TYPE: {self.detected_doc_type}")
-                print(f" RESULT FROM GRABBER: {res}")
+                logger.info(f" DETECTED DOC TYPE: {self.detected_doc_type}")
+                logger.info(f" RESULT FROM GRABBER: {res}")
                 int_res = self._interpret_tuple_res(res)
                 self.last_operation_result = int_res
-                return int_res
+
             except KeyError:
                 self.last_operation_result = False
+            else:
+                return int_res
         elif not self.detected_doc_type:
             self.last_operation_result = False
-            print("no scan result, please call start_scan first")
+            logger.error("no scan result, please call start_scan first")
         else:
             self.last_operation_result = False
-            print("scan cannot detect any doc, unable to grab")
+            logger.error("scan cannot detect any doc, unable to grab")
         return self.last_operation_result
 
     def start_scan(self) -> None:
         """Start the scanning process."""
         self.detected_doc_type = "unknown"
         if not self.fetch_repo():
-            print(
+            logger.error(
                 "Orchestrator: Failed to fetch or find repository sources."
                 " Scan cannot proceed."
             )
@@ -205,7 +210,8 @@ class Orchestrator:
             return
         if self._effective_source_path:
             scan_path_str = str(self._effective_source_path)
-            print(f"Orchestrator: Scanning effective source path: {scan_path_str}")
+            logger.info("Orchestrator: Scanning effective source path: "
+                        f"{scan_path_str}")
 
             if is_sphinx_project(scan_path_str):
                 self.detected_doc_type = "sphinx"
@@ -213,18 +219,18 @@ class Orchestrator:
                 self.detected_doc_type = "docstrings"
 
             if self.detected_doc_type == "unknown":
-                print(
+                logger.error(
                     f"Orchestrator: Scan of '{scan_path_str}' did not identify"
                     " a specific doc type (Sphinx, Docstrings)."
                 )
 
-            print(
+            logger.info(
                 "Orchestrator: Scan complete. Detected doc type"
                 f" from source files: '{self.detected_doc_type}' "
                 f"for path {self._effective_source_path}"
             )
         else:
-            print(
+            logger.error(
                 "Orchestrator ERROR: _effective_source_path is not set even after "
                 "fetch_repo reported success. This should not happen."
             )

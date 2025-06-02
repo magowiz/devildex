@@ -1,8 +1,9 @@
 """scanner utils module."""
-
+import logging
 import re
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
 
 def read_file_content_robustly(filepath: Path) -> str | None:
     """Read file content in a robust way, handling common errors.
@@ -15,16 +16,16 @@ def read_file_content_robustly(filepath: Path) -> str | None:
 
     """
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             return f.read()
     except UnicodeDecodeError:
-        print(
+        logger.exception(
             f"    ⚠️ Unable to read file {filepath} con encoding UTF-8. "
             "Could not be a valid text file."
         )
         return None
-    except IOError as e:
-        print(f"    ❌ Error reading file{filepath}: {e}")
+    except OSError:
+        logger.exception(f"    ❌ Error reading file{filepath}")
         return None
 
 
@@ -82,7 +83,7 @@ def _find_recursive_deduplicate_and_sort(
                 unique_paths_str.add(resolved_path_str)
                 unique_files_final.append(p)
         except FileNotFoundError:
-            print(
+            logger.exception(
                 f"    ⚠️ Path {p} could not be resolved during deduplication, skipping."
             )
             continue

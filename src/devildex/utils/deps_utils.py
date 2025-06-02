@@ -86,14 +86,11 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
         logger.debug(
             "Numero di righe valide estratte da '%s': %s", file_path, len(valid_lines)
         )
-        return valid_lines
-    except (
-        IOError,
-        UnicodeDecodeError,
-    ) as e:
-        logger.error(
-            "Errore di I/O o decodifica durante la parsificazione del file '%s': %s",
+    except (OSError, UnicodeDecodeError):
+        logger.exception(
+            "Errore di I/O o decodifica durante la parsificazione del file '%s'",
             file_path,
-            e,
         )
         return None
+    else:
+        return valid_lines

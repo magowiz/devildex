@@ -1,13 +1,14 @@
 """test docstrings."""
-
+import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 
+logger = logging.getLogger(__name__)
 PACKAGES_TO_TEST = [
     {
         "repo_url": "https://github.com/psf/black.git",
@@ -54,7 +55,7 @@ PACKAGES_TO_TEST = [
 ]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def manage_test_output_directory(
     tmp_path: Path,
 ) -> Path:
@@ -67,15 +68,15 @@ def manage_test_output_directory(
         parents=True, exist_ok=True
     )  # Assicuriamoci che sia creata
 
-    yield test_specific_doc_output_dir
+    return test_specific_doc_output_dir
 
 
 @pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)
 def test_documentation_generation_for_package(
-    package_info: Dict[str, Any],
+    package_info: dict[str, Any],
     tmp_path: Path,
     manage_test_output_directory: Path,
-    monkeypatch: MonkeyPatch,  # noqa: B008
+    monkeypatch: MonkeyPatch,
 ) -> None:
     """Test documentation generation for a package."""
     repo_url = package_info["repo_url"]
@@ -88,14 +89,14 @@ def test_documentation_generation_for_package(
     monkeypatch.chdir(clone_cwd)
 
     current_test_docs_output_base = manage_test_output_directory
-    print(
+    logger.info(
         f"\n[Testing] Pacchetto: {project_name}, Versione: {version_tag or 'default'}"
     )
-    print(
+    logger.info(
         "Output Base Docs (isolato per questo test): "
         f"{current_test_docs_output_base.resolve()}"
     )
-    print(f"Current Working Directory (per il clone): {Path.cwd().resolve()}")
+    logger.info(f"Current Working Directory (per il clone): {Path.cwd().resolve()}")
 
     doc_generator = DocStringsSrc(output_dir=str(current_test_docs_output_base))
     try:
@@ -122,7 +123,8 @@ def test_documentation_generation_for_package(
     assert (
         len(html_files) > 0
     ), f"Nessun file HTML trovato in: {final_project_version_docs_dir}"
-    print(f"Trovati {len(html_files)} file HTML in {final_project_version_docs_dir}.")
+    logger.info(f"Trovati {len(html_files)} file HTML in "
+                f"{final_project_version_docs_dir}.")
 
     if expected_entry_point:
         entry_point_file = final_project_version_docs_dir / expected_entry_point
@@ -132,4 +134,4 @@ def test_documentation_generation_for_package(
         assert (
             entry_point_file.is_file()
         ), f"Il percorso dell'entry point HTML atteso non è un file: {entry_point_file}"
-        print(f"Trovato entry point HTML atteso: {entry_point_file}")
+        logger.error(f"Trovato entry point HTML atteso: {entry_point_file}")

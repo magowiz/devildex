@@ -54,7 +54,7 @@ COLUMNS_ORDER = ["id", "name", "version", "description", "status", "docset_statu
 # Inizializza 'docset_status' e 'version' (se non presente e c'è 'versions')
 for item in PACKAGES_DATA:
     item["docset_status"] = "Not Available" # Default
-    if "version" not in item and item.get("versions"): # Se 'version' manca ma 'versions' esiste
+    if "version" not in item and item.get("versions"):
         # Prendi l'ultima versione dalla lista come default
         # Questo è un esempio, potresti avere una logica diversa
         if item["versions"]:

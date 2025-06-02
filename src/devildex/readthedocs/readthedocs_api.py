@@ -1,5 +1,5 @@
 """readthedocs api module."""
-
+import logging
 import os
 from json import JSONDecodeError
 from pathlib import Path
@@ -8,17 +8,17 @@ import requests
 
 FILENAME_MAX_LENGTH = 60
 
-
+logger = logging.getLogger(__name__)
 def _fetch_available_versions(project_slug: str) -> list[dict] | None:
     """Fetch ALL available versions for a project from RTD API, handling pagination."""
     all_versions_results = []
     next_page_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
-    print(f"\nCalling API to list versions (starting with): {next_page_url}")
+    logger.info(f"\nCalling API to list versions (starting with): {next_page_url}")
 
     page_num = 1
     while next_page_url:
         try:
-            print(f"Fetching page {page_num} from: {next_page_url}")
+            logger.info(f"Fetching page {page_num} from: {next_page_url}")
             response = requests.get(next_page_url, timeout=30)
             response.raise_for_status()
             data = response.json()
@@ -28,7 +28,7 @@ def _fetch_available_versions(project_slug: str) -> list[dict] | None:
 
             total_count = data.get("count", len(all_versions_results))
 
-            print(
+            logger.info(
                 f"Page {page_num}: Fetched {len(current_page_versions)} versions. "
                 f"Total fetched so far: {len(all_versions_results)}"
                 f"out of {total_count}."
@@ -39,17 +39,17 @@ def _fetch_available_versions(project_slug: str) -> list[dict] | None:
             if next_page_url:
                 pass
 
-        except requests.exceptions.RequestException as e:
-            print(f"Error calling API list versions ({next_page_url}): {e}")
+        except requests.exceptions.RequestException:
+            logger.exception(f"Error calling API list versions ({next_page_url})")
             return None
-        except JSONDecodeError as e:
-            print(
+        except JSONDecodeError:
+            logger.exception(
                 f"Error decoding JSON response while listing versions "
-                f"({next_page_url}): {e}"
+                f"({next_page_url})"
             )
             return None
 
-    print(
+    logger.info(
         "API list versions: All pages fetched. Total versions found:"
         f" {len(all_versions_results)}."
     )
@@ -61,10 +61,10 @@ def _choose_best_version(
 ) -> str | None:
     """Sceglie lo slug della versione migliore tra quelle disponibili."""
     if not available_versions:
-        print("Error: No versions available for choice (list is empty or None).")
+        logger.error("Error: No versions available for choice (list is empty or None).")
         return None
 
-    print(
+    logger.info(
         f"\nAnalyzing {len(available_versions)} available versions to choose the best:"
     )
 
@@ -75,29 +75,30 @@ def _choose_best_version(
                 and version.get("active") is True
                 and version.get("built") is True
             ):
-                print(
+                logger.info(
                     f"\nChosen favourite version (active and built): '{preferred_slug}'"
                 )
                 return preferred_slug
 
-    print(
+    logger.info(
         "\nNo favourite version found (active and built). "
         "Searching for the first available active and built version..."
     )
     for version in available_versions:
         if version.get("active") is True and version.get("built") is True:
             chosen_slug = version.get("slug")
-            print(f"Chosen first available (active and built) version: '{chosen_slug}'")
+            logger.info("Chosen first available (active and built) version:"
+                        f" '{chosen_slug}'")
             return chosen_slug
 
-    print("\nError: No active and built version found among all available ones.")
+    logger.error("\nError: No active and built version found among all available ones.")
     return None
 
 
 def _fetch_version_details(project_slug: str, version_slug: str) -> dict | None:
     """Fetch a specific version details from RTD API."""
     api_version_detail_url = f"https://readthedocs.org/api/v3/versions/{version_slug}/"
-    print(
+    logger.info(
         f"\nCalling API fo version details '{version_slug}': "
         f"{api_version_detail_url} con project__slug={project_slug}"
     )
@@ -107,59 +108,62 @@ def _fetch_version_details(project_slug: str, version_slug: str) -> dict | None:
         )
         response.raise_for_status()
         version_detail_data = response.json()
-        print(f"API details version called successfully for '{version_slug}'.")
-        return version_detail_data
-    except requests.exceptions.RequestException as e:
-        print(
+        logger.info(f"API details version called successfully for '{version_slug}'.")
+
+    except requests.exceptions.RequestException:
+        logger.exception(
             f"Error calling API details version ({api_version_detail_url}?"
-            f"project__slug={project_slug}): {e}"
+            f"project__slug={project_slug})"
         )
         return None
-    except JSONDecodeError as e:
-        print(
+    except JSONDecodeError:
+        logger.exception(
             f"Error decoding JSON response for version details "
-            f"({api_version_detail_url}?project__slug={project_slug}): {e}"
+            f"({api_version_detail_url}?project__slug={project_slug})"
         )
         return None
+    else:
+        return version_detail_data
 
 
 def _get_download_url(version_details: dict, download_format: str) -> str:
     """Extract download URL for specific format from version details."""
     if not version_details:
-        print("Error: version details not available to search for the download URL.")
+        logger.error("Error: version details not available to search for "
+                     "the download URL.")
         return None
 
     download_urls = version_details.get("downloads")
     if not download_urls:
         version_slug = version_details.get("slug", "unknown")
-        print(
+        logger.error(
             f"Error: 'downloads' field not found in version details for  "
             f"'{version_slug}'."
         )
-        print("Ensure that offline formats are enabled for this version.")
+        logger.error("Ensure that offline formats are enabled for this version.")
         return None
 
     file_url = download_urls.get(download_format)
     if not file_url:
         version_slug = version_details.get("slug", "unknown")
-        print(
+        logger.error(
             f"Error: Format '{download_format}' non disponibile per la version "
             f"'{version_slug}'."
         )
-        print(f"Formats available: {list(download_urls.keys())}")
+        logger.info(f"Formats available: {list(download_urls.keys())}")
         return None
 
     if file_url.startswith("//"):
         file_url = "https:" + file_url
 
     if not file_url.lower().endswith((".zip", ".pdf", ".epub")):
-        print(
+        logger.warning(
             f"Warning: found URL '{file_url}' may not be a direct link "
             "to downloadable file (extension not detected). "
             "Proceeding anyway..."
         )
 
-    print(
+    logger.info(
         f"\nURL found for {download_format} version "
         f"'{version_details.get('slug', 'unknown')}': {file_url}"
     )
@@ -183,7 +187,7 @@ def _determine_local_filename(
 
 def _download_file(file_url: str, local_filepath: Path) -> bool | None:
     """Download file from URL into a local path."""
-    print(f"Download file in: {local_filepath}")
+    logger.info(f"Download file in: {local_filepath}")
     download_successful = False
     try:
         with requests.get(file_url, stream=True, timeout=300) as r:
@@ -191,25 +195,26 @@ def _download_file(file_url: str, local_filepath: Path) -> bool | None:
             with open(local_filepath, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        print(f"Download completed: {local_filepath}")
+        logger.info(f"Download completed: {local_filepath}")
         download_successful = True
-        return True
-    except (requests.exceptions.RequestException, IOError) as e:
-        print(f"Error during file download ({file_url}): {e}")
+    except (OSError, requests.exceptions.RequestException):
+        logger.exception(f"Error during file download ({file_url})")
         if os.path.exists(local_filepath):
             try:
                 os.remove(local_filepath)
-                print(f"partial File removed: {local_filepath}")
-            except OSError as remove_err:
-                print(f"Error while removing partial file: {remove_err}")
+                logger.info(f"partial File removed: {local_filepath}")
+            except OSError:
+                logger.exception("Error while removing partial file")
         return False
+    else:
+        return True
     finally:
         if not download_successful and os.path.exists(local_filepath):
             try:
                 os.remove(local_filepath)
-                print(f"partial File removed: {local_filepath}")
-            except OSError as remove_err:
-                print(f"Error while removing partial file: {remove_err}")
+                logger.info(f"partial File removed: {local_filepath}")
+            except OSError:
+                logger.exception("Error while removing partial file")
 
 
 def download_readthedocs_prebuilt_robust(
@@ -266,32 +271,32 @@ def download_readthedocs_prebuilt_robust(
 
 
 if __name__ == "__main__":
-    print("--- Executing Script: Download Prebuilt Docs (Robust) ---")
+    logger.info("--- Executing Script: Download Prebuilt Docs (Robust) ---")
 
-    print("\nTrying with: Black (https://black.readthedocs.io/)")
+    logger.info("\nTrying with: Black (https://black.readthedocs.io/)")
     downloaded_file_black = download_readthedocs_prebuilt_robust(project_name="black")
     if downloaded_file_black:
-        print(f"  SUCCESS: Downloaded for Black: {downloaded_file_black}")
+        logger.info(f"  SUCCESS: Downloaded for Black: {downloaded_file_black}")
     else:
-        print("  FAILURE: Download failed for Black.")
-    print("-" * 30)
+        logger.error("  FAILURE: Download failed for Black.")
+    logger.info("-" * 30)
 
-    print("\nTrying with: Requests (https://requests.readthedocs.io/)")
+    logger.info("\nTrying with: Requests (https://requests.readthedocs.io/)")
     downloaded_file_requests = download_readthedocs_prebuilt_robust(
         project_name="requests"
     )
     if downloaded_file_requests:
-        print(f"  SUCCESS: Downloaded for Requests: {downloaded_file_requests}")
+        logger.info(f"  SUCCESS: Downloaded for Requests: {downloaded_file_requests}")
     else:
-        print("  FAILURE: Download failed for Requests.")
-    print("-" * 30)
+        logger.error("  FAILURE: Download failed for Requests.")
+    logger.info("-" * 30)
 
-    print("\nTrying with: Sphinx (https://sphinx.readthedocs.io/)")
+    logger.info("\nTrying with: Sphinx (https://sphinx.readthedocs.io/)")
     downloaded_file_sphinx = download_readthedocs_prebuilt_robust(
         project_name="sphinx-doc"
     )
     if downloaded_file_sphinx:
-        print(f"  SUCCESS: Downloaded for Sphinx: {downloaded_file_sphinx}")
+        logger.info(f"  SUCCESS: Downloaded for Sphinx: {downloaded_file_sphinx}")
     else:
-        print("  FAILURE: Download failed for Sphinx.")
-    print("-" * 30)
+        logger.error("  FAILURE: Download failed for Sphinx.")
+    logger.info("-" * 30)

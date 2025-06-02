@@ -40,13 +40,14 @@ def find_doc_source_in_clone(repo_path: Path) -> Path:
              or None if not found.
 
     """
-    print(f"\nSearching for documentation source directory in: {repo_path}")
+    logger.info(f"\nSearching for documentation source directory in: {repo_path}")
     potential_doc_dirs = ["docs", "doc", "Doc"]
     doc_source_path = _find_doc_dir_in_repo(repo_path, potential_doc_dirs)
     if not doc_source_path:
-        print("No documentation source directory with conf.py found in the clone.")
+        logger.error("No documentation source directory with conf.py "
+                     "found in the clone.")
         return None
-    print(f"Documentation source directory identified at: {doc_source_path}")
+    logger.info(f"Documentation source directory identified at: {doc_source_path}")
     return doc_source_path
 
 
@@ -70,20 +71,20 @@ def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str:
         if os.path.isdir(current_path) and os.path.exists(
             os.path.join(current_path, CONF_SPHINX_FILE)
         ):
-            print(
+            logger.info(
                 "Found documentation source directory with conf.py: " f"{current_path}"
             )
             return current_path
         if os.path.isdir(current_path):
-            print(
+            logger.warning(
                 f"Found directory '{current_path}', but no conf.py. "
                 "Continuing search..."
             )
     if os.path.exists(os.path.join(repo_path, CONF_SPHINX_FILE)):
-        print(f"Found conf.py in the repository root: {repo_path}")
+        logger.info(f"Found conf.py in the repository root: {repo_path}")
         return repo_path
 
-    print(
+    logger.info(
         "Fallback: Searching for conf.py recursively in the entire"
         f"repository: {repo_path}..."
     )
@@ -110,7 +111,7 @@ def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str:
         if CONF_SPHINX_FILE in files:
             conf_file_path = os.path.join(root, CONF_SPHINX_FILE)
             doc_source_dir = root
-            print(
+            logger.info(
                 "Found conf.py via full recursive search at: "
                 f"{conf_file_path} (source directory: {doc_source_dir})"
             )
@@ -209,9 +210,9 @@ def build_sphinx_docs(
             logger.info("Removing existing output directory: %s", sctx.final_output_dir)
             shutil.rmtree(sctx.final_output_dir)
         sctx.final_output_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as e:
-        logger.error(
-            "Error creating/cleaning output directory %s: %s", sctx.final_output_dir, e
+    except OSError:
+        logger.exception(
+            "Error creating/cleaning output directory %s", sctx.final_output_dir
         )
         return None
     build_successful = False
@@ -269,15 +270,14 @@ def build_sphinx_docs(
                 logger.error("Sphinx stdout:\n%s", stdout)
                 logger.error("Sphinx stderr:\n%s", stderr)
 
-    except RuntimeError as e:
-        logger.error(
-            "Critical error during isolated build setup for %s: %s",
-            sctx.project_slug,
-            e,
+    except RuntimeError:
+        logger.exception(
+            "Critical error during isolated build setup for %s",
+            sctx.project_slug
         )
-    except OSError as e:
-        logger.error(
-            "Error creating/cleaning output directory %s: %s", sctx.final_output_dir, e
+    except OSError:
+        logger.exception(
+            "Error creating/cleaning output directory %s", sctx.final_output_dir
         )
         return None
     finally:
@@ -287,14 +287,14 @@ def build_sphinx_docs(
 
 def _cleanup(clone_dir_path: Path) -> None:
     if os.path.exists(clone_dir_path):
-        print(f"\nDeleting repository cloned directory: {clone_dir_path}")
+        logger.info(f"\nDeleting repository cloned directory: {clone_dir_path}")
         try:
             shutil.rmtree(clone_dir_path)
-            print("Delete completed.")
-        except OSError as e:
-            print(
+            logger.info("Delete completed.")
+        except OSError:
+            logger.exception(
                 "Error during deleting della repository cloned "
-                f"'{clone_dir_path}': {e}"
+                f"'{clone_dir_path}'"
             )
 
 
@@ -313,16 +313,18 @@ def _extract_repo_url_branch(
         default_branch = project_data.get("default_branch", default_branch)
 
         if not repo_url:
-            print(
+            logger.error(
                 "Warning: URL del repository sources non trovato per "
                 f"'{project_slug}' using API."
             )
         else:
-            print(f"Trovato URL repository: {repo_url}")
-            print(f"Branch di default (used come version identifier): {default_branch}")
-    except requests.exceptions.RequestException as e:
-        print(f"Warning: Error durante la richiesta API: {e}")
-        print("Provo a search la repository cloned locally if already exists.")
+            logger.info(f"Trovato URL repository: {repo_url}")
+            logger.info("Branch di default (used come version identifier): "
+                        f"{default_branch}")
+    except requests.exceptions.RequestException:
+        logger.exception("Warning: Error durante la richiesta API: ")
+        logger.exception("Provo a search la repository cloned locally "
+                         "if already exists.")
     return default_branch, repo_url
 
 
@@ -331,7 +333,7 @@ def run_clone(
 ) -> tuple[str | None, str | None] | str:
     """Perform a clone for matching vcs."""
     successful_clone = False
-    print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
+    logger.info(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
     fallback_branches = ["master", "main"]
     cmd_git = [
         "git",
@@ -358,7 +360,7 @@ def run_clone(
             if result.returncode != 0:
                 for (
                     default_branch  # noqa: PLR1704
-                ) in fallback_branches:  # pylint: disable=R1704  # noqa: PLR1704
+                ) in fallback_branches:  # pylint: disable=R1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
                     result = subprocess.run(  # noqa: S603
                         [
@@ -389,12 +391,13 @@ def run_clone(
             )
             if result.returncode == 0:
                 successful_clone = True
-        print("git clone Command executed successfully.")
+        logger.info("git clone Command executed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"Error during execution of git clone command:\n{e.stderr}")
+        logger.exception(f"Error during execution of git clone command:\n{e.stderr}")
         return None, None
     except FileNotFoundError:
-        print("Error: 'git' command not found. Be sure that Git is installed.")
+        logger.exception("Error: 'git' command not found. Be sure that "
+                         "Git is installed.")
         return None, None
     if not successful_clone:
         return None, None
@@ -616,14 +619,14 @@ def _download_handle_result(
     isolated_source_path: Path, build_output_path: Path
 ) -> tuple[Path | None, Path | None]:
     if isolated_source_path and build_output_path:
-        print(f"\nIsolated source documentation in: {isolated_source_path}")
-        print(f"Build HTML Sphinx generata in:    {build_output_path}")
+        logger.info(f"\nIsolated source documentation in: {isolated_source_path}")
+        logger.info(f"Build HTML Sphinx generata in:    {build_output_path}")
         return isolated_source_path, build_output_path
     if isolated_source_path:
-        print(f"\nIsolated Sources documentation in: {isolated_source_path}")
-        print("Failed Build Sphinx.")
+        logger.info(f"\nIsolated Sources documentation in: {isolated_source_path}")
+        logger.error("Failed Build Sphinx.")
         return isolated_source_path, None
-    print("\nFailed Isolating sources and build Sphinx.")
+    logger.error("\nFailed Isolating sources and build Sphinx.")
     return None, None
 
 

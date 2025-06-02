@@ -1,11 +1,12 @@
 """common read module."""
-
+import logging
 import os
 import sys
 
 import toml
 from packaging.requirements import InvalidRequirement, Requirement
 
+logger = logging.getLogger(__name__)
 
 def find_pyproject_toml(start_path: str = ".") -> str | None:
     """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
@@ -26,7 +27,7 @@ def find_pyproject_toml(start_path: str = ".") -> str | None:
 def add_deps_from_section(section_data: dict, explicit_deps: set) -> None:
     """Add read dependencies from a specific section to explicit deps."""
     if isinstance(section_data, dict):
-        for name in section_data.keys():
+        for name in section_data:
             normalized_name = name.lower().replace("_", "-")
             if normalized_name != "python":
                 explicit_deps.add(normalized_name)
@@ -43,19 +44,19 @@ def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
 
     """
     try:
-        with open(pyproject_path, "r", encoding="utf-8") as f:
+        with open(pyproject_path, encoding="utf-8") as f:
             return toml.load(f)
     except FileNotFoundError:
         return None
     except toml.TomlDecodeError:
-        print(
+        logger.exception(
             f"Warning: Invalid TOML in {pyproject_path}. "
             "Cannot read explicit dependencies.",
             file=sys.stderr,
         )
         return None
     except Exception as e:  # pylint: disable=broad-except
-        print(
+        logger.warning(
             f"Warning: Unexpected error reading {pyproject_path}: {e}", file=sys.stderr
         )
         return None
@@ -124,14 +125,16 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
 
     try:
         req = Requirement(stripped_line)
-        return req.name
-    except InvalidRequirement as e:
-        print(
+
+    except InvalidRequirement:
+        logger.exception(
             f"Warning: Invalid requirement line in {filepath_for_log}: "
-            f"'{stripped_line}' - {e}",
+            f"'{stripped_line}'",
             file=sys.stderr,
         )
         return None
+    else:
+        return req.name
 
 
 def get_explicit_package_names_from_requirements(
@@ -158,22 +161,22 @@ def get_explicit_package_names_from_requirements(
         return explicit_package_names
 
     if not os.path.exists(requirements_filepath):
-        print(
+        logger.warning(
             f"Warning: Requirements file not found at {requirements_filepath}.",
             file=sys.stderr,
         )
         return explicit_package_names
 
     try:
-        with open(requirements_filepath, "r", encoding="utf-8") as f:
+        with open(requirements_filepath, encoding="utf-8") as f:
             for line in f:
                 package_name = _parse_requirement_line(line, requirements_filepath)
                 if package_name:
                     explicit_package_names.add(package_name)
 
-    except (IOError, UnicodeDecodeError) as e:
-        print(
-            f"Error reading or decoding requirements file {requirements_filepath}: {e}",
+    except (OSError, UnicodeDecodeError):
+        logger.exception(
+            f"Error reading or decoding requirements file {requirements_filepath}",
             file=sys.stderr,
         )
         return set()
@@ -215,15 +218,15 @@ def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[
     """
     pyproject_path = find_pyproject_toml(start_path)
     if pyproject_path:
-        print(f"Info: Found pyproject.toml at {pyproject_path}", file=sys.stderr)
+        logger.info(f"Info: Found pyproject.toml at {pyproject_path}", file=sys.stderr)
         return get_explicit_poetry_dependencies(pyproject_path)
 
     reqs_path = find_requirements_txt(start_path)
     if reqs_path:
-        print(f"Info: Found requirements.txt at {reqs_path}", file=sys.stderr)
+        logger.info(f"Info: Found requirements.txt at {reqs_path}", file=sys.stderr)
         return get_explicit_package_names_from_requirements(reqs_path)
 
-    print(
+    logger.warning(
         "Warning: No pyproject.toml or requirements.txt "
         f"found starting from {start_path}. "
         "Cannot determine explicit dependencies.",
@@ -233,18 +236,18 @@ def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[
 
 
 if __name__ == "__main__":
-    print("--- Testing project_config.py directly ---", file=sys.stderr)
+    logger.info("--- Testing project_config.py directly ---", file=sys.stderr)
 
     explicit_names = get_explicit_dependencies_from_project_config("")
 
     if explicit_names:
-        print("\n--- Explicit Dependency Names Found ---", file=sys.stderr)
+        logger.info("\n--- Explicit Dependency Names Found ---", file=sys.stderr)
         for ex_name in sorted(list(explicit_names)):
-            print(f"- {ex_name}", file=sys.stderr)
-        print("--- End Explicit Dependency Names ---", file=sys.stderr)
+            logger.info(f"- {ex_name}", file=sys.stderr)
+        logger.info("--- End Explicit Dependency Names ---", file=sys.stderr)
         sys.exit(0)
     else:
-        print(
+        logger.error(
             "\n--- No explicit dependency names found or config file missing ---",
             file=sys.stderr,
         )

@@ -14,6 +14,7 @@ from devildex.scanner_utils.scanner_utils import (
     read_file_content_robustly,
 )
 
+logger = logging.getLogger(__name__)
 SCORE_MAX = 3
 
 
@@ -34,13 +35,15 @@ def is_sphinx_project(project_path: str) -> bool:
     conf_file_paths = find_config_files(potential_conf_dirs, "conf.py")
 
     if not conf_file_paths:
-        print(f"  ❌ No 'conf.py' file found in standard positions for {project_path}")
+        logger.error("  ❌ No 'conf.py' file found in standard positions for"
+                     f" {project_path}")
         return False
 
-    print(f"  🔍 Found {len(conf_file_paths)} file 'conf.py'. Analyzing content...")
+    logger.info(f"  🔍 Found {len(conf_file_paths)} file 'conf.py'. "
+                "Analyzing content...")
 
     for conf_file_path in conf_file_paths:
-        print(f"    Analyzing: {conf_file_path}")
+        logger.info(f"    Analyzing: {conf_file_path}")
 
         content = read_file_content_robustly(conf_file_path)
         if content is None:
@@ -73,7 +76,7 @@ def is_sphinx_project(project_path: str) -> bool:
             content, high_priority_sphinx_checks, re.DOTALL | re.MULTILINE
         )
         if success_message:
-            print(f"    ✅ {success_message}")
+            logger.info(f"    ✅ {success_message}")
             return True
 
         common_sphinx_vars = [
@@ -91,13 +94,13 @@ def is_sphinx_project(project_path: str) -> bool:
         score = count_matching_strings(content, common_sphinx_vars)
 
         if score >= SCORE_MAX:
-            print(
+            logger.info(
                 f"    ✅ Found {score} common configuration Sphinx variables."
                 " Good indication."
             )
             return True
 
-    print(
+    logger.error(
         f"  ❌ No criteria Sphinx forte trovato nel file 'conf.py' per {project_path}."
     )
     return False
@@ -147,19 +150,20 @@ html_theme = 'alabaster'
     )
     (test_sphinx_dir_docs / "src").mkdir(exist_ok=True)
 
-    print(f"\nScanning {test_sphinx_dir.name}/:")
+    logger.info(f"\nScanning {test_sphinx_dir.name}/:")
     if is_sphinx_project(str(test_sphinx_dir)):
-        print(f"Result finale: {test_sphinx_dir.name} è un project Sphinx.")
+        logger.info(f"Result finale: {test_sphinx_dir.name} è un project Sphinx.")
     else:
-        print(f"Result finale: {test_sphinx_dir.name} NON è un project Sphinx.")
+        logger.error(f"Result finale: {test_sphinx_dir.name} NON è un project Sphinx.")
 
-    print(f"\nScanning {test_sphinx_dir_docs.name}/:")
+    logger.info(f"\nScanning {test_sphinx_dir_docs.name}/:")
     if is_sphinx_project(str(test_sphinx_dir_docs)):
-        print(f"Result finale: {test_sphinx_dir_docs.name} è un project Sphinx.")
+        logger.info(f"Result finale: {test_sphinx_dir_docs.name} è un project Sphinx.")
     else:
-        print(f"final Result: {test_sphinx_dir_docs.name} is NOT a Sphinx project.")
+        logger.error(f"final Result: {test_sphinx_dir_docs.name} "
+                     "is NOT a Sphinx project.")
 
-    print("\n--- Test su una directory che NON è Sphinx (simulation) ---")
+    logger.info("\n--- Test su una directory che NON è Sphinx (simulation) ---")
 
     test_non_sphinx_dir = Path("./NOT_SPHINX_EXAMPLE")
     test_non_sphinx_dir.mkdir(exist_ok=True)
@@ -175,26 +179,28 @@ LOG_LEVEL = "INFO"
     test_non_sphinx_dir_no_conf = Path("./WITHOUT_CONF_EXAMPLE")
     test_non_sphinx_dir_no_conf.mkdir(exist_ok=True)
 
-    print(f"\nScanning {test_non_sphinx_dir.name}/:")
+    logger.info(f"\nScanning {test_non_sphinx_dir.name}/:")
     if is_sphinx_project(str(test_non_sphinx_dir)):
-        print(f"final Result: {test_non_sphinx_dir.name} è un project Sphinx.")
+        logger.info(f"final Result: {test_non_sphinx_dir.name} è un project Sphinx.")
     else:
-        print(f"final Result: {test_non_sphinx_dir.name} NON è un project Sphinx.")
+        logger.error(f"final Result: {test_non_sphinx_dir.name} "
+                     "NON è un project Sphinx.")
 
-    print(f"\nScanning {test_non_sphinx_dir_no_conf.name}/:")
+    logger.info(f"\nScanning {test_non_sphinx_dir_no_conf.name}/:")
     if is_sphinx_project(str(test_non_sphinx_dir_no_conf)):
-        print(f"final Result: {test_non_sphinx_dir_no_conf.name} è un project Sphinx.")
+        logger.info(f"final Result: {test_non_sphinx_dir_no_conf.name} "
+                    "è un project Sphinx.")
     else:
-        print(
+        logger.error(
             f"final Result: {test_non_sphinx_dir_no_conf.name} NON è un project Sphinx."
         )
 
-    print("\nCleaning directory di test...")
+    logger.info("\nCleaning directory di test...")
     shutil.rmtree(test_sphinx_dir, ignore_errors=True)
     shutil.rmtree(test_sphinx_dir_docs, ignore_errors=True)
     shutil.rmtree(test_non_sphinx_dir, ignore_errors=True)
     shutil.rmtree(test_non_sphinx_dir_no_conf, ignore_errors=True)
-    print("Done.")
+    logger.info("Done.")
 
 
 def _check_file_for_docstrings(file_path: Path) -> bool:
@@ -203,19 +209,20 @@ def _check_file_for_docstrings(file_path: Path) -> bool:
     Returns True if any docstring is found, False otherwise.
     """
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             source_code = f.read()
         tree = ast.parse(source_code, filename=str(file_path))
         if ast.get_docstring(tree):
             return True
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                if ast.get_docstring(node):
+            if (isinstance(node,
+                           (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                    and ast.get_docstring(node)):
                     return True
     except SyntaxError:
-        logging.error("syntax error exception")
+        logging.exception("syntax error exception")
     except Exception:  # pylint: disable=broad-except
-        logging.error("generic exception")
+        logging.exception("generic exception")
     return False
 
 
