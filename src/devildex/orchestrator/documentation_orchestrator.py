@@ -41,7 +41,8 @@ class Orchestrator:
         or by fetching them. Sets self._effective_source_path.
 
         Returns:
-            bool: True if sources are now available at self._effective_source_path, False otherwise.
+            bool: True if sources are now available at
+                self._effective_source_path, False otherwise.
 
         """
         self._effective_source_path = None
@@ -54,12 +55,15 @@ class Orchestrator:
                 source_path_candidate = candidate.resolve()
             else:
                 print(
-                    f"Orchestrator WARNING: Provided initial_source_path '{candidate}' is not valid or does not exist."
+                    "Orchestrator WARNING: Provided "
+                    f"initial_source_path '{candidate}' is not valid or does not exist."
                 )
 
         if not source_path_candidate:
             print(
-                f"Orchestrator: No valid initial_source_path. Attempting to fetch sources for {self.package_details.name} v{self.package_details.version}"
+                "Orchestrator: No valid initial_source_path. "
+                "Attempting to fetch sources for "
+                f"{self.package_details.name} v{self.package_details.version}"
             )
 
             fetcher_storage_base = self.base_output_dir / "_fetched_project_sources"
@@ -84,7 +88,9 @@ class Orchestrator:
                     source_path_candidate = Path(fetched_path_str).resolve()
                 else:
                     print(
-                        f"Orchestrator: Fetch failed for {self.package_details.name}. Fetcher returned: success={fetch_successful}, path={fetched_path_str}"
+                        f"Orchestrator: Fetch failed for {self.package_details.name}."
+                        f" Fetcher returned: success={fetch_successful}, "
+                        f"path={fetched_path_str}"
                     )
                     source_path_candidate = None
             except Exception as e:
@@ -105,7 +111,9 @@ class Orchestrator:
             return True
         else:
             print(
-                f"Orchestrator ERROR: No valid source path available (neither provided nor fetched). Evaluated path: {source_path_candidate}"
+                "Orchestrator ERROR: No valid source path available "
+                "(neither provided nor fetched). "
+                f"Evaluated path: {source_path_candidate}"
             )
             self._effective_source_path = None
             return False
@@ -202,15 +210,19 @@ class Orchestrator:
 
             if self.detected_doc_type == "unknown":
                 print(
-                    f"Orchestrator: Scan of '{scan_path_str}' did not identify a specific doc type (Sphinx, Docstrings)."
+                    f"Orchestrator: Scan of '{scan_path_str}' did not identify"
+                    " a specific doc type (Sphinx, Docstrings)."
                 )
 
             print(
-                f"Orchestrator: Scan complete. Detected doc type from source files: '{self.detected_doc_type}' for path {self._effective_source_path}"
+                "Orchestrator: Scan complete. Detected doc type"
+                f" from source files: '{self.detected_doc_type}' "
+                f"for path {self._effective_source_path}"
             )
         else:
             print(
-                "Orchestrator ERROR: _effective_source_path is not set even after fetch_repo reported success. This should not happen."
+                "Orchestrator ERROR: _effective_source_path is not set even after "
+                "fetch_repo reported success. This should not happen."
             )
             self.detected_doc_type = "unknown"
 

@@ -264,7 +264,6 @@ class PackageSourceFetcher:
 
         operation_successful = False
         try:
-            # 1. Setup temp_base_dir (also cleans up previous attempts)
             if temp_base_dir.exists():
                 shutil.rmtree(temp_base_dir)
             temp_base_dir.mkdir(parents=True, exist_ok=True)
@@ -281,7 +280,8 @@ class PackageSourceFetcher:
             if not self._ensure_target_dir_exists():
                 return False
 
-            if self._move_extracted_content(content_source_dir, self.download_target_path):
+            if self._move_extracted_content(
+                    content_source_dir, self.download_target_path):
                 operation_successful = True
 
         except requests.RequestException:
@@ -301,7 +301,8 @@ class PackageSourceFetcher:
             if not git_exe:
                 return None
 
-            actual_command = [git_exe] + command_list[1:] if command_list[0] == "git" else [git_exe] + command_list
+            actual_command = [git_exe] + command_list[1:] if command_list[0] == "git" else\
+                [git_exe] + command_list
 
             process = subprocess.run(  # noqa: S603
                 actual_command,
@@ -480,7 +481,8 @@ class PackageSourceFetcher:
                     if not self._ensure_target_dir_exists():
                         break
 
-                    if self._copy_cloned_content(temp_clone_dir, self.download_target_path):
+                    if self._copy_cloned_content(
+                            temp_clone_dir, self.download_target_path):
                         tag_checkout_and_copy_successful = True
                     break
 
@@ -514,7 +516,9 @@ class PackageSourceFetcher:
         tag_variations = [t for t in list(tag_variations_set) if t]
         # Prioritize exact match and v-prefix
         preferred_order = [self.package_version, f"v{self.package_version}"]
-        ordered_tag_variations = preferred_order + [t for t in tag_variations if t not in preferred_order]
+        ordered_tag_variations = (preferred_order +
+                                  [t for t in tag_variations
+                                   if t not in preferred_order])
 
 
         if self._try_fetch_tag_github_archive(repo_url, ordered_tag_variations):
@@ -543,7 +547,8 @@ class PackageSourceFetcher:
         ):
             self._cleanup_git_dir_from_path(self.download_target_path)
             logger.info(
-                f"Clone del branch principale/default riuscito in {self.download_target_path}."
+                "Clone del branch principale/default "
+                f"riuscito in {self.download_target_path}."
             )
             return True
         return False
@@ -554,7 +559,8 @@ class PackageSourceFetcher:
         Returns:
             tuple[bool, bool, str | None]:
                 - fetch_successful: True se il fetch ha avuto successo, False altrimenti.
-                - is_master_branch_fetched: True se è stato fatto il fetch del branch principale/default.
+                - is_master_branch_fetched: True se è stato fatto il fetch del branch
+                    principale/default.
                 - path_to_return: Il percorso alla directory dei sorgenti scaricati
                     se il fetch ha successo, None altrimenti.
 
