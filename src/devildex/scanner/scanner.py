@@ -16,6 +16,7 @@ from devildex.scanner_utils.scanner_utils import (
 
 SCORE_MAX = 3
 
+
 def is_sphinx_project(project_path: str) -> bool:
     """Scan project path to determine if it is a Sphinx project.
 
