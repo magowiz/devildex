@@ -24,7 +24,8 @@ if not logger.hasHandlers():
     )
 
 CONF_SPHINX_FILE = "conf.py"
-GIT_FULL_PATH = shutil.which('git')
+GIT_FULL_PATH = shutil.which("git")
+
 
 def find_doc_source_in_clone(repo_path: Path) -> Path:
     """Identify the documentation source directory within a cloned repository.
@@ -297,7 +298,9 @@ def _cleanup(clone_dir_path: Path) -> None:
             )
 
 
-def _extract_repo_url_branch(api_project_detail_url: str, project_slug: str) -> tuple[str, str]:
+def _extract_repo_url_branch(
+    api_project_detail_url: str, project_slug: str
+) -> tuple[str, str]:
     repo_url = None
     default_branch = "main"
     try:
@@ -323,7 +326,9 @@ def _extract_repo_url_branch(api_project_detail_url: str, project_slug: str) -> 
     return default_branch, repo_url
 
 
-def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: bool) -> tuple[str|None, str|None]| str:
+def run_clone(
+    repo_url: str, default_branch: str, clone_dir_path: Path, bzr: bool
+) -> tuple[str | None, str | None] | str:
     """Perform a clone for matching vcs."""
     successful_clone = False
     print(f"Cloning repository (branch '{default_branch}') in: {clone_dir_path}")
@@ -351,7 +356,9 @@ def run_clone(repo_url: str, default_branch: str, clone_dir_path: Path, bzr: boo
             if result.returncode == 0:
                 successful_clone = True
             if result.returncode != 0:
-                for default_branch in fallback_branches:  # pylint: disable=R1704  # noqa: PLR1704
+                for (
+                    default_branch
+                ) in fallback_branches:  # pylint: disable=R1704  # noqa: PLR1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
                     result = subprocess.run(  # noqa: S603
                         [
@@ -605,7 +612,9 @@ def download_readthedocs_source_and_build(
     return _download_handle_result(isolated_source_path, build_output_path)
 
 
-def _download_handle_result(isolated_source_path: Path, build_output_path: Path)-> tuple[Path|None, Path|None]:
+def _download_handle_result(
+    isolated_source_path: Path, build_output_path: Path
+) -> tuple[Path | None, Path | None]:
     if isolated_source_path and build_output_path:
         print(f"\nIsolated source documentation in: {isolated_source_path}")
         print(f"Build HTML Sphinx generata in:    {build_output_path}")
