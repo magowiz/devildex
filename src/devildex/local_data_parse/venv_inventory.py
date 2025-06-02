@@ -6,6 +6,7 @@ from devildex.models import PackageDetails
 
 PART_LENGTH = 2
 
+
 def get_installed_packages_with_project_urls(explicit: set | None = None) -> list:
     """Restituisce una lista di oggetti PackageDetails per tutti i pacchetti installati.
 
