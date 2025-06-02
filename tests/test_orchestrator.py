@@ -65,7 +65,8 @@ PACKAGES_TO_TEST = [
                     "https://this-rtd-project-should-not-exist.readthedocs.io/",
             },
             "vcs_url": "https://github.com/psf/black.git",
-            "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",
+            "rtd_url":
+                "https://this-rtd-project-should-not-exist.readthedocs.io/",
         },
         "repo_url_for_clone": "https://github.com/psf/black.git",
         "expected_preferred_type": "sphinx",

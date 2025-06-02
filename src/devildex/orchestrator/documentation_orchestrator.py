@@ -96,7 +96,8 @@ class Orchestrator:
                     source_path_candidate = None
             except Exception as e:
                 print(
-                    f"Orchestrator: Exception during fetch for {self.package_details.name}: {e}"
+                    "Orchestrator: Exception during fetch for "
+                    f"{self.package_details.name}: {e}"
                 )
                 source_path_candidate = None
 
