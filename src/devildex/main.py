@@ -32,9 +32,9 @@ class DevilDexCore:
 
 
     def list_package_dirs(self) -> List[str]:
-        """Elenca i nomi delle directory di primo livello nella cartella base dei docset.
+        """List i nomi delle directory di primo level nella folder base dei docset.
 
-        Queste sono potenziali cartelle radice per i pacchetti.
+        These are potential folders root per i packages.
         """
         if not self.docset_base_output_path.exists():
             return []
@@ -48,7 +48,7 @@ class DevilDexCore:
         package_version = package_data.get("version")
         project_urls = package_data.get("project_urls")
         if not package_name or not package_version:
-            error_msg = "Nome del pacchetto o versione mancante nei dati di input."
+            error_msg = "missing package name or version nei dati di input."
             return False, error_msg
         details = PackageDetails(
             name=str(package_name),
@@ -64,26 +64,26 @@ class DevilDexCore:
         if detected_type == "unknown":
             last_op_msg = orchestrator.get_last_operation_result()
             msg = (
-                f"Impossibile determinare il tipo di documentazione per {details.name}."
+                f"unable to determine il tipo di documentation per {details.name}."
             )
             if isinstance(last_op_msg, str) and last_op_msg:
-                msg += f" Dettaglio: {last_op_msg}"
+                msg += f" Detail: {last_op_msg}"
             return False, msg
         generation_result = orchestrator.grab_build_doc()
         if isinstance(generation_result, str):
             return True, generation_result
         elif generation_result is False:
             last_op_detail = orchestrator.get_last_operation_result()
-            error_msg = f"Fallimento nella generazione del docset per {details.name}."
+            error_msg = f"Failure nella generation del docset per {details.name}."
             if isinstance(last_op_detail, str) and last_op_detail:
-                error_msg += f" Dettagli: {last_op_detail}"
+                error_msg += f" Details: {last_op_detail}"
             elif last_op_detail is False:
-                error_msg += " L'operazione specifica è fallita."
+                error_msg += " Specified operation is failed."
             return False, error_msg
         else:
             unexpected_msg = (
-                f"Risultato inaspettato ({type(generation_result)}) "
-                f"dalla generazione del docset per {details.name}."
+                f"Unexpected result ({type(generation_result)}) "
+                f"dalla generation del docset per {details.name}."
             )
             return False, unexpected_msg
 
@@ -163,41 +163,17 @@ class DevilDexApp(wx.App):
         return pkg == grid_pkg.get('name')
 
     def _perform_startup_docset_scan(self) -> None:
-        """Esegue la scansione dei docset esistenti all'avvio e aggiorna.
+        """Execute the scan dei existing docsets on startup e updates.
 
         self.current_grid_source_data.
         """
-        if not self.core:
-            print("GUI: Core non disponibile per la scansione all'avvio.")
-            for pkg_data in self.current_grid_source_data:
-                pkg_data["docset_status"] = "Not Available"
-                if "docset_path" in pkg_data:
-                    del pkg_data["docset_path"]
-            return
-
-        print("GUI: Avvio scansione docset all'avvio...")
         matched_top_level_dir_names: Set[str] = self.scan_docset_dir(
             self.current_grid_source_data
         )
-
-        if not matched_top_level_dir_names:
-            print(
-                "GUI: Nessuna directory di pacchetto di primo livello corrispondente ai dati della griglia trovata."
-            )
-            for pkg_data in self.current_grid_source_data:
-                pkg_data["docset_status"] = "Not Available"
-                if "docset_path" in pkg_data:
-                    del pkg_data["docset_path"]
-            return
-
         updated_count = 0
         for pkg_data in self.current_grid_source_data:
             pkg_name = pkg_data.get("name")
             pkg_version = pkg_data.get("version")
-
-            if not pkg_name:
-                continue
-
             if pkg_name in matched_top_level_dir_names:
                 package_root_on_disk: Path = (
                     self.core.docset_base_output_path / pkg_name
@@ -206,7 +182,6 @@ class DevilDexApp(wx.App):
                 if pkg_version:
                     subdirs_to_check.append(str(pkg_version))
                 subdirs_to_check.extend(["main", "master"])
-
                 found_specific_docset_subdir: Optional[Path] = None
                 for subdir_candidate_name in subdirs_to_check:
                     potential_docset_path = (
@@ -221,35 +196,18 @@ class DevilDexApp(wx.App):
 
                 if found_specific_docset_subdir:
                     pkg_data["docset_status"] = "📖 Available"
-                    # Il percorso salvato è la cartella che contiene (presumibilmente) index.html
                     pkg_data["docset_path"] = str(
                         found_specific_docset_subdir.resolve()
-                    )
-                    print(
-                        f"GUI: Docset per '{pkg_name}' (sottocartella: '{found_specific_docset_subdir.name}') "
-                        f"trovato e impostato su: '{pkg_data['docset_path']}'"
                     )
                     updated_count += 1
                 else:
                     pkg_data["docset_status"] = "Not Available"
                     if "docset_path" in pkg_data:
                         del pkg_data["docset_path"]
-                    print(
-                        f"GUI: Directory per '{pkg_name}' trovata, ma nessuna sottocartella specifica (versione/main/master) valida."
-                    )
             else:
                 pkg_data["docset_status"] = "Not Available"
                 if "docset_path" in pkg_data:
                     del pkg_data["docset_path"]
-
-        if updated_count > 0:
-            print(
-                f"GUI: Scansione all'avvio completata. {updated_count} docset esistenti impostati come 'Available'."
-            )
-        else:
-            print(
-                "GUI: Scansione all'avvio completata. Nessun docset esistente è stato reso 'Available' o confermato."
-            )
 
 
     def show_document(
@@ -425,6 +383,39 @@ class DevilDexApp(wx.App):
             event.Skip()
         self._setup_initial_view()
 
+    COL_WIDTHS = {
+        "id": COL_WIDTH_ID,
+        "name": COL_WIDTH_NAME,
+        "version": COL_WIDTH_VERSION,
+        "description": COL_WIDTH_DESC,
+        "status": COL_WIDTH_STATUS,
+        "docset_status": COL_WIDTH_DOCSET_STATUS,
+    }
+
+    def _configure_grid_columns(self) -> None:
+        """Configura le labels, sizes and attributes delle columns della grid."""
+        if not self.data_grid:
+            return
+
+        self.data_grid.SetColLabelValue(self.indicator_col_idx, "")
+        self.data_grid.SetColSize(
+            self.indicator_col_idx, 30
+        )
+        indicator_attr = wx.grid.GridCellAttr()
+        indicator_attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+        indicator_attr.SetReadOnly(True)
+        self.data_grid.SetColAttr(self.indicator_col_idx, indicator_attr.Clone())
+        for c_idx, col_name in enumerate(COLUMNS_ORDER):
+            grid_col_idx = (
+                c_idx + 1
+            )
+            self.data_grid.SetColLabelValue(grid_col_idx, col_name)
+            if col_name in self.COL_WIDTHS:
+                self.data_grid.SetColSize(grid_col_idx, self.COL_WIDTHS[col_name])
+            col_attr = wx.grid.GridCellAttr()
+            col_attr.SetReadOnly(True)
+            self.data_grid.SetColAttr(grid_col_idx, col_attr.Clone())
+
     def _setup_initial_view(self) -> None:
         """Configura la initial window."""
         self._clear_main_panel()
@@ -441,36 +432,9 @@ class DevilDexApp(wx.App):
         num_data_cols = len(COLUMNS_ORDER)
         total_grid_cols = num_data_cols + 1
 
-        self.data_grid.CreateGrid(0, total_grid_cols) # Create with 0 rows initially
+        self.data_grid.CreateGrid(0, total_grid_cols)
         self.data_grid.SetSelectionMode(wx.grid.Grid.SelectRows)
-
-        self.data_grid.SetColLabelValue(self.indicator_col_idx, "")
-        self.data_grid.SetColSize(self.indicator_col_idx, 30) # Fixed size for indicator
-        indicator_attr = wx.grid.GridCellAttr()
-        indicator_attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
-        indicator_attr.SetReadOnly(True)
-        self.data_grid.SetColAttr(self.indicator_col_idx, indicator_attr.Clone())
-
-        col_widths = {
-            "id": COL_WIDTH_ID,
-            "name": COL_WIDTH_NAME,
-            "version": COL_WIDTH_VERSION,
-            "description": COL_WIDTH_DESC,
-            "status": COL_WIDTH_STATUS,
-            "docset_status": COL_WIDTH_DOCSET_STATUS,
-        }
-
-        for c_idx, col_name in enumerate(COLUMNS_ORDER):
-            grid_col_idx = c_idx + 1
-            self.data_grid.SetColLabelValue(grid_col_idx, col_name)
-            if col_name in col_widths:
-                self.data_grid.SetColSize(grid_col_idx, col_widths[col_name])
-            col_attr = wx.grid.GridCellAttr()
-            col_attr.SetReadOnly(True)
-            self.data_grid.SetColAttr(grid_col_idx, col_attr.Clone())
-
-        self.data_grid.SetSelectionMode(wx.grid.Grid.SelectRows)
-
+        self._configure_grid_columns()
         self.log_text_ctrl = wx.TextCtrl(
             self.panel,
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.TE_RICH2,
@@ -481,9 +445,7 @@ class DevilDexApp(wx.App):
             initial_bmp_to_use = self.arrow_down_bmp_scaled
         elif self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
             initial_bmp_to_use = self.arrow_down_bmp
-
         button_fixed_size = wx.Size(50, 20)
-
         self.log_toggle_button = wx.BitmapButton(
             self.panel,
             id=wx.ID_ANY,
@@ -493,7 +455,6 @@ class DevilDexApp(wx.App):
         )
         self.log_toggle_button.Bind(wx.EVT_BUTTON, self.on_log_toggle_button_click)
         bottom_bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
         bottom_bar_sizer.AddStretchSpacer(1)
         button_padding = 0
         bottom_bar_sizer.Add(
@@ -507,18 +468,13 @@ class DevilDexApp(wx.App):
             button_fixed_size.GetHeight() + sizer_internal_vertical_padding
         )
         bottom_bar_sizer.SetMinSize(wx.Size(-1, desired_bar_height))
-
         bottom_bar_sizer.AddStretchSpacer(1)
         self.main_panel_sizer.Add(content_sizer, 1, wx.EXPAND | wx.ALL, 0)
-
         self.main_panel_sizer.Add(self.log_text_ctrl, 0, wx.EXPAND | wx.ALL, 5)
         self.log_text_ctrl.Show(self.is_log_panel_visible)
-
         self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
-
         self.update_grid()
         self._update_log_toggle_button_icon()
-
         if self.panel:
             self.panel.Layout()
         if self.main_frame:
@@ -604,10 +560,8 @@ class DevilDexApp(wx.App):
         self.show_document(package_data_to_show=package_data_for_view)
         if self.webview:
             local_url = index_file_path.as_uri()
-            print(f"GUI: Loading local docset URL: {local_url}")
             self.load_url(local_url)
         else:
-            print("GUI ERROR: WebView component not available to load URL.")
             wx.MessageBox(
                 "WebView component is not available. Cannot open docset.",
                 "Internal Error",
@@ -617,7 +571,7 @@ class DevilDexApp(wx.App):
         event.Skip()
 
 
-    def on_generate_docset(self, event: wx.CommandEvent) -> None:
+    def on_generate_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle generate docset action."""
         if self.selected_row_index is None:
             wx.MessageBox(
@@ -701,7 +655,7 @@ class DevilDexApp(wx.App):
     def _on_generation_complete(
         self,
         success: bool,
-        message: str,  # Questo è il percorso se success è True
+        message: str,
         package_name: Optional[str],
         package_id: Optional[str],
     ) -> None:
@@ -824,25 +778,12 @@ class DevilDexApp(wx.App):
         log_msg = f"INFO: Regeneration requested for '{package_name}'. Current status: {current_status}.\n"
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_msg)
-        print(f"GUI: {log_msg.strip()}")
-
-        # Step 1: Attempt to delete if docset is 'Available' or 'Error'
-        # on_delete_docset will handle its own confirmation dialog and UI updates.
-        # It modifies self.current_grid_source_data.
         if current_status in ["📖 Available", "❌ Error"]:
-            print(f"GUI: Regenerate - Attempting to delete existing docset for '{package_name}'.")
-            # Pass None for the event because we are calling it programmatically.
-            # on_delete_docset is synchronous for file operations and status updates.
             self.on_delete_docset(event=None)
-            # After this call, self.current_grid_source_data for the selected row
-            # will reflect the outcome of the deletion (e.g., status "Not Available").
-        else:
-            print(f"GUI: Regenerate - No existing docset to delete for '{package_name}' (status: {current_status}). Proceeding to generate.")
 
-        print(f"GUI: Regenerate - Attempting to generate docset for '{package_name}'.")
-        self.on_generate_docset(event=None) # Pass None for the event
+        self.on_generate_docset(event=None)
 
-        if event: # Handle the original event if it came from a button click
+        if event:
             event.Skip()
 
     def on_view_log(self, event: wx.CommandEvent) -> None:
@@ -855,66 +796,13 @@ class DevilDexApp(wx.App):
         event.Skip()
 
 
-    def on_delete_docset(self, event: wx.CommandEvent) -> None:
+    def on_delete_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle delete docset action."""
-        if self.selected_row_index is None:
-            wx.MessageBox(
-                "Please select a package to delete its docset.",
-                "No Selection",
-                wx.OK | wx.ICON_INFORMATION,
-            )
-            event.Skip()
-            return
-
         selected_package_data = self.get_selected_row()
-        if not selected_package_data:
-            wx.MessageBox(
-                "Could not retrieve data for the selected row.",
-                "Internal Error",
-                wx.OK | wx.ICON_ERROR,
-            )
-            event.Skip()
-            return
-
         package_name = selected_package_data.get("name", "N/D")
         docset_path_str = selected_package_data.get("docset_path")
-
-        if not docset_path_str:
-            wx.MessageBox(
-                f"No docset found to delete for '{package_name}'.",
-                "Docset Not Found",
-                wx.OK | wx.ICON_INFORMATION,
-            )
-            event.Skip()
-            return
-
         path_of_specific_docset_build = Path(docset_path_str)
         package_level_docset_dir = path_of_specific_docset_build.parent
-
-        expected_base_path = self.core.docset_base_output_path.resolve()
-        actual_package_level_dir_resolved = package_level_docset_dir.resolve()
-
-        if not (
-            actual_package_level_dir_resolved.parent == expected_base_path
-            and actual_package_level_dir_resolved.name == package_name
-        ):
-            error_msg = (
-                f"ERRORE DI SICUREZZA: Il percorso del docset '{path_of_specific_docset_build}' "
-                f"non sembra trovarsi in una cartella di pacchetto valida ('{package_name}') "
-                f"all'interno della directory base dei docset. Cancellazione annullata."
-            )
-            print(f"GUI: {error_msg}")
-            wx.MessageBox(
-                "Si è verificato un problema nel determinare la cartella corretta da eliminare. "
-                "Cancellazione annullata per sicurezza.",
-                "Errore di Cancellazione",
-                wx.OK | wx.ICON_ERROR,
-            )
-            if self.log_text_ctrl:
-                self.log_text_ctrl.AppendText(error_msg + "\n")
-            event.Skip()
-            return
-
         confirm_dialog = wx.MessageDialog(
             self.main_frame,
             f"Are you sure you want to delete this specific docset build for '{package_name}'?\n"
@@ -932,90 +820,38 @@ class DevilDexApp(wx.App):
         if user_choice == wx.ID_YES:
             log_message = ""
             try:
+                shutil.rmtree(path_of_specific_docset_build)
                 if (
-                    path_of_specific_docset_build.exists()
-                    and path_of_specific_docset_build.is_dir()
+                    package_level_docset_dir.exists()
+                    and package_level_docset_dir.is_dir()
+                    and not list(package_level_docset_dir.iterdir())
                 ):
-                    shutil.rmtree(path_of_specific_docset_build)
-                    log_message += (
-                        f"SUCCESS: Specific docset build for '{package_name}' deleted from "
-                        f"'{path_of_specific_docset_build}'.\n"
-                    )
-                    print(
-                        f"GUI: Deleted specific docset build at {path_of_specific_docset_build}"
-                    )
-                    deletion_successful = True
-                    if (
-                        package_level_docset_dir.exists()
-                        and package_level_docset_dir.is_dir()
-                        and not list(package_level_docset_dir.iterdir())
-                    ):
-                        shutil.rmtree(package_level_docset_dir)
-                        log_message += (
-                            f"INFO: Package directory '{package_level_docset_dir}' was empty "
-                            "after deleting the specific build and has also been removed.\n"
-                        )
-                        print(
-                            f"GUI: Removed empty package directory at {package_level_docset_dir}"
-                        )
-                    elif not package_level_docset_dir.exists():
-                        log_message += (
-                            f"INFO: Package directory '{package_level_docset_dir}' "
-                            "no longer exists (possibly deleted with the build if it was the same).\n"
-                        )
+                    shutil.rmtree(package_level_docset_dir)
 
-                elif not path_of_specific_docset_build.exists():
-                    log_message += (
-                        f"INFO: Specific docset build for '{package_name}' not found at "
-                        f"'{path_of_specific_docset_build}'. No specific build to delete.\n"
-                    )
-                    deletion_successful = True
-                else:
-                    log_message += (
-                        f"WARNING: Path '{path_of_specific_docset_build}' for '{package_name}' "
-                        "exists but is not a directory. No deletion performed on this path.\n"
-                    )
-                    deletion_successful = True
-
-                if deletion_successful:
-                    if (
-                        0
-                        <= self.selected_row_index
-                        < len(self.current_grid_source_data)
-                    ):
-                        self.current_grid_source_data[self.selected_row_index][
-                            "docset_status"
-                        ] = "Not Available"
-                        if (
-                            "docset_path"
-                            in self.current_grid_source_data[
-                                self.selected_row_index
-                            ]
-                        ):
-                            del self.current_grid_source_data[
-                                self.selected_row_index
-                            ]["docset_path"]
-
-                        if self.data_grid and self.docset_status_col_grid_idx != -1:
-                            self.data_grid.SetCellValue(
-                                self.selected_row_index,
-                                self.docset_status_col_grid_idx,
-                                "Not Available",
-                            )
-                            self.data_grid.ForceRefresh()
-                    wx.MessageBox(
-                        f"The selected docset build for '{package_name}' has been processed.\n"
-                        "Check logs for details.",
-                        "Deletion Processed",
-                        wx.OK | wx.ICON_INFORMATION,
-                    )
+                self.current_grid_source_data[self.selected_row_index][
+                    "docset_status"
+                ] = "Not Available"
+                self.current_grid_source_data[
+                    self.selected_row_index
+                ].pop("docset_path", None)
+                self.data_grid.SetCellValue(
+                    self.selected_row_index,
+                    self.docset_status_col_grid_idx,
+                    "Not Available",
+                )
+                self.data_grid.ForceRefresh()
+                wx.MessageBox(
+                    f"The selected docset build for '{package_name}' has been processed.\n"
+                    "Check logs for details.",
+                    "Deletion Processed",
+                    wx.OK | wx.ICON_INFORMATION,
+                )
 
             except OSError as e:
                 log_message += (
                     f"ERROR: Failed to delete files/directories for '{package_name}'. "
                     f"Attempted path(s): '{path_of_specific_docset_build}' and possibly '{package_level_docset_dir}'. Error: {e}\n"
                 )
-                print(f"GUI: Error during deletion process: {e}")
                 wx.MessageBox(
                     f"Could not complete the deletion process for '{package_name}'.\n"
                     f"Error: {e}",
@@ -1028,12 +864,6 @@ class DevilDexApp(wx.App):
 
             self._update_action_buttons_state()
 
-        else:
-            print(f"GUI: User cancelled deletion for {package_name}.")
-            if self.log_text_ctrl:
-                self.log_text_ctrl.AppendText(
-                    f"INFO: Deletion for '{package_name}' cancelled by user.\n"
-                )
 
         event.Skip()
     def on_log_toggle_button_click(self, event: wx.CommandEvent) -> None:
@@ -1324,17 +1154,17 @@ class DevilDexApp(wx.App):
             ("View Error Log 📄", "view_log_action_button", self.on_view_log),
             ("Delete Docset 🗑️", "delete_action_button", self.on_delete_docset),
         ]
-
-        for label, attr_name, handler in button_definitions:
-            button = wx.Button(action_box, label=label)
+        for label_text, attr_name, handler in button_definitions:
+            # Usa il wx.Button standard
+            button = wx.Button(action_box, label=label_text)
             setattr(self, attr_name, button)
+
             button.Bind(wx.EVT_BUTTON, handler)
             buttons_internal_sizer.Add(button, 0, wx.EXPAND | wx.ALL, 5)
             button.Enable(False)
+
         static_box_sizer.Add(buttons_internal_sizer, 1, wx.EXPAND | wx.ALL, 5)
         return static_box_sizer
-
-
 def main() -> None:
     """Launch whole application."""
     core = DevilDexCore()

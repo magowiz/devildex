@@ -357,7 +357,7 @@ def run_clone(
                 successful_clone = True
             if result.returncode != 0:
                 for (
-                    default_branch
+                    default_branch  # noqa: PLR1704
                 ) in fallback_branches:  # pylint: disable=R1704  # noqa: PLR1704
                     shutil.rmtree(clone_dir_path, ignore_errors=True)
                     result = subprocess.run(  # noqa: S603

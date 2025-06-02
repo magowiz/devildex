@@ -12,13 +12,6 @@ PACKAGES_DATA = [
             "Source Code": "https://github.com/psf/black.git",
             "Documentation": "https://black.readthedocs.io/",
         },
-        # Potresti voler mantenere la struttura "versions" se la tua GUI la usa
-        # per mostrare uno storico o permettere la selezione,
-        # altrimenti la chiave "version" a livello principale è sufficiente
-        # per l'integrazione con l'Orchestrator.
-        # "versions": [
-        #     {"ver_id": "black_24.4.2", "version_str": "24.4.2", "date": "2024-04-01"},
-        # ],
     },
     {
         "id": "real_pkg_flask",
@@ -30,9 +23,6 @@ PACKAGES_DATA = [
             "Source Code": "https://github.com/pallets/flask.git",
             "Documentation": "https://flask.palletsprojects.com/",
         },
-        # "versions": [
-        #     {"ver_id": "flask_3.0.3", "version_str": "3.0.3", "date": "2024-03-01"},
-        # ],
     },
     {
         "id": "real_pkg_requests",
@@ -45,8 +35,6 @@ PACKAGES_DATA = [
             "Documentation": "https://requests.readthedocs.io/",
         },
     },
-    # Puoi aggiungere altri pacchetti reali da PACKAGES_TO_TEST qui...
-    # Esempio di un pacchetto fittizio mantenuto per testare fallimenti:
     {
         "id": "fictional_pkg1",
         "name": "Alpha Package (Fictional)",
