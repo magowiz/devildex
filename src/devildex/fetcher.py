@@ -1,4 +1,5 @@
 """fetching module."""
+
 import json
 import logging
 import pathlib
@@ -12,9 +13,6 @@ from pathlib import Path
 import requests
 
 logger = logging.getLogger(__name__)
-
-
-
 
 
 class PackageSourceFetcher:
@@ -38,7 +36,7 @@ class PackageSourceFetcher:
         sane_pkg_version = self._sanitize_path_component(self.package_version)
 
         self.download_target_path = (
-                self.base_save_path / sane_pkg_name / sane_pkg_version
+            self.base_save_path / sane_pkg_name / sane_pkg_version
         )
 
         self._determined_vcs_url: str | None = None
@@ -54,7 +52,7 @@ class PackageSourceFetcher:
         name = re.sub(r'[<>:"/\\|?*\s]+', "_", name)
         name = re.sub(r"_+", "_", name)
         name = name.strip("_")
-        if not name: # Handle case where name becomes empty after sanitization
+        if not name:
             return "sanitized_empty_component"
         return name
 
@@ -95,7 +93,10 @@ class PackageSourceFetcher:
             f" API per {self.package_name}."
         )
         try:
-            api_url = f"https://pypi.org/pypi/{self.package_name}/{self.package_version}/json"
+            api_url = (
+                f"https://pypi.org/pypi/{self.package_name}"
+                f"/{self.package_version}/json"
+            )
             response = requests.get(api_url, timeout=15)
             response.raise_for_status()
             pypi_data = response.json()
@@ -109,13 +110,13 @@ class PackageSourceFetcher:
         return None
 
     def _find_vcs_url_in_dict(
-            self, urls_dict: dict | None, source_description: str # Allow urls_dict to be None
+        self, urls_dict: dict | None, source_description: str
     ) -> str | None:
         """Search for a valid VCS URL within a dictionary of URLs."""
         if not urls_dict:
             return None
 
-        preferred_labels = ["Source Code", "Source", "Repository", "Homepage"] # Added Homepage here
+        preferred_labels = ["Source Code", "Source", "Repository", "Homepage"]
         for label in preferred_labels:
             url = urls_dict.get(label)
             if url and self._is_valid_vcs_url(url):
@@ -143,7 +144,7 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _is_valid_vcs_url(url: str) -> bool:
-        if not url or not isinstance(url, str): # Added type check
+        if not url or not isinstance(url, str):  # Added type check
             return False
         return any(
             host in url for host in ["github.com", "gitlab.com", "bitbucket.org"]
@@ -159,7 +160,6 @@ class PackageSourceFetcher:
         except Exception:
             return False
 
-
     @staticmethod
     def _is_member_name_safe(member_name: str) -> bool:
         """Check if member name is safe (no '..' or absolute paths)."""
@@ -168,43 +168,52 @@ class PackageSourceFetcher:
         return True
 
     @staticmethod
-    def _extract_zip_safely(archive_filename: pathlib.Path, temp_extract_dir_abs: Path) -> bool:
+    def _extract_zip_safely(
+        archive_filename: pathlib.Path, temp_extract_dir_abs: Path
+    ) -> bool:
         try:
             with zipfile.ZipFile(archive_filename, "r") as zip_ref:
                 for member_info in zip_ref.infolist():
-                    if not PackageSourceFetcher._is_member_name_safe(member_info.filename):
+                    if not PackageSourceFetcher._is_member_name_safe(
+                        member_info.filename
+                    ):
                         return False
 
-                    member_dest_path = (temp_extract_dir_abs / member_info.filename)
-                    # Resolve after constructing, before checking safety
-                    if not PackageSourceFetcher._is_path_safe(temp_extract_dir_abs, member_dest_path.resolve()):
+                    member_dest_path = temp_extract_dir_abs / member_info.filename
+                    if not PackageSourceFetcher._is_path_safe(
+                        temp_extract_dir_abs, member_dest_path.resolve()
+                    ):
                         return False
 
                     if not member_info.is_dir():
-                        # Ensure parent directory exists before extracting file
                         member_dest_path.parent.mkdir(parents=True, exist_ok=True)
                         zip_ref.extract(member_info, path=temp_extract_dir_abs)
                     else:
-                        # For directories, ensure the path is safe and then create it
                         member_dest_path.mkdir(parents=True, exist_ok=True)
             return True
         except (zipfile.BadZipFile, OSError, Exception):
             return False
 
     @staticmethod
-    def _extract_tar_safely(archive_filename: pathlib.Path, temp_extract_dir_abs: Path) -> bool:
+    def _extract_tar_safely(
+        archive_filename: pathlib.Path, temp_extract_dir_abs: Path
+    ) -> bool:
         try:
             with tarfile.open(archive_filename, "r:*") as tar_ref:
                 for member in tar_ref.getmembers():
                     if not PackageSourceFetcher._is_member_name_safe(member.name):
-                        return False # Error logged by helper
+                        return False  # Error logged by helper
 
-                    member_dest_path = (temp_extract_dir_abs / member.name)
-                    if not PackageSourceFetcher._is_path_safe(temp_extract_dir_abs, member_dest_path.resolve()):
+                    member_dest_path = temp_extract_dir_abs / member.name
+                    if not PackageSourceFetcher._is_path_safe(
+                        temp_extract_dir_abs, member_dest_path.resolve()
+                    ):
                         return False
 
                     if member.isfile() or member.isdir():
-                        tar_ref.extract(member, path=temp_extract_dir_abs, set_attrs=False)
+                        tar_ref.extract(
+                            member, path=temp_extract_dir_abs, set_attrs=False
+                        )
                     elif member.issym() or member.islnk():
                         pass
             return True
@@ -212,14 +221,24 @@ class PackageSourceFetcher:
             return False
 
     @staticmethod
-    def _extract_archive(archive_filename: pathlib.Path, temp_extract_dir: Path) -> bool:
+    def _extract_archive(
+        archive_filename: pathlib.Path, temp_extract_dir: Path
+    ) -> bool:
         temp_extract_dir_abs = temp_extract_dir.resolve()
         success = False
 
         if str(archive_filename).lower().endswith(".zip"):
-            success = PackageSourceFetcher._extract_zip_safely(archive_filename, temp_extract_dir_abs)
-        elif str(archive_filename).lower().endswith((".tar.gz", ".tgz", ".tar.bz2", ".tar")):
-            success = PackageSourceFetcher._extract_tar_safely(archive_filename, temp_extract_dir_abs)
+            success = PackageSourceFetcher._extract_zip_safely(
+                archive_filename, temp_extract_dir_abs
+            )
+        elif (
+            str(archive_filename)
+            .lower()
+            .endswith((".tar.gz", ".tgz", ".tar.bz2", ".tar"))
+        ):
+            success = PackageSourceFetcher._extract_tar_safely(
+                archive_filename, temp_extract_dir_abs
+            )
 
         return success
 
@@ -247,7 +266,7 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _move_extracted_content(source_dir: Path, destination_dir: Path) -> bool:
-        """Move content from source_dir to destination_dir. Assumes destination_dir is clean and exists."""
+        """Move content from source_dir to destination_dir."""
         try:
             for item in source_dir.iterdir():
                 destination_item_path = destination_dir / item.name
@@ -257,7 +276,7 @@ class PackageSourceFetcher:
             return False
 
     def _download_and_extract_archive(
-            self, url: str, temp_base_dir: pathlib.Path
+        self, url: str, temp_base_dir: pathlib.Path
     ) -> bool:
         archive_filename = temp_base_dir / url.split("/")[-1].split("?")[0]
         temp_extract_dir = temp_base_dir / "extracted_content"
@@ -281,7 +300,8 @@ class PackageSourceFetcher:
                 return False
 
             if self._move_extracted_content(
-                    content_source_dir, self.download_target_path):
+                content_source_dir, self.download_target_path
+            ):
                 operation_successful = True
 
         except requests.RequestException:
@@ -294,15 +314,20 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _run_git_command(
-            command_list: list[str], cwd: pathlib.Path | None = None, check_errors: bool = True
+        command_list: list[str],
+        cwd: pathlib.Path | None = None,
+        check_errors: bool = True,
     ) -> subprocess.CompletedProcess | None:
         try:
             git_exe = shutil.which("git")
             if not git_exe:
                 return None
 
-            actual_command = [git_exe] + command_list[1:] if command_list[0] == "git" else\
-                [git_exe] + command_list
+            actual_command = (
+                [git_exe] + command_list[1:]
+                if command_list[0] == "git"
+                else [git_exe] + command_list
+            )
 
             process = subprocess.run(  # noqa: S603
                 actual_command,
@@ -315,7 +340,7 @@ class PackageSourceFetcher:
             )
             if process.stdout:
                 logger.debug(f"Git stdout:\n{process.stdout.strip()}")
-            if process.stderr and process.returncode != 0 :
+            if process.stderr and process.returncode != 0:
                 logger.warning(f"Git stderr:\n{process.stderr.strip()}")
             elif process.stderr:
                 logger.debug(f"Git stderr (info):\n{process.stderr.strip()}")
@@ -358,9 +383,9 @@ class PackageSourceFetcher:
                 return False
             logger.info(f"Trovato URL sdist: {sdist_url}")
             temp_dir_for_pypi = (
-                    self.base_save_path
-                    / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
-                    / "pypi_sdist"
+                self.base_save_path
+                / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
+                / "pypi_sdist"
             )
             if self._download_and_extract_archive(sdist_url, temp_dir_for_pypi):
                 return True
@@ -371,7 +396,7 @@ class PackageSourceFetcher:
         return False
 
     def _try_fetch_tag_github_archive(
-            self, repo_url: str, tag_variations: list[str]
+        self, repo_url: str, tag_variations: list[str]
     ) -> bool:
         """Attempt to download and extract a tag archive directly from GitHub."""
         if "github.com" not in repo_url:
@@ -379,27 +404,30 @@ class PackageSourceFetcher:
 
         repo_path_segment = repo_url.split("github.com/")[-1].replace(".git", "")
         for tag in tag_variations:
-            tag_for_url = tag.replace("refs/tags/", "") # Clean tag for URL
+            tag_for_url = tag.replace("refs/tags/", "")
             archive_urls_to_try = [
-                f"https://github.com/{repo_path_segment}/archive/refs/tags/{tag_for_url}.tar.gz",
-                f"https://github.com/{repo_path_segment}/archive/refs/tags/{tag_for_url}.zip",
-                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.tar.gz",
-                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.zip",
+                f"https://github.com/{repo_path_segment}/archive/"
+                f"refs/tags/{tag_for_url}.tar.gz",
+                f"https://github.com/{repo_path_segment}/archive/"
+                f"refs/tags/{tag_for_url}.zip",
+                f"https://github.com/{repo_path_segment}/archive/"
+                f"{tag_for_url}.tar.gz",
+                f"https://github.com/{repo_path_segment}/archive/" f"{tag_for_url}.zip",
             ]
             for archive_url in archive_urls_to_try:
                 temp_dir_for_archive_download = (
-                        self.base_save_path
-                        / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
-                        / "github_archive"
+                    self.base_save_path
+                    / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
+                    / "github_archive"
                 )
                 if self._download_and_extract_archive(
-                        archive_url, temp_dir_for_archive_download
+                    archive_url, temp_dir_for_archive_download
                 ):
                     return True
         return False
 
     def _try_fetch_tag_shallow_clone(
-            self, repo_url: str, tag_variations: list[str]
+        self, repo_url: str, tag_variations: list[str]
     ) -> bool:
         """Attempt to fetch a tag using a shallow git clone."""
         for tag in tag_variations:
@@ -408,16 +436,16 @@ class PackageSourceFetcher:
                 continue
 
             if self._run_git_command(
-                    [
-                        "git",
-                        "clone",
-                        "--depth",
-                        "1",
-                        "--branch",
-                        tag,
-                        repo_url,
-                        str(self.download_target_path),
-                    ]
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    tag,
+                    repo_url,
+                    str(self.download_target_path),
+                ]
             ):
                 self._cleanup_git_dir_from_path(self.download_target_path)
                 logger.info(
@@ -446,13 +474,13 @@ class PackageSourceFetcher:
             return False
 
     def _try_fetch_tag_full_clone_checkout(
-            self, repo_url: str, tag_variations: list[str]
+        self, repo_url: str, tag_variations: list[str]
     ) -> bool:
         """Attempt to fetch a tag by doing a full clone then checking out the tag."""
         temp_clone_dir = (
-                self.base_save_path
-                / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
-                / "full_clone"
+            self.base_save_path
+            / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
+            / "full_clone"
         )
 
         cloned_successfully = False
@@ -463,7 +491,7 @@ class PackageSourceFetcher:
                 shutil.rmtree(temp_clone_dir)
 
             if not self._run_git_command(
-                    ["git", "clone", repo_url, str(temp_clone_dir)]
+                ["git", "clone", repo_url, str(temp_clone_dir)]
             ):
                 return False
             cloned_successfully = True
@@ -482,7 +510,8 @@ class PackageSourceFetcher:
                         break
 
                     if self._copy_cloned_content(
-                            temp_clone_dir, self.download_target_path):
+                        temp_clone_dir, self.download_target_path
+                    ):
                         tag_checkout_and_copy_successful = True
                     break
 
@@ -492,7 +521,6 @@ class PackageSourceFetcher:
                 shutil.rmtree(temp_clone_dir)
             elif not cloned_successfully and temp_clone_dir.exists():
                 shutil.rmtree(temp_clone_dir)
-
 
     def _fetch_from_vcs_tag(self, repo_url: str) -> bool:
         logger.info(
@@ -516,10 +544,9 @@ class PackageSourceFetcher:
         tag_variations = [t for t in list(tag_variations_set) if t]
         # Prioritize exact match and v-prefix
         preferred_order = [self.package_version, f"v{self.package_version}"]
-        ordered_tag_variations = (preferred_order +
-                                  [t for t in tag_variations
-                                   if t not in preferred_order])
-
+        ordered_tag_variations = preferred_order + [
+            t for t in tag_variations if t not in preferred_order
+        ]
 
         if self._try_fetch_tag_github_archive(repo_url, ordered_tag_variations):
             return True
@@ -536,14 +563,16 @@ class PackageSourceFetcher:
         logger.info(
             f"Tentativo di fetch del branch principale/default da VCS: {repo_url}"
         )
-        self._cleanup_target_dir_content() # Clean target before clone
+        self._cleanup_target_dir_content()
         if not self._ensure_target_dir_exists():
-            logger.error("Impossibile preparare la directory di destinazione "
-                         "per VCS main branch clone.")
+            logger.error(
+                "Impossibile preparare la directory di destinazione "
+                "per VCS main branch clone."
+            )
             return False
 
         if self._run_git_command(
-                ["git", "clone", "--depth", "1", repo_url, str(self.download_target_path)]
+            ["git", "clone", "--depth", "1", repo_url, str(self.download_target_path)]
         ):
             self._cleanup_git_dir_from_path(self.download_target_path)
             logger.info(
@@ -558,7 +587,8 @@ class PackageSourceFetcher:
 
         Returns:
             tuple[bool, bool, str | None]:
-                - fetch_successful: True se il fetch ha avuto successo, False altrimenti.
+                - fetch_successful: True se il fetch ha avuto successo,
+                    False altrimenti.
                 - is_master_branch_fetched: True se è stato fatto il fetch del branch
                     principale/default.
                 - path_to_return: Il percorso alla directory dei sorgenti scaricati
@@ -578,9 +608,7 @@ class PackageSourceFetcher:
             self._cleanup_git_dir_from_path(self.download_target_path)
             fetch_successful = True
             path_to_return = str(self.download_target_path)
-        elif (
-            self.download_target_path.exists()
-        ):
+        elif self.download_target_path.exists():
             pass
         if not fetch_successful:
             if self._fetch_from_pypi():
@@ -595,9 +623,9 @@ class PackageSourceFetcher:
                 fetch_successful = True
                 path_to_return = str(self.download_target_path)
             elif self._fetch_from_vcs_main(vcs_url):
-                    fetch_successful = True
-                    is_master_branch_fetched = True
-                    path_to_return = str(self.download_target_path)
+                fetch_successful = True
+                is_master_branch_fetched = True
+                path_to_return = str(self.download_target_path)
 
         if fetch_successful:
             pass
@@ -606,31 +634,43 @@ class PackageSourceFetcher:
 
         return fetch_successful, is_master_branch_fetched, path_to_return
 
+
 def _pprint_(data: dict | list) -> None:
     print(json.dumps(data, sort_keys=True, indent=4))
+
 
 def main() -> None:
     """Test purpose."""
     test_packages = [
-        {"name": "requests", "version": "2.25.1", "project_urls":
-            {"Source Code": "https://github.com/psf/requests"}},
+        {
+            "name": "requests",
+            "version": "2.25.1",
+            "project_urls": {"Source Code": "https://github.com/psf/requests"},
+        },
         {"name": "nonexistentpackage", "version": "1.0.0"},
-        {"name": "flask", "version": "2.0.1", "project_urls":
-            {"Repository": "https://github.com/pallets/flask"}},
+        {
+            "name": "flask",
+            "version": "2.0.1",
+            "project_urls": {"Repository": "https://github.com/pallets/flask"},
+        },
     ]
 
     for p_info in test_packages:
         print(f"\n>>> Testing fetch for: {p_info['name']} v{p_info['version']}")
         fetcher_obj = PackageSourceFetcher(
-            base_save_path="devildex_fetcher_test_output", package_info_dict=p_info)
+            base_save_path="devildex_fetcher_test_output", package_info_dict=p_info
+        )
         success, is_master, path_str = fetcher_obj.fetch()
         if success:
             print(f"    SUCCESS: Path: {path_str}, Is Master: {is_master}")
         else:
             print(f"    FAILED to fetch {p_info['name']}")
 
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s '
-                                                   '- %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s " "- %(levelname)s - %(message)s",
+    )
     Path("devildex_fetcher_test_output").mkdir(exist_ok=True)
     main()
