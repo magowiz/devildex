@@ -1,4 +1,5 @@
 """scan project env module."""
+
 import os
 import sys
 from pathlib import Path
@@ -6,7 +7,7 @@ from pathlib import Path
 import toml
 
 
-def find_pyproject_toml(start_path: str=".") -> Path | None:
+def find_pyproject_toml(start_path: str = ".") -> Path | None:
     """Cerca pyproject.toml nella current directory or nelle parent directory.
 
     Returns:
