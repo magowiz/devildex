@@ -151,7 +151,12 @@ class IsolatedVenvManager:
             )
         return self
 
-    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]) -> bool:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> bool:
         """Clean up resources when exiting the context.
 
         This method is called automatically when the 'with' statement block is exited.
