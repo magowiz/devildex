@@ -1,4 +1,5 @@
 """main application."""
+
 import threading
 import time
 from typing import Dict, List, Optional
@@ -32,7 +33,9 @@ class DevilDexCore:
 class DevilDexApp(wx.App):
     """Main Application."""
 
-    def __init__(self, core: DevilDexCore| None = None, initial_url: str| None = None) -> None:
+    def __init__(
+        self, core: DevilDexCore | None = None, initial_url: str | None = None
+    ) -> None:
         """Initialize a new DevilDexApp instance."""
         self.core = core
         self.home_url = "https://www.google.com"
@@ -66,17 +69,18 @@ class DevilDexApp(wx.App):
         self.animation_frames: List[str] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
         self.current_animation_frame_idx: int = 0
         self.active_generation_tasks: Dict[str, int] = {}
-        self.package_display_label: Optional[wx.StaticText] = (
-            None
-        )
+        self.package_display_label: Optional[wx.StaticText] = None
         self.arrow_up_bmp_scaled: Optional[wx.Bitmap] = None
         self.arrow_down_bmp_scaled: Optional[wx.Bitmap] = None
 
         super().__init__(redirect=False)
         self.MainLoop()
 
-
-    def show_document(self, event: wx.CommandEvent| None = None, package_data_to_show:Optional[dict]=None) -> None:
+    def show_document(
+        self,
+        event: wx.CommandEvent | None = None,
+        package_data_to_show: Optional[dict] = None,
+    ) -> None:
         """Show the document view."""
         if event:
             event.Skip()
@@ -92,7 +96,9 @@ class DevilDexApp(wx.App):
         )
 
         button_sizer = self._setup_navigation_panel(self.panel)
-        self.main_panel_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
+        self.main_panel_sizer.Add(
+            button_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5
+        )
         self.webview = wx.html2.WebView.New(self.panel)
         self.main_panel_sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 5)
         self.update_navigation_buttons_state()
@@ -117,12 +123,8 @@ class DevilDexApp(wx.App):
         self.main_frame.Centre()
         self.SetTopWindow(self.main_frame)
         self.custom_row_highlight_attr = wx.grid.GridCellAttr()
-        self.custom_row_highlight_attr.SetBackgroundColour(
-            wx.Colour(255, 165, 0)
-        )
-        self.custom_row_highlight_attr.SetTextColour(
-            wx.BLACK
-        )
+        self.custom_row_highlight_attr.SetBackgroundColour(wx.Colour(255, 165, 0))
+        self.custom_row_highlight_attr.SetTextColour(wx.BLACK)
         original_icon_size = (16, 16)
         scaled_icon_height = 8
         scaled_icon_width = scaled_icon_height
@@ -139,9 +141,7 @@ class DevilDexApp(wx.App):
         )
 
         if art_down_bitmap.IsOk():
-            img_down = (
-                art_down_bitmap.ConvertToImage()
-            )
+            img_down = art_down_bitmap.ConvertToImage()
             if img_down.IsOk():
                 img_down.Rescale(
                     scaled_icon_target_size[0],
@@ -171,9 +171,7 @@ class DevilDexApp(wx.App):
         else:
             self.arrow_up_bmp_scaled = None
         self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
-        self.animation_timer = wx.Timer(
-            self
-        )
+        self.animation_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self._on_animation_tick, self.animation_timer)
         self._setup_initial_view()
         self.main_frame.Show(True)
@@ -223,16 +221,15 @@ class DevilDexApp(wx.App):
             ]
             delete_btn.Enable(can_delete)
 
-
     def _on_animation_tick(self, event: wx.TimerEvent) -> None:
         """Update frames of animation per le rows in generation."""
         if not self.data_grid or not self.active_generation_tasks:
             if event:
                 event.Skip()
             return
-        self.current_animation_frame_idx = (
-            self.current_animation_frame_idx + 1
-        ) % len(self.animation_frames)
+        self.current_animation_frame_idx = (self.current_animation_frame_idx + 1) % len(
+            self.animation_frames
+        )
         current_frame_char = self.animation_frames[self.current_animation_frame_idx]
 
         for package_id, row_idx in list(self.active_generation_tasks.items()):
@@ -246,8 +243,7 @@ class DevilDexApp(wx.App):
         if event:
             event.Skip()
 
-
-    def go_home(self, event: wx.CommandEvent| None =None) -> None:
+    def go_home(self, event: wx.CommandEvent | None = None) -> None:
         """Go to initial view."""
         if event:
             event.Skip()
@@ -273,13 +269,9 @@ class DevilDexApp(wx.App):
         )
         self.log_text_ctrl.SetMinSize(wx.Size(-1, 100))
         initial_bmp_to_use = wx.NullBitmap
-        if (
-            self.arrow_down_bmp_scaled and self.arrow_down_bmp_scaled.IsOk()
-        ):
+        if self.arrow_down_bmp_scaled and self.arrow_down_bmp_scaled.IsOk():
             initial_bmp_to_use = self.arrow_down_bmp_scaled
-        elif (
-            self.arrow_down_bmp and self.arrow_down_bmp.IsOk()
-        ):
+        elif self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
             initial_bmp_to_use = self.arrow_down_bmp
 
         button_fixed_size = wx.Size(50, 20)
@@ -309,18 +301,12 @@ class DevilDexApp(wx.App):
         bottom_bar_sizer.SetMinSize(wx.Size(-1, desired_bar_height))
 
         bottom_bar_sizer.AddStretchSpacer(1)
-        self.main_panel_sizer.Add(
-            content_sizer, 1, wx.EXPAND | wx.ALL, 0
-        )
+        self.main_panel_sizer.Add(content_sizer, 1, wx.EXPAND | wx.ALL, 0)
 
-        self.main_panel_sizer.Add(
-            self.log_text_ctrl, 0, wx.EXPAND | wx.ALL, 5
-        )
+        self.main_panel_sizer.Add(self.log_text_ctrl, 0, wx.EXPAND | wx.ALL, 5)
         self.log_text_ctrl.Show(self.is_log_panel_visible)
 
-        self.main_panel_sizer.Add(
-            bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0
-        )
+        self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
 
         self.update_grid()
         self._update_log_toggle_button_icon()
@@ -329,7 +315,6 @@ class DevilDexApp(wx.App):
             self.panel.Layout()
         if self.main_frame:
             self.main_frame.Layout()
-
 
     def _set_log_panel_visibility(self, visible: bool) -> None:
         if not self.log_text_ctrl or not self.panel:
@@ -345,8 +330,6 @@ class DevilDexApp(wx.App):
         self.panel.Layout()
         self._update_log_toggle_button_icon()
 
-
-
     def on_open_docset(self, event: wx.CommandEvent) -> None:
         """Handle open docset action."""
         print(f"Action: Apri Docset per riga {self.selected_row_index}")
@@ -355,9 +338,6 @@ class DevilDexApp(wx.App):
             print(sel_data)
             self.show_document(package_data_to_show=sel_data)
         event.Skip()
-
-
-
 
     def on_generate_docset(self, event: wx.CommandEvent) -> None:
         """Handle generate docset action."""
@@ -436,11 +416,8 @@ class DevilDexApp(wx.App):
                 status_text,
             )
             if 0 <= row_idx < len(self.current_grid_source_data):
-                self.current_grid_source_data[row_idx]["docset_status"] = (
-                    status_text
-                )
+                self.current_grid_source_data[row_idx]["docset_status"] = status_text
             self.data_grid.ForceRefresh()
-
 
     def _on_generation_complete(
         self,
@@ -472,7 +449,6 @@ class DevilDexApp(wx.App):
 
         self._update_action_buttons_state()
 
-
     def _perform_generation_in_thread(self, package_data: dict) -> None:
         """Execute la generation del docset in a separated thread.
 
@@ -480,7 +456,6 @@ class DevilDexApp(wx.App):
         """
         package_name_for_msg = package_data.get("name", "N/D")
         package_id_for_completion = package_data.get("id")
-
 
         if not package_id_for_completion:
             return
@@ -514,6 +489,7 @@ class DevilDexApp(wx.App):
                 package_name_for_msg,
                 package_id_for_completion,
             )
+
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
         """Handle regenerate docset action."""
         sel_data = self.get_selected_row()
@@ -553,7 +529,9 @@ class DevilDexApp(wx.App):
         ):
             self.data_grid.SetRowAttr(self.custom_highlighted_row_index, None)
             if self.data_grid.GetNumberRows() > self.custom_highlighted_row_index:
-                self.data_grid.SetCellValue(self.custom_highlighted_row_index, self.indicator_col_idx, "")
+                self.data_grid.SetCellValue(
+                    self.custom_highlighted_row_index, self.indicator_col_idx, ""
+                )
         if self.data_grid.GetNumberRows() > clicked_row >= 0:
             self.data_grid.SetCellValue(clicked_row, self.indicator_col_idx, "►")
             self.custom_row_highlight_attr.IncRef()
@@ -565,9 +543,7 @@ class DevilDexApp(wx.App):
         if self.data_grid:
             num_columns = self.data_grid.GetNumberCols()
             for col_idx in range(num_columns):
-                grid_row_data.append(
-                    self.data_grid.GetCellValue(clicked_row, col_idx)
-                )
+                grid_row_data.append(self.data_grid.GetCellValue(clicked_row, col_idx))
 
         self._update_action_buttons_state()
         event.Skip()
@@ -639,7 +615,6 @@ class DevilDexApp(wx.App):
         elif self.arrow_up_bmp and self.arrow_up_bmp.IsOk():
             target_bmp_to_use = self.arrow_up_bmp
 
-
         if isinstance(self.log_toggle_button, wx.BitmapButton):
             self.log_toggle_button.SetBitmap(target_bmp_to_use)
 
@@ -657,17 +632,11 @@ class DevilDexApp(wx.App):
         num_cols = len(COLUMNS_ORDER) + 1
 
         self.data_grid.CreateGrid(num_rows, num_cols)
-        self.data_grid.SetSelectionMode(
-            wx.grid.Grid.SelectRows
-        )
-        self.data_grid.SetColLabelValue(
-            self.indicator_col_idx, ""
-        )
+        self.data_grid.SetSelectionMode(wx.grid.Grid.SelectRows)
+        self.data_grid.SetColLabelValue(self.indicator_col_idx, "")
         self.data_grid.SetColSize(self.indicator_col_idx, 30)
         indicator_attr = wx.grid.GridCellAttr()
-        indicator_attr.SetAlignment(
-            wx.ALIGN_CENTRE, wx.ALIGN_CENTRE
-        )
+        indicator_attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         indicator_attr.SetReadOnly(True)
         self.data_grid.SetColAttr(self.indicator_col_idx, indicator_attr)
         for c_idx, col_name in enumerate(COLUMNS_ORDER):
@@ -681,8 +650,6 @@ class DevilDexApp(wx.App):
         self.data_grid.AutoSizeColumns()
         self.data_grid.ForceRefresh()
 
-
-
     def on_forward(self, event: wx.CommandEvent) -> None:
         """Handle browser forward button click."""
         if event:
@@ -694,7 +661,6 @@ class DevilDexApp(wx.App):
         """Load in webview given url."""
         if self.webview:
             self.webview.LoadURL(url_to_load)
-
 
     def _clear_main_panel(self) -> None:
         """Clear il main_panel_sizer e empties references to widget."""
@@ -721,7 +687,6 @@ class DevilDexApp(wx.App):
         if self.main_frame:
             self.main_frame.Layout()
 
-
     def _update_action_buttons_state(self) -> None:
         """Update state (enabled/disabled) of action buttons."""
         self.is_task_running = bool(self.active_generation_tasks)
@@ -741,7 +706,9 @@ class DevilDexApp(wx.App):
         else:
             selected_package_data = self.get_selected_row()
             if selected_package_data:
-                self._set_button_states_for_selected_row(selected_package_data, action_buttons)
+                self._set_button_states_for_selected_row(
+                    selected_package_data, action_buttons
+                )
             else:
                 for button_widget in action_buttons.values():
                     if button_widget:
@@ -749,8 +716,6 @@ class DevilDexApp(wx.App):
         disable_if_any_task_running = self.is_task_running
         if self.home_button:
             self.home_button.Enable(not disable_if_any_task_running)
-
-
 
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.
@@ -829,7 +794,6 @@ class DevilDexApp(wx.App):
         worker.daemon = True
         worker.start()
 
-
     def _setup_action_buttons_panel(self, parent: wx.Window) -> wx.Sizer:
         action_box = wx.StaticBox(parent, label="Docset Actions")
         static_box_sizer = wx.StaticBoxSizer(action_box, wx.VERTICAL)
@@ -851,17 +815,17 @@ class DevilDexApp(wx.App):
             button = wx.Button(action_box, label=label)
             setattr(self, attr_name, button)
             button.Bind(wx.EVT_BUTTON, handler)
-            buttons_internal_sizer.Add(
-                button, 0, wx.EXPAND | wx.ALL, 5
-            )
+            buttons_internal_sizer.Add(button, 0, wx.EXPAND | wx.ALL, 5)
             button.Enable(False)
         static_box_sizer.Add(buttons_internal_sizer, 1, wx.EXPAND | wx.ALL, 5)
         return static_box_sizer
 
+
 def main() -> None:
     """Launch whole application."""
     core = DevilDexCore()
-    DevilDexApp(core=core, initial_url='https://www.gazzetta.it')
+    DevilDexApp(core=core, initial_url="https://www.gazzetta.it")
+
 
 if __name__ == "__main__":
     main()
