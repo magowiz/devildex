@@ -90,7 +90,7 @@ class AppPaths:
 
     @property
     def database_path(self) -> Path:
-        """Percorso per il file del database dell'applicazione.
+        """Path per il file del database dell'applicazione.
 
         Potrebbe essere un file SQLite, ad esempio.
         """
