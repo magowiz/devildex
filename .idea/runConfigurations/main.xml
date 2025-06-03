@@ -6,7 +6,7 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
-      <env name="LD_LIBRARY_PATH" value="$USER_HOME$/.cache/pypoetry/virtualenvs/devildex-SWe2t81R-py3.13/lib/python3.13/site-packages/PySide6/Qt/lib/:$LD_LIBRARY_PATH" />
+      <env name="DEVILDEX_DEV_MODE" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />

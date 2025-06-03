@@ -1,5 +1,6 @@
 """main application."""
 import logging
+import os
 import shutil
 import threading
 from pathlib import Path
@@ -9,6 +10,7 @@ import wx
 import wx.grid
 import wx.html2
 
+from devildex.app_paths import AppPaths
 from devildex.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA
@@ -27,7 +29,11 @@ class DevilDexCore:
 
     def __init__(self) -> None:
         """Initialize a new DevilDexCore instance."""
-        self.docset_base_output_path = Path("devildex_docsets")
+        self.app_paths = AppPaths()
+        if os.getenv("DEVILDEX_DEV_MODE") == "1":
+            self.docset_base_output_path = Path("devildex_docsets")
+        else:
+            self.docset_base_output_path = self.app_paths.docsets_base_dir
         self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
 
 
