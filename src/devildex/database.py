@@ -92,7 +92,7 @@ class DatabaseManager:
     @classmethod
     def init_db(cls, database_url: Optional[str] = None) -> None:
         """Inizializza il motore del database e crea le tabelle se non exist."""
-        if cls._engine:  # Access via cls
+        if cls._engine:
             logger.debug("Database engine already initialized.")
             return
 
@@ -110,7 +110,7 @@ class DatabaseManager:
             autocommit=False, autoflush=False, bind=cls._engine
         )
 
-        Base.metadata.create_all(bind=cls._engine)  # Use the class's engine
+        Base.metadata.create_all(bind=cls._engine)
         logger.info("Database tables checked/created.")
 
     @classmethod
