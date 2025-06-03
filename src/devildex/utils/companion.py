@@ -8,7 +8,7 @@ from pathlib import Path
 
 try:
     from devildex.app_paths import AppPaths
-    from devildex.info import APPLICATION_NAME  # Importa direttamente VERSION
+    from devildex.info import APPLICATION_NAME
     from devildex.info import VERSION as DEVILDEX_VERSION
 except ImportError:
     print(
@@ -21,12 +21,16 @@ except ImportError:
 
 logging.basicConfig(
     level=logging.INFO,
-    format=f"[%(asctime)s - {APPLICATION_NAME.upper()}_REGISTRAR - %(levelname)s] %(message)s",
+    format=f"[%(asctime)s - {APPLICATION_NAME.upper()}_REGISTRAR - "
+           "%(levelname)s] %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
 REGISTRY_SUBDIR = "registered_projects"
+FIXED_REGISTRATION_FILE_NAME = "current_registered_project.json"
+
+
 
 
 def get_active_user_venv_info() -> tuple[Path | None, str | None]:
@@ -48,7 +52,6 @@ def get_active_user_venv_info() -> tuple[Path | None, str | None]:
     venv_path = Path(virtual_env_path_str).resolve()
     logger.debug(f"Venv utente attivo identificato tramite VIRTUAL_ENV: {venv_path}")
 
-    # Costruisci il percorso dell'eseguibile Python all'interno del VIRTUAL_ENV dell'utente
     python_exe_name = "python.exe" if os.name == "nt" else "python"
     scripts_dir_name = "Scripts" if os.name == "nt" else "bin"
     python_exe_path = venv_path / scripts_dir_name / python_exe_name
@@ -64,10 +67,6 @@ def get_active_user_venv_info() -> tuple[Path | None, str | None]:
         f"non è stato trovato in '{python_exe_path}'. "
         "La registrazione del venv potrebbe non essere completa."
     )
-    # Se l'eseguibile non si trova dove ci si aspetta dentro VIRTUAL_ENV,
-    # è un caso anomalo. Restituiamo il venv_path ma None per l'eseguibile
-    # per segnalare il problema, o potremmo restituire (None, None).
-    # Per ora, indichiamo che l'eseguibile specifico non è stato trovato.
     return venv_path, None
 
 
@@ -100,7 +99,8 @@ def register_project(project_path_str: str | None) -> None:
     else:
         project_path = Path(os.getcwd()).resolve()
         logger.info(
-            f"Utilizzo della directory corrente come percorso del progetto: {project_path}"
+            "Utilizzo della directory corrente come percorso del "
+            f"progetto: {project_path}"
         )
 
     project_name = project_path.name
@@ -109,13 +109,8 @@ def register_project(project_path_str: str | None) -> None:
     registry_dir = app_paths_manager.user_data_dir / REGISTRY_SUBDIR
     registry_dir.mkdir(parents=True, exist_ok=True)
 
-    safe_project_name = "".join(
-        c if c.isalnum() or c in ("_", "-") else "_" for c in project_name
-    )
-    if not safe_project_name:
-        safe_project_name = "unnamed_project"
+    registration_file = registry_dir / FIXED_REGISTRATION_FILE_NAME
 
-    registration_file = registry_dir / f"{safe_project_name}.json"
 
     project_data = {
         "project_name": project_name,
@@ -136,9 +131,10 @@ def register_project(project_path_str: str | None) -> None:
         logger.info(f"Eseguibile Python utente: {active_python_executable}")
         logger.info(f"Percorso Progetto: {project_path}")
         logger.info(f"File di registrazione: {registration_file}")
-    except OSError as e:
-        logger.error(
-            f"Errore durante la scrittura del file di registrazione {registration_file}: {e}"
+    except OSError:
+        logger.exception(
+            "Errore durante la scrittura del file di registrazione "
+            f"{registration_file}"
         )
     except Exception: # pylint: disable=broad-except
         logger.exception(
