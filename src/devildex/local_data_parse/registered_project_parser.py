@@ -1,3 +1,4 @@
+"""module that parse a registered project data."""
 import json
 import logging
 from pathlib import Path
@@ -13,6 +14,8 @@ REGISTRY_SUBDIR = "registered_projects"
 
 
 class RegisteredProjectData(TypedDict, total=False):
+    """Class that implements RegisteredProjectData."""
+
     project_name: str
     project_path: str
     venv_path: str | None
@@ -47,10 +50,10 @@ def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None
                 except Exception: # pylint: disable=broad-except
                     logger.warning(f"Percorso non valido per '{path_key}' in "
                                    f"{file_path}: {data[path_key]}")
-        return data
 
     except FileNotFoundError:
-        logger.info(f"File di registrazione non trovato durante il parsing: {file_path}")
+        logger.info("File di registrazione non trovato durante "
+                    f"il parsing: {file_path}")
         return None
     except json.JSONDecodeError:
         logger.exception(f"Errore nel decodificare il JSON dal file: {file_path}")
@@ -58,6 +61,8 @@ def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None
     except Exception: # pylint: disable=broad-except
         logger.exception(f"Errore imprevisto durante il parsing del file: {file_path}")
         return None
+    else:
+        return data
 
 
 def load_active_registered_project() -> Optional[RegisteredProjectData]:
@@ -94,7 +99,8 @@ def load_active_registered_project() -> Optional[RegisteredProjectData]:
     project_data = _parse_registration_content(registration_file_to_check)
 
     if project_data:
-        logger.info(f"Progetto '{project_data.get('project_name')}' caricato con successo.")
+        logger.info(f"Progetto '{project_data.get('project_name')}'"
+                    " caricato con successo.")
     return project_data
 
 

@@ -1,3 +1,4 @@
+"""companion to get basic data from project."""
 import argparse
 import datetime
 import json
@@ -6,18 +7,7 @@ import os
 import sys
 from pathlib import Path
 
-try:
-    from devildex.app_paths import AppPaths
-    from devildex.info import APPLICATION_NAME
-    from devildex.info import VERSION as DEVILDEX_VERSION
-except ImportError:
-    print(
-        "Errore: Impossibile importare i moduli di DevilDex. "
-        "Assicurati che DevilDex sia installato o che lo script sia eseguito "
-        "in un contesto dove il pacchetto devildex è trovabile.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+from devildex.info import APPLICATION_NAME
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,6 +16,18 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
+try:
+    from devildex.app_paths import AppPaths
+    from devildex.info import VERSION as DEVILDEX_VERSION
+except ImportError:
+    logger.exception(
+        "Errore: Impossibile importare i moduli di DevilDex. "
+        "Assicurati che DevilDex sia installato o che lo script sia eseguito "
+        "in un contesto dove il pacchetto devildex è trovabile.",
+    )
+    sys.exit(1)
+
+
 
 REGISTRY_SUBDIR = "registered_projects"
 FIXED_REGISTRATION_FILE_NAME = "current_registered_project.json"
@@ -34,18 +36,19 @@ FIXED_REGISTRATION_FILE_NAME = "current_registered_project.json"
 
 
 def get_active_user_venv_info() -> tuple[Path | None, str | None]:
-    """Determina il percorso del venv e l'eseguibile Python basandosi
-    esclusivamente sulla variabile d'ambiente VIRTUAL_ENV.
+    """Determina il percorso del venv e Python usando variabile d'ambiente VIRTUAL_ENV.
 
     Restituisce:
-        tuple[Path | None, str | None]: (percorso_venv_attivo_utente, percorso_eseguibile_python_utente)
-                                        o (None, None) se VIRTUAL_ENV non è impostato.
+        tuple[Path | None, str | None]: (percorso_venv_attivo_utente,
+            percorso_eseguibile_python_utente)
+            o (None, None) se VIRTUAL_ENV non è impostato.
     """
     virtual_env_path_str = os.environ.get("VIRTUAL_ENV")
 
     if not virtual_env_path_str:
         logger.info(
-            "VIRTUAL_ENV non impostato. Impossibile identificare un ambiente virtuale utente attivo."
+            "VIRTUAL_ENV non impostato. Impossibile identificare un "
+            "ambiente virtuale utente attivo."
         )
         return None, None
 
@@ -76,14 +79,17 @@ def register_project(project_path_str: str | None) -> None:
 
     if not active_venv_path:
         logger.error(
-            "Operazione annullata: nessun ambiente virtuale utente attivo (VIRTUAL_ENV) rilevato. "
-            "Assicurati di aver attivato l'ambiente virtuale del progetto che desideri registrare."
+            "Operazione annullata: nessun ambiente virtuale utente attivo "
+            "(VIRTUAL_ENV) rilevato. "
+            "Assicurati di aver attivato l'ambiente virtuale del "
+            "progetto che desideri registrare."
         )
         return
 
     if not active_python_executable:
         logger.error(
-            f"Operazione annullata: VIRTUAL_ENV '{active_venv_path}' rilevato, ma impossibile "
+            f"Operazione annullata: VIRTUAL_ENV '{active_venv_path}'"
+            " rilevato, ma impossibile "
             "determinare l'eseguibile Python corretto al suo interno. "
             "Verifica la struttura del tuo ambiente virtuale."
         )
@@ -93,7 +99,8 @@ def register_project(project_path_str: str | None) -> None:
         project_path = Path(project_path_str).resolve()
         if not project_path.is_dir():
             logger.error(
-                f"Il percorso del progetto specificato non è una directory valida: {project_path}"
+                "Il percorso del progetto specificato non è una "
+                f"directory valida: {project_path}"
             )
             return
     else:
@@ -143,6 +150,7 @@ def register_project(project_path_str: str | None) -> None:
 
 
 def main() -> None:
+    """Implement Main method."""
     parser = argparse.ArgumentParser(
         description=(
             "Registra il progetto corrente e il suo ambiente virtuale con DevilDex. "
