@@ -7,7 +7,9 @@ import os
 import sys
 from pathlib import Path
 
+from devildex.app_paths import AppPaths
 from devildex.info import APPLICATION_NAME
+from devildex.info import VERSION as DEVILDEX_VERSION
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,16 +18,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
-try:
-    from devildex.app_paths import AppPaths
-    from devildex.info import VERSION as DEVILDEX_VERSION
-except ImportError:
-    logger.exception(
-        "Errore: Impossibile importare i moduli di DevilDex. "
-        "Assicurati che DevilDex sia installato o che lo script sia eseguito "
-        "in un contesto dove il pacchetto devildex è trovabile.",
-    )
-    sys.exit(1)
 
 
 
@@ -143,7 +135,7 @@ def register_project(project_path_str: str | None) -> None:
             "Errore durante la scrittura del file di registrazione "
             f"{registration_file}"
         )
-    except Exception: # pylint: disable=broad-except
+    except (TypeError, ValueError):
         logger.exception(
             f"Errore imprevisto durante la registrazione del progetto {project_name}."
         )

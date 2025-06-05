@@ -37,29 +37,27 @@ PACKAGES_DATA = [
     {
         "id": "fictional_pkg1",
         "name": "Alpha Package (Fictional)",
-        "version": "1.2.1", # Aggiunta per coerenza
+        "version": "1.2.1",
         "description": "Core library of the system",
         "status": "Installed",
-        "versions": [ # Mantenuto se la GUI lo usa
+        "versions": [
             {"ver_id": "pkg1_v3", "version_str": "1.2.1", "date": "2023-05-10"},
         ],
     },
 ]
 
-# Assicurati che COLUMNS_ORDER rifletta le chiavi che vuoi visualizzare
-# e che la GUI sappia come gestire la chiave "version" se la usi
-# direttamente a livello del pacchetto.
 COLUMNS_ORDER = ["id", "name", "version", "description", "status", "docset_status"]
 
-# Inizializza 'docset_status' e 'version' (se non presente e c'è 'versions')
+
 for item in PACKAGES_DATA:
-    item["docset_status"] = "Not Available" # Default
-    if "version" not in item and item.get("versions"):
-        # Prendi l'ultima versione dalla lista come default
-        # Questo è un esempio, potresti avere una logica diversa
-        if item["versions"]:
-            item["version"] = item["versions"][-1]["version_str"]
-        else:
-            item["version"] = "N/A" # O un altro placeholder se non ci sono versioni
+    item["docset_status"] = "Not Available"
+    if "version" not in item:
+        versions_list = item.get('versions')
+        if isinstance(versions_list, list) and versions_list:
+            last_version_detail = versions_list[-1]
+            if isinstance(last_version_detail, dict):
+                item["version"] = last_version_detail
+            else:
+                item["version"] = "N/A"
     elif "version" not in item:
-        item["version"] = "N/A" # Placeholder se mancano sia 'version' che 'versions'
+        item["version"] = "N/A"

@@ -126,7 +126,7 @@ def _fetch_version_details(project_slug: str, version_slug: str) -> dict | None:
         return version_detail_data
 
 
-def _get_download_url(version_details: dict, download_format: str) -> str:
+def _get_download_url(version_details: dict, download_format: str) -> str | None:
     """Extract download URL for specific format from version details."""
     if not version_details:
         logger.error("Error: version details not available to search for "
@@ -215,6 +215,11 @@ def _download_file(file_url: str, local_filepath: Path) -> bool | None:
                 logger.info(f"partial File removed: {local_filepath}")
             except OSError:
                 logger.exception("Error while removing partial file")
+                return None
+            else:
+                return None
+
+
 
 
 def download_readthedocs_prebuilt_robust(
@@ -246,7 +251,8 @@ def download_readthedocs_prebuilt_robust(
     if available_versions is None:
         return None
 
-    chosen_version_slug = _choose_best_version(available_versions, preferred_versions)
+    chosen_version_slug = _choose_best_version(
+        available_versions, list(preferred_versions))
     if not chosen_version_slug:
         return None
 

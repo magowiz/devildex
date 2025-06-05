@@ -18,7 +18,7 @@ def find_pyproject_toml(start_path: str = ".") -> Path | None:
     while True:
         pyproject_path = os.path.join(current_path, "pyproject.toml")
         if os.path.exists(pyproject_path):
-            return pyproject_path
+            return Path(pyproject_path)
         parent_path = os.path.dirname(current_path)
         if parent_path == current_path:
             return None
@@ -32,13 +32,11 @@ def _read_project_data_toml(pyproject_path: Path | str) -> set | dict:
     except FileNotFoundError:
         logger.exception(
             f"Error: File pyproject.toml non trovato a {pyproject_path}.",
-            file=sys.stderr,
         )
         return set()
     except toml.TomlDecodeError:
         logger.exception(
             f"Error: Unable to decode TOML file: {pyproject_path}.",
-            file=sys.stderr,
         )
         return set()
     return pyproject_data
@@ -85,7 +83,6 @@ if __name__ == "__main__":
         logger.error(
             "Error: pyproject.toml non trovato. "
             "Unable to determine explicit dependencies.",
-            file=sys.stderr,
         )
         sys.exit(1)
 
@@ -95,7 +92,6 @@ if __name__ == "__main__":
         logger.warning(
             "Warning: No explicit dependencies found in "
             "pyproject.toml (other than python).",
-            file=sys.stderr,
         )
 
     sys.exit(0)

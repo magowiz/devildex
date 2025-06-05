@@ -190,7 +190,6 @@ class DocStringsSrc:
                 "Unexpected error during pdoc.import_module for '%s'",
                 module_name
             )
-            self._log_traceback()
             return None, None
         else:
             return module_candidate, None

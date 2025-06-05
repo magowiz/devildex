@@ -47,7 +47,7 @@ def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None
                 try:
                     _ = Path(data[path_key]).resolve()
                     data[path_key] = str(Path(data[path_key]))
-                except Exception: # pylint: disable=broad-except
+                except (TypeError, OSError, RuntimeError):
                     logger.warning(f"Percorso non valido per '{path_key}' in "
                                    f"{file_path}: {data[path_key]}")
 
@@ -80,7 +80,7 @@ def load_active_registered_project() -> Optional[RegisteredProjectData]:
                          f"({registry_base_dir}) non esiste.")
         else:
             registration_file_to_check = registry_base_dir / REGISTRATION_FILE_NAME
-    except Exception: # pylint: disable=broad-except
+    except OSError:
         logger.exception("Errore nel determinare il percorso del "
                          "file di registrazione.")
 

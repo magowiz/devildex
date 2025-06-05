@@ -92,7 +92,7 @@ def _find_recursive_deduplicate_and_sort(
 
 
 def check_content_patterns(
-    content: str, checks: list[tuple[str, str]], re_flags: re.RegexFlag = 0
+    content: str, checks: list[tuple[str, str]], re_flags: re.RegexFlag | int = 0
 ) -> str | None:
     """Verify if a string content matches one of given pattern regex.
 

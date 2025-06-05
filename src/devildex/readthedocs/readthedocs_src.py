@@ -27,7 +27,7 @@ CONF_SPHINX_FILE = "conf.py"
 GIT_FULL_PATH = shutil.which("git")
 
 
-def find_doc_source_in_clone(repo_path: Path) -> Path:
+def find_doc_source_in_clone(repo_path: Path) -> str | None:
     """Identify the documentation source directory within a cloned repository.
 
     It does NOT copy any files.
@@ -42,7 +42,7 @@ def find_doc_source_in_clone(repo_path: Path) -> Path:
     """
     logger.info(f"\nSearching for documentation source directory in: {repo_path}")
     potential_doc_dirs = ["docs", "doc", "Doc"]
-    doc_source_path = _find_doc_dir_in_repo(repo_path, potential_doc_dirs)
+    doc_source_path = _find_doc_dir_in_repo(str(repo_path), potential_doc_dirs)
     if not doc_source_path:
         logger.error("No documentation source directory with conf.py "
                      "found in the clone.")
@@ -51,7 +51,7 @@ def find_doc_source_in_clone(repo_path: Path) -> Path:
     return doc_source_path
 
 
-def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str:
+def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str | None:
     """Find the first potential documentation directory that contains a conf.py file.
 
     Also checks the repository root if no specific doc directory is found.
@@ -516,7 +516,7 @@ def _process_documentation(
         project_ctx.version,
         clone_dir_path,
     )
-    isolated_source_path = find_doc_source_in_clone(str(clone_dir_path))
+    isolated_source_path = find_doc_source_in_clone(clone_dir_path)
     build_output_path = None
     if isolated_source_path:
         logger.info(
@@ -596,7 +596,7 @@ def download_readthedocs_source_and_build(
         logger.error(
             "Failed to obtain a valid repository clone for '%s'.", project_slug
         )
-        return _download_handle_result(None, None)
+        return None, None
 
     project_context = ProjectContext(slug=project_slug, version=effective_branch)
     if output_dir:
@@ -604,15 +604,15 @@ def download_readthedocs_source_and_build(
     else:
         final_sphinx_build_destination = (
             PROJECT_ROOT / "devildex_sphinx_build_output_default"
-        )  # Puoi scegliere un nome diverso
+        )
     isolated_source_path, build_output_path = _process_documentation(
         clone_dir_path,
         project_context,
         base_output_dir=final_sphinx_build_destination,
     )
 
-    _cleanup(str(clone_dir_path))
-    return _download_handle_result(isolated_source_path, build_output_path)
+    _cleanup(clone_dir_path)
+    return _download_handle_result(Path(isolated_source_path), Path(build_output_path))
 
 
 def _download_handle_result(

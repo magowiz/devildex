@@ -25,7 +25,7 @@ def main() -> None:
                         if len(parts) == PATHS_LEN:
                             label, url_value = parts
                             current_project_urls[label] = url_value
-                    except Exception:
+                    except AttributeError:
                         pass
 
             package_list.append({

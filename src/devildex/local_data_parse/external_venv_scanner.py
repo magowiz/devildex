@@ -58,7 +58,7 @@ class ExternalVenvScanner:
                 "non trovato (FileNotFoundError)."
             )
             return None
-        except Exception:
+        except (OSError, TypeError, UnicodeDecodeError):
             logger.exception(
                 "Errore durante il caricamento dello script helper "
                 f"'{HELPER_SCRIPT_FILENAME}'"
@@ -182,7 +182,7 @@ class ExternalVenvScanner:
                 "durante il tentativo di esecuzione."
             )
             return None
-        except Exception:  # pylint: disable=broad-except
+        except (TypeError, ValueError, AttributeError):
             logger.exception(
                 f"Errore imprevisto durante l'esecuzione dello script esterno con "
                 f"'{self.python_executable_path}'"

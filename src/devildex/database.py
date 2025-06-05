@@ -246,7 +246,6 @@ def ensure_package_entities_exist( # noqa: PLR0913
         - Associate il Docset al RegisteredProject.
 
     Args:
-        session: active session SQLAlchemy.
         package_name: Il nome del package.
         package_version: La version del package.
         summary: Summary del package (per creation PackageInfo).
