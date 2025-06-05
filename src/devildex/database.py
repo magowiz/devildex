@@ -13,6 +13,8 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Table,
+    UniqueConstraint,
     create_engine,
 )
 from sqlalchemy.orm import Session as SQLAlchemySession
@@ -23,6 +25,12 @@ from devildex.app_paths import AppPaths
 logger = logging.getLogger(__name__)
 
 Base = declarative_base()
+project_docset_association = Table(
+    "project_docset_association",
+    Base.metadata,
+    Column("project_id", Integer, ForeignKey("registered_project.id"), primary_key=True),
+    Column("docset_id", Integer, ForeignKey("docset.id"), primary_key=True),
+)
 class DatabaseNotInitializedError(RuntimeError):
     """Raised when an operation is attempted before the database is initialized."""
 
@@ -44,7 +52,11 @@ class RegisteredProject(Base): # type: ignore[valid-type,misc]
         DateTime(timezone=True), nullable=False,
         default=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
-    docsets = relationship("Docset", back_populates="associated_project")
+    docsets = relationship(
+        "Docset",
+        secondary=project_docset_association,
+        back_populates="associated_projects",
+    )
 
     def __repr__(self) -> str:
         """Implement repr method."""
@@ -66,9 +78,16 @@ class Docset(Base): # type: ignore[valid-type,misc]
         default=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
     status = Column(String, nullable=False, default="available")
-    registered_project_id = Column(Integer, ForeignKey("registered_project.id"),
-                                   nullable=True, index=True)
-    associated_project = relationship("RegisteredProject", back_populates="docsets")
+    associated_projects = relationship(
+        "RegisteredProject",
+        secondary=project_docset_association,
+        back_populates="docsets",
+    )
+    __table_args__ = (
+        UniqueConstraint(
+            "package_name", "package_version", name="uq_docset_package_name_version"
+        ),
+    )
 
     def __repr__(self) -> str:
         """Implement repr method."""
@@ -149,60 +168,99 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format="[%(levelname)s - %(name)s - %(funcName)s] %(message)s")
     logger.info("Initializing DB for standalone example...")
-    init_db()
+    # Per test, usiamo un database in memoria
+    # init_db("sqlite:///:memory:")
+    # Oppure, per testare il file su disco:
+    db_file_for_test = Path("test_devildex_m2m.db")
+    if db_file_for_test.exists():
+        db_file_for_test.unlink()
+    init_db(f"sqlite:///{db_file_for_test.resolve()}")
+
 
     logger.info("DB Initialized.")
 
     with get_session() as session:
+        # Pulisci le tabelle (utile per riesecuzioni del test)
+        session.execute(project_docset_association.delete()) # Pulisci prima la tabella di associazione
         session.query(Docset).delete()
         session.query(RegisteredProject).delete()
         session.commit()
 
-        new_project = RegisteredProject(
-            project_name="MyDevProject",
-            project_path="/path/to/mydevproject",
-            python_executable="/path/to/mydevproject/.venv/bin/python",
+        # Crea Progetti
+        project1 = RegisteredProject(
+            project_name="WebAppProject",
+            project_path="/path/to/webapp",
+            python_executable="/path/to/webapp/.venv/bin/python",
         )
-        session.add(new_project)
-        session.commit()
-        session.refresh(new_project)
-        logger.info(f"Added project: {new_project}")
-
-        generic_docset = Docset(
-            package_name="requests",
-            package_version="2.28.1",
-            index_file_name="index.html",
-            status="available"
+        project2 = RegisteredProject(
+            project_name="DataAnalysisProject",
+            project_path="/path/to/dataanalysis",
+            python_executable="/path/to/dataanalysis/.venv/bin/python",
         )
-        session.add(generic_docset)
+        session.add_all([project1, project2])
         session.commit()
-        session.refresh(generic_docset)
-        logger.info(f"Added generic docset: {generic_docset}")
+        logger.info(f"Added project: {project1}")
+        logger.info(f"Added project: {project2}")
 
-        project_specific_docset = Docset(
-            package_name="MyDevProjectInternalLib",
-            package_version="0.1.0",
-            index_file_name="main.html",
-            status="available",
-            associated_project=new_project
+        # Crea Docsets
+        # Nota: (package_name, package_version) deve essere unico per Docset
+        docset_requests = Docset(
+            package_name="requests", package_version="2.28.1", status="available"
         )
-        session.add(project_specific_docset)
+        docset_pandas = Docset(
+            package_name="pandas", package_version="1.5.0", status="generating"
+        )
+        docset_flask = Docset(
+            package_name="Flask", package_version="2.2.2", status="available"
+        )
+        session.add_all([docset_requests, docset_pandas, docset_flask])
         session.commit()
-        session.refresh(project_specific_docset)
-        logger.info(f"Added project-specific docset: {project_specific_docset}")
+        logger.info(f"Added docset: {docset_requests}")
+        logger.info(f"Added docset: {docset_pandas}")
+        logger.info(f"Added docset: {docset_flask}")
 
-        # Query
-        retrieved_project = session.query(
-            RegisteredProject).filter_by(project_name="MyDevProject").first()
-        if retrieved_project:
-            logger.info(f"Retrieved project: {retrieved_project}")
-            logger.info(f"Docsets for {retrieved_project.project_name}:")
-            for ds in retrieved_project.docsets:
+
+        # Associa Docsets ai Progetti
+        # Progetto WebApp usa requests e Flask
+        project1.docsets.append(docset_requests)
+        project1.docsets.append(docset_flask)
+
+        # Progetto DataAnalysis usa requests e pandas
+        project2.docsets.append(docset_requests) # requests è usato da entrambi
+        project2.docsets.append(docset_pandas)
+
+        session.commit()
+        logger.info("Associations committed.")
+
+        # Query di Esempio
+        logger.info("-" * 20)
+        retrieved_project1 = session.query(RegisteredProject).filter_by(project_name="WebAppProject").first()
+        if retrieved_project1:
+            logger.info(f"Docsets for {retrieved_project1.project_name}:")
+            for ds in retrieved_project1.docsets:
                 logger.info(f"  - {ds}")
 
-        all_docsets = session.query(Docset).all()
-        logger.info("All docsets in DB:")
-        for ds in all_docsets:
-            logger.info(f"  - {ds} (Project ID: {ds.registered_project_id})")
+        retrieved_project2 = session.query(RegisteredProject).filter_by(project_name="DataAnalysisProject").first()
+        if retrieved_project2:
+            logger.info(f"Docsets for {retrieved_project2.project_name}:")
+            for ds in retrieved_project2.docsets:
+                logger.info(f"  - {ds}")
 
-    logger.info("Standalone example finished.")
+        logger.info("-" * 20)
+        retrieved_docset_requests = session.query(Docset).filter_by(package_name="requests").first()
+        if retrieved_docset_requests:
+            logger.info(f"Projects associated with {retrieved_docset_requests.package_name} "
+                        f"v{retrieved_docset_requests.package_version}:")
+            for proj in retrieved_docset_requests.associated_projects:
+                logger.info(f"  - {proj.project_name}")
+
+        all_docsets = session.query(Docset).all()
+        logger.info("All docsets in DB and their associated projects:")
+        for ds in all_docsets:
+            project_names = ", ".join([p.project_name for p in ds.associated_projects])
+            if not project_names:
+                project_names = "None"
+            logger.info(f"  - {ds} -> Projects: [{project_names}]")
+
+
+    logger.info(f"Standalone example finished. Database file: {db_file_for_test.resolve() if db_file_for_test else 'in-memory'}")
