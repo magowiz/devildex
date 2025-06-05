@@ -60,13 +60,13 @@ class PackageInfo(Base): # type: ignore[valid-type,misc]
 
     @property
     def project_urls(self) -> dict[str, str]:
-        """Get project_urls come dizionario."""
+        """Get project_urls come dictionary."""
         if self._project_urls_json:
             try:
                 return json.loads(self._project_urls_json) # type: ignore[no-any-return]
             except json.JSONDecodeError:
                 logger.exception(
-                    "Errore nel decodificare project_urls JSON per package_info "
+                    "Error nel decoding project_urls JSON per package_info "
                     f"{self.package_name}: "
                     f"{self._project_urls_json}"
                 )
@@ -75,7 +75,7 @@ class PackageInfo(Base): # type: ignore[valid-type,misc]
 
     @project_urls.setter
     def project_urls(self, value: dict[str, str]) -> None:
-        """Imposta project_urls, convertendolo in JSON."""
+        """Set up project_urls, converting it in JSON."""
         if value:
             self._project_urls_json = json.dumps(value)
         else:
@@ -99,7 +99,6 @@ class RegisteredProject(Base): # type: ignore[valid-type,misc]
         DateTime(timezone=True), nullable=False,
         default=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
-    # La relazione con Docset è corretta e rimane:
     docsets = relationship(
         "Docset",
         secondary=project_docset_association,
@@ -131,10 +130,8 @@ class Docset(Base): # type: ignore[valid-type,misc]
     )
     status = Column(String, nullable=False, default="unknown")
 
-    # Relazione molti-a-uno: un Docset appartiene a un PackageInfo
     package_info = relationship("PackageInfo", back_populates="docsets")
 
-    # Relazione molti-a-molti con RegisteredProject
     associated_projects = relationship(
         "RegisteredProject",
         secondary=project_docset_association,
@@ -163,14 +160,14 @@ class DatabaseManager:
 
     @staticmethod
     def get_db_path() -> Path:
-        """Return il percorso del file database SQLite."""
+        """Return il path del file database SQLite."""
         paths = AppPaths()
         _ = paths.user_data_dir
         return paths.database_path
 
     @classmethod
     def init_db(cls, database_url: Optional[str] = None) -> None:
-        """Inizializza il motore del database e crea le tabelle se non exist."""
+        """Initialize il engine del database e crea le tables se non exist."""
         if cls._engine:
             logger.debug("Database engine already initialized.")
             return
@@ -195,9 +192,9 @@ class DatabaseManager:
     @classmethod
     @contextmanager
     def get_session(cls) -> Generator[SQLAlchemySession, None, None]:
-        """Return una nuova sessione del database.
+        """Return una new session del database.
 
-        Assicura che init_db() sia stato chiamato.
+        Ensures that init_db() was called.
         """
         if not cls._SessionLocal:
             logger.warning(
@@ -240,54 +237,54 @@ def ensure_package_entities_exist( # noqa: PLR0913
     project_path: Optional[str] = None,
     python_executable: Optional[str] = None,
 ) -> tuple[PackageInfo, Docset, Optional[RegisteredProject]]:
-    """Assicura l'esistenza e links di PackageInfo, Docset e, RegisteredProject.
+    """Ensure existence e links di PackageInfo, Docset e, RegisteredProject.
 
-    - Crea PackageInfo se non esiste per package_name.
-    - Crea Docset se non esiste per (package_name, package_version) e
-        lo collega a PackageInfo.
-    - Se project_name è fornito:
-        - Crea RegisteredProject se non esiste.
-        - Associa il Docset al RegisteredProject.
+    - Crea PackageInfo se non exists per package_name.
+    - Crea Docset se non exists per (package_name, package_version) e
+        lo link a PackageInfo.
+    - Se project_name is given:
+        - Crea RegisteredProject se non exists.
+        - Associate il Docset al RegisteredProject.
 
     Args:
-        session: La sessione SQLAlchemy attiva.
-        package_name: Il nome del pacchetto.
-        package_version: La versione del pacchetto.
-        summary: Sommario del pacchetto (per creazione PackageInfo).
-        project_urls: URL del progetto (per creazione PackageInfo).
-        initial_docset_status: Stato iniziale del Docset (per creazione Docset).
-        index_file_name: Nome del file indice del Docset.
-        project_name: (Opzionale) Nome del progetto.
-        project_path: (Opzionale) Percorso del progetto
-            (necessario se project_name è nuovo).
-        python_executable: (Opzionale) Eseguibile Python
-            (necessario se project_name è nuovo).
+        session: active session SQLAlchemy.
+        package_name: Il nome del package.
+        package_version: La version del package.
+        summary: Summary del package (per creation PackageInfo).
+        project_urls: URL del project (per creation PackageInfo).
+        initial_docset_status: initial Status del Docset (per creation Docset).
+        index_file_name: Nome del file index del Docset.
+        project_name: (Optional) Nome del project.
+        project_path: (Optional) Path del project
+            (necessary se project_name è new).
+        python_executable: (Optional) Executable Python
+            (necessary se project_name è new).
 
     Returns:
-        Una tupla (PackageInfo, Docset, Optional[RegisteredProject]).
-        L'oggetto RegisteredProject è None se project_name non è stato fornito.
+        Una tuple (PackageInfo, Docset, Optional[RegisteredProject]).
+        RegisteredProject object è None se project_name was not given.
 
     Raises:
-        ValueError: Se project_name è fornito per un nuovo progetto ma mancano
-                    project_path o python_executable.
+        ValueError: Se project_name è given per un new project but
+                    project_path o python_executable are missing.
 
     """
     pkg_info = session.query(PackageInfo).filter_by(package_name=package_name).first()
     if not pkg_info:
-        logger.info(f"PackageInfo per '{package_name}' non trovato, creazione...")
+        logger.info(f"PackageInfo per '{package_name}' non trovato, creation...")
         pkg_info = PackageInfo(package_name=package_name, summary=summary)
         if project_urls:
             pkg_info.project_urls = project_urls
         session.add(pkg_info)
-        logger.info(f"Nuovo PackageInfo '{package_name}' aggiunto alla sessione.")
+        logger.info(f"New PackageInfo '{package_name}' added alla session.")
     else:
         logger.debug(f"PackageInfo '{package_name}' trovato.")
         if summary and not pkg_info.summary:
             pkg_info.summary = summary
-            logger.info(f"Aggiornato summary per PackageInfo '{package_name}'.")
+            logger.info(f"summary updated per PackageInfo '{package_name}'.")
         if project_urls and not pkg_info.project_urls:
             pkg_info.project_urls = project_urls
-            logger.info(f"Aggiornati project_urls per PackageInfo '{package_name}'.")
+            logger.info(f"project_urls updated per PackageInfo '{package_name}'.")
 
     docset = (
         session.query(Docset)
@@ -296,7 +293,7 @@ def ensure_package_entities_exist( # noqa: PLR0913
     )
     if not docset:
         logger.info(f"Docset per '{package_name} v{package_version}' "
-                    "non trovato, creazione...")
+                    "non trovato, creation...")
         docset = Docset(
             package_name=package_name, # FK
             package_version=package_version,
@@ -305,8 +302,8 @@ def ensure_package_entities_exist( # noqa: PLR0913
         )
         docset.package_info = pkg_info
         session.add(docset)
-        logger.info(f"Nuovo Docset '{package_name} v{package_version}' "
-                    "aggiunto e collegato.")
+        logger.info(f"New Docset '{package_name} v{package_version}' "
+                    "added and linked.")
     else:
         logger.debug(f"Docset '{package_name} v{package_version}' trovato.")
 
@@ -316,11 +313,11 @@ def ensure_package_entities_exist( # noqa: PLR0913
             session.query(RegisteredProject).filter_by(project_name=project_name).first()
         )
         if not registered_project_obj:
-            logger.info(f"RegisteredProject '{project_name}' non trovato, creazione...")
+            logger.info(f"RegisteredProject '{project_name}' non trovato, creation...")
             if not project_path or not python_executable:
                 msg = (
-                    f"Per creare un nuovo RegisteredProject '{project_name}', "
-                    "project_path e python_executable devono essere forniti."
+                    f"Per create un new RegisteredProject '{project_name}', "
+                    "project_path e python_executable must be given."
                 )
                 logger.error(msg)
                 raise ValueError(msg)
@@ -330,14 +327,14 @@ def ensure_package_entities_exist( # noqa: PLR0913
                 python_executable=str(python_executable),
             )
             session.add(registered_project_obj)
-            logger.info(f"Nuovo RegisteredProject '{project_name}' "
-                        "aggiunto alla sessione.")
+            logger.info(f"New RegisteredProject '{project_name}' "
+                        "added to session.")
 
         if docset not in registered_project_obj.docsets:
             registered_project_obj.docsets.append(docset)
             logger.info(
-                f"Associato Docset '{docset.package_name} v{docset.package_version}' "
-                f"al progetto '{registered_project_obj.project_name}'."
+                f"Docset associated '{docset.package_name} v{docset.package_version}' "
+                f"al project '{registered_project_obj.project_name}'."
             )
     return pkg_info, docset, registered_project_obj
 
