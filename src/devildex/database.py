@@ -226,7 +226,6 @@ def get_session() -> Generator[SQLAlchemySession, None, None]:
     with DatabaseManager.get_session() as db_session:
         yield db_session
 def ensure_package_entities_exist( # noqa: PLR0913
-    session: SQLAlchemySession,
     package_name: str,
     package_version: str,
     summary: Optional[str] = None,
@@ -269,73 +268,85 @@ def ensure_package_entities_exist( # noqa: PLR0913
                     project_path o python_executable are missing.
 
     """
-    pkg_info = session.query(PackageInfo).filter_by(package_name=package_name).first()
-    if not pkg_info:
-        logger.info(f"PackageInfo per '{package_name}' non trovato, creation...")
-        pkg_info = PackageInfo(package_name=package_name, summary=summary)
-        if project_urls:
-            pkg_info.project_urls = project_urls
-        session.add(pkg_info)
-        logger.info(f"New PackageInfo '{package_name}' added alla session.")
-    else:
-        logger.debug(f"PackageInfo '{package_name}' trovato.")
-        if summary and not pkg_info.summary:
-            pkg_info.summary = summary
-            logger.info(f"summary updated per PackageInfo '{package_name}'.")
-        if project_urls and not pkg_info.project_urls:
-            pkg_info.project_urls = project_urls
-            logger.info(f"project_urls updated per PackageInfo '{package_name}'.")
+    with get_session() as session:
+        pkg_info = session.query(PackageInfo).filter_by(package_name=package_name).first()
+        if not pkg_info:
+            logger.info(f"PackageInfo per '{package_name}' non trovato, creation...")
+            pkg_info = PackageInfo(package_name=package_name, summary=summary)
+            if project_urls:
+                pkg_info.project_urls = project_urls
+            session.add(pkg_info)
+            logger.info(f"New PackageInfo '{package_name}' added alla session.")
+        else:
+            logger.debug(f"PackageInfo '{package_name}' trovato.")
+            if summary and not pkg_info.summary:
+                pkg_info.summary = summary
+                logger.info(f"summary updated per PackageInfo '{package_name}'.")
+            if project_urls and not pkg_info.project_urls:
+                pkg_info.project_urls = project_urls
+                logger.info(f"project_urls updated per PackageInfo '{package_name}'.")
 
-    docset = (
-        session.query(Docset)
-        .filter_by(package_name=package_name, package_version=package_version)
-        .first()
-    )
-    if not docset:
-        logger.info(f"Docset per '{package_name} v{package_version}' "
-                    "non trovato, creation...")
-        docset = Docset(
-            package_name=package_name, # FK
-            package_version=package_version,
-            status=initial_docset_status,
-            index_file_name=index_file_name,
+        docset = (
+            session.query(Docset)
+            .filter_by(package_name=package_name, package_version=package_version)
+            .first()
         )
-        docset.package_info = pkg_info
-        session.add(docset)
-        logger.info(f"New Docset '{package_name} v{package_version}' "
-                    "added and linked.")
-    else:
-        logger.debug(f"Docset '{package_name} v{package_version}' trovato.")
+        if not docset:
+            logger.info(f"Docset per '{package_name} v{package_version}' "
+                        "non trovato, creation...")
+            docset = Docset(
+                package_name=package_name, # FK
+                package_version=package_version,
+                status=initial_docset_status,
+                index_file_name=index_file_name,
+            )
+            docset.package_info = pkg_info
+            session.add(docset)
+            logger.info(f"New Docset '{package_name} v{package_version}' "
+                        "added and linked.")
+        else:
+            logger.debug(f"Docset '{package_name} v{package_version}' trovato.")
 
-    registered_project_obj: Optional[RegisteredProject] = None
-    if project_name:
-        registered_project_obj = (
-            session.query(RegisteredProject).filter_by(project_name=project_name).first()
-        )
-        if not registered_project_obj:
-            logger.info(f"RegisteredProject '{project_name}' non trovato, creation...")
-            if not project_path or not python_executable:
-                msg = (
-                    f"Per create un new RegisteredProject '{project_name}', "
-                    "project_path e python_executable must be given."
+        registered_project_obj: Optional[RegisteredProject] = None
+        if project_name:
+            registered_project_obj = (
+                session.query(RegisteredProject).filter_by(project_name=project_name).first()
+            )
+            if not registered_project_obj:
+                logger.info(f"RegisteredProject '{project_name}' non trovato, creation...")
+                if not project_path or not python_executable:
+                    msg = (
+                        f"Per create un new RegisteredProject '{project_name}', "
+                        "project_path e python_executable must be given."
+                    )
+                    logger.error(msg)
+                    raise ValueError(msg)
+                registered_project_obj = RegisteredProject(
+                    project_name=project_name,
+                    project_path=str(project_path),
+                    python_executable=str(python_executable),
                 )
-                logger.error(msg)
-                raise ValueError(msg)
-            registered_project_obj = RegisteredProject(
-                project_name=project_name,
-                project_path=str(project_path),
-                python_executable=str(python_executable),
-            )
-            session.add(registered_project_obj)
-            logger.info(f"New RegisteredProject '{project_name}' "
-                        "added to session.")
+                session.add(registered_project_obj)
+                logger.info(f"New RegisteredProject '{project_name}' "
+                            "added to session.")
 
-        if docset not in registered_project_obj.docsets:
-            registered_project_obj.docsets.append(docset)
-            logger.info(
-                f"Docset associated '{docset.package_name} v{docset.package_version}' "
-                f"al project '{registered_project_obj.project_name}'."
-            )
+            if docset not in registered_project_obj.docsets:
+                registered_project_obj.docsets.append(docset)
+                logger.info(
+                    f"Docset associated '{docset.package_name} v{docset.package_version}' "
+                    f"al project '{registered_project_obj.project_name}'."
+                )
+            try:
+                session.commit()
+                logger.info(
+                    "Core: Final commit for bootstrap_database_and_load_data successful."
+                )
+            except Exception as e_final_commit:
+                logger.error(
+                    f"Error during final commit in bootstrap_database_and_load_data: {e_final_commit}"
+                )
+                session.rollback()
+                raise
     return pkg_info, docset, registered_project_obj
 
 

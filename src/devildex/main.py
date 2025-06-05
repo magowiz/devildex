@@ -10,7 +10,9 @@ import wx
 import wx.grid
 import wx.html2
 
+from devildex import database
 from devildex.app_paths import AppPaths
+from devildex.local_data_parse import registered_project_parser
 from devildex.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA
@@ -32,11 +34,118 @@ class DevilDexCore:
         self.app_paths = AppPaths()
         if os.getenv("DEVILDEX_DEV_MODE") == "1":
             self.docset_base_output_path = Path("devildex_docsets")
+            self.database_file_path = Path("devildex_dev.db")
         else:
             self.docset_base_output_path = self.app_paths.docsets_base_dir
+            self.database_file_path = self.app_paths.database_path
         self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
 
+    def bootstrap_database_and_load_data(
+        self, initial_package_source: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Initialize the database, populates it with initial data.
 
+        and loads data for the grid.
+        """
+        logger.info("Core: Initializing database...")
+        db_url = f"sqlite:///{self.database_file_path}"
+        database.init_db(database_url=db_url)
+        logger.info("Core: Database initialized.")
+
+        active_project_data = registered_project_parser.load_active_registered_project()
+        project_db_name: Optional[str] = None
+        project_db_path: Optional[str] = None
+        project_db_python_exec: Optional[str] = None
+
+        if active_project_data:
+            project_db_name = active_project_data.get("project_name")
+            project_db_path = active_project_data.get("project_path")
+            project_db_python_exec = active_project_data.get("python_executable")
+            logger.info(f"Core: Active project for DB population: {project_db_name}")
+        else:
+            logger.info(
+                "Core: No active project registered, packages will be added globally."
+            )
+
+        logger.info(
+            "Core: Populating DB using initial_package_source - Total:"
+            f" {len(initial_package_source)} packages."
+        )
+        for pkg_data_dict in initial_package_source:
+            pkg_name = pkg_data_dict.get("name")
+            pkg_version = pkg_data_dict.get("version")
+            pkg_summary = pkg_data_dict.get(
+                "description"
+            )
+            pkg_project_urls = pkg_data_dict.get(
+                "project_urls"
+            )
+
+            if pkg_name and pkg_version:
+                logger.debug(f"Core: Processing for DB: {pkg_name} v{pkg_version}")
+                database.ensure_package_entities_exist(
+                    package_name=str(pkg_name),
+                    package_version=str(pkg_version),
+                    summary=str(pkg_summary) if pkg_summary else None,
+                    project_urls=pkg_project_urls,
+                    initial_docset_status="unknown",
+                    project_name=project_db_name,
+                    project_path=project_db_path,
+                    python_executable=project_db_python_exec,
+                )
+            else:
+                logger.warning(
+                    "Core: Skipped record from initial_package_source due to "
+                    f"missing name or version: {pkg_data_dict}"
+                )
+
+        logger.info("Core: Initial DB population completed.")
+
+        logger.info("Core: Loading data from database for the grid...")
+        grid_data_to_return: list[dict[str, Any]] = []
+        with database.get_session() as session:
+            docsets_to_load_from_db: list[database.Docset] = []
+            if project_db_name:
+                current_project_obj = (
+                    session.query(database.RegisteredProject)
+                    .filter_by(project_name=project_db_name)
+                    .first()
+                )
+                if current_project_obj:
+                    docsets_to_load_from_db = current_project_obj.docsets
+                    logger.info(
+                        f"Core: Loading {len(docsets_to_load_from_db)} "
+                        f"docsets for project '{project_db_name}'."
+                    )
+                else:
+                    logger.warning(
+                        f"Core: Project '{project_db_name}' not found in "
+                        "DB for loading its docsets."
+                    )
+            else:
+                docsets_to_load_from_db = session.query(database.Docset).all()
+                logger.info(
+                    "Core: No active project, loading all "
+                    f"{len(docsets_to_load_from_db)} docsets from DB."
+                )
+
+            for db_docset in docsets_to_load_from_db:
+                pkg_info = db_docset.package_info
+                grid_row = {
+                    "id": db_docset.id,
+                    "name": db_docset.package_name,
+                    "version": db_docset.package_version,
+                    "description": pkg_info.summary if pkg_info else "N/A",
+                    "docset_status": db_docset.status,
+                }
+                if pkg_info and pkg_info.project_urls:
+                    grid_row["project_urls"] = pkg_info.project_urls
+                grid_data_to_return.append(grid_row)
+
+            logger.info(
+                f"Core: Loaded {len(grid_data_to_return)} records from DB for the grid."
+            )
+        return grid_data_to_return
 
     def list_package_dirs(self) -> list[str]:
         """List i nomi delle directory di primo level nella folder base dei docset.
@@ -114,16 +223,6 @@ class DevilDexApp(wx.App):
         self.data_grid: wx.grid.Grid | None = None
 
         self.current_grid_source_data: list[dict[str, Any]] = []
-        for item in PACKAGES_DATA:
-            new_item = item.copy()
-            if "docset_status" not in new_item:
-                new_item["docset_status"] = "Not Available"
-            if (
-                new_item.get("docset_status") != "📖 Available"
-                and "docset_path" in new_item
-            ):
-                del new_item["docset_path"]
-            self.current_grid_source_data.append(new_item)
 
         self.open_action_button: wx.Button | None = None
         self.generate_action_button: wx.Button | None = None
@@ -258,6 +357,9 @@ class DevilDexApp(wx.App):
         wx.Log.SetActiveTarget(wx.LogStderr())
         window_title = "DevilDex"
         self.main_frame = wx.Frame(parent=None, title=window_title, size=(1280, 900))
+        self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
+            PACKAGES_DATA
+        )
         self.panel = wx.Panel(self.main_frame)
         self.main_panel_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel.SetSizer(self.main_panel_sizer)
