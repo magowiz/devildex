@@ -63,7 +63,18 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
     done \
      && rm -rf /var/lib/apt/lists/*
 
-RUN curl -Lo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"; \
+    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
+      MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh"; \
+    else \
+      echo "Architettura non supported: $ARCH"; \
+      exit 1; \
+    fi && \
+    echo "Downloading Miniconda for $ARCH from $MINICONDA_URL" && \
+    curl -Lo ~/miniconda.sh $MINICONDA_URL \
     && bash ~/miniconda.sh -b -p ${CONDA_DIR} \
     && rm ~/miniconda.sh \
     && eval "$(${CONDA_DIR}/bin/conda shell.bash hook)" \
