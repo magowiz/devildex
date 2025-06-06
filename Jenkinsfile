@@ -339,20 +339,19 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Starting Build Nuitka for ${env.ARCH} ---"
-                                withPythonEnv('python3.13') {
-                                    sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                                    sh 'sed -i /^packaging/d requirements.txt'
-                                    sh 'sed -i /^markdown/d requirements.txt'
-                                    sh 'sed -i /^typing_extensions/d requirements.txt'
-                                    sh 'python -m pip install --break-system-packages -r requirements.txt'
-                                    sh 'python -m pip install --break-system-packages nuitka'
-                                    sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
+                                sh """
+                                    eval "\$(/opt/conda/bin/conda shell.bash hook)"
+                                    conda activate conda_env
+                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                    python -m pip install -r requirements.txt
+                                    python -m pip install nuitka
+                                    mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka
                                     echo "Starting Nuitka build for Linux on host ${env.ARCH}"
-                                    sh "python -m nuitka src/devildex/main.py --standalone --onefile \
-                                        --output-dir=dist/${env.ARCH}/linux/nuitka"
-                                    sh "mv dist/${env.ARCH}/linux/nuitka/main.bin \
+                                    python -m nuitka src/devildex/main.py --standalone --onefile \
+                                        --output-dir=dist/${env.ARCH}/linux/nuitka
+                                """
+                                sh "mv dist/${env.ARCH}/linux/nuitka/main.bin \
                                         ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
-                                }
                                 echo "--- Build Nuitka finished for ${env.ARCH} ---"
                             }
                         }
@@ -388,28 +387,26 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Start Build PyOxidizer for ${env.ARCH} ---"
-                                withPythonEnv('python3.13') {
-                                    sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                                    sh 'sed -i /^packaging/d requirements.txt'
-                                    sh 'sed -i /^markdown/d requirements.txt'
-                                    sh 'sed -i /^typing_extensions/d requirements.txt'
-                                    sh 'python -m pip install --break-system-packages -r requirements.txt'
-                                    sh 'python -m pip install --break-system-packages pyoxidizer'
-                                    sh "mkdir -p dist/${env.ARCH}/pyoxidizer"
-                                    sh 'pyoxidizer build'
-                                    def sourceFolder = '-unknown-linux-gnu/debug/install/'
+                                sh """
+                                    eval "\$(/opt/conda/bin/conda shell.bash hook)"
+                                    conda activate conda_env
+                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                    python -m pip install -r requirements.txt
+                                    python -m pip install pyoxidizer
+                                    mkdir -p dist/${env.ARCH}/pyoxidizer
+                                    pyoxidizer build
+                                """
+                                def sourceFolder = '-unknown-linux-gnu/debug/install/'
                                     def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
                                     if (env.ARCH == 'arm64') {
                                         sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
                                     } else if (env.ARCH != 'amd64') {
                                         error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
                                     }
-                                    echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
-                                    sh "ls -l ${sourceBuildPath}"
-                                    def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
-                                    sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
-                                    sh "chmod +r '${finalArtifactName}'"
-                                }
+                                echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
+                                def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
+                                sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
+                                sh "chmod +r '${finalArtifactName}'"
                                 echo "--- End Build PyOxidizer for ${env.ARCH} ---"
                             }
                         }
@@ -446,21 +443,20 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Start Build PyInstaller for ${env.ARCH} ---"
-                                withPythonEnv('python3.13') {
-                                    sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                                    sh 'sed -i /^packaging/d requirements.txt'
-                                    sh 'sed -i /^markdown/d requirements.txt'
-                                    sh 'sed -i /^typing_extensions/d requirements.txt'
-                                    sh 'python -m pip install --break-system-packages -r requirements.txt'
-                                    sh "mkdir -p dist/${env.ARCH}/pyinstaller"
-                                    sh 'python -m pip install --break-system-packages pyinstaller'
-                                    sh "pyinstaller --noconfirm --onefile --console src/devildex/main.py \
+                                sh """
+                                    eval "\$(/opt/conda/bin/conda shell.bash hook)"
+                                    conda activate conda_env
+                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                    python -m pip install -r requirements.txt
+                                    mkdir -p dist/${env.ARCH}/pyinstaller
+                                    python -m pip install pyinstaller
+                                    pyinstaller --noconfirm --onefile --console src/devildex/main.py \
                                         --distpath dist/${env.ARCH}/pyinstaller \
-                                        --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}"
-                                    sh "mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \
+                                        --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}
+                              """
+                              sh "mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \
                                         ${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin"
-                                }
-                                echo "--- End Build PyInstaller for ${env.ARCH} ---"
+                              echo "--- End Build PyInstaller for ${env.ARCH} ---"
                             }
                         }
                         post {
