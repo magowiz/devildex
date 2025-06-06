@@ -264,6 +264,8 @@ pipeline {
 sh 'echo "--- INIZIO DEBUG VENV ---"'
         sh 'echo "[DEBUG] 1. Quale python stiamo usando?"'
         sh 'which python'
+sh 'which python3'
+sh 'which python3.13'
         sh 'echo "[DEBUG] 2. Quale pip stiamo usando?"'
         sh 'which pip'
         sh 'echo "[DEBUG] 3. Com\'è configurato il PATH?"'
