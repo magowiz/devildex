@@ -292,18 +292,16 @@ pipeline {
                                 pip install cx_Freeze
                             '''
                             sh """
-                                #!/bin/bash
-                                set -e
-                                echo [INFO] Activating Conda env (conda_env) for cx_Freeze build...
+                                echo '[INFO] Activating Conda env (conda_env) for cx_Freeze build...'
                                 eval $(/opt/conda/bin/conda shell.bash hook)
                                 conda activate conda_env
 
                                 mkdir -p dist/${env.ARCH}/cxfreeze
 
-                                echo [INFO] Running cx_Freeze build using Conda env python...
+                                echo '[INFO] Running cx_Freeze build using Conda env python...'
                                 python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
 
-                                echo [INFO] Moving built artifact...
+                                echo '[INFO] Moving built artifact...'
                                 mv ./dist/${env.ARCH}/cxfreeze/main \
                                    ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin
                             """
