@@ -64,7 +64,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
      && rm -rf /var/lib/apt/lists/*
 
 RUN curl -Lo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && bash ~/.miniconda.sh -b -p ${CONDA_DIR} \
+    && bash ~/miniconda.sh -b -p ${CONDA_DIR} \
     && rm ~/miniconda.sh \
     && eval "$(${CONDA_DIR}/bin/conda shell.bash hook)" \
     && conda init bash \
