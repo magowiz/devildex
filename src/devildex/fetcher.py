@@ -78,7 +78,7 @@ class PackageSourceFetcher:
         if not self.download_target_path.exists():
             return
         logger.info(
-            "Pulizia del contenuto della directory di destinazione: "
+            "Cleaning del content della directory di destinazione: "
             f"{self.download_target_path}"
         )
         try:
@@ -578,7 +578,7 @@ class PackageSourceFetcher:
         self._cleanup_target_dir_content()
         if not self._ensure_target_dir_exists():
             logger.error(
-                "Impossibile preparare la directory di destinazione "
+                "Unable to prepare la directory di destinazione "
                 "per VCS main branch clone."
             )
             return False
@@ -603,8 +603,8 @@ class PackageSourceFetcher:
                     False altrimenti.
                 - is_master_branch_fetched: True se è stato fatto il fetch del branch
                     principale/default.
-                - path_to_return: Il percorso alla directory dei sorgenti downloaded
-                    se il fetch ha successo, None altrimenti.
+                - path_to_return: Il path alla directory dei sorgenti downloaded
+                    se il fetch ha success, None altrimenti.
 
         """
         fetch_successful = False

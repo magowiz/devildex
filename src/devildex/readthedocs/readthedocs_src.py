@@ -372,7 +372,6 @@ def run_clone(
                 logger.exception(f"Failed to clean up {clone_dir_path}: {e_rm}")
                 return None
 
-        cmd_list: list[str] = []
         if not bzr:
             if not vcs_command_path: logger.error("GIT_FULL_PATH is None, cannot clone."); return None
             cmd_list = [

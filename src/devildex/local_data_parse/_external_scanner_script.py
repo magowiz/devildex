@@ -35,7 +35,7 @@ def main() -> None:
             })
 
     except Exception as e:
-        error_payload = {"error": f"Errore in _external_scanner_script.py: {e!s}"}
+        error_payload = {"error": f"Error in _external_scanner_script.py: {e!s}"}
         logger.exception(json.dumps(error_payload))
         sys.exit(1)
 

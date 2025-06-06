@@ -268,7 +268,8 @@ def ensure_package_entities_exist( # noqa: PLR0913
 
     """
     with get_session() as session:
-        pkg_info = session.query(PackageInfo).filter_by(package_name=package_name).first()
+        pkg_info = session.query(PackageInfo).filter_by(
+            package_name=package_name).first()
         if not pkg_info:
             logger.info(f"PackageInfo per '{package_name}' non trovato, creation...")
             pkg_info = PackageInfo(package_name=package_name, summary=summary)
@@ -312,7 +313,8 @@ def ensure_package_entities_exist( # noqa: PLR0913
                 session.query(RegisteredProject).filter_by(project_name=project_name).first()
             )
             if not registered_project_obj:
-                logger.info(f"RegisteredProject '{project_name}' non trovato, creation...")
+                logger.info(f"RegisteredProject '{project_name}' "
+                            f"non trovato, creation...")
                 if not project_path or not python_executable:
                     msg = (
                         f"Per create un new RegisteredProject '{project_name}', "
@@ -332,17 +334,19 @@ def ensure_package_entities_exist( # noqa: PLR0913
             if docset not in registered_project_obj.docsets:
                 registered_project_obj.docsets.append(docset)
                 logger.info(
-                    f"Docset associated '{docset.package_name} v{docset.package_version}' "
+                    f"Docset associated '{docset.package_name} "
+                    f"v{docset.package_version}' "
                     f"al project '{registered_project_obj.project_name}'."
                 )
             try:
                 session.commit()
                 logger.info(
-                    "Core: Final commit for bootstrap_database_and_load_data successful."
+                    "Core: Final commit for bootstrap_database_and_load_data"
+                    " successful."
                 )
-            except Exception as e_final_commit:
-                logger.error(
-                    f"Error during final commit in bootstrap_database_and_load_data: {e_final_commit}"
+            except Exception:
+                logger.exception(
+                    "Error during final commit in bootstrap_database_and_load_data "
                 )
                 session.rollback()
                 raise

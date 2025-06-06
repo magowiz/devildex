@@ -21,7 +21,7 @@ def _process_requirements_obj(
             stripped_line = req.line.strip()
             if stripped_line in lines_to_explicitly_remove:
                 logger.info(
-                    "Rimozione esplicita della riga '%s' da '%s'",
+                    "Rimozione explicit della riga '%s' da '%s'",
                     stripped_line,
                     file_path_for_logging,
                 )
@@ -36,8 +36,8 @@ def _process_requirements_obj(
         )
         if invalid_line_content_count > 0:
             logger.warning(
-                "Trovate %s righe potenzialmente non valide "
-                "(scartate dal parser) in '%s'.",
+                "Found %s rows not valid "
+                "(discarded dal parser) in '%s'.",
                 invalid_line_content_count,
                 file_path_for_logging,
             )
@@ -45,13 +45,13 @@ def _process_requirements_obj(
 
 
 def filter_requirements_lines(file_path_str: str) -> list[str] | None:
-    """Legge un file requirements.txt, filtra le righe non valide.
+    """Read un file requirements.txt, filtra le righe non valid.
 
     usando pip-requirements-parser e restituisce una lista delle stringhe di
-    requisito valide.
+    requisito valid.
 
     Args:
-        file_path_str (str): Il percorso al file requirements.txt da leggere.
+        file_path_str (str): Il path al file requirements.txt da read.
 
     Returns:
         list[str] | None: Una lista di stringhe, ognuna rappresentante una riga
@@ -84,7 +84,7 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
         )
 
         logger.debug(
-            "Numero di righe valide estratte da '%s': %s", file_path, len(valid_lines)
+            "Numero di rows valid extract da '%s': %s", file_path, len(valid_lines)
         )
     except (OSError, UnicodeDecodeError):
         logger.exception(

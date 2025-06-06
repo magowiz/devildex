@@ -28,12 +28,13 @@ FIXED_REGISTRATION_FILE_NAME = "current_registered_project.json"
 
 
 def get_active_user_venv_info() -> tuple[Path | None, str | None]:
-    """Determina il percorso del venv e Python usando variabile d'ambiente VIRTUAL_ENV.
+    """Determine il path del venv e Python using variable environment VIRTUAL_ENV.
 
-    Restituisce:
+    Returns:
         tuple[Path | None, str | None]: (percorso_venv_attivo_utente,
             percorso_eseguibile_python_utente)
             o (None, None) se VIRTUAL_ENV non è impostato.
+
     """
     virtual_env_path_str = os.environ.get("VIRTUAL_ENV")
 

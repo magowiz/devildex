@@ -26,8 +26,8 @@ class ExternalVenvScanner:
 
         if not self.python_executable_path.is_file():
             logger.warning(
-                f"ExternalVenvScanner: Il path dell'eseguibile Python fornito "
-                f"'{self.python_executable_path}' non sembra essere un file valido."
+                f"ExternalVenvScanner: Il path dell'eseguibile Python given "
+                f"'{self.python_executable_path}' non seem to be un file valido."
             )
         if self.script_content is None:
             logger.error(
@@ -60,14 +60,14 @@ class ExternalVenvScanner:
             return None
         except (OSError, TypeError, UnicodeDecodeError):
             logger.exception(
-                "Errore durante il caricamento dello script helper "
+                "Error durante il caricamento dello script helper "
                 f"'{HELPER_SCRIPT_FILENAME}'"
             )
             return None
 
     def scan_packages(self) -> Optional[list[PackageDetails]]:
         """Scan packages in the external venv."""
-        if not self.script_content: # Già corretto
+        if not self.script_content:
             logger.error("Helper script content not loaded. Cannot scan packages.")
             return None
 
@@ -126,7 +126,7 @@ class ExternalVenvScanner:
                         f"({self.python_executable_path})."
                     )
                     logger.debug(
-                        "Output ricevuto (primi 500 caratteri): "
+                        "Output received (first 500 characters): "
                         f"{stdout_output[:500]}..."
                     )
                     return None
@@ -158,12 +158,12 @@ class ExternalVenvScanner:
 
             except json.JSONDecodeError:
                 logger.exception(
-                    "Errore nel decoding output JSON da stdout "
-                    "dello script esterno "
+                    "Error nel decoding output JSON da stdout "
+                    "dell script extern "
                     f"({self.python_executable_path})."
                 )
                 logger.debug(
-                    "Output STDOUT non parsabile (primi 500 caratteri):"
+                    "Output STDOUT non parsable (first 500 characters):"
                     f" {stdout_output[:500]}..."
                 )
                 return None
@@ -172,7 +172,7 @@ class ExternalVenvScanner:
 
         except subprocess.TimeoutExpired:
             logger.exception(
-                f"Timeout scaduto durante l'esecuzione dello external script "
+                f"Timeout expired durante l'esecuzione dello external script "
                 f"con '{self.python_executable_path}'."
             )
             return None
@@ -195,19 +195,19 @@ if __name__ == "__main__":
     test_exec_path = "/home/magowiz/venvs/tempenv-08109221402d/bin/python"
 
     if not Path(test_exec_path).is_file():
-        logger.error(f"Il percorso di test '{test_exec_path}' non è un file valido. "
+        logger.error(f"Il path di test '{test_exec_path}' non è un file valido. "
                      "Modifica lo script.")
     else:
         scanner = ExternalVenvScanner(python_executable_path=test_exec_path)
         if scanner.script_content:
-            logger.info("Contenuto dello script helper loaded con successo!")
-            logger.debug(f"Inizio content: {scanner.script_content[:200]}...")
+            logger.info("Content del script helper loaded con successo!")
+            logger.debug(f"Initial content: {scanner.script_content[:200]}...")
         else:
-            logger.error("Failed il caricamento del content of script helper.")
+            logger.error("Failed il load del content of script helper.")
 
-        logger.info("Tentativo di call scan_packages (simulazione)...")
+        logger.info("Trying to call scan_packages (simulation)...")
         packages = scanner.scan_packages()
         if packages is not None:
-            logger.info(f"scan_packages (simulation) ha restituito: {packages}")
+            logger.info(f"scan_packages (simulation) ha returned: {packages}")
         else:
             logger.error("scan_packages (simulation) ha returned None (error).")

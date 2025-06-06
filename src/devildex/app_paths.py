@@ -8,19 +8,20 @@ from devildex.info import APPLICATION_AUTHOR, APPLICATION_NAME
 
 logger = logging.getLogger(__name__)
 class AppPaths:
-    """Handle i percorsi standard per i file di dati, configurazione.
+    """Handle i paths standard per i file di dati, configuration.
 
-    cache e log dell'applicazione in modo indipendente dalla piattaforma.
+    cache e log dell application in modo independent dalla platform.
     """
 
     def __init__(self, app_name: str = APPLICATION_NAME,
-                 app_author: str = APPLICATION_AUTHOR, version: str | None = None):
-        """Inizializza i percorsi.
+                 app_author: str = APPLICATION_AUTHOR,
+                 version: str | None = None) -> None:
+        """Initialize i paths.
 
         Args:
-            app_name: Il nome dell'applicazione.
-            app_author: L'autore/organizzazione dell'applicazione.
-            version: Una versione opzionale dell'app, per percorsi versionati.
+            app_name: Il nome dell application.
+            app_author: author/organization del application.
+            version: Una version optional of app, per paths versioned.
 
         """
         self._dirs = platformdirs.PlatformDirs(
@@ -28,61 +29,38 @@ class AppPaths:
 
     @property
     def user_data_dir(self) -> Path:
-        """Directory per i file di dati specifici dell'utente.
-
-        Es. Linux:   ~/.local/share/devildex
-        Es. macOS:   ~/Library/Application Support/devildex
-        Es. Windows: C:\\Users\\<Utente>\\AppData\\Roaming\\DevilDexTeam\\devildex
-        """
+        """Directory per i file di dati del user."""
         path = Path(self._dirs.user_data_dir)
-        path.mkdir(parents=True, exist_ok=True) # Assicura che la directory esista
+        path.mkdir(parents=True, exist_ok=True)
         return path
 
     @property
     def user_config_dir(self) -> Path:
-        """Directory per i file di configurazione specifici dell'utente.
-
-        Es. Linux:   ~/.config/devildex
-        Es. macOS:
-            ~/Library/Application Support/devildex
-        Es. Windows:
-            C:\\Users\\<Utente>\\AppData\\Roaming\\DevilDexTeam\\devildex\\Config
-        """
+        """Directory per i file di configuration del user."""
         path = Path(self._dirs.user_config_dir)
         path.mkdir(parents=True, exist_ok=True)
         return path
 
     @property
     def user_cache_dir(self) -> Path:
-        """Directory per i file di cache specifici dell'utente.
-
-        Es. Linux:   ~/.cache/devildex
-        Es. macOS:   ~/Library/Caches/devildex
-        Es. Windows: C:\\Users\\<Utente>\\AppData\\Local\\DevilDexTeam\\devildex\\Cache
-        """
+        """Directory per i file di cache."""
         path = Path(self._dirs.user_cache_dir)
         path.mkdir(parents=True, exist_ok=True)
         return path
 
     @property
     def user_log_dir(self) -> Path:
-        """Directory per i file di log specifici dell'utente.
-
-        Es. Linux:   ~/.local/state/devildex/log (o sotto cache/data)
-        Es. macOS:   ~/Library/Logs/devildex
-        Es. Windows: C:\\Users\\<Utente>\\AppData\\Local\\DevilDexTeam\\devildex\\Logs
-        """
+        """Directory per i file di log specifici dell'utente."""
         path = Path(self._dirs.user_log_dir)
         path.mkdir(parents=True, exist_ok=True)
         return path
 
-    # --- Percorsi specifici per DevilDex ---
 
     @property
     def docsets_base_dir(self) -> Path:
-        """Directory base predefinita per i docset generati.
+        """Directory base default per i docset generated.
 
-        Solitamente si trova all'interno della user_data_dir.
+        Usually si found inside della user_data_dir.
         """
         path = self.user_data_dir / "docsets"
         path.mkdir(parents=True, exist_ok=True)
@@ -90,15 +68,15 @@ class AppPaths:
 
     @property
     def database_path(self) -> Path:
-        """Path per il file del database dell'applicazione.
+        """Path per il file del database dell application.
 
-        Potrebbe essere un file SQLite, ad esempio.
+        May be un file SQLite, ad example.
         """
         return self.user_data_dir / "devildex.db"
 
     @property
     def settings_file_path(self) -> Path:
-        """Percorso per il file delle impostazioni dell'applicazione."""
+        """Path per il file delle settings del application."""
         return self.user_config_dir / "settings.toml"
 
 
