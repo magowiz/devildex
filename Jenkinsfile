@@ -293,7 +293,7 @@ pipeline {
                             '''
                             sh """
                                 echo '[INFO] Activating Conda env (conda_env) for cx_Freeze build...'
-                                eval \$(/opt/conda/bin/conda shell.bash hook)
+                                eval "\$(/opt/conda/bin/conda shell.bash hook)"
                                 conda activate conda_env
 
                                 mkdir -p dist/${env.ARCH}/cxfreeze
