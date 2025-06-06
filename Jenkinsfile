@@ -260,35 +260,51 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
-                                withPythonEnv('python3.13') {
-sh 'echo "--- INIZIO DEBUG VENV ---"'
-        sh 'echo "[DEBUG] 1. Quale python stiamo usando?"'
-        sh 'which python'
-sh 'which python3'
-sh 'which python3.13'
-        sh 'echo "[DEBUG] 2. Quale pip stiamo usando?"'
-        sh 'which pip'
-        sh 'echo "[DEBUG] 3. Com\'è configurato il PATH?"'
-        sh 'echo $PATH'
-        sh 'echo "[DEBUG] 4. Provo a installare un pacchetto e vedo dove finisce"'
-        sh 'pip install six'
-        sh 'pip show six'
-        sh 'echo "--- FINE DEBUG VENV ---"'
-        error("Pipeline fermata per debug.")
-                                    sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                                    sh 'sed -i /^packaging/d requirements.txt'
-                                    sh 'sed -i /^markdown/d requirements.txt'
-                                    sh 'sed -i /^typing_extensions/d requirements.txt'
-                                    sh 'cat requirements.txt'
-sh 'python -m pip install --break-system-packages -r requirements.txt'
-                                    sh "mkdir -p dist/${env.ARCH}/cxfreeze"
-                                    sh 'python -m pip install --break-system-packages cx_Freeze'
-                                    sh "python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze"
-                                    sh "mv ./dist/${env.ARCH}/cxfreeze/main \
-                                        ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
-                                }
-                                echo "--- End Build cx_Freeze for ${env.ARCH} ---"
-                            }
+                                sh '''
+            echo "[INFO] Initializing Conda and activating environment (conda_env)..."
+            eval "$(/opt/conda/bin/conda shell.bash hook)"
+            conda activate conda_env
+
+            echo "[DEBUG] Verifying Python and Pip from Conda env:"
+            which python
+            python --version
+            which pip
+            pip --version
+        '''
+        sh '''
+            echo "[INFO] Activating Conda env (conda_env) for requirements export..."
+            eval "$(/opt/conda/bin/conda shell.bash hook)"
+            conda activate conda_env
+
+            echo "[INFO] Exporting and preparing requirements.txt using global poetry..."
+            poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+        '''
+         sh '''
+            echo "[INFO] Activating Conda env (conda_env) for installing dependencies..."
+            eval "$(/opt/conda/bin/conda shell.bash hook)"
+            conda activate conda_env
+
+            echo "[INFO] Installing requirements.txt using Conda env pip..."
+            pip install -r requirements.txt
+
+            echo "[INFO] Installing cx_Freeze using Conda env pip..."
+            pip install cx_Freeze
+        '''
+        sh '''
+            echo "[INFO] Activating Conda env (conda_env) for cx_Freeze build..."
+            eval "$(/opt/conda/bin/conda shell.bash hook)"
+            conda activate conda_env
+
+            mkdir -p dist/${env.ARCH}/cxfreeze
+
+            echo "[INFO] Running cx_Freeze build using Conda env python..."
+            python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
+
+            echo "[INFO] Moving built artifact..."
+            mv "./dist/${env.ARCH}/cxfreeze/main" \
+               "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+        '''
                         }
                         post {
                             success {

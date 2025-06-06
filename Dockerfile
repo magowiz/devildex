@@ -2,16 +2,20 @@ FROM ubuntu:plucky AS builder
 
 ARG PYTHON_VERSION=3.13
 ARG POETRY_VERSION=2.1.0
+ARG CONDA_ENV_NAME=conda_env
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
+ENV CONDA_DIR="/opt/conda" \
+    POETRY_HOME="/opt/poetry"
+
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
-    POETRY_HOME="/opt/poetry" \
-    PATH="/root/.local/bin:/opt/poetry/bin:${PATH}"
+    PATH="${CONDA_DIR}/bin:/root/.local/bin:/opt/poetry/bin:${PATH}"
+
 
 RUN sed -i -E 's|^(URIs:[[:space:]]*)http://|\1https://|g' /etc/apt/sources.list.d/ubuntu.sources
 
@@ -58,6 +62,15 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
       fi; \
     done \
      && rm -rf /var/lib/apt/lists/*
+
+RUN curl -Lo ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && bash ~/.miniconda.sh -b -p ${CONDA_DIR} \
+    && rm ~/miniconda.sh \
+    && eval "$(${CONDA_DIR}/bin/conda shell.bash hook)" \
+    && conda init bash \
+    && conda config --set auto_activate_base false \
+    && conda clean --all -f -y
+RUN conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y && conda clean -all -f -y
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
 RUN poetry self add poetry-plugin-export
