@@ -291,7 +291,7 @@ pipeline {
                                 echo "[INFO] Installing cx_Freeze using Conda env pip..."
                                 pip install cx_Freeze
                             '''
-                            sh '''
+                            sh """
                                 #!/bin/bash
                                 set -e
                                 echo "[INFO] Activating Conda env (conda_env) for cx_Freeze build..."
@@ -301,12 +301,12 @@ pipeline {
                                 mkdir -p "dist/${env.ARCH}/cxfreeze"
 
                                 echo "[INFO] Running cx_Freeze build using Conda env python..."
-                                python setup_cxfreeze.py build_exe --build-exe "dist/${env.ARCH}/cxfreeze"
+                                python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
 
                                 echo "[INFO] Moving built artifact..."
-                                mv "./dist/${env.ARCH}/cxfreeze/main" \
-                                   "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
-                            '''
+                                mv ./dist/${env.ARCH}/cxfreeze/main \
+                                   ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin
+                            """
                             }
                         }
                         post {
