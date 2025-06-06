@@ -279,14 +279,17 @@ def test_orchestrator_documentation_retrieval(
         assert len(html_files) > 0, "No HTML files found in output for "
         f"{package_details_for_test.name} at {output_docs_root_path}"
     else:
-        assert operation_result is None, (
-            "Expected grab_build_doc to result in None for "
+        assert (
+            operation_result is False
+        ), (  # MODIFICATO: controlla 'is False' invece di 'is None'
+            "Expected grab_build_doc to result in False for "  # Aggiornato anche il messaggio
             f"{package_details_for_test.name} due to "
+            f"expect_success=False. Got: {operation_result} (type: {type(operation_result)})"
         )
         f"expected failure, but got type {type(operation_result)}"
         f" with value: {operation_result}"
         assert (
-            output_docs_root_path_str is None
+            output_docs_root_path_str is False
         ), ("Expected grab_build_doc to return None for "
             f"{package_details_for_test.name} ")
         f"due to expected failure, but got: {output_docs_root_path_str}"
