@@ -49,7 +49,7 @@ def dummy_project_in_tmp_path(tmp_path: Path, request: pytest.FixtureRequest) ->
 
         return direct_project_copy_destination
 
-
+@pytest.mark.focus
 def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
     """Test applying a sphinx theme."""
     conf_path = Path(dummy_project_in_tmp_path / "docs" / "source" / "conf.py")
