@@ -140,6 +140,7 @@ pipeline {
                             sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
                             sh 'sed -i /^packaging/d requirements.txt'
                             sh 'sed -i /^packaging/d requirements-test.txt'
+                            sh 'sed -i /^typing_extensions/d requirements.txt'
                             pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
                                    skipMarkers: '')
                             script {
@@ -263,6 +264,7 @@ pipeline {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'sed -i /^markdown/d requirements.txt'
+                                    sh 'sed -i /^typing_extensions/d requirements.txt'
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh "mkdir -p dist/${env.ARCH}/cxfreeze"
                                     sh 'python -m pip install --break-system-packages cx_Freeze'
@@ -309,6 +311,7 @@ pipeline {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'sed -i /^markdown/d requirements.txt'
+                                    sh 'sed -i /^typing_extensions/d requirements.txt'
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh 'python -m pip install --break-system-packages nuitka'
                                     sh "mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka"
@@ -357,6 +360,7 @@ pipeline {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'sed -i /^markdown/d requirements.txt'
+                                    sh 'sed -i /^typing_extensions/d requirements.txt'
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh 'python -m pip install --break-system-packages pyoxidizer'
                                     sh "mkdir -p dist/${env.ARCH}/pyoxidizer"
@@ -414,6 +418,7 @@ pipeline {
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'sed -i /^markdown/d requirements.txt'
+                                    sh 'sed -i /^typing_extensions/d requirements.txt'
                                     sh 'python -m pip install --break-system-packages -r requirements.txt'
                                     sh "mkdir -p dist/${env.ARCH}/pyinstaller"
                                     sh 'python -m pip install --break-system-packages pyinstaller'
