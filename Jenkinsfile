@@ -342,6 +342,7 @@ pipeline {
                                 sh """
                                     eval "\$(/opt/conda/bin/conda shell.bash hook)"
                                     conda activate conda_env
+                                    conda install libpython-static
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
                                     python -m pip install -r requirements.txt
                                     python -m pip install nuitka
