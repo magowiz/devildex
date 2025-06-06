@@ -18,7 +18,7 @@ from devildex.orchestrator.documentation_orchestrator import Orchestrator
 from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA
 
 logger = logging.getLogger(__name__)
-COL_WIDTH_ID = 160
+COL_WIDTH_ID = 60
 COL_WIDTH_NAME = 160
 COL_WIDTH_VERSION = 80
 COL_WIDTH_DESC = 200
@@ -39,6 +39,29 @@ class DevilDexCore:
             self.docset_base_output_path = self.app_paths.docsets_base_dir
             self.database_file_path = self.app_paths.database_path
         self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
+        self.registered_project_name: Optional[str] = None
+        self.registered_project_path: Optional[str] = None
+        self.registered_project_python_executable: Optional[str] = (
+            None
+        )
+
+        self._load_registered_project_details()
+
+    def _load_registered_project_details(self) -> None:
+        """Carica i details del project active e li set come attributes."""
+        active_project_data = registered_project_parser.load_active_registered_project()
+        if active_project_data:
+            self.registered_project_name = active_project_data.get("project_name")
+            self.registered_project_path = active_project_data.get("project_path")
+            self.registered_project_python_executable = active_project_data.get(
+                "python_executable"
+            )
+            logger.info(
+                f"Core: Registered project loaded: {self.registered_project_name} "
+                f"at {self.registered_project_path}"
+            )
+        else:
+            logger.info("Core: No registered project found.")
 
     def bootstrap_database_and_load_data(
         self, initial_package_source: list[dict[str, Any]]
@@ -52,20 +75,10 @@ class DevilDexCore:
         database.init_db(database_url=db_url)
         logger.info("Core: Database initialized.")
 
-        active_project_data = registered_project_parser.load_active_registered_project()
-        project_db_name: Optional[str] = None
-        project_db_path: Optional[str] = None
-        project_db_python_exec: Optional[str] = None
+        project_db_name = self.registered_project_name
+        project_db_path = self.registered_project_path
+        project_db_python_exec = self.registered_project_python_executable
 
-        if active_project_data:
-            project_db_name = active_project_data.get("project_name")
-            project_db_path = active_project_data.get("project_path")
-            project_db_python_exec = active_project_data.get("python_executable")
-            logger.info(f"Core: Active project for DB population: {project_db_name}")
-        else:
-            logger.info(
-                "Core: No active project registered, packages will be added globally."
-            )
 
         logger.info(
             "Core: Populating DB using initial_package_source - Total:"
@@ -247,6 +260,8 @@ class DevilDexApp(wx.App):
         self.package_display_label: Optional[wx.StaticText] = None
         self.arrow_up_bmp_scaled: Optional[wx.Bitmap] = None
         self.arrow_down_bmp_scaled: Optional[wx.Bitmap] = None
+        self.view_mode_selector: Optional[wx.ComboBox] = None
+        self.package_display_label: Optional[wx.StaticText] = None
 
         super().__init__(redirect=False)
         self.MainLoop()
@@ -524,14 +539,37 @@ class DevilDexApp(wx.App):
             col_attr = wx.grid.GridCellAttr()
             col_attr.SetReadOnly(True)
             self.data_grid.SetColAttr(grid_col_idx, col_attr.Clone())
+    def _setup_view_mode_selector(self, parent: wx.Window) -> wx.Sizer:
+        """Configura il ComboBox per la selezione della modalità di vista."""
+        view_choices = ["Show all Docsets (Global)"]
+        if self.core and self.core.registered_project_name:
+            view_choices.append(
+                f"Show Project Docset: {self.core.registered_project_name}"
+            )
 
+        self.view_mode_selector = wx.ComboBox(
+            parent,
+            choices=view_choices,
+            style=wx.CB_READONLY,
+        )
+        self.view_mode_selector.SetValue(view_choices[0])
+
+        selector_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        selector_label = wx.StaticText(parent, label="View Mode:")
+        selector_sizer.Add(selector_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
+        selector_sizer.Add(self.view_mode_selector, 1, wx.EXPAND)
+
+        return selector_sizer
     def _setup_initial_view(self) -> None:
         """Configura la initial window."""
         self._clear_main_panel()
         self.is_log_panel_visible = False
-
+        view_mode_sizer = self._setup_view_mode_selector(self.panel)
+        if self.main_panel_sizer:
+            self.main_panel_sizer.Add(
+                view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+            )
         content_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
         self.data_grid = wx.grid.Grid(self.panel)
         self.data_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_grid_cell_click)
         content_sizer.Add(self.data_grid, 1, wx.EXPAND | wx.ALL, 5)
@@ -1135,6 +1173,7 @@ class DevilDexApp(wx.App):
         self.forward_button = None
         self.home_button = None
         self.data_grid = None
+        self.view_mode_selector = None
         self.selected_row_index = None
         self.custom_highlighted_row_index = None
         self.open_action_button = None
