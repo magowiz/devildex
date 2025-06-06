@@ -261,6 +261,18 @@ pipeline {
                             script {
                                 echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
                                 withPythonEnv('python3.13') {
+sh 'echo "--- INIZIO DEBUG VENV ---"'
+        sh 'echo "[DEBUG] 1. Quale python stiamo usando?"'
+        sh 'which python'
+        sh 'echo "[DEBUG] 2. Quale pip stiamo usando?"'
+        sh 'which pip'
+        sh 'echo "[DEBUG] 3. Com\'è configurato il PATH?"'
+        sh 'echo $PATH'
+        sh 'echo "[DEBUG] 4. Provo a installare un pacchetto e vedo dove finisce"'
+        sh 'pip install six'
+        sh 'pip show six'
+        sh 'echo "--- FINE DEBUG VENV ---"'
+        error("Pipeline fermata per debug.")
                                     sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
                                     sh 'sed -i /^packaging/d requirements.txt'
                                     sh 'sed -i /^markdown/d requirements.txt'
