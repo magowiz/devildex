@@ -126,7 +126,7 @@ class Orchestrator:
 
     @property
     def _grabbers(self) -> dict:
-        """Property to dynamically build the grabbers configuration."""
+        """Property to dynamically build the grabbers' configuration."""
         effective_source_path_str = (
             str(self._effective_source_path) if self._effective_source_path else None
         )

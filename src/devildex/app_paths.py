@@ -8,7 +8,7 @@ from devildex.info import APPLICATION_AUTHOR, APPLICATION_NAME
 
 logger = logging.getLogger(__name__)
 class AppPaths:
-    """Gestisce i percorsi standard per i file di dati, configurazione.
+    """Handle i percorsi standard per i file di dati, configurazione.
 
     cache e log dell'applicazione in modo indipendente dalla piattaforma.
     """

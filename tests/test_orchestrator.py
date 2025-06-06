@@ -281,8 +281,8 @@ def test_orchestrator_documentation_retrieval(
     else:
         assert (
             operation_result is False
-        ), (  # MODIFICATO: controlla 'is False' invece di 'is None'
-            "Expected grab_build_doc to result in False for "  # Aggiornato anche il messaggio
+        ), (
+            "Expected grab_build_doc to result in False for "
             f"{package_details_for_test.name} due to "
             f"expect_success=False. Got: {operation_result} (type: {type(operation_result)})"
         )

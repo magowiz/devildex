@@ -19,8 +19,8 @@ class MyFrame(wx.Frame):
         sample_data_as_list_of_dicts = [
             {
                 "id": "pkg1",
-                "description": "Libreria Core del sistema",
-                "name": "Pacchetto Alpha",
+                "description": "Libreria Core del system",
+                "name": "Package Alpha",
             }
         ]
 
@@ -51,5 +51,5 @@ class MyFrame(wx.Frame):
 
 if __name__ == "__main__":
     app = wx.App(False)
-    frame = MyFrame(None, "Esempio wx.grid.Grid")
+    frame = MyFrame(None, "Example wx.grid.Grid")
     app.MainLoop()

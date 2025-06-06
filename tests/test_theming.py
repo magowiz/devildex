@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def dummy_project_in_tmp_path(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
-    """Fixture che copia il contenuto di 'tests/dummy_project' in una.
+    """Fixture che copia il content di 'tests/dummy_project' in una.
 
-    sottodirectory di tmp_path e restituisce il percorso a questa copia.
+    subdirectory di tmp_path e restituisce il percorso a questa copia.
     """
     create_nested_structure = getattr(request, "param", False)
     project_source_name = ORIGINAL_DUMMY_PROJECT_PATH.name
@@ -73,7 +73,7 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
     index_html_path = output_html_dir / "index.html"
 
     url_to_open = index_html_path.as_uri()
-    logger.info(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
+    logger.info(f"🔗 Apri manually questo URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)
 
 
@@ -130,11 +130,11 @@ def _minimal_build_pydoctor_docs(
             qualified_module_to_document,
         ]
 
-        _stdout, _stderr, returncode = execute_command(
+        _stdout, _stderr, return_code = execute_command(
             pydoctor_command, "PyDoctor Build", cwd=source_project_path
         )
         index_html_path = actual_docs_output_dir / "index.html"
-        if returncode == 0 and index_html_path.exists():
+        if return_code == 0 and index_html_path.exists():
             return str(actual_docs_output_dir.resolve())
     return None
 
@@ -158,5 +158,5 @@ def test_pydoctor_theme(dummy_project_in_tmp_path: Path) -> None:
     index_html_path = output_project_docs_path / "index.html"
 
     url_to_open = index_html_path.as_uri()
-    logger.info("🔗 Apri manualmente questo URI: %s", url_to_open)
+    logger.info("🔗 Apri manually questo URI: %s", url_to_open)
     webbrowser.open_new_tab(url_to_open)

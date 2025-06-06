@@ -20,7 +20,7 @@ class MissingPackageInfoError(ValueError):
     def __init__(self) -> None:
         """Construct a MissingPackageInfoError object."""
         super().__init__(
-            "Nome del pacchetto e version devono essere "
+            "Nome del package e version devono essere "
             "forniti in package_info_dict."
         )
 
@@ -89,7 +89,7 @@ class PackageSourceFetcher:
                     item.unlink()
         except OSError:
             logger.exception(
-                "Errore durante la pulizia della directory "
+                "Error durante la pulizia della directory "
                 f"{self.download_target_path}"
             )
 
@@ -588,7 +588,7 @@ class PackageSourceFetcher:
         ):
             self._cleanup_git_dir_from_path(self.download_target_path)
             logger.info(
-                "Clone del branch principale/default "
+                "Clone del branch main/default "
                 f"riuscito in {self.download_target_path}."
             )
             return True
@@ -599,11 +599,11 @@ class PackageSourceFetcher:
 
         Returns:
             tuple[bool, bool, str | None]:
-                - fetch_successful: True se il fetch ha avuto successo,
+                - fetch_successful: True se il fetch ha avuto succeed,
                     False altrimenti.
                 - is_master_branch_fetched: True se è stato fatto il fetch del branch
                     principale/default.
-                - path_to_return: Il percorso alla directory dei sorgenti scaricati
+                - path_to_return: Il percorso alla directory dei sorgenti downloaded
                     se il fetch ha successo, None altrimenti.
 
         """

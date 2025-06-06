@@ -59,7 +59,7 @@ PACKAGES_TO_TEST = [
 def manage_test_output_directory(
     tmp_path: Path,
 ) -> Path:
-    """Fixture per creare e fornire una directory di output documentazione.
+    """Fixture per create e fornire una directory di output documentation.
 
     all'interno dello spazio temporaneo di un test specifico.
     """
@@ -103,7 +103,7 @@ def test_documentation_generation_for_package(
         doc_generator.run(url=repo_url, project_name=project_name)
     except Exception as e:
         pytest.fail(
-            f"L'esecuzione di doc_generator.run per {project_name} ha fallito con "
+            f"L'esecuzione di doc_generator.run per {project_name} ha failed con "
             f"un'eccezione: {e}\n"
             f"Controlla i log precedenti per dettagli."
         )
@@ -115,15 +115,15 @@ def test_documentation_generation_for_package(
         f"{final_project_version_docs_dir}"
     )
     assert final_project_version_docs_dir.is_dir(), (
-        "Il percorso della documentazione versionata non è una directory: "
+        "Il path della documentazione versionata non è una directory: "
         f"{final_project_version_docs_dir}"
     )
 
     html_files = list(final_project_version_docs_dir.rglob("*.html"))
     assert (
         len(html_files) > 0
-    ), f"Nessun file HTML trovato in: {final_project_version_docs_dir}"
-    logger.info(f"Trovati {len(html_files)} file HTML in "
+    ), f"No file HTML trovato in: {final_project_version_docs_dir}"
+    logger.info(f"Found {len(html_files)} file HTML in "
                 f"{final_project_version_docs_dir}.")
 
     if expected_entry_point:
@@ -133,5 +133,5 @@ def test_documentation_generation_for_package(
         ), f"Il file di entry point HTML atteso non è stato trovato: {entry_point_file}"
         assert (
             entry_point_file.is_file()
-        ), f"Il percorso dell'entry point HTML atteso non è un file: {entry_point_file}"
+        ), f"Il path dell'entry point HTML atteso non è un file: {entry_point_file}"
         logger.error(f"Trovato entry point HTML atteso: {entry_point_file}")
