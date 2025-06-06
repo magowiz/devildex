@@ -261,50 +261,51 @@ pipeline {
                             script {
                                 echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
                                 sh '''
-            echo "[INFO] Initializing Conda and activating environment (conda_env)..."
-            eval "$(/opt/conda/bin/conda shell.bash hook)"
-            conda activate conda_env
+                                    echo "[INFO] Initializing Conda and activating environment (conda_env)..."
+                                    eval "$(/opt/conda/bin/conda shell.bash hook)"
+                                    conda activate conda_env
 
-            echo "[DEBUG] Verifying Python and Pip from Conda env:"
-            which python
-            python --version
-            which pip
-            pip --version
-        '''
-        sh '''
-            echo "[INFO] Activating Conda env (conda_env) for requirements export..."
-            eval "$(/opt/conda/bin/conda shell.bash hook)"
-            conda activate conda_env
+                                    echo "[DEBUG] Verifying Python and Pip from Conda env:"
+                                    which python
+                                    python --version
+                                    which pip
+                                    pip --version
+                                '''
+                                sh '''
+                                    echo "[INFO] Activating Conda env (conda_env) for requirements export..."
+                                    eval "$(/opt/conda/bin/conda shell.bash hook)"
+                                    conda activate conda_env
 
-            echo "[INFO] Exporting and preparing requirements.txt using global poetry..."
-            poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                    echo "[INFO] Exporting and preparing requirements.txt using global poetry..."
+                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-        '''
-         sh '''
-            echo "[INFO] Activating Conda env (conda_env) for installing dependencies..."
-            eval "$(/opt/conda/bin/conda shell.bash hook)"
-            conda activate conda_env
+                                '''
+                             sh '''
+                                echo "[INFO] Activating Conda env (conda_env) for installing dependencies..."
+                                eval "$(/opt/conda/bin/conda shell.bash hook)"
+                                conda activate conda_env
 
-            echo "[INFO] Installing requirements.txt using Conda env pip..."
-            pip install -r requirements.txt
+                                echo "[INFO] Installing requirements.txt using Conda env pip..."
+                                pip install -r requirements.txt
 
-            echo "[INFO] Installing cx_Freeze using Conda env pip..."
-            pip install cx_Freeze
-        '''
-        sh '''
-            echo "[INFO] Activating Conda env (conda_env) for cx_Freeze build..."
-            eval "$(/opt/conda/bin/conda shell.bash hook)"
-            conda activate conda_env
+                                echo "[INFO] Installing cx_Freeze using Conda env pip..."
+                                pip install cx_Freeze
+                            '''
+                            sh '''
+                                echo "[INFO] Activating Conda env (conda_env) for cx_Freeze build..."
+                                eval "$(/opt/conda/bin/conda shell.bash hook)"
+                                conda activate conda_env
 
-            mkdir -p dist/${env.ARCH}/cxfreeze
+                                mkdir -p dist/${env.ARCH}/cxfreeze
 
-            echo "[INFO] Running cx_Freeze build using Conda env python..."
-            python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
+                                echo "[INFO] Running cx_Freeze build using Conda env python..."
+                                python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
 
-            echo "[INFO] Moving built artifact..."
-            mv "./dist/${env.ARCH}/cxfreeze/main" \
-               "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
-        '''
+                                echo "[INFO] Moving built artifact..."
+                                mv "./dist/${env.ARCH}/cxfreeze/main" \
+                                   "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+                            '''
+                            }
                         }
                         post {
                             success {
