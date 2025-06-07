@@ -48,10 +48,64 @@ class DevilDexCore:
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
 
-        self._load_registered_project_details()
+        self._setup_registered_project()
+
+    def query_project_names(self) -> list[str]:
+        """Recupera solo i NOMI di tutti i progetti registrati dal database.
+
+        Serve per popolare il ComboBox nella GUI.
+        """
+        logger.info("Core: Richiesta lista nomi progetti dal DB...")
+        project_names = database.DatabaseManager.get_all_project_names()
+        logger.info(f"Core: Ricevuti {len(project_names)} nomi di progetti.")
+        return project_names
+
+    def set_active_project(self, project_name: Optional[str]) -> bool:
+        """Imposta il progetto specificato come attivo nel core.
+
+        Se project_name è None, imposta la vista globale.
+        Carica i dettagli (path, python_exec) dal DB per il progetto specificato.
+        Restituisce True se il progetto è stato impostato con successo, False altrimenti.
+        """
+        if project_name is None:
+            logger.info("Core: Impostazione vista globale (nessun progetto attivo).")
+            self.registered_project_name = None
+            self.registered_project_path = None
+            self.registered_project_python_executable = None
+            registered_project_parser.clear_active_registered_project()
+            return True
+
+        logger.info(
+            f"Core: Tentativo di impostare '{project_name}' come progetto attivo."
+        )
+        project_details = database.DatabaseManager.get_project_details_by_name(
+            project_name
+        )
+        if project_details:
+            self.registered_project_name = project_details.get("project_name")
+            self.registered_project_path = project_details.get("project_path")
+            self.registered_project_python_executable = project_details.get(
+                "python_executable"
+            )
+            logger.info(
+                f"Core: Progetto '{self.registered_project_name}' impostato come attivo. "
+                f"Path: {self.registered_project_path}, Python: {self.registered_project_python_executable}"
+            )
+            # Salva il progetto appena attivato nel file JSON
+            registered_project_parser.save_active_registered_project(project_details)
+            return True
+        else:
+            logger.error(
+                f"Core: Impossibile trovare i dettagli per il progetto '{project_name}' nel DB."
+            )
+            # Resetta lo stato del core a globale se il progetto non viene trovato
+            self.registered_project_name = None
+            self.registered_project_path = None
+            self.registered_project_python_executable = None
+            registered_project_parser.clear_active_registered_project()
+            return False
 
     def scan_project(self):
-        self._load_registered_project_details()
         if self.registered_project_name:
             evenv_scanner = ExternalVenvScanner(
                 self.registered_project_python_executable
@@ -65,14 +119,22 @@ class DevilDexCore:
                 return None
             elif exp_dep:
                 for package in packages:
-                    if package.name in exp_dep:
+                    normalized_package_name = package.name.lower().replace("_", "-")
+                    if normalized_package_name in exp_dep:
                         result.append(package)
             elif packages:
                 result = packages
             return result
         return None
 
-    def _load_registered_project_details(self) -> None:
+    def load_all_registered_projects_details(self):
+        return {
+            "project_name": self.registered_project_name,
+            "project_path": self.registered_project_path,
+            "python_executable": self.registered_project_python_executable,
+        }
+
+    def _setup_registered_project(self) -> None:
         """Carica i details del project active e li set come attributes."""
         active_project_data = registered_project_parser.load_active_registered_project()
         if active_project_data:
@@ -569,9 +631,13 @@ class DevilDexApp(wx.App):
     def _setup_view_mode_selector(self, parent: wx.Window) -> wx.Sizer:
         """Configura il ComboBox per la selection della mode di vista."""
         view_choices = ["Show all Docsets (Global)"]
-        if self.core and self.core.registered_project_name:
-            view_choices.append(
-                f"Show Project Docset: {self.core.registered_project_name}"
+        if self.core:
+            project_names_from_db = self.core.query_project_names()
+            for name in project_names_from_db:
+                view_choices.append(f"Project: {name}")
+        else:
+            logger.error(
+                "GUI: DevilDexCore non disponibile durante _setup_view_mode_selector."
             )
 
         self.view_mode_selector = wx.ComboBox(
@@ -585,8 +651,99 @@ class DevilDexApp(wx.App):
         selector_label = wx.StaticText(parent, label="View Mode:")
         selector_sizer.Add(selector_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
         selector_sizer.Add(self.view_mode_selector, 1, wx.EXPAND)
+        self.view_mode_selector.Bind(wx.EVT_COMBOBOX, self.on_view_mode_changed)
 
         return selector_sizer
+
+    def on_view_mode_changed(self, event: wx.CommandEvent) -> None:
+        """Handle view mode change from the ComboBox."""
+        if not self.view_mode_selector or not self.core:
+            event.Skip()
+            return
+
+        selected_view_str = self.view_mode_selector.GetValue()
+        logger.info(f"GUI: View mode changed to: {selected_view_str}")
+
+        packages_for_db_init: list[PackageDetails]
+        is_fallback_data_for_new_view = False
+
+        if selected_view_str == "Show all Docsets (Global)":
+            # Imposta il core in modalità globale
+            self.core.registered_project_name = None
+            self.core.registered_project_path = None
+            self.core.registered_project_python_executable = None
+            logger.info("GUI: Core view mode switched to Global.")
+
+            packages_for_db_init = PACKAGES_DATA_AS_DETAILS  # Per la vista globale, usiamo i dati di esempio
+            is_fallback_data_for_new_view = True
+        else:
+            try:
+                project_name_from_selector = selected_view_str.split(": ", 1)[1].strip()
+            except IndexError:
+                logger.error(
+                    f"GUI: Could not parse project name from ComboBox selection: {selected_view_str}"
+                )
+                event.Skip()
+                return
+
+            all_projects = None
+            selected_project_details = all_projects.get(project_name_from_selector)
+
+            if selected_project_details:
+                self.core.registered_project_name = selected_project_details.get(
+                    "project_name"
+                )
+                self.core.registered_project_path = selected_project_details.get(
+                    "project_path"
+                )
+                self.core.registered_project_python_executable = (
+                    selected_project_details.get("python_executable")
+                )
+                logger.info(
+                    f"GUI: Core view mode switched to project: {self.core.registered_project_name}"
+                )
+
+                scanned_pkgs_for_project = self.core.scan_project()
+
+                if scanned_pkgs_for_project is not None:
+                    packages_for_db_init = scanned_pkgs_for_project
+                    is_fallback_data_for_new_view = (
+                        False  # Dati da scansione, non fallback
+                    )
+                    if not scanned_pkgs_for_project:
+                        logger.info(
+                            f"GUI: Scan for project {self.core.registered_project_name} found no explicit dependencies."
+                        )
+                else:  # Fallback se la scansione fallisce per il progetto selezionato
+                    logger.warning(
+                        f"GUI: Scan for project {self.core.registered_project_name} returned None. Using fallback data for this view."
+                    )
+                    packages_for_db_init = PACKAGES_DATA_AS_DETAILS
+                    is_fallback_data_for_new_view = True
+            else:
+                logger.error(
+                    f"GUI: Details for project '{project_name_from_selector}' not found in registered projects. Cannot switch view."
+                )
+                # Potresti voler gestire questo caso mostrando una griglia vuota o un messaggio
+                packages_for_db_init = []
+                is_fallback_data_for_new_view = (
+                    False  # O True se vuoi mostrare i dati di esempio
+                )
+                # event.Skip()
+                # return
+
+        # Ricarica i dati per la griglia in base alla nuova vista
+        self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
+            initial_package_source=packages_for_db_init,
+            is_fallback_data=is_fallback_data_for_new_view,
+        )
+        self.update_grid()  # Aggiorna la visualizzazione della griglia
+        self._perform_startup_docset_scan()  # Aggiorna lo stato dei docset ("Available", etc.)
+        self._update_action_buttons_state()  # Aggiorna l'abilitazione dei bottoni
+
+        if self.panel:
+            self.panel.Layout()
+        event.Skip()
 
     def _setup_initial_view(self) -> None:
         """Configura la initial window."""
