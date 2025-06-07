@@ -1,4 +1,5 @@
 """main application."""
+
 import logging
 import os
 import shutil
@@ -41,9 +42,7 @@ class DevilDexCore:
         self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
         self.registered_project_name: Optional[str] = None
         self.registered_project_path: Optional[str] = None
-        self.registered_project_python_executable: Optional[str] = (
-            None
-        )
+        self.registered_project_python_executable: Optional[str] = None
 
         self._load_registered_project_details()
 
@@ -79,7 +78,6 @@ class DevilDexCore:
         project_db_path = self.registered_project_path
         project_db_python_exec = self.registered_project_python_executable
 
-
         logger.info(
             "Core: Populating DB using initial_package_source - Total:"
             f" {len(initial_package_source)} packages."
@@ -87,12 +85,8 @@ class DevilDexCore:
         for pkg_data_dict in initial_package_source:
             pkg_name = pkg_data_dict.get("name")
             pkg_version = pkg_data_dict.get("version")
-            pkg_summary = pkg_data_dict.get(
-                "description"
-            )
-            pkg_project_urls = pkg_data_dict.get(
-                "project_urls"
-            )
+            pkg_summary = pkg_data_dict.get("description")
+            pkg_project_urls = pkg_data_dict.get("project_urls")
 
             if pkg_name and pkg_version:
                 logger.debug(f"Core: Processing for DB: {pkg_name} v{pkg_version}")
@@ -168,6 +162,7 @@ class DevilDexCore:
         if not self.docset_base_output_path.exists():
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
+
     def generate_docset(self, package_data: dict) -> tuple[bool, str]:
         """Generate a docset using Orchestrator.
 
@@ -192,9 +187,7 @@ class DevilDexCore:
         detected_type = orchestrator.get_detected_doc_type()
         if detected_type == "unknown":
             last_op_msg = orchestrator.get_last_operation_result()
-            msg = (
-                f"unable to determine il tipo di documentation per {details.name}."
-            )
+            msg = f"unable to determine il tipo di documentation per {details.name}."
             if isinstance(last_op_msg, str) and last_op_msg:
                 msg += f" Detail: {last_op_msg}"
             return False, msg
@@ -215,6 +208,7 @@ class DevilDexCore:
                 f"dalla generation del docset per {details.name}."
             )
             return False, unexpected_msg
+
 
 class DevilDexApp(wx.App):
     """Main Application."""
@@ -266,7 +260,6 @@ class DevilDexApp(wx.App):
         super().__init__(redirect=False)
         self.MainLoop()
 
-
     def scan_docset_dir(self, grid_pkg: list[dict]) -> set:
         """Scan Docset directory."""
         available_pkg = set()
@@ -281,7 +274,7 @@ class DevilDexApp(wx.App):
     @staticmethod
     def matching_docset(pkg: str, grid_pkg: dict) -> bool:
         """Check if a package name is matching a package in grid."""
-        return pkg == grid_pkg.get('name')
+        return pkg == grid_pkg.get("name")
 
     def _perform_startup_docset_scan(self) -> None:
         """Execute the scan dei existing docsets on startup e updates.
@@ -305,9 +298,7 @@ class DevilDexApp(wx.App):
                 subdirs_to_check.extend(["main", "master"])
                 found_specific_docset_subdir: Optional[Path] = None
                 for subdir_candidate_name in subdirs_to_check:
-                    potential_docset_path = (
-                        package_root_on_disk / subdir_candidate_name
-                    )
+                    potential_docset_path = package_root_on_disk / subdir_candidate_name
                     if (
                         potential_docset_path.exists()
                         and potential_docset_path.is_dir()
@@ -329,7 +320,6 @@ class DevilDexApp(wx.App):
                 pkg_data["docset_status"] = "Not Available"
                 if "docset_path" in pkg_data:
                     del pkg_data["docset_path"]
-
 
     def show_document(
         self,
@@ -522,25 +512,22 @@ class DevilDexApp(wx.App):
             return
 
         self.data_grid.SetColLabelValue(self.indicator_col_idx, "")
-        self.data_grid.SetColSize(
-            self.indicator_col_idx, 30
-        )
+        self.data_grid.SetColSize(self.indicator_col_idx, 30)
         indicator_attr = wx.grid.GridCellAttr()
         indicator_attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         indicator_attr.SetReadOnly(True)
         self.data_grid.SetColAttr(self.indicator_col_idx, indicator_attr.Clone())
         for c_idx, col_name in enumerate(COLUMNS_ORDER):
-            grid_col_idx = (
-                c_idx + 1
-            )
+            grid_col_idx = c_idx + 1
             self.data_grid.SetColLabelValue(grid_col_idx, col_name)
             if col_name in self.COL_WIDTHS:
                 self.data_grid.SetColSize(grid_col_idx, self.COL_WIDTHS[col_name])
             col_attr = wx.grid.GridCellAttr()
             col_attr.SetReadOnly(True)
             self.data_grid.SetColAttr(grid_col_idx, col_attr.Clone())
+
     def _setup_view_mode_selector(self, parent: wx.Window) -> wx.Sizer:
-        """Configura il ComboBox per la selezione della modalità di vista."""
+        """Configura il ComboBox per la selection della mode di vista."""
         view_choices = ["Show all Docsets (Global)"]
         if self.core and self.core.registered_project_name:
             view_choices.append(
@@ -560,6 +547,7 @@ class DevilDexApp(wx.App):
         selector_sizer.Add(self.view_mode_selector, 1, wx.EXPAND)
 
         return selector_sizer
+
     def _setup_initial_view(self) -> None:
         """Configura la initial window."""
         self._clear_main_panel()
@@ -641,8 +629,6 @@ class DevilDexApp(wx.App):
         self.panel.Layout()
         self._update_log_toggle_button_icon()
 
-
-
     def on_open_docset(self, event: wx.CommandEvent) -> None:
         """Handle open docset action."""
         if self.selected_row_index is None:
@@ -666,9 +652,7 @@ class DevilDexApp(wx.App):
             return
 
         docset_path_str = selected_package_data.get("docset_path")
-        package_name_for_display = selected_package_data.get(
-            "name", "Selected Package"
-        )
+        package_name_for_display = selected_package_data.get("name", "Selected Package")
 
         if not docset_path_str:
             wx.MessageBox(
@@ -718,7 +702,6 @@ class DevilDexApp(wx.App):
             )
 
         event.Skip()
-
 
     def on_generate_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle generate docset action."""
@@ -800,7 +783,6 @@ class DevilDexApp(wx.App):
                 self.current_grid_source_data[row_idx]["docset_status"] = status_text
             self.data_grid.ForceRefresh()
 
-
     def _on_generation_complete(
         self,
         success: bool,
@@ -828,12 +810,10 @@ class DevilDexApp(wx.App):
             self._update_grid_with_generation_status(
                 row_idx_to_update, final_status_text
             )
-            if success and 0 <= row_idx_to_update < len(
-                self.current_grid_source_data
-            ):
-                self.current_grid_source_data[row_idx_to_update]["docset_path"] = (
-                    message
-                )
+            if success and 0 <= row_idx_to_update < len(self.current_grid_source_data):
+                self.current_grid_source_data[row_idx_to_update][
+                    "docset_path"
+                ] = message
                 logger.info(
                     f"GUI: Docset path '{message}' stored for package "
                     f"'{package_name}' at row {row_idx_to_update}"
@@ -873,8 +853,10 @@ class DevilDexApp(wx.App):
             )
 
         except Exception as e:
-            error_message = ("Unexpected Exception durante la generation per "
-                             f"'{package_name_for_msg}' nel thread: {e}")
+            error_message = (
+                "Unexpected Exception durante la generation per "
+                f"'{package_name_for_msg}' nel thread: {e}"
+            )
             wx.CallAfter(
                 self._on_generation_complete,
                 False,
@@ -913,7 +895,8 @@ class DevilDexApp(wx.App):
 
         package_name = selected_package_data_initial.get("name", "N/D")
         current_status = selected_package_data_initial.get(
-            "docset_status", "Not Available")
+            "docset_status", "Not Available"
+        )
         package_id = selected_package_data_initial.get("id")
 
         if package_id in self.active_generation_tasks:
@@ -928,8 +911,10 @@ class DevilDexApp(wx.App):
             return
 
         # Log the intent to regenerate
-        log_msg = (f"INFO: Regeneration requested for '{package_name}'. "
-                   f"Current status: {current_status}.\n")
+        log_msg = (
+            f"INFO: Regeneration requested for '{package_name}'. "
+            f"Current status: {current_status}.\n"
+        )
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_msg)
         if current_status in ["📖 Available", "❌ Error"]:
@@ -948,7 +933,6 @@ class DevilDexApp(wx.App):
             if not self.is_log_panel_visible:
                 self._set_log_panel_visibility(True)
         event.Skip()
-
 
     def on_delete_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle delete docset action."""
@@ -986,9 +970,9 @@ class DevilDexApp(wx.App):
                 self.current_grid_source_data[self.selected_row_index][
                     "docset_status"
                 ] = "Not Available"
-                self.current_grid_source_data[
-                    self.selected_row_index
-                ].pop("docset_path", None)
+                self.current_grid_source_data[self.selected_row_index].pop(
+                    "docset_path", None
+                )
                 self.data_grid.SetCellValue(
                     self.selected_row_index,
                     self.docset_status_col_grid_idx,
@@ -1022,8 +1006,8 @@ class DevilDexApp(wx.App):
 
             self._update_action_buttons_state()
 
-
         event.Skip()
+
     def on_log_toggle_button_click(self, event: wx.CommandEvent) -> None:
         """Toggle visibility of the log panel."""
         self._set_log_panel_visibility(not self.is_log_panel_visible)
@@ -1142,9 +1126,7 @@ class DevilDexApp(wx.App):
         if current_grid_rows < num_rows:
             self.data_grid.AppendRows(num_rows - current_grid_rows)
         elif current_grid_rows > num_rows:
-            self.data_grid.DeleteRows(
-                num_rows, current_grid_rows - num_rows
-            )
+            self.data_grid.DeleteRows(num_rows, current_grid_rows - num_rows)
 
         for r_idx, row_dict in enumerate(table_data):
             for c_idx, col_name in enumerate(COLUMNS_ORDER):
@@ -1324,6 +1306,8 @@ class DevilDexApp(wx.App):
 
         static_box_sizer.Add(buttons_internal_sizer, 1, wx.EXPAND | wx.ALL, 5)
         return static_box_sizer
+
+
 def main() -> None:
     """Launch whole application."""
     core = DevilDexCore()
