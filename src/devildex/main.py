@@ -13,6 +13,7 @@ import wx.html2
 
 from devildex import database
 from devildex.app_paths import AppPaths
+from devildex.default_data import COLUMNS_ORDER, PACKAGES_DATA_AS_DETAILS
 from devildex.local_data_parse import registered_project_parser
 from devildex.local_data_parse.common_read import (
     get_explicit_dependencies_from_project_config,
@@ -21,7 +22,6 @@ from devildex.local_data_parse.external_venv_scanner import ExternalVenvScanner
 from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
 from devildex.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
-from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA_AS_DETAILS
 
 logger = logging.getLogger(__name__)
 COL_WIDTH_ID = 60
