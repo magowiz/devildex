@@ -44,7 +44,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     pkg-config cmake build-essential libcairo2-dev \
     pipx python3-gi python3-gi-cairo gir1.2-gtk-4.0 libgirepository1.0-dev libglib2.0-dev gir1.2-glib-2.0-dev \
-    python3-wxgtk4.0 python3-wxgtk-webview4.0 && \
+    python3-wxgtk4.0 python3-wxgtk-webview4.0" && \
     MAX_TENTATIVI=5 && \
     DELAY_TRA_TENTATIVI=2 && \
  apt-get update && \
@@ -62,7 +62,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
         fi; \
       fi; \
     done \
-     && rm -rf /var/lib/apt/lists/*"
+     && rm -rf /var/lib/apt/lists/*
 
 
 RUN ARCH=$(uname -m) && \
@@ -82,8 +82,7 @@ RUN ARCH=$(uname -m) && \
     && conda init bash \
     && conda config --set auto_activate_base false \
     && conda clean --all -f -y
-RUN conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} --system-site-packages -y && conda clean -all -f -y
-
+RUN conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y && conda clean -all -f -y
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
 RUN poetry self add poetry-plugin-export
