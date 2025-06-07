@@ -199,7 +199,8 @@ class DatabaseManager:
 
     @classmethod
     def get_all_project_names(cls) -> list[str]:
-        """Recupera solo i NOMI di tutti i progetti registrati, ordinati.
+        """
+        Recupera solo i NOMI di tutti i progetti registrati, ordinati.
         Restituisce una lista di stringhe.
         """
         project_names_list: list[str]
@@ -373,7 +374,8 @@ class DatabaseManager:
     def get_project_details_by_name(
         cls, project_name_to_find: str
     ) -> Optional[dict[str, Any]]:
-        """Recupera i dettagli completi (nome, path, python_executable)
+        """
+        Recupera i dettagli completi (nome, path, python_executable)
         di un singolo progetto specificato dal suo nome.
         """
         stmt = select(RegisteredProject).where(
