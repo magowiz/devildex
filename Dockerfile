@@ -63,6 +63,7 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
       fi; \
     done \
      && rm -rf /var/lib/apt/lists/*
+RUN python3 -c "import site; from pathlib import Path; print(next(p for p in site.getsitepackages() if Path(p).is_dir() and 'dist-packages' in p))" > /tmp/system_site_packages.path
 
 
 RUN ARCH=$(uname -m) && \
@@ -83,11 +84,10 @@ RUN ARCH=$(uname -m) && \
     && conda config --set auto_activate_base false \
     && conda clean --all -f -y
 RUN eval "$(${CONDA_DIR}/bin/conda shell.bash hook)" && \
+    SYSTEM_SITE_PACKAGES=$(cat /tmp/system_site_packages.path) && \
     conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y && \
     echo "INFO: Attivazione dell'ambiente per la configurazione..." && \
     conda activate ${CONDA_ENV_NAME} && \
-    echo "INFO: Ricerca del percorso site-packages di sistema..." && \
-    SYSTEM_SITE_PACKAGES=$(python3 -c "import site; from pathlib import Path; print(next(p for p in site.getsitepackages() if Path(p).is_dir() and 'dist-packages' in p))") && \
     echo "INFO: Trovato percorso di sistema: ${SYSTEM_SITE_PACKAGES}" && \
     echo "INFO: Collegamento del percorso di sistema all'ambiente Conda..." && \
     conda env config vars set PYTHONPATH=${SYSTEM_SITE_PACKAGES} && \
