@@ -23,7 +23,7 @@ RUN dnf update -y && \
     xorg-x11-xauth \
     patchelf \
     glib2-devel \
-    cmake cairo-devel cairo-gobject-devel gawk \
+    cmake cairo-devel cairo-gobject-devel gawk gtk3-devel \
     && dnf clean all
 
 ENV PATH="/root/.local/bin:${PATH}"
