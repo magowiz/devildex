@@ -14,7 +14,8 @@ dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "platformdirs (>=3.0.0,<5.0.0)",
     "poetry-core (>=2.0.0,<3.0.0)",
-    "sqlalchemy (>=2.0.41,<3.0.0)"
+    "sqlalchemy (>=2.0.41,<3.0.0)",
+    "wxpython (>=4.2.3,<5.0.0)"
 ]
 
 
