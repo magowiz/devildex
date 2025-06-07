@@ -115,7 +115,8 @@ pipeline {
                         PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                         LP_USER_ID = credentials('launchpad_id_conf_file')
                         PATH = "/root/.local/bin:${env.PATH}"
-                        PIP_FIND_LINKS = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/fedora-38/"
+                        //PIP_FIND_LINKS = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/fedora-38/"
+                        PIP_FIND_LINKS = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
                     }
                     options {
                         throttle(['pytest_telenium'])
