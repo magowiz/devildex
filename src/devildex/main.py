@@ -46,6 +46,12 @@ class DevilDexCore:
 
         self._load_registered_project_details()
 
+    def scan_project(self):
+        self._load_registered_project_details()
+        if self.registered_project_name:
+            return PACKAGES_DATA
+        return []
+
     def _load_registered_project_details(self) -> None:
         """Carica i details del project active e li set come attributes."""
         active_project_data = registered_project_parser.load_active_registered_project()
@@ -361,6 +367,7 @@ class DevilDexApp(wx.App):
         """Set up gui widgets on application startup."""
         wx.Log.SetActiveTarget(wx.LogStderr())
         window_title = "DevilDex"
+        self.core.scan_project()
         self.main_frame = wx.Frame(parent=None, title=window_title, size=(1280, 900))
         self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
             PACKAGES_DATA
