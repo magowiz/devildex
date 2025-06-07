@@ -177,7 +177,7 @@ class DatabaseManager:
 
     @classmethod
     def execute_statement(
-        cls, statement: Executable, session: SQLAlchemySession = None
+        cls, statement: Executable, session: SQLAlchemySession
     ) -> Result:
         """Esegue uno statement SQLAlchemy fornito sulla sessione data.
 
@@ -192,28 +192,28 @@ class DatabaseManager:
 
         """
         logger.debug(f"Esecuzione statement: {statement}")
-        if session:
-            return session.execute(statement)
-        with cls.get_session() as new_session:
-            return new_session.execute(statement)
+        return session.execute(statement)
 
     @classmethod
     def get_all_project_names(cls) -> list[str]:
-        """
-        Recupera solo i NOMI di tutti i progetti registrati, ordinati.
+        """Recupera solo i NOMI di tutti i progetti registrati, ordinati.
+
         Restituisce una lista di stringhe.
         """
         project_names_list: list[str]
         stmt = select(RegisteredProject.project_name).order_by(
             RegisteredProject.project_name
         )
-        result = cls.execute_statement(stmt)
-        project_names_list = result.scalars().all()
-        logger.info(
-            f"Recuperati {len(project_names_list)} nomi di progetti registrati dal DB."
-        )
+        with get_session() as session:
+            result = cls.execute_statement(stmt, session)
+            project_names_list = result.scalars().all()
+            logger.info(
+                f"Recuperati {len(project_names_list)} nomi "
+                "di progetti registrati dal DB."
+            )
         return project_names_list
 
+    @classmethod
     def get_docsets_for_project_view(
         cls, project_name_filter: Optional[str]
     ) -> list[dict[str, Any]]:
@@ -230,49 +230,51 @@ class DatabaseManager:
         )
 
         if project_name_filter:
-            stmt = stmt.join(
-                Docset.associated_projects  # Questo fa il JOIN con la tabella di associazione e poi con RegisteredProject
-            ).where(RegisteredProject.project_name == project_name_filter)
+            stmt = stmt.join(Docset.associated_projects).where(
+                RegisteredProject.project_name == project_name_filter
+            )
 
         stmt = stmt.order_by(Docset.package_name, Docset.package_version)
 
         try:
-            result = cls.execute_statement(stmt)
-            docsets_from_db = result.scalars().unique().all()
+            with get_session() as session:
+                result = cls.execute_statement(stmt, session)
+                docsets_from_db = result.scalars().unique().all()
 
-            for db_docset in docsets_from_db:
-                pkg_info = db_docset.package_info
+                for db_docset in docsets_from_db:
+                    pkg_info = db_docset.package_info
 
-                associated_project_name_for_display: Optional[str] = None
-                if db_docset.associated_projects:
-                    associated_project_name_for_display = db_docset.associated_projects[
-                        0
-                    ].project_name
+                    associated_project_name_for_display: Optional[str] = None
+                    if db_docset.associated_projects:
+                        associated_project_name_for_display = (
+                            db_docset.associated_projects[0].project_name
+                        )
 
-                grid_row = {
-                    "id": db_docset.id,
-                    "name": db_docset.package_name,
-                    "version": db_docset.package_version,
-                    "description": (
-                        pkg_info.summary if pkg_info and pkg_info.summary else "N/A"
-                    ),
-                    "docset_status": db_docset.status,
-                    "project_name": associated_project_name_for_display,  # <-- ECCOLO!
-                }
-                if pkg_info and pkg_info.project_urls:
-                    grid_row["project_urls"] = pkg_info.project_urls
-                grid_data_to_return.append(grid_row)
+                    grid_row = {
+                        "id": db_docset.id,
+                        "name": db_docset.package_name,
+                        "version": db_docset.package_version,
+                        "description": (
+                            pkg_info.summary if pkg_info and pkg_info.summary else "N/A"
+                        ),
+                        "docset_status": db_docset.status,
+                        "project_name": associated_project_name_for_display,
+                    }
+                    if pkg_info and pkg_info.project_urls:
+                        grid_row["project_urls"] = pkg_info.project_urls
+                    grid_data_to_return.append(grid_row)
 
-            view_type = (
-                f"progetto '{project_name_filter}'"
-                if project_name_filter
-                else "globale"
-            )
-            logger.info(
-                f"Recuperati {len(grid_data_to_return)} docset(s) per la vista {view_type}."
-            )
-        except Exception as e:
-            logger.exception(f"Errore durante il recupero dei docset per la vista: {e}")
+                view_type = (
+                    f"progetto '{project_name_filter}'"
+                    if project_name_filter
+                    else "globale"
+                )
+                logger.info(
+                    f"Recuperati {len(grid_data_to_return)} docset(s) "
+                    f"per la vista {view_type}."
+                )
+        except Exception:
+            logger.exception("Errore durante il recupero dei docset per la vista")
             return []
         return grid_data_to_return
 
@@ -281,71 +283,25 @@ class DatabaseManager:
         projects_list: list[dict[str, Any]] = []
         stmt = select(RegisteredProject).order_by(RegisteredProject.project_name)
         try:
-            result = cls.execute_statement(stmt)
-            for db_project in result.scalars().all():
-                projects_list.append(
-                    {
-                        "project_name": db_project.project_name,
-                        "project_path": db_project.project_path,
-                        "python_executable": db_project.python_executable,
-                    }
+            with get_session() as session:
+                result = cls.execute_statement(stmt, session)
+                for db_project in result.scalars().all():
+                    projects_list.append(
+                        {
+                            "project_name": db_project.project_name,
+                            "project_path": db_project.project_path,
+                            "python_executable": db_project.python_executable,
+                        }
+                    )
+                logger.info(
+                    f"Recuperati {len(projects_list)} progetti registrati dal DB."
                 )
-            logger.info(f"Recuperati {len(projects_list)} progetti registrati dal DB.")
-        except Exception as e:
+        except Exception:
             logger.exception(
-                f"Errore durante il recupero di tutti i progetti registrati: {e}"
+                "Errore durante il recupero di tutti i progetti registrati"
             )
             return []
         return projects_list
-
-    @classmethod
-    def get_docsets_for_project_view(
-        cls, project_name_filter: Optional[str]
-    ) -> list[dict[str, Any]]:
-        """Recupera i docset formattati per la vista griglia.
-
-        Filtra per progetto se project_name_filter è fornito.
-        """
-        grid_data_to_return: list[dict[str, Any]] = []
-        stmt = select(Docset).options(selectinload(Docset.package_info))
-
-        if project_name_filter:
-            stmt = stmt.join(Docset.associated_projects).where(
-                RegisteredProject.project_name == project_name_filter
-            )
-        stmt = stmt.order_by(Docset.package_name, Docset.package_version)
-
-        try:
-            result = cls.execute_statement(stmt)
-            docsets_to_load_from_db = result.scalars().all()  # Rimosso il punto extra
-
-            for db_docset in docsets_to_load_from_db:
-                pkg_info = db_docset.package_info
-                grid_row = {
-                    "id": db_docset.id,
-                    "name": db_docset.package_name,
-                    "version": db_docset.package_version,
-                    "description": (
-                        pkg_info.summary if pkg_info and pkg_info.summary else "N/A"
-                    ),
-                    "docset_status": db_docset.status,
-                }
-                if pkg_info and pkg_info.project_urls:
-                    grid_row["project_urls"] = pkg_info.project_urls
-                grid_data_to_return.append(grid_row)
-
-            view_type = (
-                f"progetto '{project_name_filter}'"
-                if project_name_filter
-                else "globale"
-            )
-            logger.info(
-                f"Recuperati {len(grid_data_to_return)} docset(s) per la vista {view_type}."
-            )
-        except Exception as e:
-            logger.exception(f"Errore durante il recupero dei docset per la vista: {e}")
-            return []
-        return grid_data_to_return
 
     @classmethod
     def init_db(cls, database_url: Optional[str] = None) -> None:
@@ -371,38 +327,38 @@ class DatabaseManager:
         Base.metadata.create_all(bind=cls._engine)
         logger.info("Database tables checked/created.")
 
+    @classmethod
     def get_project_details_by_name(
         cls, project_name_to_find: str
     ) -> Optional[dict[str, Any]]:
-        """
-        Recupera i dettagli completi (nome, path, python_executable)
+        """Recupera i dettagli completi (nome, path, python_executable).
+
         di un singolo progetto specificato dal suo nome.
         """
         stmt = select(RegisteredProject).where(
             RegisteredProject.project_name == project_name_to_find
         )
         try:
-            # execute_statement gestisce la sessione
-            result = cls.execute_statement(stmt)
-            db_project = (
-                result.scalar_one_or_none()
-            )  # Ci aspettiamo al massimo un progetto con quel nome
-            if db_project:
-                logger.info(
-                    f"Dettagli recuperati per il progetto '{project_name_to_find}'."
+            with get_session() as session:
+                result = cls.execute_statement(stmt, session)
+                db_project = result.scalar_one_or_none()
+                if db_project:
+                    logger.info(
+                        f"Dettagli recuperati per il progetto '{project_name_to_find}'."
+                    )
+                    return {
+                        "project_name": db_project.project_name,
+                        "project_path": db_project.project_path,
+                        "python_executable": db_project.python_executable,
+                    }
+                logger.warning(
+                    f"Nessun progetto trovato nel DB con nome '{project_name_to_find}'."
                 )
-                return {
-                    "project_name": db_project.project_name,
-                    "project_path": db_project.project_path,
-                    "python_executable": db_project.python_executable,
-                }
-            logger.warning(
-                f"Nessun progetto trovato nel DB con nome '{project_name_to_find}'."
-            )
-            return None
-        except Exception as e:
+                return None
+        except Exception:
             logger.exception(
-                f"Errore durante il recupero dei dettagli del progetto '{project_name_to_find}': {e}"
+                "Errore durante il recupero dei dettagli del"
+                f" progetto '{project_name_to_find}'"
             )
             return None
 
