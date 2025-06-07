@@ -6,7 +6,7 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from sqlalchemy import (
     Column,
@@ -23,6 +23,7 @@ from sqlalchemy import (
     create_engine,
     select,
 )
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import declarative_base, relationship, selectinload, sessionmaker
 
@@ -179,26 +180,27 @@ class DatabaseManager:
     def execute_statement(
         cls, statement: Executable, session: SQLAlchemySession
     ) -> Result:
-        """Esegue uno statement SQLAlchemy fornito sulla sessione data.
+        """Execute a given SQLAlchemy statement on the provided session.
 
         Args:
-            session: La sessione SQLAlchemy attiva.
-            statement: Lo statement SQLAlchemy da eseguire (es. creato con select(),
+            session: The active SQLAlchemy session.
+            statement: The SQLAlchemy statement to execute (e.g., created with select(),
                        update(), delete(), insert()).
 
         Returns:
-            Un oggetto SQLAlchemy Result che può essere usato per ottenere i dati
-            (es. result.scalars().all(), result.scalar_one_or_none(), result.rowcount).
+            A SQLAlchemy Result object that can be used to fetch data
+            (e.g., result.scalars().all(), result.scalar_one_or_none(),
+            result.rowcount).
 
         """
-        logger.debug(f"Esecuzione statement: {statement}")
+        logger.debug(f"Executing statement: {statement}")
         return session.execute(statement)
 
     @classmethod
     def get_all_project_names(cls) -> list[str]:
-        """Recupera solo i NOMI di tutti i progetti registrati, ordinati.
+        """Retrieve only the NAMES of all registered projects, sorted.
 
-        Restituisce una lista di stringhe.
+        Returns a list of strings.
         """
         project_names_list: list[str]
         stmt = select(RegisteredProject.project_name).order_by(
@@ -206,10 +208,10 @@ class DatabaseManager:
         )
         with get_session() as session:
             result = cls.execute_statement(stmt, session)
-            project_names_list = result.scalars().all()
+            project_names_list = cast(list[str], result.scalars().all())
             logger.info(
-                f"Recuperati {len(project_names_list)} nomi "
-                "di progetti registrati dal DB."
+                f"Retrieved {len(project_names_list)} registered project names "
+                "from the DB."
             )
         return project_names_list
 
@@ -217,10 +219,10 @@ class DatabaseManager:
     def get_docsets_for_project_view(
         cls, project_name_filter: Optional[str]
     ) -> list[dict[str, Any]]:
-        """Recupera i docset formattati per la vista griglia.
+        """Retrieve docsets formatted for the grid view.
 
-        Include il nome del progetto associato, se presente.
-        Filtra per progetto se project_name_filter è fornito.
+        Includes the associated project name, if present.
+        Filters by project if project_name_filter is provided.
         """
         grid_data_to_return: list[dict[str, Any]] = []
 
@@ -265,21 +267,22 @@ class DatabaseManager:
                     grid_data_to_return.append(grid_row)
 
                 view_type = (
-                    f"progetto '{project_name_filter}'"
+                    f"project '{project_name_filter}'"
                     if project_name_filter
-                    else "globale"
+                    else "global"
                 )
                 logger.info(
-                    f"Recuperati {len(grid_data_to_return)} docset(s) "
-                    f"per la vista {view_type}."
+                    f"Retrieved {len(grid_data_to_return)} docset(s) "
+                    f"for the {view_type} view."
                 )
         except Exception:
-            logger.exception("Errore durante il recupero dei docset per la vista")
+            logger.exception("Error retrieving docsets for the view")
             return []
         return grid_data_to_return
 
     @classmethod
     def get_all_registered_projects_details(cls) -> list[dict[str, Any]]:
+        """Get registered project details."""
         projects_list: list[dict[str, Any]] = []
         stmt = select(RegisteredProject).order_by(RegisteredProject.project_name)
         try:
@@ -294,12 +297,10 @@ class DatabaseManager:
                         }
                     )
                 logger.info(
-                    f"Recuperati {len(projects_list)} progetti registrati dal DB."
+                    f"Retrieved {len(projects_list)} registered projects from the DB."
                 )
         except Exception:
-            logger.exception(
-                "Errore durante il recupero di tutti i progetti registrati"
-            )
+            logger.exception("Error retrieving all registered projects")
             return []
         return projects_list
 
@@ -331,10 +332,7 @@ class DatabaseManager:
     def get_project_details_by_name(
         cls, project_name_to_find: str
     ) -> Optional[dict[str, Any]]:
-        """Recupera i dettagli completi (nome, path, python_executable).
-
-        di un singolo progetto specificato dal suo nome.
-        """
+        """Retrieve the complete details of a project specified by name."""
         stmt = select(RegisteredProject).where(
             RegisteredProject.project_name == project_name_to_find
         )
@@ -344,7 +342,7 @@ class DatabaseManager:
                 db_project = result.scalar_one_or_none()
                 if db_project:
                     logger.info(
-                        f"Dettagli recuperati per il progetto '{project_name_to_find}'."
+                        f"Details retrieved for project '{project_name_to_find}'."
                     )
                     return {
                         "project_name": db_project.project_name,
@@ -352,13 +350,12 @@ class DatabaseManager:
                         "python_executable": db_project.python_executable,
                     }
                 logger.warning(
-                    f"Nessun progetto trovato nel DB con nome '{project_name_to_find}'."
+                    f"No project found in the DB with name '{project_name_to_find}'."
                 )
                 return None
-        except Exception:
+        except SQLAlchemyError:
             logger.exception(
-                "Errore durante il recupero dei dettagli del"
-                f" progetto '{project_name_to_find}'"
+                f"Error retrieving details for project '{project_name_to_find}'"
             )
             return None
 
@@ -399,6 +396,108 @@ def get_session() -> Generator[SQLAlchemySession, None, None]:
     with DatabaseManager.get_session() as db_session:
         yield db_session
 
+def _ensure_package_info(
+    session: SQLAlchemySession,
+    package_name: str,
+    summary: Optional[str],
+    project_urls: Optional[dict[str, str]],
+) -> PackageInfo:
+    """Get or creates a PackageInfo entity."""
+    pkg_info = session.query(PackageInfo).filter_by(package_name=package_name).first()
+    if not pkg_info:
+        logger.info(f"PackageInfo for '{package_name}' not found, creating...")
+        pkg_info = PackageInfo(package_name=package_name, summary=summary)
+        if project_urls:
+            pkg_info.project_urls = project_urls
+        session.add(pkg_info)
+        logger.info(f"New PackageInfo '{package_name}' added to session.")
+    else:
+        logger.debug(f"PackageInfo '{package_name}' found.")
+        if summary and not pkg_info.summary:
+            pkg_info.summary = summary
+            logger.info(f"Summary updated for PackageInfo '{package_name}'.")
+        if project_urls and not pkg_info.project_urls:
+            pkg_info.project_urls = project_urls
+            logger.info(f"Project URLs updated for PackageInfo '{package_name}'.")
+    return pkg_info
+
+
+def _ensure_docset(
+    session: SQLAlchemySession,
+    pkg_info: PackageInfo,
+    package_version: str,
+    initial_docset_status: str,
+    index_file_name: str,
+) -> Docset:
+    """Get or creates a Docset entity and links it to PackageInfo."""
+    package_name = pkg_info.package_name
+    docset = (
+        session.query(Docset)
+        .filter_by(package_name=package_name, package_version=package_version)
+        .first()
+    )
+    if not docset:
+        logger.info(
+            f"Docset for '{package_name} v{package_version}' not found, creating..."
+        )
+        docset = Docset(
+            package_name=package_name,
+            package_version=package_version,
+            status=initial_docset_status,
+            index_file_name=index_file_name,
+            package_info=pkg_info,  # Link to pkg_info
+        )
+        session.add(docset)
+        logger.info(
+            f"New Docset '{package_name} v{package_version}' added and linked."
+        )
+    return docset
+
+
+def _ensure_registered_project_and_association(
+    session: SQLAlchemySession,
+    project_name: Optional[str],
+    project_path: Optional[str],
+    python_executable: Optional[str],
+    docset: Docset,
+) -> Optional[RegisteredProject]:
+    """Get or creates a RegisteredProject and associates it with the given Docset.
+
+    Returns None if project_name is not provided.
+    """
+    if not project_name:
+        return None
+
+    registered_project_obj = (
+        session.query(RegisteredProject)
+        .filter_by(project_name=project_name)
+        .first()
+    )
+    if not registered_project_obj:
+        logger.info(f"RegisteredProject '{project_name}' not found, creating...")
+        if not project_path or not python_executable:
+            msg = (
+                f"To create a new RegisteredProject '{project_name}', "
+                "project_path and python_executable must be provided."
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+        registered_project_obj = RegisteredProject(
+            project_name=project_name,
+            project_path=str(project_path),
+            python_executable=str(python_executable),
+        )
+        session.add(registered_project_obj)
+        logger.info(f"New RegisteredProject '{project_name}' added to session.")
+
+    if docset not in registered_project_obj.docsets:
+        registered_project_obj.docsets.append(docset)
+        logger.info(
+            f"Docset '{docset.package_name} v{docset.package_version}' "
+            f"associated with project '{registered_project_obj.project_name}'."
+        )
+    return registered_project_obj
+
 
 def ensure_package_entities_exist(  # noqa: PLR0913
     package_name: str,
@@ -411,128 +510,68 @@ def ensure_package_entities_exist(  # noqa: PLR0913
     project_path: Optional[str] = None,
     python_executable: Optional[str] = None,
 ) -> tuple[PackageInfo, Docset, Optional[RegisteredProject]]:
-    """Ensure existence e links di PackageInfo, Docset e, RegisteredProject.
+    """Ensure PackageInfo, Docset, and optionally RegisteredProject entities.
 
-    - Crea PackageInfo se non exists per package_name.
-    - Crea Docset se non exists per (package_name, package_version) e
-        lo link a PackageInfo.
-    - Se project_name is given:
-        - Crea RegisteredProject se non exists.
-        - Associate il Docset al RegisteredProject.
+    - Creates PackageInfo if it doesn't exist for the given package_name.
+    - Creates Docset if it doesn't exist for the
+        (package_name, package_version) pair and links it to PackageInfo.
+    - If project_name is provided:
+        - Creates RegisteredProject if it doesn't exist.
+        - Associates the Docset with the RegisteredProject.
 
     Args:
-        package_name: Il nome del package.
-        package_version: La version del package.
-        summary: Summary del package (per creation PackageInfo).
-        project_urls: URL del project (per creation PackageInfo).
-        initial_docset_status: initial Status del Docset (per creation Docset).
-        index_file_name: Nome del file index del Docset.
-        project_name: (Optional) Nome del project.
-        project_path: (Optional) Path del project
-            (necessary se project_name è new).
-        python_executable: (Optional) Executable Python
-            (necessary se project_name è new).
+        package_name: The name of the package.
+        package_version: The version of the package.
+        summary: Summary of the package (for PackageInfo creation).
+        project_urls: Project URLs (for PackageInfo creation).
+        initial_docset_status: Initial status of the Docset (for Docset creation).
+        index_file_name: Name of the Docset's index file.
+        project_name: (Optional) Name of the project.
+        project_path: (Optional) Path of the project (required if
+            project_name is for a new project).
+        python_executable: (Optional) Python executable path (required if
+            project_name is for a new project).
 
     Returns:
-        Una tuple (PackageInfo, Docset, Optional[RegisteredProject]).
-        RegisteredProject object è None se project_name was not given.
+        A tuple (PackageInfo, Docset, Optional[RegisteredProject]).
+        The RegisteredProject object is None if project_name was not provided.
 
     Raises:
-        ValueError: Se project_name è given per un new project but
-                    project_path o python_executable are missing.
+        ValueError: If project_name is provided for a new project but
+                    project_path or python_executable are missing.
 
     """
     with get_session() as session:
-        pkg_info = (
-            session.query(PackageInfo).filter_by(package_name=package_name).first()
+        pkg_info = _ensure_package_info(
+            session, package_name, summary, project_urls
         )
-        if not pkg_info:
-            logger.info(f"PackageInfo per '{package_name}' non trovato, creation...")
-            pkg_info = PackageInfo(package_name=package_name, summary=summary)
-            if project_urls:
-                pkg_info.project_urls = project_urls
-            session.add(pkg_info)
-            logger.info(f"New PackageInfo '{package_name}' added alla session.")
-        else:
-            logger.debug(f"PackageInfo '{package_name}' trovato.")
-            if summary and not pkg_info.summary:
-                pkg_info.summary = summary
-                logger.info(f"summary updated per PackageInfo '{package_name}'.")
-            if project_urls and not pkg_info.project_urls:
-                pkg_info.project_urls = project_urls
-                logger.info(f"project_urls updated per PackageInfo '{package_name}'.")
-
-        docset = (
-            session.query(Docset)
-            .filter_by(package_name=package_name, package_version=package_version)
-            .first()
+        docset = _ensure_docset(
+            session,
+            pkg_info,
+            package_version,
+            initial_docset_status,
+            index_file_name,
         )
-        if not docset:
-            logger.info(
-                f"Docset per '{package_name} v{package_version}' "
-                "non trovato, creation..."
-            )
-            docset = Docset(
-                package_name=package_name,  # FK
-                package_version=package_version,
-                status=initial_docset_status,
-                index_file_name=index_file_name,
-            )
-            docset.package_info = pkg_info
-            session.add(docset)
-            logger.info(
-                f"New Docset '{package_name} v{package_version}' " "added and linked."
-            )
-        else:
-            logger.debug(f"Docset '{package_name} v{package_version}' trovato.")
+        registered_project_obj = _ensure_registered_project_and_association(
+            session, project_name, project_path, python_executable, docset
+        )
 
-        registered_project_obj: Optional[RegisteredProject] = None
-        if project_name:
-            registered_project_obj = (
-                session.query(RegisteredProject)
-                .filter_by(project_name=project_name)
-                .first()
+        try:
+            session.commit()
+            log_message = (
+                "Successfully ensured entities for package "
+                f"'{package_name} v{package_version}'"
             )
-            if not registered_project_obj:
-                logger.info(
-                    f"RegisteredProject '{project_name}' " f"non trovato, creation..."
-                )
-                if not project_path or not python_executable:
-                    msg = (
-                        f"Per create un new RegisteredProject '{project_name}', "
-                        "project_path e python_executable must be given."
-                    )
-                    logger.error(msg)
-                    raise ValueError(msg)
-                registered_project_obj = RegisteredProject(
-                    project_name=project_name,
-                    project_path=str(project_path),
-                    python_executable=str(python_executable),
-                )
-                session.add(registered_project_obj)
-                logger.info(
-                    f"New RegisteredProject '{project_name}' " "added to session."
-                )
-
-            if docset not in registered_project_obj.docsets:
-                registered_project_obj.docsets.append(docset)
-                logger.info(
-                    f"Docset associated '{docset.package_name} "
-                    f"v{docset.package_version}' "
-                    f"al project '{registered_project_obj.project_name}'."
-                )
-            try:
-                session.commit()
-                logger.info(
-                    "Core: Final commit for bootstrap_database_and_load_data"
-                    " successful."
-                )
-            except Exception:
-                logger.exception(
-                    "Error during final commit in bootstrap_database_and_load_data "
-                )
-                session.rollback()
-                raise
+            if project_name:
+                log_message += f" and project '{project_name}'"
+            log_message += "."
+            logger.info(log_message)
+        except Exception:
+            logger.exception(
+                "Error during final commit while ensuring package entities."
+            )
+            session.rollback()
+            raise
     return pkg_info, docset, registered_project_obj
 
 

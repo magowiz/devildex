@@ -26,9 +26,9 @@ class RegisteredProjectData(TypedDict, total=False):
 
 
 def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None:
-    """Legge, parsa e valida il contenuto di un file JSON di registrazione.
+    """Read, parses, and validates the content of a registration JSON file.
 
-    Rinominato con underscore per indicare che è un helper interno.
+    Renamed with an underscore to indicate it's an internal helper function.
     """
     try:
         with file_path.open("r", encoding="utf-8") as f:
@@ -38,7 +38,7 @@ def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None
         for key in required_keys:
             if key not in data or data[key] is None:
                 logger.error(
-                    f"Chiave richiesta '{key}' mancante o None nel file: {file_path}"
+                    f"Required key '{key}' missing or None in file: {file_path}"
                 )
                 return None
 
@@ -49,37 +49,35 @@ def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None
                     data[path_key] = str(Path(data[path_key]))
                 except (TypeError, OSError, RuntimeError):
                     logger.warning(
-                        f"Percorso non valido per '{path_key}' in "
+                        f"Invalid path for '{path_key}' in "
                         f"{file_path}: {data[path_key]}"
                     )
 
     except FileNotFoundError:
-        logger.info(
-            "File di registrazione non trovato durante " f"il parsing: {file_path}"
-        )
+        logger.info(f"Registration file not found during parsing: {file_path}")
         return None
     except json.JSONDecodeError:
-        logger.exception(f"Errore nel decodificare il JSON dal file: {file_path}")
+        logger.exception(f"Error decoding JSON from file: {file_path}")
         return None
-    except Exception:  # pylint: disable=broad-except
-        logger.exception(f"Errore imprevisto durante il parsing del file: {file_path}")
+    except OSError:
+        logger.exception(f"Unexpected error while parsing file: {file_path}")
         return None
     else:
         return data
 
 
 def save_active_registered_project(project_data: RegisteredProjectData) -> bool:
-    """Salva i dati del progetto fornito come progetto attivamente registrato.
+    """Save the provided project data as the actively registered project.
 
-    Crea la directory necessaria se non esiste e scrive i dati del progetto
-    in formato JSON nel file di registrazione.
+    Creates the necessary directory if it doesn't exist and writes the project
+    data in JSON format to the registration file.
 
     Args:
-        project_data: Un dizionario contenente i dettagli del progetto da salvare.
-                      Dovrebbe conformarsi alla struttura RegisteredProjectData.
+        project_data: A dictionary containing the project details to save.
+                      It should conform to the RegisteredProjectData structure.
 
     Returns:
-        True se il salvataggio ha avuto successo, False altrimenti.
+        True if saving was successful, False otherwise.
 
     """
     try:
@@ -91,15 +89,15 @@ def save_active_registered_project(project_data: RegisteredProjectData) -> bool:
         registration_file_to_write = registry_base_dir / REGISTRATION_FILE_NAME
     except OSError:
         logger.exception(
-            "Errore nel determinare o creare il percorso per il file di registrazione "
-            "del progetto attivo"
+            "Error determining or creating the path for the active project's "
+            "registration file"
         )
         return False
 
     if not registration_file_to_write:
         logger.error(
-            "Impossibile determinare il percorso del "
-            "file per salvare la registrazione del progetto attivo."
+            "Unable to determine the path for saving the active "
+            "project registration file."
         )
         return False
 
@@ -108,32 +106,31 @@ def save_active_registered_project(project_data: RegisteredProjectData) -> bool:
         for key in required_keys:
             if key not in project_data or project_data.get(key) is None:  # type: ignore
                 logger.error(
-                    "Dati del progetto non validi per il salvataggio: "
-                    f"chiave richiesta '{key}' mancante o None."
+                    f"Invalid project data for saving: required key '{key}'"
+                    " missing or None."
                 )
                 return False
 
         with registration_file_to_write.open("w", encoding="utf-8") as f:
             json.dump(project_data, f, indent=4)
         logger.info(
-            f"Progetto '{project_data.get('project_name')}' "
-            f"salvato come attivo in: {registration_file_to_write}"
+            f"Project '{project_data.get('project_name')}' "
+            f"saved as active in: {registration_file_to_write}"
         )
 
     except OSError:
         logger.exception(
-            "Errore di I/O durante il salvataggio del "
-            f"progetto attivo in {registration_file_to_write}"
+            f"I/O error while saving the active project to {registration_file_to_write}"
         )
     except TypeError:
         logger.exception(
-            "Errore di tipo durante la serializzazione JSON per il"
-            f" progetto attivo in {registration_file_to_write}"
+            "Type error during JSON serialization for the active"
+            f" project in {registration_file_to_write}"
         )
-    except Exception:  # pylint: disable=broad-except
+    except ValueError:
         logger.exception(
-            "Errore imprevisto durante il salvataggio del "
-            f"progetto attivo in {registration_file_to_write}"
+            "Unexpected error while saving the active project"
+            f" to {registration_file_to_write}"
         )
     else:
         return True
@@ -141,48 +138,44 @@ def save_active_registered_project(project_data: RegisteredProjectData) -> bool:
 
 
 def clear_active_registered_project() -> None:
-    """Rimuove il file che memorizza lo stato del progetto attivo."""
+    """Remove the file that stores the active project's state."""
     try:
         app_paths = AppPaths()
         registry_base_dir = app_paths.user_data_dir / REGISTRY_SUBDIR
         registration_file_to_clear = registry_base_dir / REGISTRATION_FILE_NAME
     except OSError:
         logger.exception(
-            "Errore nel determinare il percorso del file di registrazione da pulire."
+            "Error determining the path of the registration file to be cleared."
         )
         return
 
     if not registration_file_to_clear:
         logger.error(
-            "Impossibile determinare il percorso del file di registrazione da pulire."
+            "Unable to determine the path of the registration file to be cleared."
         )
         return
 
     try:
         if registration_file_to_clear.exists() and registration_file_to_clear.is_file():
             registration_file_to_clear.unlink()
-            logger.info(
-                f"File del progetto attivo rimosso: {registration_file_to_clear}"
-            )
+            logger.info(f"Active project file removed: {registration_file_to_clear}")
         else:
             logger.info(
-                "Nessun file del progetto attivo da rimuovere "
-                f"(non esisteva o non era un file): {registration_file_to_clear}"
+                f"No active project file to remove "
+                f"(did not exist or was not a file): {registration_file_to_clear}"
             )
     except OSError:
         logger.exception(
-            "Errore durante la rimozione del file "
-            f"del progetto attivo {registration_file_to_clear}"
+            "Error while removing the active project "
+            f"file: {registration_file_to_clear}"
         )
-    except Exception:  # pylint: disable=broad-except
-        logger.exception("Errore imprevisto durante la pulizia del progetto attivo")
 
 
 def load_active_registered_project() -> Optional[RegisteredProjectData]:
-    """Carica e parsa il progetto attivamente registrato.
+    """Load and parses the actively registered project.
 
-    Determina il percorso del file, lo legge e ne valida il contenuto.
-    Restituisce i dati del progetto o None se non registrato o in caso di errore.
+    Determines the file path, reads it, and validates its content.
+    Returns the project data or None if not registered or in case of an error.
     """
     registration_file_to_check: Optional[Path] = None
     try:
@@ -190,33 +183,31 @@ def load_active_registered_project() -> Optional[RegisteredProjectData]:
         registry_base_dir = app_paths.user_data_dir / REGISTRY_SUBDIR
         if not registry_base_dir.exists():
             logger.debug(
-                "La directory base per la registrazione "
-                f"({registry_base_dir}) non esiste."
+                "The base directory for registration "
+                f"({registry_base_dir}) does not exist."
             )
         else:
             registration_file_to_check = registry_base_dir / REGISTRATION_FILE_NAME
     except OSError:
-        logger.exception(
-            "Errore nel determinare il percorso del " "file di registrazione."
-        )
+        logger.exception("Error determining the path of the registration file.")
 
     if not registration_file_to_check:
-        logger.info("Percorso del file di registrazione non determinabile.")
+        logger.info("Registration file path not determinable.")
         return None
 
     if not registration_file_to_check.is_file():
         logger.info(
-            "Nessun progetto attivamente registrato trovato "
-            f"(file mancante: {registration_file_to_check})."
+            f"No actively registered project found "
+            f"(missing file: {registration_file_to_check})."
         )
         return None
 
-    logger.debug(f"Trovato file di progetto registrato: {registration_file_to_check}")
+    logger.debug(f"Found registered project file: {registration_file_to_check}")
     project_data = _parse_registration_content(registration_file_to_check)
 
     if project_data:
         logger.info(
-            f"Progetto '{project_data.get('project_name')}'" " caricato con successo."
+            f"Project '{project_data.get('project_name')}' loaded successfully."
         )
     return project_data
 
@@ -225,12 +216,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     active_project = load_active_registered_project()
     if active_project:
-        logger.info("Progetto attivamente registrato caricato:")
-        logger.info(f"  - Nome: {active_project.get('project_name')}")
-        logger.info(f"  - Percorso Venv: {active_project.get('venv_path')}")
-        logger.info(f"  - Eseguibile Python: {active_project.get('python_executable')}")
+        logger.info("Actively registered project loaded:")
+        logger.info(f"  - Name: {active_project.get('project_name')}")
+        logger.info(f"  - Venv Path: {active_project.get('venv_path')}")
+        logger.info(f"  - Python Executable: {active_project.get('python_executable')}")
     else:
-        logger.info(
-            "Nessun progetto attivamente registrato trovato o "
-            "errore durante il caricamento."
-        )
+        logger.info("No actively registered project found or error during loading.")

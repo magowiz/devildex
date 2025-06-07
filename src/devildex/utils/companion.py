@@ -28,63 +28,60 @@ FIXED_REGISTRATION_FILE_NAME = "current_registered_project.json"
 
 
 def get_active_user_venv_info() -> tuple[Path | None, str | None]:
-    """Determine il path del venv e Python using variable environment VIRTUAL_ENV.
+    """Determine the venv path and Python executable using the VIRTUAL_ENV environment variable.
 
     Returns:
-        tuple[Path | None, str | None]: (percorso_venv_attivo_utente,
-            percorso_eseguibile_python_utente)
-            o (None, None) se VIRTUAL_ENV non è impostato.
+        tuple[Path | None, str | None]: (active_user_venv_path,
+            user_python_executable_path)
+            or (None, None) if VIRTUAL_ENV is not set.
 
     """
     virtual_env_path_str = os.environ.get("VIRTUAL_ENV")
 
     if not virtual_env_path_str:
         logger.info(
-            "VIRTUAL_ENV non impostato. Impossibile identificare un "
-            "ambiente virtuale utente attivo."
+            "VIRTUAL_ENV not set. Unable to identify an active user "
+            "virtual environment."
         )
         return None, None
 
     venv_path = Path(virtual_env_path_str).resolve()
-    logger.debug(f"Venv utente attivo identificato tramite VIRTUAL_ENV: {venv_path}")
+    logger.debug(f"Active user venv identified via VIRTUAL_ENV: {venv_path}")
 
     python_exe_name = "python.exe" if os.name == "nt" else "python"
     scripts_dir_name = "Scripts" if os.name == "nt" else "bin"
     python_exe_path = venv_path / scripts_dir_name / python_exe_name
 
     if python_exe_path.exists() and python_exe_path.is_file():
-        logger.debug(
-            f"Eseguibile Python per VIRTUAL_ENV utente: {python_exe_path}"
-        )
+        logger.debug(f"Python executable for user VIRTUAL_ENV: {python_exe_path}")
         return venv_path, str(python_exe_path)
 
     logger.warning(
-        f"VIRTUAL_ENV è '{venv_path}', ma l'eseguibile Python atteso "
-        f"non è stato trovato in '{python_exe_path}'. "
-        "La registrazione del venv potrebbe non essere completa."
+        f"VIRTUAL_ENV is '{venv_path}', but the expected Python executable "
+        f"was not found at '{python_exe_path}'. "
+        "The venv registration might not be complete."
     )
     return venv_path, None
 
 
 def register_project(project_path_str: str | None) -> None:
-    """Raccoglie informazioni sul progetto e il venv utente attivo e le salva."""
+    """Collect information about the project and the active user venv and saves it."""
     active_venv_path, active_python_executable = get_active_user_venv_info()
 
     if not active_venv_path:
         logger.error(
-            "Operazione annullata: nessun ambiente virtuale utente attivo "
-            "(VIRTUAL_ENV) rilevato. "
-            "Assicurati di aver attivato l'ambiente virtuale del "
-            "progetto che desideri registrare."
+            "Operation cancelled: no active user virtual environment "
+            "(VIRTUAL_ENV) detected. "
+            "Ensure you have activated the virtual environment of the "
+            "project you wish to register."
         )
         return
 
     if not active_python_executable:
         logger.error(
-            f"Operazione annullata: VIRTUAL_ENV '{active_venv_path}'"
-            " rilevato, ma impossibile "
-            "determinare l'eseguibile Python corretto al suo interno. "
-            "Verifica la struttura del tuo ambiente virtuale."
+            f"Operation cancelled: VIRTUAL_ENV '{active_venv_path}'"
+            " detected, but unable to determine the correct Python executable within it. "
+            "Check the structure of your virtual environment."
         )
         return
 
@@ -92,16 +89,12 @@ def register_project(project_path_str: str | None) -> None:
         project_path = Path(project_path_str).resolve()
         if not project_path.is_dir():
             logger.error(
-                "Il percorso del progetto specificato non è una "
-                f"directory valida: {project_path}"
+                f"The specified project path is not a valid directory: {project_path}"
             )
             return
     else:
         project_path = Path(os.getcwd()).resolve()
-        logger.info(
-            "Utilizzo della directory corrente come percorso del "
-            f"progetto: {project_path}"
-        )
+        logger.info(f"Using current directory as project path: {project_path}")
 
     project_name = project_path.name
 
@@ -126,29 +119,24 @@ def register_project(project_path_str: str | None) -> None:
     try:
         with open(registration_file, "w", encoding="utf-8") as f:
             json.dump(project_data, f, indent=4)
-        logger.info(f"Progetto '{project_name}' registrato con successo!")
-        logger.info(f"Percorso Venv utente: {active_venv_path}")
-        logger.info(f"Eseguibile Python utente: {active_python_executable}")
-        logger.info(f"Percorso Progetto: {project_path}")
-        logger.info(f"File di registrazione: {registration_file}")
+        logger.info(f"Project '{project_name}' registered successfully!")
+        logger.info(f"User Venv Path: {active_venv_path}")
+        logger.info(f"User Python Executable: {active_python_executable}")
+        logger.info(f"Project Path: {project_path}")
+        logger.info(f"Registration File: {registration_file}")
     except OSError:
-        logger.exception(
-            "Errore durante la scrittura del file di registrazione "
-            f"{registration_file}"
-        )
+        logger.exception(f"Error writing the registration file {registration_file}")
     except (TypeError, ValueError):
-        logger.exception(
-            f"Errore imprevisto durante la registrazione del progetto {project_name}."
-        )
+        logger.exception(f"Unexpected error while registering project {project_name}.")
 
 
 def main() -> None:
     """Implement Main method."""
     parser = argparse.ArgumentParser(
         description=(
-            "Registra il progetto corrente e il suo ambiente virtuale con DevilDex. "
-            "Questo script dovrebbe essere eseguito dall'interno del venv ATTIVATO "
-            "del progetto che si desidera registrare."
+            "Registers the current project and its virtual environment with DevilDex. "
+            "This script should be run from within the ACTIVATED venv "
+            "of the project you wish to register."
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -157,13 +145,13 @@ def main() -> None:
         type=str,
         default=None,
         help=(
-            "Percorso opzionale alla directory root del progetto.\n"
-            "Se non fornito, viene usata la directory di lavoro corrente."
+            "Optional path to the project's root directory.\n"
+            "If not provided, the current working directory is used."
         ),
     )
     args = parser.parse_args()
 
-    logger.info("Avvio registrazione progetto per DevilDex...")
+    logger.info("Starting project registration for DevilDex...")
     register_project(args.project_path)
 
 

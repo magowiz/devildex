@@ -17,7 +17,7 @@ def main() -> None:
     package_list = []
     if len(sys.argv) < 2:
         logger.debug(
-            "DEBUG_HELPER: Errore: Percorso del file di output non fornito come argomento.",
+            "DEBUG_HELPER: Error: Output file path not provided as argument.",
         )
         sys.exit(2)
 

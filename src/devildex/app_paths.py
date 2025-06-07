@@ -1,4 +1,5 @@
 """app paths module."""
+
 import logging
 from pathlib import Path
 
@@ -7,15 +8,20 @@ import platformdirs
 from devildex.info import APPLICATION_AUTHOR, APPLICATION_NAME
 
 logger = logging.getLogger(__name__)
+
+
 class AppPaths:
     """Handle i paths standard per i file di dati, configuration.
 
     cache e log dell application in modo independent dalla platform.
     """
 
-    def __init__(self, app_name: str = APPLICATION_NAME,
-                 app_author: str = APPLICATION_AUTHOR,
-                 version: str | None = None) -> None:
+    def __init__(
+        self,
+        app_name: str = APPLICATION_NAME,
+        app_author: str = APPLICATION_AUTHOR,
+        version: str | None = None,
+    ) -> None:
         """Initialize i paths.
 
         Args:
@@ -25,7 +31,8 @@ class AppPaths:
 
         """
         self._dirs = platformdirs.PlatformDirs(
-            appname=app_name, appauthor=app_author, version=version)
+            appname=app_name, appauthor=app_author, version=version
+        )
 
     @property
     def user_data_dir(self) -> Path:
@@ -50,11 +57,10 @@ class AppPaths:
 
     @property
     def user_log_dir(self) -> Path:
-        """Directory per i file di log specifici dell'utente."""
+        """Directory for user-specific log files."""
         path = Path(self._dirs.user_log_dir)
         path.mkdir(parents=True, exist_ok=True)
         return path
-
 
     @property
     def docsets_base_dir(self) -> Path:
