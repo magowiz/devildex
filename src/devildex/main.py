@@ -14,9 +14,13 @@ import wx.html2
 from devildex import database
 from devildex.app_paths import AppPaths
 from devildex.local_data_parse import registered_project_parser
+from devildex.local_data_parse.common_read import (
+    get_explicit_dependencies_from_project_config,
+)
+from devildex.local_data_parse.external_venv_scanner import ExternalVenvScanner
 from devildex.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
-from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA
+from examples.sample_data import COLUMNS_ORDER, PACKAGES_DATA_AS_DETAILS
 
 logger = logging.getLogger(__name__)
 COL_WIDTH_ID = 60
@@ -49,8 +53,24 @@ class DevilDexCore:
     def scan_project(self):
         self._load_registered_project_details()
         if self.registered_project_name:
-            return PACKAGES_DATA
-        return []
+            evenv_scanner = ExternalVenvScanner(
+                self.registered_project_python_executable
+            )
+            exp_dep: set[str] = get_explicit_dependencies_from_project_config(
+                start_path=self.registered_project_path
+            )
+            packages = evenv_scanner.scan_packages()
+            result = []
+            if not packages:
+                return None
+            elif exp_dep:
+                for package in packages:
+                    if package.name in exp_dep:
+                        result.append(package)
+            elif packages:
+                result = packages
+            return result
+        return None
 
     def _load_registered_project_details(self) -> None:
         """Carica i details del project active e li set come attributes."""
@@ -69,7 +89,7 @@ class DevilDexCore:
             logger.info("Core: No registered project found.")
 
     def bootstrap_database_and_load_data(
-        self, initial_package_source: list[dict[str, Any]]
+        self, initial_package_source: list[PackageDetails], is_fallback_data
     ) -> list[dict[str, Any]]:
         """Initialize the database, populates it with initial data.
 
@@ -88,28 +108,32 @@ class DevilDexCore:
             "Core: Populating DB using initial_package_source - Total:"
             f" {len(initial_package_source)} packages."
         )
-        for pkg_data_dict in initial_package_source:
-            pkg_name = pkg_data_dict.get("name")
-            pkg_version = pkg_data_dict.get("version")
-            pkg_summary = pkg_data_dict.get("description")
-            pkg_project_urls = pkg_data_dict.get("project_urls")
+        for pkg_detail in initial_package_source:
+            pkg_name = pkg_detail.name
+            pkg_version = pkg_detail.version
+            pkg_summary = getattr(pkg_detail, "summary", None) or getattr(
+                pkg_detail, "description", "N/A"
+            )
+            pkg_project_urls = pkg_detail.project_urls
 
             if pkg_name and pkg_version:
                 logger.debug(f"Core: Processing for DB: {pkg_name} v{pkg_version}")
-                database.ensure_package_entities_exist(
-                    package_name=str(pkg_name),
-                    package_version=str(pkg_version),
-                    summary=str(pkg_summary) if pkg_summary else None,
-                    project_urls=pkg_project_urls,
-                    initial_docset_status="unknown",
-                    project_name=project_db_name,
-                    project_path=project_db_path,
-                    python_executable=project_db_python_exec,
-                )
+                build_dict = {
+                    "package_name": str(pkg_name),
+                    "package_version": str(pkg_version),
+                    "summary": str(pkg_summary) if pkg_summary else None,
+                    "project_urls": pkg_project_urls,
+                    "initial_docset_status": "unknown",
+                }
+                if not is_fallback_data and project_db_name:
+                    build_dict["project_name"] = project_db_name
+                    build_dict["project_path"] = project_db_path
+                    build_dict["python_executable"] = project_db_python_exec
+                database.ensure_package_entities_exist(**build_dict)
             else:
                 logger.warning(
                     "Core: Skipped record from initial_package_source due to "
-                    f"missing name or version: {pkg_data_dict}"
+                    f"missing name or version: {pkg_detail}"
                 )
 
         logger.info("Core: Initial DB population completed.")
@@ -367,10 +391,19 @@ class DevilDexApp(wx.App):
         """Set up gui widgets on application startup."""
         wx.Log.SetActiveTarget(wx.LogStderr())
         window_title = "DevilDex"
-        self.core.scan_project()
+
+        scanned_project_packages: Optional[list[PackageDetails]] = (
+            self.core.scan_project()
+        )
+        is_fallback_data = False
+        if scanned_project_packages:
+            logger.info(scanned_project_packages)
+        else:
+            scanned_project_packages = PACKAGES_DATA_AS_DETAILS
+            is_fallback_data = True
         self.main_frame = wx.Frame(parent=None, title=window_title, size=(1280, 900))
         self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
-            PACKAGES_DATA
+            scanned_project_packages, is_fallback_data
         )
         self.panel = wx.Panel(self.main_frame)
         self.main_panel_sizer = wx.BoxSizer(wx.VERTICAL)

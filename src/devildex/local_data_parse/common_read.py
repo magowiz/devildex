@@ -1,4 +1,5 @@
 """common read module."""
+
 import logging
 import os
 import sys
@@ -7,6 +8,7 @@ import toml
 from packaging.requirements import InvalidRequirement, Requirement
 
 logger = logging.getLogger(__name__)
+
 
 def find_pyproject_toml(start_path: str = ".") -> str | None:
     """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
@@ -24,8 +26,11 @@ def find_pyproject_toml(start_path: str = ".") -> str | None:
         current_path = parent_path
 
 
-def add_deps_from_section(section_data: dict, explicit_deps: set) -> None:
-    """Add read dependencies from a specific section to explicit deps."""
+def add_deps_from_poetry_section(section_data: dict, explicit_deps: set) -> None:
+    """Add read dependencies from a specific Poetry dictionary section to explicit deps.
+
+    Normalizes names (lowercase, hyphenated) and excludes 'python'.
+    """
     if isinstance(section_data, dict):
         for name in section_data:
             normalized_name = name.lower().replace("_", "-")
@@ -47,6 +52,7 @@ def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
         with open(pyproject_path, encoding="utf-8") as f:
             return toml.load(f)
     except FileNotFoundError:
+        logger.warning(f"File pyproject.toml non trovato a: {pyproject_path}")
         return None
     except toml.TomlDecodeError:
         logger.exception(
@@ -55,59 +61,16 @@ def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
         )
         return None
     except Exception as e:  # pylint: disable=broad-except
-        logger.warning(
-            f"Warning: Unexpected error reading {pyproject_path}: {e}"
-        )
+        logger.warning(f"Warning: Unexpected error reading {pyproject_path}: {e}")
         return None
 
 
-def get_explicit_poetry_dependencies(pyproject_path: str | None) -> set[str]:
-    """Read pyproject.toml and returns a set con i nomi delle direct dependencies.
-
-    (from sections tool.poetry.dependencies e tool.poetry.group.*.dependencies).
-    Requires that 'toml' is importable.
-
-    Args:
-        pyproject_path (str | None): Il path al file pyproject.toml.
-
-    Returns:
-        set[str]: A set di strings containing explicit dependencies names.
-                  Returns un empty set if file not exist, not readable,
-                  not a valid Poetry project, or haven't got explicit dependencies.
-
-    """
-    explicit_deps: set[str] = set()
-    if not pyproject_path:
-        return explicit_deps
-
-    pyproject_data = _read_and_parse_pyproject_toml(pyproject_path)
-    if not pyproject_data:
-        return explicit_deps
-
-    tool_data = pyproject_data.get("tool", {})
-    poetry_data = tool_data.get("poetry", {})
-
-    main_deps_data = poetry_data.get("dependencies")
-    if main_deps_data:
-        add_deps_from_section(main_deps_data, explicit_deps)
-
-    group_section_data = poetry_data.get("group", {})
-    if isinstance(group_section_data, dict):
-        for _group_name, group_content in group_section_data.items():
-            if isinstance(group_content, dict):
-                group_deps_data = group_content.get("dependencies")
-                if group_deps_data:
-                    add_deps_from_section(group_deps_data, explicit_deps)
-
-    return explicit_deps
-
-
 def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | None:
-    """Parse a single line from a requirements file.
+    """Parse a single line from a requirements file or a PEP 621 dependency string.
 
     Args:
         line_content: The content of the line to parse.
-        filepath_for_log: The path of the requirements file, for logging purposes.
+        filepath_for_log: The path/origin of the requirements, for logging purposes.
 
     Returns:
         The package name if successfully parsed, otherwise None.
@@ -117,22 +80,96 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
     if (
         not stripped_line
         or stripped_line.startswith("#")
-        or stripped_line.startswith("-")
-        or stripped_line.startswith("--")
+        # Per requirements.txt, potremmo voler ignorare anche le opzioni che iniziano con '-' o '--'
+        # ma per [project.dependencies], queste non dovrebbero essere presenti.
+        # Manteniamo il controllo per robustezza generale se questa funzione viene riutilizzata.
+        or (
+            filepath_for_log.endswith(".txt")
+            and (stripped_line.startswith("-") or stripped_line.startswith("--"))
+        )
     ):
         return None
 
     try:
         req = Requirement(stripped_line)
-
+        # req.name è già normalizzato secondo PEP 503 (lowercase, trattini)
+        return req.name
     except InvalidRequirement:
-        logger.exception(
+        logger.warning(  # Usiamo warning invece di exception per non interrompere il flusso per una riga malformata
             f"Warning: Invalid requirement line in {filepath_for_log}: "
             f"'{stripped_line}'"
         )
         return None
-    else:
-        return req.name
+
+
+def _get_explicit_dependencies_from_parsed_pyproject(
+    pyproject_data: dict | None,
+) -> set[str]:
+    """Extracts explicit dependencies from parsed pyproject.toml data.
+
+    Prioritizes [project.dependencies] (PEP 621) and then checks
+    [tool.poetry.dependencies] and [tool.poetry.group] sections for
+    Poetry-specific definitions.
+
+    Args:
+        pyproject_data: Parsed content of pyproject.toml.
+
+    Returns:
+        A set of normalized explicit dependency names.
+
+    """
+    explicit_deps: set[str] = set()
+    if not pyproject_data:
+        return explicit_deps
+
+    # 1. Leggi da [project.dependencies] (PEP 621)
+    project_section = pyproject_data.get("project", {})
+    if isinstance(project_section, dict):
+        project_deps_list = project_section.get("dependencies")
+        if isinstance(project_deps_list, list):
+            logger.info("Reading dependencies from [project.dependencies] (PEP 621)")
+            for dep_string in project_deps_list:
+                if isinstance(dep_string, str):
+                    package_name = _parse_requirement_line(
+                        dep_string, "pyproject.toml [project.dependencies]"
+                    )
+                    if package_name:  # _parse_requirement_line già normalizza il nome
+                        explicit_deps.add(package_name)
+
+    # 2. Leggi da [tool.poetry.dependencies] e gruppi (specifico di Poetry)
+    # Questo cattura dipendenze in progetti gestiti da Poetry, specialmente versioni
+    # che potrebbero non duplicare tutto in [project.dependencies] o per gruppi.
+    tool_data = pyproject_data.get("tool", {})
+    poetry_data = tool_data.get("poetry", {})
+
+    if (
+        isinstance(poetry_data, dict) and poetry_data
+    ):  # Solo se la sezione [tool.poetry] esiste ed è un dict
+        logger.info(
+            "Reading/adding dependencies from [tool.poetry.dependencies] and groups"
+        )
+        main_deps_data = poetry_data.get("dependencies")
+        if main_deps_data:
+            add_deps_from_poetry_section(main_deps_data, explicit_deps)
+
+        group_section_data = poetry_data.get("group", {})
+        if isinstance(group_section_data, dict):
+            for _group_name, group_content in group_section_data.items():
+                if isinstance(group_content, dict):
+                    group_deps_data = group_content.get("dependencies")
+                    if group_deps_data:
+                        add_deps_from_poetry_section(group_deps_data, explicit_deps)
+    elif explicit_deps:  # Se abbiamo trovato deps da [project] e non c'è [tool.poetry]
+        logger.info(
+            "No [tool.poetry] section found or it's not a dictionary, "
+            "using dependencies from [project] section if any."
+        )
+    elif not explicit_deps:  # Nessuna dipendenza trovata da nessuna delle due sezioni
+        logger.info(
+            "No explicit dependencies found in [project] or [tool.poetry] sections."
+        )
+
+    return explicit_deps
 
 
 def get_explicit_package_names_from_requirements(
@@ -149,8 +186,6 @@ def get_explicit_package_names_from_requirements(
         A set of strings containing explicit package names.
         Returns an empty set if the file doesn't exist, cannot be read,
         or contains no valid requirements.
-        May raise exceptions for critical unrecoverable errors not related to
-        individual line parsing or basic file I/O.
 
     """
     explicit_package_names: set[str] = set()
@@ -168,14 +203,14 @@ def get_explicit_package_names_from_requirements(
         with open(requirements_filepath, encoding="utf-8") as f:
             for line in f:
                 package_name = _parse_requirement_line(line, requirements_filepath)
-                if package_name:
+                if package_name:  # _parse_requirement_line già normalizza il nome
                     explicit_package_names.add(package_name)
 
     except (OSError, UnicodeDecodeError):
         logger.exception(
             f"Error reading or decoding requirements file {requirements_filepath}"
         )
-        return set()
+        return set()  # Restituisce un set vuoto in caso di errore di lettura
     return explicit_package_names
 
 
@@ -209,13 +244,13 @@ def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[
         set: Un set di strings con i nomi delle dependencies explicit.
              Returns an empty set if no valid configuration file is found
              o if there are read/parsing errors.
-             Stampa warning/error su stderr.
 
     """
     pyproject_path = find_pyproject_toml(start_path)
     if pyproject_path:
         logger.info(f"Info: Found pyproject.toml at {pyproject_path}")
-        return get_explicit_poetry_dependencies(pyproject_path)
+        pyproject_data = _read_and_parse_pyproject_toml(pyproject_path)
+        return _get_explicit_dependencies_from_parsed_pyproject(pyproject_data)
 
     reqs_path = find_requirements_txt(start_path)
     if reqs_path:
@@ -231,18 +266,73 @@ def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[
 
 
 if __name__ == "__main__":
-    logger.info("--- Testing project_config.py directly ---")
+    # Configura il logging per il test diretto
+    logging.basicConfig(
+        level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s"
+    )
+    logger.info("--- Testing common_read.py directly ---")
 
-    explicit_names = get_explicit_dependencies_from_project_config("")
+    # Esempio: crea un dummy pyproject.toml per il test
+    dummy_project_path = "dummy_project_for_test"
+    os.makedirs(dummy_project_path, exist_ok=True)
+    dummy_pyproject_content_pep621 = """
+[project]
+name = "my-package"
+version = "0.1.0"
+description = "A sample package"
+dependencies = [
+    "requests>=2.0",
+    "click",
+    "Flask~=2.0"
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+"""
+    dummy_pyproject_content_poetry = """
+[tool.poetry]
+name = "my-poetry-package"
+version = "0.2.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.20"
+pandas = { version = "^1.3", optional = true }
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^2.10"
+"""
+    with open(
+        os.path.join(dummy_project_path, "pyproject.toml"), "w", encoding="utf-8"
+    ) as f:
+        # Scegli quale contenuto testare o testali separatamente
+        f.write(dummy_pyproject_content_pep621)
+        # f.write(dummy_pyproject_content_poetry)
+
+    logger.info(f"Testing with config in: {os.path.abspath(dummy_project_path)}")
+    explicit_names = get_explicit_dependencies_from_project_config(dummy_project_path)
 
     if explicit_names:
         logger.info("\n--- Explicit Dependency Names Found ---")
         for ex_name in sorted(list(explicit_names)):
             logger.info(f"- {ex_name}")
         logger.info("--- End Explicit Dependency Names ---")
-        sys.exit(0)
     else:
         logger.error(
             "\n--- No explicit dependency names found or config file missing ---"
         )
+
+    # Cleanup
+    try:
+        os.remove(os.path.join(dummy_project_path, "pyproject.toml"))
+        os.rmdir(dummy_project_path)
+        logger.info("Cleaned up dummy project.")
+    except OSError as e_clean:
+        logger.error(f"Error cleaning up dummy project: {e_clean}")
+
+    if explicit_names:  # Esci con 0 se sono stati trovati nomi
+        sys.exit(0)
+    else:
         sys.exit(1)

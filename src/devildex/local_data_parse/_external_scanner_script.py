@@ -2,19 +2,32 @@ import importlib.metadata
 import json
 import logging
 import sys
+import traceback
 
 PATHS_LEN = 2
 logger = logging.getLogger(__name__)
+
+
 def main() -> None:
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
 
     package_list = []
+    if len(sys.argv) < 2:
+        logger.debug(
+            "DEBUG_HELPER: Errore: Percorso del file di output non fornito come argomento.",
+        )
+        sys.exit(2)
+
+    output_file_path = sys.argv[1]
     try:
         for dist in importlib.metadata.distributions():
             package_name = dist.name
             package_version = dist.version
             metadata = dist.metadata
+            summary = metadata.get("Summary", "")
 
             current_project_urls = {}
             project_url_entries = metadata.get_all("Project-URL")
@@ -28,19 +41,38 @@ def main() -> None:
                     except AttributeError:
                         pass
 
-            package_list.append({
-                "name": package_name,
-                "version": package_version,
-                "project_urls": current_project_urls,
-            })
-
+            package_list.append(
+                {
+                    "name": package_name,
+                    "version": package_version,
+                    "summary": summary,
+                    "project_urls": current_project_urls,
+                }
+            )
+        try:
+            with open(output_file_path, "w", encoding="utf-8") as f_out:
+                json.dump(package_list, f_out, indent=2)
+            logger.debug(
+                f"DEBUG_HELPER: Successfully wrote JSON to {output_file_path}",
+            )
+            sys.exit(0)
+        except OSError as e_io:
+            logger.debug(
+                f"DEBUG_HELPER: IOError writing to output file {output_file_path}: {e_io!s}",
+            )
+            traceback.print_exc(file=sys.stderr)
+            sys.exit(3)
+        except Exception as e_json:
+            logger.debug(
+                f"DEBUG_HELPER: Exception during final JSON dump/file write to {output_file_path}: {type(e_json).__name__}: {e_json!s}"
+            )
+            traceback.print_exc(file=sys.stderr)
+            sys.exit(1)
     except Exception as e:
         error_payload = {"error": f"Error in _external_scanner_script.py: {e!s}"}
         logger.exception(json.dumps(error_payload))
         sys.exit(1)
 
-    logger.info(json.dumps(package_list))
-    sys.exit(0)
 
 if __name__ == "__main__":
     main()
