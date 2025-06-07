@@ -82,7 +82,7 @@ RUN ARCH=$(uname -m) && \
     && conda init bash \
     && conda config --set auto_activate_base false \
     && conda clean --all -f -y
-RUN conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y && conda clean -all -f -y
+RUN conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} --system-site-packages -y && conda clean -all -f -y
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
 RUN poetry self add poetry-plugin-export
