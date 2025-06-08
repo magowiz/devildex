@@ -35,7 +35,10 @@ COL_WIDTH_DOCSET_STATUS = 140
 
 
 class GuiLogHandler(logging.Handler):
-    def __init__(self, text_ctrl: wx.TextCtrl):
+    """Class define Gui Log Handler."""
+
+    def __init__(self, text_ctrl: wx.TextCtrl) -> None:
+        """Construct GuiLogHandler class."""
         super().__init__()
         self.text_ctrl = text_ctrl
         formatter = logging.Formatter(
@@ -43,14 +46,25 @@ class GuiLogHandler(logging.Handler):
         )
         self.setFormatter(formatter)
 
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
+        """Emit log message."""
+        # noinspection PyUnresolvedReferences
         try:
             msg = self.format(record)
+            # noinspection PyArgumentList
             if self.text_ctrl and wx.IsMainThread():
                 self.text_ctrl.AppendText(msg + "\n")
             elif self.text_ctrl:
                 wx.CallAfter(self.text_ctrl.AppendText, msg + "\n")
-        except Exception:
+        except (
+            AttributeError,
+            KeyError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            # noinspection PyUnresolvedReferences
+            wx.AssertionError,
+        ):
             self.handleError(record)
 
 
@@ -325,8 +339,7 @@ class DevilDexCore:
             project_urls=project_urls if isinstance(project_urls, dict) else {},
         )
         orchestrator = Orchestrator(
-            package_details=details,
-            base_output_dir=self.docset_base_output_path,
+            package_details=details, base_output_dir=self.docset_base_output_path
         )
         orchestrator.start_scan()
         detected_type = orchestrator.get_detected_doc_type()
@@ -361,7 +374,9 @@ class DevilDexApp(wx.App):
     def __init__(
         self, core: DevilDexCore | None = None, initial_url: str | None = None
     ) -> None:
-        """Initialize a new DevilDexApp instance."""
+        """Construct DevilDexApp class."""
+        self.gui_log_handler = None
+        self.jokes_timer = None
         self.core = core
         self.home_url = "https://www.google.com"
         self.initial_url = initial_url
@@ -400,10 +415,13 @@ class DevilDexApp(wx.App):
         self.arrow_up_bmp_scaled: Optional[wx.Bitmap] = None
         self.arrow_down_bmp_scaled: Optional[wx.Bitmap] = None
         self.view_mode_selector: Optional[wx.ComboBox] = None
-        self.package_display_label: Optional[wx.StaticText] = None
+
+        self.splitter: Optional[wx.SplitterWindow] = None
+        self.top_splitter_panel: Optional[wx.Panel] = None
+        self.bottom_splitter_panel: Optional[wx.Panel] = None
+        self.last_sash_position: int = -200
 
         super().__init__(redirect=False)
-        self.MainLoop()
 
     def scan_docset_dir(self, grid_pkg: list[dict]) -> set:
         """Scan Docset directory."""
@@ -550,7 +568,6 @@ class DevilDexApp(wx.App):
         """Set up gui widgets on application startup."""
         wx.Log.SetActiveTarget(wx.LogStderr())
         window_title = "DevilDex"
-
         scanned_project_packages: Optional[list[PackageDetails]] = (
             self.core.scan_project()
         )
@@ -584,33 +601,24 @@ class DevilDexApp(wx.App):
         self.animation_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self._on_animation_tick, self.animation_timer)
         self._setup_initial_view()
+        self.init_log()
         self.main_frame.Show(True)
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
-        # --- TEST LOG ALL'AVVIO ---
-        self.init_log()
 
-        logger.info("******************************************************")
-        logger.info("**** GuiLogHandler TEST: Messaggio di avvio! ****")
-        logger.info("******************************************************")
-        # --- FINE TEST LOG ---
-        self.jokes_timer = wx.Timer(self)  # 'self' (l'app) è l'owner del timer
-        # Collega l'evento del timer al metodo on_jokes_timer
+        self.jokes_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_jokes_timer_event, self.jokes_timer)
-        # Avvia il timer per scattare ogni 3000 millisecondi (3 secondi)
-        self.jokes_timer.Start(3000)
         return True
 
-    def on_jokes_timer_event(self, event: wx.TimerEvent):
-        """Chiamato dal jokes_timer ogni 3 secondi."""
-        # 'logger' qui è l'istanza del logger a livello di modulo
-        # definita all'inizio del file: logger = logging.getLogger(__name__)
-        self.jokes(logger)  # Chiama il tuo metodo jokes
-        if event:  # Buona pratica gestire l'evento
+    def on_jokes_timer_event(self, event: wx.TimerEvent) -> None:
+        """Handle jokes_timer every 3 seconds."""
+        self.jokes(logger)
+        if event:
             event.Skip()
 
-    def init_log(self):
+    def init_log(self) -> None:
+        """Initialize log."""
         self.gui_log_handler = GuiLogHandler(self.log_text_ctrl)
         devildex_package_logger = logging.getLogger("devildex")
         if self.gui_log_handler not in devildex_package_logger.handlers:
@@ -623,9 +631,11 @@ class DevilDexApp(wx.App):
         logger.setLevel(logging.INFO)
         logger.propagate = False
 
-    def jokes(self, logger):
+    @staticmethod
+    def jokes(my_logger: logging.Logger) -> None:
+        """Log a joke."""
         joke = pyjokes.get_joke(language="it", category="neutral")
-        logger.info(joke)
+        my_logger.info(joke)
 
     def _set_button_states_for_selected_row(
         self, package_data: dict, action_buttons: dict
@@ -905,51 +915,27 @@ class DevilDexApp(wx.App):
         self._perform_startup_docset_scan()
         self._update_action_buttons_state()
 
-    def _setup_initial_view(self) -> None:
-        """Configura la initial window."""
-        self._clear_main_panel()
-        self.is_log_panel_visible = False
-        view_mode_sizer = self._setup_view_mode_selector(self.panel)
-        if self.main_panel_sizer:
-            self.main_panel_sizer.Add(
-                view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-            )
-        content_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.data_grid = wx.grid.Grid(self.panel)
-        self.data_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_grid_cell_click)
-        content_sizer.Add(self.data_grid, 1, wx.EXPAND | wx.ALL, 5)
-
-        action_buttons_sizer = self._setup_action_buttons_panel(self.panel)
-        content_sizer.Add(action_buttons_sizer, 0, wx.EXPAND | wx.ALL, 5)
-        num_data_cols = len(COLUMNS_ORDER)
-        total_grid_cols = num_data_cols + 1
-
-        self.data_grid.CreateGrid(0, total_grid_cols)
-        self.data_grid.SetSelectionMode(wx.grid.Grid.SelectRows)
-        self._configure_grid_columns()
-        self.log_text_ctrl = wx.TextCtrl(
-            self.panel,
-            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.TE_RICH2,
-        )
-        self.log_text_ctrl.SetMinSize(wx.Size(-1, 100))
+    def _init_log_toggle_bar(self, parent_panel: wx.Panel) -> wx.Sizer:
         initial_bmp_to_use = wx.BitmapBundle.FromBitmap(wx.NullBitmap)
         if self.arrow_down_bmp_scaled and self.arrow_down_bmp_scaled.IsOk():
             initial_bmp_to_use = self.arrow_down_bmp_scaled
         elif self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
             initial_bmp_to_use = self.arrow_down_bmp
+
         button_fixed_size = wx.Size(50, 20)
         self.log_toggle_button = wx.BitmapButton(
-            self.panel,
+            parent_panel,
             id=wx.ID_ANY,
             bitmap=initial_bmp_to_use,
             size=button_fixed_size,
             style=wx.BU_EXACTFIT,
         )
         self.log_toggle_button.Bind(wx.EVT_BUTTON, self.on_log_toggle_button_click)
-        bottom_bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        bottom_bar_sizer.AddStretchSpacer(1)
+
+        bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        bar_sizer.AddStretchSpacer(1)
         button_padding = 0
-        bottom_bar_sizer.Add(
+        bar_sizer.Add(
             self.log_toggle_button,
             proportion=0,
             flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
@@ -959,31 +945,139 @@ class DevilDexApp(wx.App):
         desired_bar_height = (
             button_fixed_size.GetHeight() + sizer_internal_vertical_padding
         )
-        bottom_bar_sizer.SetMinSize(wx.Size(-1, desired_bar_height))
-        bottom_bar_sizer.AddStretchSpacer(1)
-        self.main_panel_sizer.Add(content_sizer, 1, wx.EXPAND | wx.ALL, 0)
-        self.main_panel_sizer.Add(self.log_text_ctrl, 0, wx.EXPAND | wx.ALL, 5)
-        self.log_text_ctrl.Show(self.is_log_panel_visible)
+        bar_sizer.SetMinSize(wx.Size(-1, desired_bar_height))
+        bar_sizer.AddStretchSpacer(1)
+        return bar_sizer
+
+    def _setup_initial_view(self) -> None:
+        self._clear_main_panel()
+
+        if not self.panel or not self.main_panel_sizer:
+            logger.error(
+                "GUI: Panel or main_panel_sizer not initialized in"
+                " _setup_initial_view"
+            )
+            return
+
+        view_mode_sizer = self._setup_view_mode_selector(self.panel)
+        self.main_panel_sizer.Add(
+            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        )
+
+        self._init_splitter_components(self.panel)
+        if self.splitter:
+            self.main_panel_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
+
+        bottom_bar_sizer = self._init_log_toggle_bar(self.panel)
         self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
+
         self.update_grid()
+
+        if self.gui_log_handler and self.log_text_ctrl:
+            self.gui_log_handler.text_ctrl = self.log_text_ctrl
+
         self._update_log_toggle_button_icon()
+
         if self.panel:
             self.panel.Layout()
         if self.main_frame:
             self.main_frame.Layout()
 
+    def _init_splitter_components(self, parent_panel: wx.Panel) -> None:
+        self.splitter = wx.SplitterWindow(
+            parent_panel, style=wx.SP_LIVE_UPDATE | wx.SP_BORDER
+        )
+        self.splitter.SetMinimumPaneSize(50)
+
+        # --- Top Panel Setup ---
+        self.top_splitter_panel = wx.Panel(self.splitter)
+        content_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.data_grid = wx.grid.Grid(self.top_splitter_panel)
+        self.data_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_grid_cell_click)
+
+        if self.data_grid:
+            num_data_cols = len(COLUMNS_ORDER)
+            total_grid_cols = num_data_cols + 1
+            self.data_grid.CreateGrid(0, total_grid_cols)
+            self.data_grid.SetSelectionMode(wx.grid.Grid.SelectRows)
+            self._configure_grid_columns()
+
+        content_sizer.Add(self.data_grid, 1, wx.EXPAND | wx.ALL, 5)
+        action_buttons_sizer = self._setup_action_buttons_panel(self.top_splitter_panel)
+        content_sizer.Add(action_buttons_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        self.top_splitter_panel.SetSizer(content_sizer)
+
+        # --- Bottom Panel Setup ---
+        self.bottom_splitter_panel = wx.Panel(self.splitter)
+        bottom_splitter_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.log_text_ctrl = wx.TextCtrl(
+            self.bottom_splitter_panel,
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.TE_RICH2,
+        )
+        bottom_splitter_sizer.Add(self.log_text_ctrl, 1, wx.EXPAND | wx.ALL, 0)
+        self.bottom_splitter_panel.SetSizer(bottom_splitter_sizer)
+
+        # --- Splitter Initialization ---
+        if self.is_log_panel_visible:
+            self.splitter.SplitHorizontally(
+                self.top_splitter_panel,
+                self.bottom_splitter_panel,
+                self.last_sash_position,
+            )
+            self.top_splitter_panel.Show(True)
+            self.bottom_splitter_panel.Show(True)
+            if self.log_text_ctrl:
+                self.log_text_ctrl.Show(True)
+            self.bottom_splitter_panel.Layout()  # <--- AGGIUNGI QUESTO
+        else:
+            self.splitter.Initialize(self.top_splitter_panel)
+            self.top_splitter_panel.Show(True)
+            self.bottom_splitter_panel.Show(False)
+            if self.log_text_ctrl:
+                self.log_text_ctrl.Show(False)
+
     def _set_log_panel_visibility(self, visible: bool) -> None:
-        if not self.log_text_ctrl or not self.panel:
+        if (
+            not self.splitter
+            or not self.top_splitter_panel
+            or not self.bottom_splitter_panel
+        ):
+            logger.warning(
+                "GUI: Splitter or splitter panels not available in "
+                "_set_log_panel_visibility."
+            )
+            if self.log_text_ctrl:
+                self.log_text_ctrl.Show(visible)
+            if self.panel:
+                self.panel.Layout()
+            self._update_log_toggle_button_icon()
             return
 
         self.is_log_panel_visible = visible
-        self.log_text_ctrl.Show(self.is_log_panel_visible)
 
-        item = self.main_panel_sizer.GetItem(self.log_text_ctrl)
-        if item:
-            item.Show(self.is_log_panel_visible)
+        if self.is_log_panel_visible:
+            if not self.splitter.IsSplit():
+                self.splitter.SplitHorizontally(
+                    self.top_splitter_panel,
+                    self.bottom_splitter_panel,
+                    self.last_sash_position,
+                )
+            self.bottom_splitter_panel.Show(True)
+            if self.log_text_ctrl:
+                self.log_text_ctrl.Show(True)
+            self.splitter.SetSashPosition(self.last_sash_position, redraw=True)
+            self.bottom_splitter_panel.Layout()  # <--- AGGIUNGI QUESTO
+        else:
+            if self.splitter.IsSplit():
+                self.last_sash_position = self.splitter.GetSashPosition()
+                self.splitter.Unsplit(self.bottom_splitter_panel)
+            self.bottom_splitter_panel.Show(False)
+            if self.log_text_ctrl:
+                self.log_text_ctrl.Show(False)
 
-        self.panel.Layout()
+        if self.panel:
+            self.panel.Layout()
         self._update_log_toggle_button_icon()
 
     def on_open_docset(self, event: wx.CommandEvent) -> None:
@@ -1509,7 +1603,6 @@ class DevilDexApp(wx.App):
             self.webview.LoadURL(url_to_load)
 
     def _clear_main_panel(self) -> None:
-        """Clear il main_panel_sizer e empties references to widget."""
         if self.main_panel_sizer and self.main_panel_sizer.GetItemCount() > 0:
             self.main_panel_sizer.Clear(True)
         self.webview = None
@@ -1527,8 +1620,12 @@ class DevilDexApp(wx.App):
         self.delete_action_button = None
         self.log_text_ctrl = None
         self.log_toggle_button = None
-        self.is_log_panel_visible = False
         self.package_display_label = None
+
+        self.splitter = None
+        self.top_splitter_panel = None
+        self.bottom_splitter_panel = None
+
         if self.panel:
             self.panel.Layout()
         if self.main_frame:
@@ -1672,7 +1769,8 @@ class DevilDexApp(wx.App):
 def main() -> None:
     """Launch whole application."""
     core = DevilDexCore()
-    DevilDexApp(core=core, initial_url="https://www.gazzetta.it")
+    app = DevilDexApp(core=core, initial_url="https://www.gazzetta.it")
+    app.MainLoop()
 
 
 if __name__ == "__main__":
