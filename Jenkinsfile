@@ -265,50 +265,52 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
+                                def venvPath = "/tmp/devildex_cx_freeze_venv_${env.ARCH}"
                                 sh '''
                                     echo "[INFO] Initializing Conda and activating environment (conda_env)..."
-                                    eval "$(/opt/conda/bin/conda shell.bash hook)"
-                                    conda activate conda_env
+                                    rm -rf "${venvPath}"
 
-                                    echo "[DEBUG] Verifying Python and Pip from Conda env:"
-                                    which python
-                                    python --version
-                                    which pip
-                                    pip --version
+                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+
+                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+                                    echo "[INFO] Activating Python venv (${venvPath})..."
+                                    source "${venvPath}/bin/activate"
                                 '''
                                 sh '''
-                                    echo "[INFO] Activating Conda env (conda_env) for requirements export..."
-                                    eval "$(/opt/conda/bin/conda shell.bash hook)"
-                                    conda activate conda_env
+                                    echo "[INFO] Activating Python venv (${venvPath}) for requirements export..."
+            source "${venvPath}/bin/activate"
 
-                                    echo "[INFO] Exporting and preparing requirements.txt using global poetry..."
-                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
+            echo "[INFO] Exporting requirements.txt using globally installed poetry..."
+            # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
+            poetry export -f requirements.txt --output requirements.txt --without-hashes
 
                                 '''
                              sh '''
-                                echo "[INFO] Activating Conda env (conda_env) for installing dependencies..."
-                                eval "$(/opt/conda/bin/conda shell.bash hook)"
-                                conda activate conda_env
+                                echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
+            source "${venvPath}/bin/activate"
 
-                                echo "[INFO] Installing requirements.txt using Conda env pip..."
-                                pip install -r requirements.txt
+            echo "[INFO] Installing requirements.txt using venv pip..."
+            # Con --system-site-packages, pip dovrebbe vedere wxPython (se listato in requirements.txt)
+            # come già soddisfatto dalla versione di sistema e non tentare di compilarlo/reinstallarlo,
+            # specialmente su arm64 dove PIP_FIND_LINKS non fornirà un wheel.
+            # Su amd64, PIP_FIND_LINKS potrebbe comunque fornire un wheel che pip potrebbe preferire.
+            pip install -r requirements.txt
 
-                                echo "[INFO] Installing cx_Freeze using Conda env pip..."
-                                pip install cx_Freeze
+            echo "[INFO] Installing cx_Freeze using venv pip..."
+            pip install cx_Freeze
                             '''
                             sh """
-                                echo '[INFO] Activating Conda env (conda_env) for cx_Freeze build...'
-                                eval "\$(/opt/conda/bin/conda shell.bash hook)"
-                                conda activate conda_env
+                                echo '[INFO] Activating Python venv (${venvPath}) for cx_Freeze build...'
+            source "${venvPath}/bin/activate"
 
-                                mkdir -p dist/${env.ARCH}/cxfreeze
+            mkdir -p dist/${env.ARCH}/cxfreeze
 
-                                echo '[INFO] Running cx_Freeze build using Conda env python...'
-                                python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
+            echo '[INFO] Running cx_Freeze build using venv python...'
+            python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
 
-                                echo '[INFO] Moving built artifact...'
-                                mv ./dist/${env.ARCH}/cxfreeze/main \
-                                   ${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin
+            echo '[INFO] Moving built artifact...'
+            mv ./dist/${env.ARCH}/cxfreeze/main \\
+               "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
                             """
                             }
                         }
