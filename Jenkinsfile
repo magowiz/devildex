@@ -115,7 +115,6 @@ pipeline {
                         PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                         LP_USER_ID = credentials('launchpad_id_conf_file')
                         PATH = "/root/.local/bin:${env.PATH}"
-                        //PIP_FIND_LINKS = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/fedora-38/"
                         PIP_FIND_LINKS = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
                     }
                     options {
@@ -334,7 +333,7 @@ pipeline {
                         }
                         agent {
                             dockerfile {
-                                filename 'Dockerfile' // Questo usa l'immagine ubuntu:plucky
+                                filename 'Dockerfile'
                                 args '-u root'
                                 label "${ARCHITECTURE}"
                                 reuseNode true
@@ -350,8 +349,6 @@ pipeline {
                             script {
                                 echo "--- Starting Build Nuitka for ${env.ARCH} ---"
                                 def venvPath = "/tmp/devildex_nuitka_venv_${env.ARCH}"
-
-                                // Blocco 1: Crea il venv, attivalo e verifica
                                 sh """
                                     echo "[INFO] Preparing Python virtual environment (venv) for Nuitka..."
                                     rm -rf "${venvPath}"
