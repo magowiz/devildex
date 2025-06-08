@@ -265,6 +265,7 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
+
                                 def venvPath = "/tmp/devildex_cx_freeze_venv_${env.ARCH}"
                                 sh """
                                     echo "[INFO] Initializing Conda and activating environment (conda_env)..."
@@ -284,6 +285,11 @@ pipeline {
             # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
             poetry export -f requirements.txt --output requirements.txt --without-hashes
 
+                                """
+                                sh """
+                                    if [ "${env.ARCH}" = "arm64" ]; then
+                                        sed -i '/wxpython/d' requirements.txt
+                                    fi
                                 """
                              sh """
                                 echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
