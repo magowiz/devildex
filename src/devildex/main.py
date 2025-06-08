@@ -33,6 +33,26 @@ COL_WIDTH_STATUS = 120
 COL_WIDTH_DOCSET_STATUS = 140
 
 
+class GuiLogHandler(logging.Handler):
+    def __init__(self, text_ctrl: wx.TextCtrl):
+        super().__init__()
+        self.text_ctrl = text_ctrl
+        formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(name)s: %(message)s", datefmt="%H:%M:%S"
+        )
+        self.setFormatter(formatter)
+
+    def emit(self, record: logging.LogRecord):
+        try:
+            msg = self.format(record)
+            if self.text_ctrl and wx.IsMainThread():
+                self.text_ctrl.AppendText(msg + "\n")
+            elif self.text_ctrl:
+                wx.CallAfter(self.text_ctrl.AppendText, msg + "\n")
+        except Exception:
+            self.handleError(record)
+
+
 class DevilDexCore:
     """DevilDex Core."""
 
@@ -567,6 +587,12 @@ class DevilDexApp(wx.App):
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
+        # --- TEST LOG ALL'AVVIO ---
+        logger.info("******************************************************")
+        logger.info("**** GuiLogHandler TEST: Messaggio di avvio! ****")
+        logger.info("******************************************************")
+        # --- FINE TEST LOG ---
+
         return True
 
     def _set_button_states_for_selected_row(
