@@ -266,7 +266,7 @@ pipeline {
                             script {
                                 echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
                                 def venvPath = "/tmp/devildex_cx_freeze_venv_${env.ARCH}"
-                                sh '''
+                                sh """
                                     echo "[INFO] Initializing Conda and activating environment (conda_env)..."
                                     rm -rf "${venvPath}"
 
@@ -275,8 +275,8 @@ pipeline {
                                     /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
                                     echo "[INFO] Activating Python venv (${venvPath})..."
                                     source "${venvPath}/bin/activate"
-                                '''
-                                sh '''
+                                """
+                                sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for requirements export..."
             source "${venvPath}/bin/activate"
 
@@ -284,8 +284,8 @@ pipeline {
             # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
             poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-                                '''
-                             sh '''
+                                """
+                             sh """
                                 echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
             source "${venvPath}/bin/activate"
 
@@ -298,7 +298,7 @@ pipeline {
 
             echo "[INFO] Installing cx_Freeze using venv pip..."
             pip install cx_Freeze
-                            '''
+                            """
                             sh """
                                 echo '[INFO] Activating Python venv (${venvPath}) for cx_Freeze build...'
             source "${venvPath}/bin/activate"
