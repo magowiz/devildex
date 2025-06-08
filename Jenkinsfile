@@ -331,13 +331,14 @@ pipeline {
                             }
                         }
                     }
-                    stage('Build Nuitka') {
+
+                                        stage('Build Nuitka') {
                         options {
                             retry(2)
                         }
                         agent {
                             dockerfile {
-                                filename 'Dockerfile'
+                                filename 'Dockerfile' // Questo usa l'immagine ubuntu:plucky
                                 args '-u root'
                                 label "${ARCHITECTURE}"
                                 reuseNode true
@@ -352,15 +353,68 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Starting Build Nuitka for ${env.ARCH} ---"
+                                def venvPath = "/tmp/devildex_nuitka_venv_${env.ARCH}"
+
+                                // Blocco 1: Crea il venv, attivalo e verifica
                                 sh """
-                                    eval "\$(/opt/conda/bin/conda shell.bash hook)"
-                                    conda activate conda_env
-                                    conda install libpython-static
+                                    echo "[INFO] Preparing Python virtual environment (venv) for Nuitka..."
+                                    rm -rf "${venvPath}"
+
+                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+
+                                    echo "[INFO] Activating Python venv (${venvPath})..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[DEBUG] Verifying Python and Pip from venv:"
+                                    which python
+                                    python --version
+                                    which pip
+                                    pip --version
+
+                                    echo "[INFO] Upgrading pip in venv..."
+                                    python -m pip install --upgrade pip
+                                """
+
+                                // Blocco 2: Esporta requirements.txt e gestisci wxPython per arm64
+                                sh """
+                                    echo "[INFO] Activating Python venv (${venvPath}) for Nuitka requirements management..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+                                    if [ "${env.ARCH}" = "arm64" ]; then
+                                        echo "[INFO] ARM64: Verifying system wxPython importability in venv for Nuitka..."
+                                        if python -c "import wx; print(f'[DEBUG] ARM64: wxPython (system) version in venv: {wx.version()}; Path: {wx.__file__}')"; then
+                                            echo "[INFO] ARM64: Successfully imported wxPython from system path into venv for Nuitka."
+                                            echo "[INFO] ARM64: Content of requirements.txt BEFORE wxPython removal (Nuitka):"
+                                            cat requirements.txt
+                                            echo "[INFO] ARM64: Removing wxPython from requirements.txt to rely on system version for Nuitka."
+                                            sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
+                                            echo "[INFO] ARM64: Content of requirements.txt AFTER wxPython removal (Nuitka):"
+                                            cat requirements.txt
+                                        else
+                                            echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for Nuitka. Build will likely fail."
+                                            echo "[ERROR] Ensure 'python3-wxgtk4.0' is correctly installed via apt and compatible with Python ${PYTHON_VERSION}."
+                                            exit 1
+                                        fi
+                                    fi
+                                """
+
+                                // Blocco 3: Installa dipendenze, Nuitka ed esegui la build
+                                sh """
+                                    echo "[INFO] Activating Python venv (${venvPath}) for Nuitka build..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[INFO] Installing requirements.txt for Nuitka using venv pip..."
                                     python -m pip install -r requirements.txt
+
+                                    echo "[INFO] Installing Nuitka using venv pip..."
                                     python -m pip install nuitka
-                                    mkdir -p dist/${env.ARCH}/linux/nuitka dist/${env.ARCH}/windows/nuitka
-                                    echo "Starting Nuitka build for Linux on host ${env.ARCH}"
+
+                                    mkdir -p dist/${env.ARCH}/linux/nuitka
+                                    echo "Starting Nuitka build for Linux on host ${env.ARCH} using venv python..."
                                     python -m nuitka src/devildex/main.py --standalone --onefile \
                                         --output-dir=dist/${env.ARCH}/linux/nuitka
                                 """
@@ -380,13 +434,15 @@ pipeline {
                             }
                         }
                     }
-                    stage('Build PyOxidizer') {
+
+
+                                       stage('Build PyOxidizer') {
                         options {
                             retry(2)
                         }
                         agent {
                             dockerfile {
-                                filename 'Dockerfile'
+                                filename 'Dockerfile' // Questo usa l'immagine ubuntu:plucky
                                 args '-u root'
                                 label "${ARCHITECTURE}"
                                 reuseNode true
@@ -397,26 +453,87 @@ pipeline {
                             PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                             PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                             DISABLE_ERRORS = true
+                            // PYTHON_VERSION è implicitamente 3.13 dal Dockerfile
                         }
                         steps {
                             script {
                                 echo "--- Start Build PyOxidizer for ${env.ARCH} ---"
+                                def venvPath = "/tmp/devildex_pyoxidizer_venv_${env.ARCH}"
+
+                                // Blocco 1: Crea il venv, attivalo e verifica
                                 sh """
-                                    eval "\$(/opt/conda/bin/conda shell.bash hook)"
-                                    conda activate conda_env
+                                    echo "[INFO] Preparing Python virtual environment (venv) for PyOxidizer..."
+                                    rm -rf "${venvPath}"
+
+                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+
+                                    echo "[INFO] Activating Python venv (${venvPath})..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[DEBUG] Verifying Python and Pip from venv:"
+                                    which python
+                                    python --version
+                                    which pip
+                                    pip --version
+
+                                    echo "[INFO] Upgrading pip in venv..."
+                                    python -m pip install --upgrade pip
+                                """
+
+                                // Blocco 2: Esporta requirements.txt e gestisci wxPython per arm64
+                                sh """
+                                    echo "[INFO] Activating Python venv (${venvPath}) for PyOxidizer requirements management..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+                                    if [ "${env.ARCH}" = "arm64" ]; then
+                                        echo "[INFO] ARM64: Verifying system wxPython importability in venv for PyOxidizer..."
+                                        if python -c "import wx; print(f'[DEBUG] ARM64: wxPython (system) version in venv: {wx.version()}; Path: {wx.__file__}')"; then
+                                            echo "[INFO] ARM64: Successfully imported wxPython from system path into venv for PyOxidizer."
+                                            echo "[INFO] ARM64: Content of requirements.txt BEFORE wxPython removal (PyOxidizer):"
+                                            cat requirements.txt
+                                            echo "[INFO] ARM64: Removing wxPython from requirements.txt to rely on system version for PyOxidizer."
+                                            sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
+                                            echo "[INFO] ARM64: Content of requirements.txt AFTER wxPython removal (PyOxidizer):"
+                                            cat requirements.txt
+                                        else
+                                            echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for PyOxidizer. Build will likely fail."
+                                            echo "[ERROR] Ensure 'python3-wxgtk4.0' is correctly installed via apt and compatible with system Python."
+                                            exit 1
+                                        fi
+                                    fi
+                                """
+
+                                // Blocco 3: Installa dipendenze, PyOxidizer ed esegui la build
+                                sh """
+                                    echo "[INFO] Activating Python venv (${venvPath}) for PyOxidizer build..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[INFO] Installing requirements.txt for PyOxidizer using venv pip..."
                                     python -m pip install -r requirements.txt
+
+                                    echo "[INFO] Installing PyOxidizer using venv pip..."
                                     python -m pip install pyoxidizer
-                                    mkdir -p dist/${env.ARCH}/pyoxidizer
+
+                                    echo "[INFO] Running PyOxidizer build using venv..."
+                                    # mkdir -p dist/${env.ARCH}/pyoxidizer # Questa riga potrebbe non essere necessaria
+                                                                        # se PyOxidizer crea la sua struttura in 'build/'
                                     pyoxidizer build
                                 """
+
+                                // Blocco 4: Gestione artefatti (invariato, ma ora opera dopo i passaggi nel venv)
                                 def sourceFolder = '-unknown-linux-gnu/debug/install/'
-                                    def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
-                                    if (env.ARCH == 'arm64') {
-                                        sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
-                                    } else if (env.ARCH != 'amd64') {
-                                        error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
-                                    }
+                                // Assicurati che PYTHON_VERSION sia disponibile o definito se usato qui,
+                                // ma il path di PyOxidizer di solito non dipende dalla versione Python nel nome della cartella build
+                                def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
+                                if (env.ARCH == 'arm64') {
+                                    sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
+                                } else if (env.ARCH != 'amd64') {
+                                    error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
+                                }
                                 echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
                                 def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
                                 sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
@@ -436,13 +553,15 @@ pipeline {
                             }
                         }
                     }
-                    stage('Build PyInstaller') {
+
+
+                                        stage('Build PyInstaller') {
                         options {
                             retry(2)
                         }
                         agent {
                             dockerfile {
-                                filename 'Dockerfile'
+                                filename 'Dockerfile' // Questo usa l'immagine ubuntu:plucky
                                 args '-u root'
                                 label "${ARCHITECTURE}"
                                 reuseNode true
@@ -457,20 +576,78 @@ pipeline {
                         steps {
                             script {
                                 echo "--- Start Build PyInstaller for ${env.ARCH} ---"
+                                def venvPath = "/tmp/devildex_pyinstaller_venv_${env.ARCH}"
+
+                                // Blocco 1: Crea il venv, attivalo e verifica
                                 sh """
-                                    eval "\$(/opt/conda/bin/conda shell.bash hook)"
-                                    conda activate conda_env
+                                    echo "[INFO] Preparing Python virtual environment (venv) for PyInstaller..."
+                                    rm -rf "${venvPath}"
+
+                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+
+                                    echo "[INFO] Activating Python venv (${venvPath})..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[DEBUG] Verifying Python and Pip from venv:"
+                                    which python
+                                    python --version
+                                    which pip
+                                    pip --version
+
+                                    echo "[INFO] Upgrading pip in venv..."
+                                    python -m pip install --upgrade pip
+                                """
+
+                                sh """
+                                    echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller requirements management..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+                                    if [ "${env.ARCH}" = "arm64" ]; then
+                                        echo "[INFO] ARM64: Verifying system wxPython importability in venv for PyInstaller..."
+                                        if python -c "import wx; print(f'[DEBUG] ARM64: wxPython (system) version in venv: {wx.version()}; Path: {wx.__file__}')"; then
+                                            echo "[INFO] ARM64: Successfully imported wxPython from system path into venv for PyInstaller."
+                                            echo "[INFO] ARM64: Content of requirements.txt BEFORE wxPython removal (PyInstaller):"
+                                            cat requirements.txt
+                                            echo "[INFO] ARM64: Removing wxPython from requirements.txt to rely on system version for PyInstaller."
+                                            sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
+                                            echo "[INFO] ARM64: Content of requirements.txt AFTER wxPython removal (PyInstaller):"
+                                            cat requirements.txt
+                                        else
+                                            echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for PyInstaller. Build will likely fail."
+                                            echo "[ERROR] Ensure 'python3-wxgtk4.0' is correctly installed via apt and compatible with system Python."
+                                            exit 1
+                                        fi
+                                    fi
+                                """
+
+                                // Blocco 3: Installa dipendenze, PyInstaller ed esegui la build
+                                sh """
+                                    echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller build..."
+                                    . "${venvPath}/bin/activate"
+
+                                    echo "[INFO] Installing requirements.txt for PyInstaller using venv pip..."
                                     python -m pip install -r requirements.txt
-                                    mkdir -p dist/${env.ARCH}/pyinstaller
+
+                                    echo "[INFO] Installing PyInstaller using venv pip..."
                                     python -m pip install pyinstaller
+
+                                    echo "[INFO] Running PyInstaller build using venv..."
+                                    mkdir -p dist/${env.ARCH}/pyinstaller // Assicura che la directory esista
                                     pyinstaller --noconfirm --onefile --console src/devildex/main.py \
                                         --distpath dist/${env.ARCH}/pyinstaller \
                                         --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}
-                              """
-                              sh "mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \
-                                        ${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin"
-                              echo "--- End Build PyInstaller for ${env.ARCH} ---"
+                                """
+                                // Blocco 4: Sposta l'artefatto (separato per chiarezza, ma potrebbe essere unito al precedente)
+                                sh """
+                                    echo "[INFO] Moving PyInstaller artifact..."
+                                    mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \
+                                        ${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin
+                                """
+                                echo "--- End Build PyInstaller for ${env.ARCH} ---"
                             }
                         }
                         post {
