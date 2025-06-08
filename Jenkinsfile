@@ -274,11 +274,11 @@ pipeline {
 
                                     /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
                                     echo "[INFO] Activating Python venv (${venvPath})..."
-                                    source "${venvPath}/bin/activate"
+                                    . "${venvPath}/bin/activate"
                                 """
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for requirements export..."
-            source "${venvPath}/bin/activate"
+            . "${venvPath}/bin/activate"
 
             echo "[INFO] Exporting requirements.txt using globally installed poetry..."
             # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
@@ -287,7 +287,7 @@ pipeline {
                                 """
                              sh """
                                 echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
-            source "${venvPath}/bin/activate"
+            . "${venvPath}/bin/activate"
 
             echo "[INFO] Installing requirements.txt using venv pip..."
             # Con --system-site-packages, pip dovrebbe vedere wxPython (se listato in requirements.txt)
@@ -301,7 +301,7 @@ pipeline {
                             """
                             sh """
                                 echo '[INFO] Activating Python venv (${venvPath}) for cx_Freeze build...'
-            source "${venvPath}/bin/activate"
+            . "${venvPath}/bin/activate"
 
             mkdir -p dist/${env.ARCH}/cxfreeze
 
