@@ -376,7 +376,6 @@ pipeline {
                                     python -m pip install --upgrade pip
                                 """
 
-                                // Blocco 2: Esporta requirements.txt e gestisci wxPython per arm64
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for Nuitka requirements management..."
                                     . "${venvPath}/bin/activate"
@@ -385,23 +384,10 @@ pipeline {
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
 
                                     if [ "${env.ARCH}" = "arm64" ]; then
-                                        echo "[INFO] ARM64: Verifying system wxPython importability in venv for Nuitka..."
-                                        if python -c "import wx; print(f'[DEBUG] ARM64: wxPython (system) version in venv: {wx.version()}; Path: {wx.__file__}')"; then
-                                            echo "[INFO] ARM64: Successfully imported wxPython from system path into venv for Nuitka."
-                                            echo "[INFO] ARM64: Content of requirements.txt BEFORE wxPython removal (Nuitka):"
-                                            cat requirements.txt
-                                            echo "[INFO] ARM64: Removing wxPython from requirements.txt to rely on system version for Nuitka."
                                             sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
-                                            echo "[INFO] ARM64: Content of requirements.txt AFTER wxPython removal (Nuitka):"
-                                            cat requirements.txt
-                                        else
-                                            echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for Nuitka. Build will likely fail."
-                                            exit 1
-                                        fi
                                     fi
                                 """
 
-                                // Blocco 3: Installa dipendenze, Nuitka ed esegui la build
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for Nuitka build..."
                                     . "${venvPath}/bin/activate"
