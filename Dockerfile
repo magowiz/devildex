@@ -63,35 +63,6 @@ RUN APT_CMD="apt-get install -y --no-install-recommends \
       fi; \
     done \
      && rm -rf /var/lib/apt/lists/*
-RUN python3 -c "import site; from pathlib import Path; print(next(p for p in site.getsitepackages() if Path(p).is_dir() and 'dist-packages' in p))" > /tmp/system_site_packages.path
-
-
-RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-      MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"; \
-    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
-      MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh"; \
-    else \
-      echo "Architettura non supported: $ARCH"; \
-      exit 1; \
-    fi && \
-    echo "Downloading Miniconda for $ARCH from $MINICONDA_URL" && \
-    curl -Lo ~/miniconda.sh $MINICONDA_URL \
-    && bash ~/miniconda.sh -b -p ${CONDA_DIR} \
-    && rm ~/miniconda.sh \
-    && eval "$(${CONDA_DIR}/bin/conda shell.bash hook)" \
-    && conda init bash \
-    && conda config --set auto_activate_base false \
-    && conda clean --all -f -y
-RUN eval "$(${CONDA_DIR}/bin/conda shell.bash hook)" && \
-    SYSTEM_SITE_PACKAGES=$(cat /tmp/system_site_packages.path) && \
-    conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y && \
-    echo "INFO: Attivazione dell'ambiente per la configurazione..." && \
-    conda activate ${CONDA_ENV_NAME} && \
-    echo "INFO: Trovato percorso di sistema: ${SYSTEM_SITE_PACKAGES}" && \
-    echo "INFO: Collegamento del percorso di sistema all'ambiente Conda..." && \
-    conda env config vars set PYTHONPATH=${SYSTEM_SITE_PACKAGES} && \
-    conda clean --all -f -y
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION}
