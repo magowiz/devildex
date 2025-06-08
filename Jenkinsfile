@@ -279,11 +279,11 @@ pipeline {
                                 """
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for requirements export..."
-            . "${venvPath}/bin/activate"
+                                    . "${venvPath}/bin/activate"
 
-            echo "[INFO] Exporting requirements.txt using globally installed poetry..."
-            # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
-            poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
+                                    # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
+                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
 
                                 """
                                 sh """
@@ -293,30 +293,26 @@ pipeline {
                                 """
                              sh """
                                 echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
-            . "${venvPath}/bin/activate"
+                                . "${venvPath}/bin/activate"
 
-            echo "[INFO] Installing requirements.txt using venv pip..."
-            # Con --system-site-packages, pip dovrebbe vedere wxPython (se listato in requirements.txt)
-            # come già soddisfatto dalla versione di sistema e non tentare di compilarlo/reinstallarlo,
-            # specialmente su arm64 dove PIP_FIND_LINKS non fornirà un wheel.
-            # Su amd64, PIP_FIND_LINKS potrebbe comunque fornire un wheel che pip potrebbe preferire.
-            pip install -r requirements.txt
+                                echo "[INFO] Installing requirements.txt using venv pip..."
+                                pip install -r requirements.txt
 
-            echo "[INFO] Installing cx_Freeze using venv pip..."
-            pip install cx_Freeze
+                                echo "[INFO] Installing cx_Freeze using venv pip..."
+                                pip install cx_Freeze
                             """
                             sh """
                                 echo '[INFO] Activating Python venv (${venvPath}) for cx_Freeze build...'
-            . "${venvPath}/bin/activate"
+                                . "${venvPath}/bin/activate"
 
-            mkdir -p dist/${env.ARCH}/cxfreeze
+                                mkdir -p dist/${env.ARCH}/cxfreeze
 
-            echo '[INFO] Running cx_Freeze build using venv python...'
-            python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
+                                echo '[INFO] Running cx_Freeze build using venv python...'
+                                python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
 
-            echo '[INFO] Moving built artifact...'
-            mv ./dist/${env.ARCH}/cxfreeze/main \\
-               "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+                                echo '[INFO] Moving built artifact...'
+                                mv ./dist/${env.ARCH}/cxfreeze/main \\
+                                   "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
                             """
                             }
                         }
