@@ -1,4 +1,5 @@
 """docstrings pdoc3 module."""
+
 import contextlib
 import importlib
 import logging
@@ -16,13 +17,12 @@ import pdoc  # type: ignore[import-untyped]
 from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command,
-    install_project_and_dependencies_in_venv,
-)
+    execute_command, install_project_and_dependencies_in_venv)
 
 GIT_FULL_PATH = shutil.which("git")
 
 logger = logging.getLogger(__name__)
+
 
 class GitCloneFailedUnknownReasonError(RuntimeError):
     """Exception raised when a git clone operation fails for an unknown reason.
@@ -41,6 +41,8 @@ class GitCloneFailedUnknownReasonError(RuntimeError):
             "Unknown reason if no specific git error was logged."
         )
         super().__init__(message)
+
+
 class DocStringsSrc:
     """Implement class that build documentation from docstrings."""
 
@@ -176,7 +178,6 @@ class DocStringsSrc:
 
             logger.debug("Successfully imported module '%s'.", module_name)
 
-
         except ImportError as e:
             logger.debug(
                 "Import of '%s' failed within pdoc.import_module with: %s",
@@ -187,8 +188,7 @@ class DocStringsSrc:
 
         except Exception:
             logger.exception(
-                "Unexpected error during pdoc.import_module for '%s'",
-                module_name
+                "Unexpected error during pdoc.import_module for '%s'", module_name
             )
             return None, None
         else:
@@ -653,7 +653,7 @@ class DocStringsSrc:
             except OSError:
                 logger.exception(
                     "DocStringsSrc: Error cleaning up pdoc output directory %s",
-                    pdoc_base_output_dir
+                    pdoc_base_output_dir,
                 )
         return False
 

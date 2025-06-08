@@ -1,9 +1,11 @@
 """scanner utils module."""
+
 import logging
 import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
 
 def read_file_content_robustly(filepath: Path) -> str | None:
     """Read file content in a robust way, handling common errors.

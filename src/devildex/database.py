@@ -8,24 +8,13 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Optional, cast
 
-from sqlalchemy import (
-    Column,
-    DateTime,
-    Engine,
-    Executable,
-    ForeignKey,
-    Integer,
-    Result,
-    String,
-    Table,
-    Text,
-    UniqueConstraint,
-    create_engine,
-    select,
-)
+from sqlalchemy import (Column, DateTime, Engine, Executable, ForeignKey,
+                        Integer, Result, String, Table, Text, UniqueConstraint,
+                        create_engine, select)
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
-from sqlalchemy.orm import declarative_base, relationship, selectinload, sessionmaker
+from sqlalchemy.orm import (declarative_base, relationship, selectinload,
+                            sessionmaker)
 
 from devildex.app_paths import AppPaths
 
@@ -396,6 +385,7 @@ def get_session() -> Generator[SQLAlchemySession, None, None]:
     with DatabaseManager.get_session() as db_session:
         yield db_session
 
+
 def _ensure_package_info(
     session: SQLAlchemySession,
     package_name: str,
@@ -448,9 +438,7 @@ def _ensure_docset(
             package_info=pkg_info,  # Link to pkg_info
         )
         session.add(docset)
-        logger.info(
-            f"New Docset '{package_name} v{package_version}' added and linked."
-        )
+        logger.info(f"New Docset '{package_name} v{package_version}' added and linked.")
     return docset
 
 
@@ -469,9 +457,7 @@ def _ensure_registered_project_and_association(
         return None
 
     registered_project_obj = (
-        session.query(RegisteredProject)
-        .filter_by(project_name=project_name)
-        .first()
+        session.query(RegisteredProject).filter_by(project_name=project_name).first()
     )
     if not registered_project_obj:
         logger.info(f"RegisteredProject '{project_name}' not found, creating...")
@@ -542,9 +528,7 @@ def ensure_package_entities_exist(  # noqa: PLR0913
 
     """
     with get_session() as session:
-        pkg_info = _ensure_package_info(
-            session, package_name, summary, project_urls
-        )
+        pkg_info = _ensure_package_info(session, package_name, summary, project_urls)
         docset = _ensure_docset(
             session,
             pkg_info,

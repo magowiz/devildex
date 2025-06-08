@@ -3,7 +3,8 @@
 import logging
 from pathlib import Path
 
-from pip_requirements_parser import RequirementsFile  # type: ignore[import-untyped]
+from pip_requirements_parser import \
+    RequirementsFile  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,7 @@ def _process_requirements_obj(
         )
         if invalid_line_content_count > 0:
             logger.warning(
-                "Found %s rows not valid "
-                "(discarded dal parser) in '%s'.",
+                "Found %s rows not valid " "(discarded dal parser) in '%s'.",
                 invalid_line_content_count,
                 file_path_for_logging,
             )

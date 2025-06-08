@@ -1,4 +1,5 @@
 """readthedocs api module."""
+
 import logging
 import os
 from json import JSONDecodeError
@@ -9,6 +10,8 @@ import requests
 FILENAME_MAX_LENGTH = 60
 
 logger = logging.getLogger(__name__)
+
+
 def _fetch_available_versions(project_slug: str) -> list[dict] | None:
     """Fetch ALL available versions for a project from RTD API, handling pagination."""
     all_versions_results = []
@@ -87,8 +90,9 @@ def _choose_best_version(
     for version in available_versions:
         if version.get("active") is True and version.get("built") is True:
             chosen_slug = version.get("slug")
-            logger.info("Chosen first available (active and built) version:"
-                        f" '{chosen_slug}'")
+            logger.info(
+                "Chosen first available (active and built) version:" f" '{chosen_slug}'"
+            )
             return chosen_slug
 
     logger.error("\nError: No active and built version found among all available ones.")
@@ -129,8 +133,9 @@ def _fetch_version_details(project_slug: str, version_slug: str) -> dict | None:
 def _get_download_url(version_details: dict, download_format: str) -> str | None:
     """Extract download URL for specific format from version details."""
     if not version_details:
-        logger.error("Error: version details not available to search for "
-                     "the download URL.")
+        logger.error(
+            "Error: version details not available to search for " "the download URL."
+        )
         return None
 
     download_urls = version_details.get("downloads")
@@ -220,8 +225,6 @@ def _download_file(file_url: str, local_filepath: Path) -> bool | None:
                 return None
 
 
-
-
 def download_readthedocs_prebuilt_robust(
     project_name: str,
     download_folder: str = "rtd_prebuilt_downloads",
@@ -252,7 +255,8 @@ def download_readthedocs_prebuilt_robust(
         return None
 
     chosen_version_slug = _choose_best_version(
-        available_versions, list(preferred_versions))
+        available_versions, list(preferred_versions)
+    )
     if not chosen_version_slug:
         return None
 

@@ -10,6 +10,7 @@ from typing import Any, ClassVar, Optional
 import wx
 import wx.grid
 import wx.html2
+from wx import Size
 
 from devildex import database
 from devildex.app_paths import AppPaths
@@ -481,7 +482,7 @@ class DevilDexApp(wx.App):
         self.panel.Layout()
 
     def _init_buttons(self) -> None:
-        original_icon_size = (16, 16)
+        original_icon_size = Size(16, 16)
         scaled_icon_height = 8
         self.arrow_down_bmp = wx.ArtProvider.GetBitmap(
             wx.ART_GO_DOWN, wx.ART_BUTTON, original_icon_size
@@ -532,13 +533,16 @@ class DevilDexApp(wx.App):
         scanned_project_packages: Optional[list[PackageDetails]] = (
             self.core.scan_project()
         )
+        scan_successful = bool(scanned_project_packages)
         is_fallback_data = False
         if scanned_project_packages:
             logger.info(scanned_project_packages)
         else:
             scanned_project_packages = PACKAGES_DATA_AS_DETAILS
             is_fallback_data = True
-        self.main_frame = wx.Frame(parent=None, title=window_title, size=(1280, 900))
+        self.main_frame = wx.Frame(
+            parent=None, title=window_title, size=Size(1280, 900)
+        )
         self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
             scanned_project_packages, is_fallback_data
         )
@@ -560,6 +564,9 @@ class DevilDexApp(wx.App):
         self.Bind(wx.EVT_TIMER, self._on_animation_tick, self.animation_timer)
         self._setup_initial_view()
         self.main_frame.Show(True)
+        if scan_successful:
+            active_project_file_path = self.core.app_paths.active_project_file
+            active_project_file_path.unlink(missing_ok=True)
         return True
 
     def _set_button_states_for_selected_row(
@@ -713,8 +720,6 @@ class DevilDexApp(wx.App):
             event.Skip()
             return
 
-        packages_for_db_init, is_fallback = self._determine_initial_packages_for_view()
-
         if not self.core:
             logger.error(
                 "GUI: Core non disponibile prima di bootstrap_database_and_load_data."
@@ -727,8 +732,8 @@ class DevilDexApp(wx.App):
             f"core for DB query: {self.core.registered_project_name}"
         )
         self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
-            initial_package_source=packages_for_db_init,
-            is_fallback_data=is_fallback,
+            initial_package_source=[],
+            is_fallback_data=False,
         )
 
         self._update_ui_after_data_load()

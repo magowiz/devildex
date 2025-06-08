@@ -1,4 +1,5 @@
 """companion to get basic data from project."""
+
 import argparse
 import datetime
 import json
@@ -7,24 +8,21 @@ import os
 import sys
 from pathlib import Path
 
-from devildex.app_paths import AppPaths
+from devildex.app_paths import (
+    ACTIVE_PROJECT_REGISTRATION_FILENAME,
+    ACTIVE_PROJECT_REGISTRY_SUBDIR,
+    AppPaths,
+)
 from devildex.info import APPLICATION_NAME
 from devildex.info import VERSION as DEVILDEX_VERSION
 
 logging.basicConfig(
     level=logging.INFO,
     format=f"[%(asctime)s - {APPLICATION_NAME.upper()}_REGISTRAR - "
-           "%(levelname)s] %(message)s",
+    "%(levelname)s] %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
-
-
-
-REGISTRY_SUBDIR = "registered_projects"
-FIXED_REGISTRATION_FILE_NAME = "current_registered_project.json"
-
-
 
 
 def get_active_user_venv_info() -> tuple[Path | None, str | None]:
@@ -99,11 +97,10 @@ def register_project(project_path_str: str | None) -> None:
     project_name = project_path.name
 
     app_paths_manager = AppPaths()
-    registry_dir = app_paths_manager.user_data_dir / REGISTRY_SUBDIR
+    registry_dir = app_paths_manager.user_data_dir / ACTIVE_PROJECT_REGISTRY_SUBDIR
     registry_dir.mkdir(parents=True, exist_ok=True)
 
-    registration_file = registry_dir / FIXED_REGISTRATION_FILE_NAME
-
+    registration_file = registry_dir / ACTIVE_PROJECT_REGISTRATION_FILENAME
 
     project_data = {
         "project_name": project_name,

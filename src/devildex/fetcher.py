@@ -14,15 +14,16 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
 class MissingPackageInfoError(ValueError):
     """Custom exception for when package name or version is missing."""
 
     def __init__(self) -> None:
         """Construct a MissingPackageInfoError object."""
         super().__init__(
-            "Nome del package e version devono essere "
-            "forniti in package_info_dict."
+            "Nome del package e version devono essere " "forniti in package_info_dict."
         )
+
 
 class PackageSourceFetcher:
     """Class that implement fetching mechanisms for packages."""
@@ -200,6 +201,7 @@ class PackageSourceFetcher:
             return False
         else:
             return True
+
     @staticmethod
     def _extract_tar_safely(
         archive_filename: pathlib.Path, temp_extract_dir_abs: Path
@@ -532,8 +534,9 @@ class PackageSourceFetcher:
 
             return tag_checkout_and_copy_successful
         finally:
-            if ((cloned_successfully and temp_clone_dir.exists()) or
-                    (not cloned_successfully and temp_clone_dir.exists())):
+            if (cloned_successfully and temp_clone_dir.exists()) or (
+                not cloned_successfully and temp_clone_dir.exists()
+            ):
                 shutil.rmtree(temp_clone_dir)
 
     def _fetch_from_vcs_tag(self, repo_url: str) -> bool:

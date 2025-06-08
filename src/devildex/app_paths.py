@@ -85,6 +85,25 @@ class AppPaths:
         """Path per il file delle settings del application."""
         return self.user_config_dir / "settings.toml"
 
+    @property
+    def active_project_registry_dir(self) -> Path:
+        """Directory where the active project registration file is stored."""
+        path = self.user_data_dir / ACTIVE_PROJECT_REGISTRY_SUBDIR
+        # La creazione di questa directory è responsabilità di chi scrive il file (es. companion)
+        # ma assicurarsi che esista quando si legge può essere utile in alcuni contesti.
+        # Per ora, lasciamo che sia il companion a crearla.
+        return path
+
+    @property
+    def active_project_file(self) -> Path:
+        """Path per il file che segnala il progetto attivo all'avvio.
+
+        Questo file viene creato dal processo "companion", letto da DevilDexCore
+        e poi cancellato da DevilDexApp.OnInit se processato con successo.
+        """
+        # Ora usa le costanti definite in questo modulo e la directory corretta
+        return self.active_project_registry_dir / ACTIVE_PROJECT_REGISTRATION_FILENAME
+
 
 if __name__ == "__main__":
     paths = AppPaths()
@@ -95,3 +114,5 @@ if __name__ == "__main__":
     logger.info(f"Docsets Base Directory:  {paths.docsets_base_dir}")
     logger.info(f"Database Path:           {paths.database_path}")
     logger.info(f"Settings File Path:      {paths.settings_file_path}")
+ACTIVE_PROJECT_REGISTRY_SUBDIR = "registered_projects"
+ACTIVE_PROJECT_REGISTRATION_FILENAME = "current_registered_project.json"

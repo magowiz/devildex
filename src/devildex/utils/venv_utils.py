@@ -25,7 +25,7 @@ def _install_base_packages_in_venv(
         "install",
         "--disable-pip-version-check",
         "--no-python-version-warning",
-        *packages_list
+        *packages_list,
     ]
     _, _, ret_code = execute_command(
         install_cmd, f"Install/Verify base packages for {project_name}"
@@ -250,8 +250,9 @@ def _log_command_failure_details(
     if stderr_text and stderr_text.strip():
         stripped_stderr = stderr_text.strip()
         logger.debug("Stderr:\n%s", stripped_stderr)
-        logger.debug(f"DEBUG STDERR from FAILED command '{description}':"
-                     f"\n{stripped_stderr}")
+        logger.debug(
+            f"DEBUG STDERR from FAILED command '{description}':" f"\n{stripped_stderr}"
+        )
 
 
 def _log_command_success_details(
@@ -335,8 +336,6 @@ def execute_command(
 
         ret_code = _handle_command_result(process, command, description, cwd_str)
 
-
-
     except FileNotFoundError:
         logger.exception(
             "Command not found: %s. Ensure it's in PATH or provide full path.",
@@ -354,16 +353,14 @@ def execute_command(
         return "", f"Permission denied: {e}", -3
 
     except OSError as e:
-        logger.exception(
-            "OS error during command execution '%s'", command_str_for_log
-        )
+        logger.exception("OS error during command execution '%s'", command_str_for_log)
 
         return "", f"OS error: {e}", -4
 
     except ValueError as e:
         logger.exception(
             "Value error during command setup or execution for '%s'",
-            command_str_for_log
+            command_str_for_log,
         )
 
         return "", f"Value error: {e}", -5

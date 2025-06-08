@@ -1,4 +1,5 @@
 """documentation orchestrator module."""
+
 import logging
 from pathlib import Path
 from typing import Optional
@@ -7,11 +8,14 @@ from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
 from devildex.models import PackageDetails
-from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
-from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
+from devildex.readthedocs.readthedocs_api import \
+    download_readthedocs_prebuilt_robust
+from devildex.readthedocs.readthedocs_src import \
+    download_readthedocs_source_and_build
 from devildex.scanner.scanner import has_docstrings, is_sphinx_project
 
 logger = logging.getLogger(__name__)
+
 
 class Orchestrator:
     """Implement orchestrator class which detects doc type and perform right action."""
@@ -53,8 +57,9 @@ class Orchestrator:
         if self.package_details.initial_source_path:
             candidate = Path(self.package_details.initial_source_path)
             if candidate.exists() and candidate.is_dir():
-                logger.info("Orchestrator: Using provided initial_source_path:"
-                            f" {candidate}")
+                logger.info(
+                    "Orchestrator: Using provided initial_source_path:" f" {candidate}"
+                )
                 source_path_candidate = candidate.resolve()
             else:
                 logger.warning(
@@ -210,8 +215,9 @@ class Orchestrator:
             return
         if self._effective_source_path:
             scan_path_str = str(self._effective_source_path)
-            logger.info("Orchestrator: Scanning effective source path: "
-                        f"{scan_path_str}")
+            logger.info(
+                "Orchestrator: Scanning effective source path: " f"{scan_path_str}"
+            )
 
             if is_sphinx_project(scan_path_str):
                 self.detected_doc_type = "sphinx"

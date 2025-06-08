@@ -7,12 +7,10 @@ import re
 import shutil
 from pathlib import Path
 
-from devildex.scanner_utils.scanner_utils import (
-    check_content_patterns,
-    count_matching_strings,
-    find_config_files,
-    read_file_content_robustly,
-)
+from devildex.scanner_utils.scanner_utils import (check_content_patterns,
+                                                  count_matching_strings,
+                                                  find_config_files,
+                                                  read_file_content_robustly)
 
 logger = logging.getLogger(__name__)
 SCORE_MAX = 3
@@ -35,12 +33,14 @@ def is_sphinx_project(project_path: str) -> bool:
     conf_file_paths = find_config_files(potential_conf_dirs, "conf.py")
 
     if not conf_file_paths:
-        logger.error("  ❌ No 'conf.py' file found in standard positions for"
-                     f" {project_path}")
+        logger.error(
+            "  ❌ No 'conf.py' file found in standard positions for" f" {project_path}"
+        )
         return False
 
-    logger.info(f"  🔍 Found {len(conf_file_paths)} file 'conf.py'. "
-                "Analyzing content...")
+    logger.info(
+        f"  🔍 Found {len(conf_file_paths)} file 'conf.py'. " "Analyzing content..."
+    )
 
     for conf_file_path in conf_file_paths:
         logger.info(f"    Analyzing: {conf_file_path}")
@@ -160,8 +160,9 @@ html_theme = 'alabaster'
     if is_sphinx_project(str(test_sphinx_dir_docs)):
         logger.info(f"Result finale: {test_sphinx_dir_docs.name} è un project Sphinx.")
     else:
-        logger.error(f"final Result: {test_sphinx_dir_docs.name} "
-                     "is NOT a Sphinx project.")
+        logger.error(
+            f"final Result: {test_sphinx_dir_docs.name} " "is NOT a Sphinx project."
+        )
 
     logger.info("\n--- Test su una directory che NON è Sphinx (simulation) ---")
 
@@ -183,13 +184,15 @@ LOG_LEVEL = "INFO"
     if is_sphinx_project(str(test_non_sphinx_dir)):
         logger.info(f"final Result: {test_non_sphinx_dir.name} è un project Sphinx.")
     else:
-        logger.error(f"final Result: {test_non_sphinx_dir.name} "
-                     "NON è un project Sphinx.")
+        logger.error(
+            f"final Result: {test_non_sphinx_dir.name} " "NON è un project Sphinx."
+        )
 
     logger.info(f"\nScanning {test_non_sphinx_dir_no_conf.name}/:")
     if is_sphinx_project(str(test_non_sphinx_dir_no_conf)):
-        logger.info(f"final Result: {test_non_sphinx_dir_no_conf.name} "
-                    "è un project Sphinx.")
+        logger.info(
+            f"final Result: {test_non_sphinx_dir_no_conf.name} " "è un project Sphinx."
+        )
     else:
         logger.error(
             f"final Result: {test_non_sphinx_dir_no_conf.name} NON è un project Sphinx."
@@ -215,10 +218,10 @@ def _check_file_for_docstrings(file_path: Path) -> bool:
         if ast.get_docstring(tree):
             return True
         for node in ast.walk(tree):
-            if (isinstance(node,
-                           (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-                    and ast.get_docstring(node)):
-                    return True
+            if isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ) and ast.get_docstring(node):
+                return True
     except SyntaxError:
         logging.exception("syntax error exception")
     except Exception:  # pylint: disable=broad-except

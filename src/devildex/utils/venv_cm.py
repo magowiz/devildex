@@ -10,15 +10,16 @@ from types import TracebackType
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
 class VenvInitializationError(RuntimeError):
     """Custom exception for errors during venv initialization."""
 
     def __init__(self, project_name: str) -> None:
         """Construct VenvInitializationError."""
         self.project_name = project_name
-        super().__init__(
-            f"Venv for {self.project_name} was not properly initialized."
-        )
+        super().__init__(f"Venv for {self.project_name} was not properly initialized.")
+
 
 class IsolatedVenvManager:
     """A context manager to create and manage a Python virtual environment."""
@@ -62,8 +63,9 @@ class IsolatedVenvManager:
                 f"DEBUG VENV_CM: VENV CREATED. Python executable: "
                 f"{self.python_executable}"
             )
-            logger.debug("DEBUG VENV_CM: VENV CREATED. Pip executable:"
-                         f" {self.pip_executable}")
+            logger.debug(
+                "DEBUG VENV_CM: VENV CREATED. Pip executable:" f" {self.pip_executable}"
+            )
             logger.debug(
                 "DEBUG VENV_CM: VENV CREATED. Does python exist? %s",
                 Path(self.python_executable).exists(),
@@ -80,9 +82,7 @@ class IsolatedVenvManager:
             self._upgrade_pip()
 
         except subprocess.CalledProcessError:
-            logger.exception(
-                "Failed to create venv for '%s'", self.project_name
-            )
+            logger.exception("Failed to create venv for '%s'", self.project_name)
             self._cleanup()
             raise
         except Exception:
@@ -127,7 +127,7 @@ class IsolatedVenvManager:
             except OSError:
                 logger.exception(
                     "Error removing venv '%s'. Manual cleanup might be needed.",
-                    self.venv_path
+                    self.venv_path,
                 )
         self.venv_path = None
         self.python_executable = None
