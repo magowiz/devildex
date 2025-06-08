@@ -7,6 +7,7 @@ import threading
 from pathlib import Path
 from typing import Any, ClassVar, Optional
 
+import pyjokes
 import wx
 import wx.grid
 import wx.html2
@@ -588,12 +589,43 @@ class DevilDexApp(wx.App):
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
         # --- TEST LOG ALL'AVVIO ---
+        self.init_log()
+
         logger.info("******************************************************")
         logger.info("**** GuiLogHandler TEST: Messaggio di avvio! ****")
         logger.info("******************************************************")
         # --- FINE TEST LOG ---
-
+        self.jokes_timer = wx.Timer(self)  # 'self' (l'app) è l'owner del timer
+        # Collega l'evento del timer al metodo on_jokes_timer
+        self.Bind(wx.EVT_TIMER, self.on_jokes_timer_event, self.jokes_timer)
+        # Avvia il timer per scattare ogni 3000 millisecondi (3 secondi)
+        self.jokes_timer.Start(3000)
         return True
+
+    def on_jokes_timer_event(self, event: wx.TimerEvent):
+        """Chiamato dal jokes_timer ogni 3 secondi."""
+        # 'logger' qui è l'istanza del logger a livello di modulo
+        # definita all'inizio del file: logger = logging.getLogger(__name__)
+        self.jokes(logger)  # Chiama il tuo metodo jokes
+        if event:  # Buona pratica gestire l'evento
+            event.Skip()
+
+    def init_log(self):
+        self.gui_log_handler = GuiLogHandler(self.log_text_ctrl)
+        devildex_package_logger = logging.getLogger("devildex")
+        if self.gui_log_handler not in devildex_package_logger.handlers:
+            devildex_package_logger.addHandler(self.gui_log_handler)
+        devildex_package_logger.setLevel(logging.INFO)
+
+        for h in logger.handlers[:]:
+            logger.removeHandler(h)
+        logger.addHandler(self.gui_log_handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+
+    def jokes(self, logger):
+        joke = pyjokes.get_joke(language="it", category="neutral")
+        logger.info(joke)
 
     def _set_button_states_for_selected_row(
         self, package_data: dict, action_buttons: dict
