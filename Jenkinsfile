@@ -396,7 +396,6 @@ pipeline {
                                             cat requirements.txt
                                         else
                                             echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for Nuitka. Build will likely fail."
-                                            echo "[ERROR] Ensure 'python3-wxgtk4.0' is correctly installed via apt and compatible with Python ${PYTHON_VERSION}."
                                             exit 1
                                         fi
                                     fi
