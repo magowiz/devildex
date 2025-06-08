@@ -122,7 +122,7 @@ pipeline {
                         retry(2)
                     }
                     steps {
-                        sh 'echo "Variabile SHELL: $SHELL"'
+                        sh 'echo "Variable SHELL: $SHELL"'
                         sh 'mkdir -p ~/.bazaar/'
                         withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
                         {
@@ -281,7 +281,6 @@ pipeline {
                                     . "${venvPath}/bin/activate"
 
                                     echo "[INFO] Exporting requirements.txt using globally installed poetry..."
-                                    # Poetry è installato globalmente nel Dockerfile e dovrebbe essere nel PATH
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
 
                                 """
@@ -480,8 +479,6 @@ pipeline {
                                     python -m pip install pyoxidizer
 
                                     echo "[INFO] Running PyOxidizer build using venv..."
-                                    # mkdir -p dist/${env.ARCH}/pyoxidizer # Questa riga potrebbe non essere necessaria
-                                                                        # se PyOxidizer crea la sua struttura in 'build/'
                                     pyoxidizer build
                                 """
 
@@ -579,7 +576,7 @@ pipeline {
                                     python -m pip install pyinstaller
 
                                     echo "[INFO] Running PyInstaller build using venv..."
-                                    mkdir -p dist/${env.ARCH}/pyinstaller // Assicura che la directory esista
+                                    mkdir -p dist/${env.ARCH}/pyinstaller
                                     pyinstaller --noconfirm --onefile --console src/devildex/main.py \
                                         --distpath dist/${env.ARCH}/pyinstaller \
                                         --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}
