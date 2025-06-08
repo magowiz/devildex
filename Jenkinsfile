@@ -427,7 +427,7 @@ pipeline {
                         }
                         agent {
                             dockerfile {
-                                filename 'Dockerfile' // Questo usa l'immagine ubuntu:plucky
+                                filename 'Dockerfile'
                                 args '-u root'
                                 label "${ARCHITECTURE}"
                                 reuseNode true
@@ -438,14 +438,12 @@ pipeline {
                             PIP_INDEX_URL = "${env.IP_INDEX_URL}"
                             PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                             DISABLE_ERRORS = true
-                            // PYTHON_VERSION è implicitamente 3.13 dal Dockerfile
                         }
                         steps {
                             script {
                                 echo "--- Start Build PyOxidizer for ${env.ARCH} ---"
                                 def venvPath = "/tmp/devildex_pyoxidizer_venv_${env.ARCH}"
 
-                                // Blocco 1: Crea il venv, attivalo e verifica
                                 sh """
                                     echo "[INFO] Preparing Python virtual environment (venv) for PyOxidizer..."
                                     rm -rf "${venvPath}"
@@ -466,7 +464,6 @@ pipeline {
                                     python -m pip install --upgrade pip
                                 """
 
-                                // Blocco 2: Esporta requirements.txt e gestisci wxPython per arm64
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for PyOxidizer requirements management..."
                                     . "${venvPath}/bin/activate"
@@ -475,24 +472,10 @@ pipeline {
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
 
                                     if [ "${env.ARCH}" = "arm64" ]; then
-                                        echo "[INFO] ARM64: Verifying system wxPython importability in venv for PyOxidizer..."
-                                        if python -c "import wx; print(f'[DEBUG] ARM64: wxPython (system) version in venv: {wx.version()}; Path: {wx.__file__}')"; then
-                                            echo "[INFO] ARM64: Successfully imported wxPython from system path into venv for PyOxidizer."
-                                            echo "[INFO] ARM64: Content of requirements.txt BEFORE wxPython removal (PyOxidizer):"
-                                            cat requirements.txt
-                                            echo "[INFO] ARM64: Removing wxPython from requirements.txt to rely on system version for PyOxidizer."
                                             sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
-                                            echo "[INFO] ARM64: Content of requirements.txt AFTER wxPython removal (PyOxidizer):"
-                                            cat requirements.txt
-                                        else
-                                            echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for PyOxidizer. Build will likely fail."
-                                            echo "[ERROR] Ensure 'python3-wxgtk4.0' is correctly installed via apt and compatible with system Python."
-                                            exit 1
-                                        fi
                                     fi
                                 """
 
-                                // Blocco 3: Installa dipendenze, PyOxidizer ed esegui la build
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for PyOxidizer build..."
                                     . "${venvPath}/bin/activate"
@@ -509,10 +492,7 @@ pipeline {
                                     pyoxidizer build
                                 """
 
-                                // Blocco 4: Gestione artefatti (invariato, ma ora opera dopo i passaggi nel venv)
                                 def sourceFolder = '-unknown-linux-gnu/debug/install/'
-                                // Assicurati che PYTHON_VERSION sia disponibile o definito se usato qui,
-                                // ma il path di PyOxidizer di solito non dipende dalla versione Python nel nome della cartella build
                                 def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
                                 if (env.ARCH == 'arm64') {
                                     sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
@@ -546,7 +526,7 @@ pipeline {
                         }
                         agent {
                             dockerfile {
-                                filename 'Dockerfile' // Questo usa l'immagine ubuntu:plucky
+                                filename 'Dockerfile'
                                 args '-u root'
                                 label "${ARCHITECTURE}"
                                 reuseNode true
@@ -563,7 +543,6 @@ pipeline {
                                 echo "--- Start Build PyInstaller for ${env.ARCH} ---"
                                 def venvPath = "/tmp/devildex_pyinstaller_venv_${env.ARCH}"
 
-                                // Blocco 1: Crea il venv, attivalo e verifica
                                 sh """
                                     echo "[INFO] Preparing Python virtual environment (venv) for PyInstaller..."
                                     rm -rf "${venvPath}"
@@ -592,24 +571,10 @@ pipeline {
                                     poetry export -f requirements.txt --output requirements.txt --without-hashes
 
                                     if [ "${env.ARCH}" = "arm64" ]; then
-                                        echo "[INFO] ARM64: Verifying system wxPython importability in venv for PyInstaller..."
-                                        if python -c "import wx; print(f'[DEBUG] ARM64: wxPython (system) version in venv: {wx.version()}; Path: {wx.__file__}')"; then
-                                            echo "[INFO] ARM64: Successfully imported wxPython from system path into venv for PyInstaller."
-                                            echo "[INFO] ARM64: Content of requirements.txt BEFORE wxPython removal (PyInstaller):"
-                                            cat requirements.txt
-                                            echo "[INFO] ARM64: Removing wxPython from requirements.txt to rely on system version for PyInstaller."
                                             sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
-                                            echo "[INFO] ARM64: Content of requirements.txt AFTER wxPython removal (PyInstaller):"
-                                            cat requirements.txt
-                                        else
-                                            echo "[ERROR] ARM64: FAILED to import wxPython from system path into venv for PyInstaller. Build will likely fail."
-                                            echo "[ERROR] Ensure 'python3-wxgtk4.0' is correctly installed via apt and compatible with system Python."
-                                            exit 1
-                                        fi
                                     fi
                                 """
 
-                                // Blocco 3: Installa dipendenze, PyInstaller ed esegui la build
                                 sh """
                                     echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller build..."
                                     . "${venvPath}/bin/activate"
@@ -626,7 +591,6 @@ pipeline {
                                         --distpath dist/${env.ARCH}/pyinstaller \
                                         --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}
                                 """
-                                // Blocco 4: Sposta l'artefatto (separato per chiarezza, ma potrebbe essere unito al precedente)
                                 sh """
                                     echo "[INFO] Moving PyInstaller artifact..."
                                     mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \
