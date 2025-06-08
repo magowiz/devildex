@@ -874,7 +874,7 @@ class DevilDexApp(wx.App):
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.TE_RICH2,
         )
         self.log_text_ctrl.SetMinSize(wx.Size(-1, 100))
-        initial_bmp_to_use = wx.NullBitmap
+        initial_bmp_to_use = wx.BitmapBundle.FromBitmap(wx.NullBitmap)
         if self.arrow_down_bmp_scaled and self.arrow_down_bmp_scaled.IsOk():
             initial_bmp_to_use = self.arrow_down_bmp_scaled
         elif self.arrow_down_bmp and self.arrow_down_bmp.IsOk():
@@ -1322,7 +1322,9 @@ class DevilDexApp(wx.App):
             self.custom_highlighted_row_index is not None
             and self.custom_highlighted_row_index != clicked_row
         ):
-            self.data_grid.SetRowAttr(self.custom_highlighted_row_index, None)
+            self.data_grid.SetRowAttr(
+                self.custom_highlighted_row_index, wx.grid.GridCellAttr()
+            )
             if self.data_grid.GetNumberRows() > self.custom_highlighted_row_index:
                 self.data_grid.SetCellValue(
                     self.custom_highlighted_row_index, self.indicator_col_idx, ""
@@ -1351,14 +1353,17 @@ class DevilDexApp(wx.App):
         )
         home_icon = wx.ArtProvider.GetBitmap(wx.ART_GO_HOME, wx.ART_BUTTON, icon_size)
         self.back_button = wx.Button(panel)
+        back_bundle = wx.BitmapBundle(back_icon)
+        forward_bundle = wx.BitmapBundle(forward_icon)
+        home_bundle = wx.BitmapBundle(home_icon)
         self.forward_button = wx.Button(panel)
         self.home_button = wx.Button(panel)
         if back_icon.IsOk():
-            self.back_button.SetBitmap(back_icon, wx.LEFT)
+            self.back_button.SetBitmap(back_bundle, wx.LEFT)
         if forward_icon.IsOk():
-            self.forward_button.SetBitmap(forward_icon, wx.LEFT)
+            self.forward_button.SetBitmap(forward_bundle, wx.LEFT)
         if home_icon.IsOk():
-            self.home_button.SetBitmap(home_icon, wx.LEFT)
+            self.home_button.SetBitmap(home_bundle, wx.LEFT)
         self.back_button.Bind(wx.EVT_BUTTON, self.on_back)
         self.forward_button.Bind(wx.EVT_BUTTON, self.on_forward)
         self.home_button.Bind(wx.EVT_BUTTON, self.go_home)
@@ -1409,9 +1414,10 @@ class DevilDexApp(wx.App):
             target_bmp_to_use = self.arrow_up_bmp_scaled
         elif self.arrow_up_bmp and self.arrow_up_bmp.IsOk():
             target_bmp_to_use = self.arrow_up_bmp
+        target_bmp_bundle = wx.BitmapBundle.FromBitmap(target_bmp_to_use)
 
         if isinstance(self.log_toggle_button, wx.BitmapButton):
-            self.log_toggle_button.SetBitmap(target_bmp_to_use)
+            self.log_toggle_button.SetBitmap(target_bmp_bundle)
 
     def update_grid(self) -> None:
         """Populate self.data_grid con i dati."""
