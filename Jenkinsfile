@@ -614,7 +614,7 @@ pipeline {
                 }
             }
         }
-
+        stages {
         stage('Smoke Test and Archive Executables') {
             matrix {
                 axes {
@@ -725,6 +725,7 @@ pipeline {
                         archiveArtifacts artifacts: 'smoke_test_logs/**/*.log', allowEmptyArchive: true
                         cleanWs()
                     }
+                }
                 }
             }
         }
