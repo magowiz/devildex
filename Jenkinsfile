@@ -682,6 +682,7 @@ pipeline {
                             }
                             sh "mkdir -p ${smokeResultsDir}"
                             sh "mkdir -p smoke_test_logs"
+                            sh "touch ${smokeResultsDir}/smoke_test_status.txt"
                             sh "chmod +x ${smokeTestScriptPath}"
 
                             sh "${smokeTestScriptPath} \"${artifactFileName}\" \"${smokeResultsDir}\""
@@ -695,9 +696,11 @@ pipeline {
                                     smokeTestPassed = true
                                 }
                             } else {
-                                smokeTestStatus = "ERROR_NO_STATUS_FILE"
-                                testLogContent += "\\nError: smoke_test_status.txt not found in ${smokeResultsDir}."
-                            }
+                            echo "Smoke test FAILED for ${artifactFileName}. Archiving to 'failed/' directory."
+                            sh "mkdir -p failed"
+                            sh "mv '${artifactFileName}' failed/"
+                            archiveArtifacts artifacts: "failed/${artifactFileName}", allowEmptyArchive: true
+                        }
 
                         } catch (Exception e) {
                             echo "Smoke test Jenkins script execution failed for ${artifactFileName}: ${e.toString()}"
@@ -708,15 +711,20 @@ pipeline {
 
                         writeFile file: detailedLogFile, text: testLogContent
                         reportLine += smokeTestStatus
-                        writeFile file: "overall_smoke_test_report.txt", text: "${reportLine}\n", append: true
+                        def individualReportFragmentFile = "report_fragment_${BUILD_TOOL}_${ARCH}.txt"
+                        writeFile file: individualReportFragmentFile, text: "${reportLine}\n"
+                        stash name: "smoke_report_fragment_${BUILD_TOOL}_${ARCH}", includes: individualReportFragmentFile
+
 
                         if (smokeTestPassed) {
                             echo "Smoke test PASSED for ${artifactFileName}. Archiving to standard location (root of artifacts)."
                             archiveArtifacts artifacts: artifactFileName, allowEmptyArchive: true
                         } else {
                             echo "Smoke test FAILED for ${artifactFileName}. Archiving to 'failed/' directory."
-                            archiveArtifacts artifacts: artifactFileName, targetDir: "failed", allowEmptyArchive: true
-                        }
+                            sh "mkdir -p failed"
+                            sh "mv '${artifactFileName}' failed/"
+                            archiveArtifacts artifacts: "failed/${artifactFileName}", allowEmptyArchive: true
+                            }
 
                         sh "rm -f ${artifactFileName}"
                         sh "rm -rf ${smokeResultsDir}"
@@ -724,12 +732,53 @@ pipeline {
                 }
                 post {
                     always {
-                        archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
                         archiveArtifacts artifacts: 'smoke_test_logs/**/*.log', allowEmptyArchive: true
                         cleanWs()
                     }
                     }
                 }
+                }
+            }
+        }
+                stage('Aggregate Smoke Test Reports') {
+            agent any
+            steps {
+                script {
+                    def finalReportContent = new StringBuilder()
+                    def tools = ['cx_Freeze', 'Nuitka', 'PyOxidizer', 'PyInstaller']
+                    def architectures = ['amd64', 'arm64']
+
+                    tools.each { tool ->
+                        architectures.each { arch ->
+                            def stashName = "smoke_report_fragment_${tool}_${arch}"
+                            def fragmentFileName = "report_fragment_${tool}_${arch}.txt"
+                            try {
+                                echo "Attempting to unstash ${stashName}"
+                                unstash name: stashName
+                                if (fileExists(fragmentFileName)) {
+                                    finalReportContent.append(readFile(fragmentFileName))
+                                    sh "rm -f ${fragmentFileName}"
+                                } else {
+                                    echo "Warning: Unstashed fragment file ${fragmentFileName} not found for ${stashName}."
+                                    finalReportContent.append("Tool: ${tool}, Arch: ${arch}, Artifact: N/A, Status: FRAGMENT_NOT_FOUND\n")
+                                }
+                            } catch (Exception e) {
+                                echo "Warning: Could not unstash or process report fragment for ${tool} on ${arch}. Stash: ${stashName}. Error: ${e.getMessage()}"
+                                finalReportContent.append("Tool: ${tool}, Arch: ${arch}, Artifact: N/A, Status: ERROR_RETRIEVING_FRAGMENT\n")
+                            }
+                        }
+                    }
+
+                    if (finalReportContent.length() > 0) {
+                        writeFile file: "overall_smoke_test_report.txt", text: finalReportContent.toString()
+                    } else {
+                        writeFile file: "overall_smoke_test_report.txt", text: "No smoke test report fragments were found or successfully processed."
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
                 }
             }
         }
