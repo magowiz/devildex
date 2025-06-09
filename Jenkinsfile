@@ -628,7 +628,7 @@ pipeline {
                     }
                 }
                 stages {
-                stage("Run Smoke Test for ${TOOL} on ${ARCHITECTURE}") { // 'stage' (singolare) INTERNO
+                stage("Run Smoke Test") {
 
                 agent {
                     dockerfile {
