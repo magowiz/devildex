@@ -405,8 +405,10 @@ pipeline {
                         }
                         post {
                             success {
-                                def artifactName = "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
-                                stash name: "executable-Nuitka-${env.ARCH}", includes: artifactName
+                                script {
+                                    def artifactName = "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
+                                    stash name: "executable-Nuitka-${env.ARCH}", includes: artifactName
+                                }
                                 cleanWs()
                             }
                             failure {
@@ -502,8 +504,10 @@ pipeline {
                         }
                         post {
                             success {
-                                def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
-                                stash name: "executable-PyOxidizer-${env.ARCH}", includes: artifactName
+                                script {
+                                    def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
+                                    stash name: "executable-PyOxidizer-${env.ARCH}", includes: artifactName
+                                }
                                 cleanWs()
                             }
                             failure {
@@ -595,10 +599,10 @@ pipeline {
                         }
                         post {
                             success {
-                                def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin"
-
-                                stash name: "executable-PyInstaller-${env.ARCH}", includes: artifactName
-
+                                script {
+                                    def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin"
+                                    stash name: "executable-PyInstaller-${env.ARCH}", includes: artifactName
+                                }
                                 cleanWs()
                             }
                             failure {
