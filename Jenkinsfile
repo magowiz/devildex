@@ -614,7 +614,7 @@ pipeline {
                 }
             }
         }
-        stages {
+
         stage('Smoke Test and Archive Executables') {
             matrix {
                 axes {
@@ -627,6 +627,9 @@ pipeline {
                         values 'cx_Freeze', 'Nuitka', 'PyOxidizer', 'PyInstaller'
                     }
                 }
+                stages {
+                stage("Run Smoke Test for ${TOOL} on ${ARCHITECTURE}") { // 'stage' (singolare) INTERNO
+
                 agent {
                     dockerfile {
                         filename 'Dockerfile'
@@ -724,6 +727,7 @@ pipeline {
                         archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
                         archiveArtifacts artifacts: 'smoke_test_logs/**/*.log', allowEmptyArchive: true
                         cleanWs()
+                    }
                     }
                 }
                 }
