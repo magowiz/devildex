@@ -2,7 +2,7 @@
 
 from cx_Freeze import Executable, setup
 
-build_options = {"packages": [], "excludes": []}
+build_options = {"packages": ["encodings"], "excludes": []}
 
 BASE = "gui"
 
