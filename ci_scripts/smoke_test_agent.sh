@@ -22,7 +22,7 @@ chmod +x "${EXECUTABLE_PATH}"
 
 echo "Starting executable with xvfb-run..." >> "${LOG_FILE}"
 echo "Command: xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24' \"${EXECUTABLE_PATH}\"" >> "${LOG_FILE}"
-xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24' "${EXECUTABLE_PATH}" >> "${LOG_FILE}" 2>&1 &
+xvfb-run --auto-servernum --server-args='-screen 0 1024x768x24' "./${EXECUTABLE_PATH}" >> "${LOG_FILE}" 2>&1 &
 PID=$!
 echo "Process started with PID: ${PID}" >> "${LOG_FILE}"
 
