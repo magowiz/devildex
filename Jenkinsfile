@@ -143,7 +143,7 @@ pipeline {
                             sh 'sed -i /^packaging/d requirements-test.txt'
                             sh 'sed -i /^typing_extensions/d requirements.txt'
                             pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
-                                   skipMarkers: '')
+                                   skipMarkers: 'focus')
                             script {
                                 def exists = fileExists 'core'
                                 if (exists) {
@@ -316,7 +316,8 @@ pipeline {
                         }
                         post {
                             success {
-                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+                                def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+                                stash name: "executable-cx_Freeze-${env.ARCH}", includes: artifactName
                                 cleanWs()
                             }
                             failure {
@@ -402,7 +403,8 @@ pipeline {
                         }
                         post {
                             success {
-                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
+                                def artifactName = "${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
+                                stash name: "executable-Nuitka-${env.ARCH}", includes: artifactName
                                 cleanWs()
                             }
                             failure {
@@ -498,8 +500,8 @@ pipeline {
                         }
                         post {
                             success {
-                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin",
-                                                 fingerprint: true
+                                def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
+                                stash name: "executable-PyOxidizer-${env.ARCH}", includes: artifactName
                                 cleanWs()
                             }
                             failure {
@@ -591,7 +593,10 @@ pipeline {
                         }
                         post {
                             success {
-                                archiveArtifacts artifacts: "${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin"
+                                def artifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin"
+
+                                stash name: "executable-PyInstaller-${env.ARCH}", includes: artifactName
+
                                 cleanWs()
                             }
                             failure {
@@ -599,6 +604,120 @@ pipeline {
                                 cleanWs()
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        stage('Smoke Test and Archive Executables') {
+            matrix {
+                axes {
+                    axis {
+                        name 'ARCHITECTURE'
+                        values 'amd64', 'arm64'
+                    }
+                    axis {
+                        name 'TOOL'
+                        values 'cx_Freeze', 'Nuitka', 'PyOxidizer', 'PyInstaller'
+                    }
+                }
+                agent {
+                    dockerfile {
+                        filename 'Dockerfile'
+                        dir 'ci_dockerfiles/smoke_runner'
+                        label "${ARCHITECTURE}"
+                        reuseNode true
+                    }
+                }
+                environment {
+                    ARCH = "${ARCHITECTURE}"
+                    BUILD_TOOL = "${TOOL}"
+                    STASHED_EXECUTABLE_NAME_PATTERN = "executable-${TOOL}-${ARCH}"
+                }
+                steps {
+                    script {
+                        def artifactFileName
+                        switch (BUILD_TOOL) {
+                            case 'cx_Freeze':
+                                artifactFileName = "${PROJECT_NAME}_${VERSION}-${ARCH}-cx.bin"
+                                break
+                            case 'Nuitka':
+                                artifactFileName = "${PROJECT_NAME}_${VERSION}-host_${ARCH}-lin-nui.bin"
+                                break
+                            case 'PyOxidizer':
+                                artifactFileName = "${PROJECT_NAME}_${VERSION}-${ARCH}-oxi.bin"
+                                break
+                            case 'PyInstaller':
+                                artifactFileName = "${PROJECT_NAME}_${VERSION}-${ARCH}-pyi.bin"
+                                break
+                            default:
+                                error("Unknown build tool for smoke test: ${BUILD_TOOL}")
+                                return
+                        }
+
+                        def smokeTestPassed = false
+                        def testLogContent = "Smoke test log for ${artifactFileName} (${BUILD_TOOL}, ${ARCH}):\n"
+                        def smokeTestStatus = "UNKNOWN"
+                        def reportLine = "Tool: ${BUILD_TOOL}, Arch: ${ARCH}, Artifact: ${artifactFileName}, Status: "
+                        def workspace = pwd()
+                        def smokeResultsDir = "${workspace}/smoke_results_${BUILD_TOOL}_${ARCH}"
+                        def detailedLogFile = "smoke_test_logs/${BUILD_TOOL}-${ARCH}-${artifactFileName}.log"
+                        def smokeTestScriptPath = "ci_scripts/smoke_test_agent.sh" // Assicurati che questo script esista
+
+                        try {
+                            echo "Attempting to unstash ${STASHED_EXECUTABLE_NAME_PATTERN} (expected file: ${artifactFileName})"
+                            unstash name: STASHED_EXECUTABLE_NAME_PATTERN
+
+                            if (!fileExists(artifactFileName)) {
+                                error("Stashed artifact ${artifactFileName} not found after unstash for ${STASHED_EXECUTABLE_NAME_PATTERN}.")
+                            }
+                            sh "mkdir -p ${smokeResultsDir}"
+                            sh "mkdir -p smoke_test_logs"
+                            sh "chmod +x ${smokeTestScriptPath}"
+
+                            sh "${smokeTestScriptPath} \"${artifactFileName}\" \"${smokeResultsDir}\""
+
+                            if (fileExists("${smokeResultsDir}/smoke_test_status.txt")) {
+                                smokeTestStatus = readFile("${smokeResultsDir}/smoke_test_status.txt").trim()
+                                if (fileExists("${smokeResultsDir}/smoke_test_run.log")) {
+                                   testLogContent += readFile("${smokeResultsDir}/smoke_test_run.log")
+                                }
+                                if (smokeTestStatus.startsWith("PASS")) {
+                                    smokeTestPassed = true
+                                }
+                            } else {
+                                smokeTestStatus = "ERROR_NO_STATUS_FILE"
+                                testLogContent += "\\nError: smoke_test_status.txt not found in ${smokeResultsDir}."
+                            }
+
+                        } catch (Exception e) {
+                            echo "Smoke test Jenkins script execution failed for ${artifactFileName}: ${e.toString()}"
+                            testLogContent += "\\nJenkins-level Exception: ${e.toString()}"
+                            smokeTestStatus = "JENKINS_ERROR"
+                            smokeTestPassed = false
+                        }
+
+                        writeFile file: detailedLogFile, text: testLogContent
+                        reportLine += smokeTestStatus
+                        writeFile file: "overall_smoke_test_report.txt", text: "${reportLine}\n", append: true
+
+                        if (smokeTestPassed) {
+                            echo "Smoke test PASSED for ${artifactFileName}. Archiving to standard location (root of artifacts)."
+                            archiveArtifacts artifacts: artifactFileName, allowEmptyArchive: true
+                        } else {
+                            echo "Smoke test FAILED for ${artifactFileName}. Archiving to 'failed/' directory."
+                            archiveArtifacts artifacts: artifactFileName, targetDir: "failed", allowEmptyArchive: true
+                        }
+
+                        sh "rm -f ${artifactFileName}"
+                        sh "rm -rf ${smokeResultsDir}"
+                    }
+                }
+                post {
+                    always {
+                        archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
+                        archiveArtifacts artifacts: 'smoke_test_logs/**/*.log', allowEmptyArchive: true
+                        cleanWs()
                     }
                 }
             }
