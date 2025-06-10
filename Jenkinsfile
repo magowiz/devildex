@@ -143,7 +143,7 @@ pipeline {
                             sh 'sed -i /^packaging/d requirements-test.txt'
                             sh 'sed -i /^typing_extensions/d requirements.txt'
                             pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
-                                   skipMarkers: 'focus')
+                                   skipMarkers: '')
                             script {
                                 def exists = fileExists 'core'
                                 if (exists) {
@@ -671,7 +671,7 @@ pipeline {
                         def workspace = pwd()
                         def smokeResultsDir = "${workspace}/smoke_results_${BUILD_TOOL}_${ARCH}"
                         def detailedLogFile = "smoke_test_logs/${BUILD_TOOL}-${ARCH}-${artifactFileName}.log"
-                        def smokeTestScriptPath = "ci_scripts/smoke_test_agent.sh" // Assicurati che questo script esista
+                        def smokeTestScriptPath = "ci_scripts/smoke_test_agent.sh"
 
                         try {
                             echo "Attempting to unstash ${STASHED_EXECUTABLE_NAME_PATTERN} (expected file: ${artifactFileName})"
