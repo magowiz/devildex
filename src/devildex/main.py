@@ -1029,7 +1029,7 @@ class DevilDexApp(wx.App):
             self.bottom_splitter_panel.Show(True)
             if self.log_text_ctrl:
                 self.log_text_ctrl.Show(True)
-            self.bottom_splitter_panel.Layout()  # <--- AGGIUNGI QUESTO
+            self.bottom_splitter_panel.Layout()
         else:
             self.splitter.Initialize(self.top_splitter_panel)
             self.top_splitter_panel.Show(True)
@@ -1067,7 +1067,7 @@ class DevilDexApp(wx.App):
             if self.log_text_ctrl:
                 self.log_text_ctrl.Show(True)
             self.splitter.SetSashPosition(self.last_sash_position, redraw=True)
-            self.bottom_splitter_panel.Layout()  # <--- AGGIUNGI QUESTO
+            self.bottom_splitter_panel.Layout()
         else:
             if self.splitter.IsSplit():
                 self.last_sash_position = self.splitter.GetSashPosition()

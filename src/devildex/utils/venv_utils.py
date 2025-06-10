@@ -241,10 +241,10 @@ def _prepare_command_env(
 
 
 def _log_command_failure_details(
-    description: str, returncode: int, stdout_text: str | None, stderr_text: str | None
+    description: str, return_code: int, stdout_text: str | None, stderr_text: str | None
 ) -> None:
     """Log details and prints debug info for a failed command."""
-    logger.warning("%s failed. Return code: %s", description, returncode)
+    logger.warning("%s failed. Return code: %s", description, return_code)
     if stdout_text and stdout_text.strip():
         logger.debug("Stdout:\n%s", stdout_text.strip())
     if stderr_text and stderr_text.strip():

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_active_user_venv_info() -> tuple[Path | None, str | None]:
-    """Determine the venv path and Python executable using the VIRTUAL_ENV environment variable.
+    """Determine venv path and Python exe using the VIRTUAL_ENV environment variable.
 
     Returns:
         tuple[Path | None, str | None]: (active_user_venv_path,
@@ -78,7 +78,8 @@ def register_project(project_path_str: str | None) -> None:
     if not active_python_executable:
         logger.error(
             f"Operation cancelled: VIRTUAL_ENV '{active_venv_path}'"
-            " detected, but unable to determine the correct Python executable within it. "
+            " detected, but unable to determine the correct Python "
+            "executable within it. "
             "Check the structure of your virtual environment."
         )
         return

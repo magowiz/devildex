@@ -1,4 +1,5 @@
 """test docstrings."""
+
 import logging
 from pathlib import Path
 from typing import Any
@@ -64,9 +65,7 @@ def manage_test_output_directory(
     all'interno dello spazio temporaneo di un test specifico.
     """
     test_specific_doc_output_dir = tmp_path / "doc_gen_output"
-    test_specific_doc_output_dir.mkdir(
-        parents=True, exist_ok=True
-    )  # Assicuriamoci che sia creata
+    test_specific_doc_output_dir.mkdir(parents=True, exist_ok=True)
 
     return test_specific_doc_output_dir
 
@@ -123,8 +122,9 @@ def test_documentation_generation_for_package(
     assert (
         len(html_files) > 0
     ), f"No file HTML trovato in: {final_project_version_docs_dir}"
-    logger.info(f"Found {len(html_files)} file HTML in "
-                f"{final_project_version_docs_dir}.")
+    logger.info(
+        f"Found {len(html_files)} file HTML in " f"{final_project_version_docs_dir}."
+    )
 
     if expected_entry_point:
         entry_point_file = final_project_version_docs_dir / expected_entry_point

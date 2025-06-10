@@ -4,6 +4,7 @@ from typing import Optional
 
 import wx
 import wx.grid
+from wx import Size
 
 
 class MyFrame(wx.Frame):
@@ -11,7 +12,7 @@ class MyFrame(wx.Frame):
 
     def __init__(self, parent: Optional[wx.Window], title: str) -> None:
         """MyFrame constructor."""
-        super().__init__(parent, title=title, size=(400, 300))
+        super().__init__(parent, title=title, size=Size(400, 300))
 
         panel = wx.Panel(self)
         self.grid = wx.grid.Grid(panel)

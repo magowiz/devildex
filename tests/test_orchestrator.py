@@ -61,12 +61,10 @@ PACKAGES_TO_TEST = [
             "version": "1.0.0",
             "project_urls": {
                 "Source Code": "https://github.com/psf/black.git",
-                "Documentation":
-                    "https://this-rtd-project-should-not-exist.readthedocs.io/",
+                "Documentation": "https://this-rtd-project-should-not-exist.readthedocs.io/",
             },
             "vcs_url": "https://github.com/psf/black.git",
-            "rtd_url":
-                "https://this-rtd-project-should-not-exist.readthedocs.io/",
+            "rtd_url": "https://this-rtd-project-should-not-exist.readthedocs.io/",
         },
         "repo_url_for_clone": "https://github.com/psf/black.git",
         "expected_preferred_type": "sphinx",
@@ -279,17 +277,16 @@ def test_orchestrator_documentation_retrieval(
         assert len(html_files) > 0, "No HTML files found in output for "
         f"{package_details_for_test.name} at {output_docs_root_path}"
     else:
-        assert (
-            operation_result is False
-        ), (
+        assert operation_result is False, (
             "Expected grab_build_doc to result in False for "
             f"{package_details_for_test.name} due to "
-            f"expect_success=False. Got: {operation_result} (type: {type(operation_result)})"
+            f"expect_success=False. Got: {operation_result} "
+            f"(type: {type(operation_result)})"
         )
         f"expected failure, but got type {type(operation_result)}"
         f" with value: {operation_result}"
-        assert (
-            output_docs_root_path_str is False
-        ), ("Expected grab_build_doc to return None for "
-            f"{package_details_for_test.name} ")
+        assert output_docs_root_path_str is False, (
+            "Expected grab_build_doc to return None for "
+            f"{package_details_for_test.name} "
+        )
         f"due to expected failure, but got: {output_docs_root_path_str}"

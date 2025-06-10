@@ -13,7 +13,9 @@ from devildex.info import PROJECT_ROOT
 from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -249,13 +251,13 @@ def build_sphinx_docs(
             ]
             sphinx_process_env = {"LC_ALL": "C"}
             logger.info("Executing Sphinx: %s", " ".join(sphinx_command_list))
-            stdout, stderr, returncode = execute_command(
+            stdout, stderr, return_code = execute_command(
                 sphinx_command_list,
                 f"Sphinx build for {sctx.project_slug}",
                 cwd=sctx.source_dir,
                 env=sphinx_process_env,
             )
-            if returncode == 0:
+            if return_code == 0:
                 logger.info(
                     "Sphinx build for %s completed successfully.", sctx.project_slug
                 )
@@ -264,7 +266,7 @@ def build_sphinx_docs(
                 logger.error(
                     "Sphinx build for %s failed. Return code: %s",
                     sctx.project_slug,
-                    returncode,
+                    return_code,
                 )
                 logger.error("Sphinx stdout:\n%s", stdout)
                 logger.error("Sphinx stderr:\n%s", stderr)
@@ -334,15 +336,15 @@ def run_clone(
     repo_url: str,
     initial_default_branch: str,
     clone_dir_path: Path,
-    bzr: bool,  # Rinominato default_branch
-) -> str | None:  # MODIFICATO: firma di ritorno più semplice
+    bzr: bool,
+) -> str | None:
     """Perform a clone for matching vcs. Tries initial_default_branch then fallbacks."""
     logger.info(
-        f"Attempting to clone repository (initial branch '{initial_default_branch}') into: {clone_dir_path}"
+        "Attempting to clone repository (initial branch "
+        f"'{initial_default_branch}') into: {clone_dir_path}"
     )
 
     branches_to_attempt = [initial_default_branch, "master", "main"]
-    # Filtra None/stringhe vuote e rimuovi duplicati, mantenendo l'ordine
     unique_branches_to_attempt = []
     for b_candidate in branches_to_attempt:
         if (
@@ -377,8 +379,8 @@ def run_clone(
             logger.info(f"Cleaning up existing clone directory: {clone_dir_path}")
             try:
                 shutil.rmtree(clone_dir_path)
-            except OSError as e_rm:
-                logger.exception(f"Failed to clean up {clone_dir_path}: {e_rm}")
+            except OSError:
+                logger.exception(f"Failed to clean up {clone_dir_path}")
                 return None
 
         if not bzr:
@@ -405,7 +407,7 @@ def run_clone(
             logger.debug(f"Executing clone command: {' '.join(cmd_list)}")
             result = subprocess.run(
                 cmd_list,
-                check=False,  # Controlliamo il returncode manualmente
+                check=False,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -415,35 +417,33 @@ def run_clone(
                     f"Successfully cloned branch '{branch_to_try}' "
                     f"from {repo_url} into {clone_dir_path}"
                 )
-                return branch_to_try  # SUCCESSO: restituisce il nome del branch clonato
+                return branch_to_try
             else:
                 logger.warning(
                     f"Failed to clone branch '{branch_to_try}'. "
-                    f"Return code: {result.returncode}. Stdout: {result.stdout.strip()} Stderr: {result.stderr.strip()}"
+                    f"Return code: {result.returncode}. "
+                    f"Stdout: {result.stdout.strip()} "
+                    f"Stderr: {result.stderr.strip()}"
                 )
-        except (
-            FileNotFoundError
-        ):  # Se il comando VCS non viene trovato durante subprocess.run
+        except FileNotFoundError:
             logger.exception(
-                f"Error: VCS command ({vcs_command_path}) not found during subprocess.run."
+                f"Error: VCS command ({vcs_command_path}) not found "
+                "during subprocess.run."
             )
-            return None  # Fallimento critico
-        except Exception as e_subproc:  # Altri errori imprevisti da subprocess
+            return None
+        except Exception:
             logger.exception(
-                f"Unexpected error during subprocess run for clone of branch {branch_to_try}: {e_subproc}"
+                "Unexpected error during subprocess run for clone "
+                f"of branch {branch_to_try}"
             )
-            # Continua con il prossimo tentativo di branch se questo fallisce per un'eccezione imprevista
 
     logger.error(f"Failed to clone any of the attempted branches for {repo_url}.")
-    return None  # Tutti i tentativi sono falliti
-
-
-# ... (codice precedente di run_clone) ...
+    return None
 
 
 def _attempt_clone_and_process_result(
     repo_url: str,
-    initial_default_branch: str,  # Branch suggerito dall'API o default
+    initial_default_branch: str,
     clone_dir_path: Path,
     bzr: bool,
     project_slug: str,
@@ -580,9 +580,9 @@ def download_readthedocs_source_and_build(
     project_name: str,
     project_url: str,
     existing_clone_path: str | None = None,
-    output_dir: Path | None = None,  # Questa è la base_output_dir dell'Orchestrator
+    output_dir: Path | None = None,
     clone_base_dir_override: Path | None = None,
-) -> str | bool:  # MODIFICATO: tipo di ritorno per i test
+) -> str | bool:
     """Scarica sorgenti da RTD, clona, isola sorgenti doc, esegue Sphinx e pulisce."""
     logger.info(
         "\n--- Starting RTD Source Download, Build & Cleanup for: %s ---", project_name
@@ -592,34 +592,25 @@ def download_readthedocs_source_and_build(
     project_slug = project_name
     if not project_slug:
         logger.error("Project slug (project_name) cannot be empty.")
-        return False  # MODIFICATO: ritorno per fallimento
+        return False
 
     logger.info("Project Slug: %s", project_slug)
-    # Semplificazione: assumiamo che project_url sia l'URL API o che _extract_repo_url_branch lo gestisca
-    # In uno scenario reale, potresti voler distinguere meglio gli URL RTD dagli URL VCS diretti
     api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
-    # Se project_url è già un URL VCS, questa chiamata a _extract_repo_url_branch potrebbe fallire
-    # o restituire valori non ottimali. Per ora, manteniamo la logica esistente.
     logger.info("Fetching project details from API: %s", api_project_detail_url)
 
     initial_default_branch, repo_url = _extract_repo_url_branch(
         api_project_detail_url, project_slug
     )
 
-    # Determina la directory base per i cloni
     actual_clone_base_dir: Path
     if clone_base_dir_override:
         actual_clone_base_dir = clone_base_dir_override
     else:
-        actual_clone_base_dir = (
-            PROJECT_ROOT / "rtd_source_clones_temp"
-        )  # O un percorso temporaneo migliore
+        actual_clone_base_dir = PROJECT_ROOT / "rtd_source_clones_temp"
     actual_clone_base_dir.mkdir(parents=True, exist_ok=True)
 
-    bzr = bool(repo_url and repo_url.startswith("lp:"))  # repo_url può essere None qui
-    clone_dir_path: (
-        Path | None
-    )  # Può essere None se _handle_repository_cloning fallisce
+    bzr = bool(repo_url and repo_url.startswith("lp:"))
+    clone_dir_path: Path | None
     effective_branch: str
 
     if existing_clone_path:
@@ -627,14 +618,12 @@ def download_readthedocs_source_and_build(
         if existing_clone_path_obj.exists() and existing_clone_path_obj.is_dir():
             logger.info("Using existing clone path: %s", existing_clone_path)
             clone_dir_path = existing_clone_path_obj
-            effective_branch = (
-                initial_default_branch  # O cerca di determinarlo dal clone
-            )
+            effective_branch = initial_default_branch
         else:
             logger.warning(
-                f"Provided existing_clone_path '{existing_clone_path}' not found or not a dir. Attempting clone."
+                f"Provided existing_clone_path '{existing_clone_path}'"
+                " not found or not a dir. Attempting clone."
             )
-            # Se il percorso esistente non è valido, procedi con la clonazione normale
             clone_dir_path, effective_branch = _handle_repository_cloning(
                 repo_url,
                 initial_default_branch,
@@ -647,28 +636,24 @@ def download_readthedocs_source_and_build(
             repo_url, initial_default_branch, actual_clone_base_dir, project_slug, bzr
         )
 
-    if (
-        not clone_dir_path
-    ):  # Se _handle_repository_cloning restituisce None per il percorso
+    if not clone_dir_path:
         logger.error(
             "Failed to obtain a valid repository clone for '%s'.", project_slug
         )
-        # Opzionale: pulisci actual_clone_base_dir se è vuota e creata da noi
         if (
             not clone_base_dir_override
             and actual_clone_base_dir.exists()
             and not any(actual_clone_base_dir.iterdir())
         ):
             _cleanup(actual_clone_base_dir)
-        return False  # MODIFICATO: ritorno per fallimento
+        return False
 
     project_context = ProjectContext(slug=project_slug, version=effective_branch)
 
-    # Determina la directory di output finale per la build Sphinx
     final_sphinx_build_destination: Path
-    if output_dir:  # Questa è la base_output_dir dell'Orchestrator
+    if output_dir:
         final_sphinx_build_destination = output_dir
-    else:  # Fallback se non fornita (non dovrebbe accadere se chiamato dall'Orchestrator)
+    else:
         final_sphinx_build_destination = (
             PROJECT_ROOT / "devildex_sphinx_build_output_default"
         )
@@ -680,12 +665,11 @@ def download_readthedocs_source_and_build(
     isolated_source_path_str, built_docs_path_str = _process_documentation(
         clone_dir_path,
         project_context,
-        base_output_dir=final_sphinx_build_destination,  # Passa la directory base corretta
+        base_output_dir=final_sphinx_build_destination,
     )
 
     if not existing_clone_path:
-        _cleanup(clone_dir_path)  # _cleanup accetta Path | None
-        # Opzionale: pulisci actual_clone_base_dir se è vuota dopo aver pulito il clone specifico
+        _cleanup(clone_dir_path)
         if (
             not clone_base_dir_override
             and actual_clone_base_dir.exists()
@@ -724,27 +708,25 @@ def _download_handle_result(
         o None se la build è fallita o i percorsi essenziali mancavano.
 
     """
-    if (
-        built_docs_path_str
-    ):  # La build ha avuto successo e ha prodotto un percorso di output
-        # built_docs_path_str è già una stringa, Path() è corretto per risolverlo
+    if built_docs_path_str:
         final_built_path = Path(built_docs_path_str).resolve()
         logger.info(f"\nBuild HTML Sphinx generata in:    {final_built_path}")
-        if isolated_source_path_str:  # Logga anche il percorso sorgente se disponibile
+        if isolated_source_path_str:
             logger.info(
-                f"Sorgente isolata della documentazione era in: {isolated_source_path_str}"
+                "Sorgente isolata della documentazione era in: "
+                f"{isolated_source_path_str}"
             )
-        return str(final_built_path)  # Successo, restituisce la stringa del percorso
+        return str(final_built_path)
 
-    # Se built_docs_path_str è None, la build è fallita
     logger.error("Build Sphinx fallita.")
     if isolated_source_path_str:
         logger.info(
-            f"Sorgente isolata della documentazione era in: {isolated_source_path_str}, ma la build è fallita."
+            "Sorgente isolata della documentazione era in: "
+            f"{isolated_source_path_str}, ma la build è fallita."
         )
     else:
         logger.error("Anche l'isolamento della sorgente è fallito.")
-    return None  # Fallimento
+    return None
 
 
 if __name__ == "__main__":

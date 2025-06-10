@@ -17,7 +17,9 @@ import pdoc  # type: ignore[import-untyped]
 from devildex import info
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    execute_command, install_project_and_dependencies_in_venv)
+    execute_command,
+    install_project_and_dependencies_in_venv,
+)
 
 GIT_FULL_PATH = shutil.which("git")
 
@@ -105,12 +107,12 @@ class DocStringsSrc:
             "install",
             missing_module_name,
         ]
-        stdout, stderr, returncode = execute_command(
+        stdout, stderr, return_code = execute_command(
             pip_install_cmd,
             f"Install missing dependency {missing_module_name}",
         )
 
-        if returncode == 0:
+        if return_code == 0:
             logger.info(
                 "Installation of '%s' completed successfully.", missing_module_name
             )
@@ -121,7 +123,7 @@ class DocStringsSrc:
         logger.error(
             "Failed installation of '%s' (return code %d).",
             missing_module_name,
-            returncode,
+            return_code,
         )
         logger.debug("Install stdout:\n%s", stdout)
         logger.debug("Install stderr:\n%s", stderr)
@@ -518,13 +520,13 @@ class DocStringsSrc:
         )
 
         logger.info("DocStringsSrc: Executing pdoc: %s", " ".join(pdoc_command))
-        stdout, stderr, returncode = execute_command(
+        stdout, stderr, return_code = execute_command(
             pdoc_command,
             f"pdoc HTML generation for {project_name}",
             cwd=source_project_path,
         )
 
-        if returncode == 0:
+        if return_code == 0:
             logger.info(
                 "DocStringsSrc: pdoc build for %s completed successfully.", project_name
             )
@@ -533,7 +535,7 @@ class DocStringsSrc:
         logger.error(
             "DocStringsSrc: pdoc build for %s FAILED. Return code: %s",
             project_name,
-            returncode,
+            return_code,
         )
         logger.debug("pdoc stdout:\n%s", stdout)
         logger.debug("pdoc stderr:\n%s", stderr)

@@ -49,8 +49,8 @@ def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
 
     """
     try:
-        with open(pyproject_path, encoding="utf-8") as f:
-            return toml.load(f)
+        with open(pyproject_path, encoding="utf-8") as f_toml:
+            return toml.load(f_toml)
     except FileNotFoundError:
         logger.warning(f"File pyproject.toml non trovato a: {pyproject_path}")
         return None
@@ -89,19 +89,20 @@ def _parse_requirement_line(line_content: str, filepath_for_log: str) -> str | N
 
     try:
         req = Requirement(stripped_line)
-        return req.name
     except InvalidRequirement:
         logger.warning(
             f"Warning: Invalid requirement line in {filepath_for_log}: "
             f"'{stripped_line}'"
         )
         return None
+    else:
+        return req.name
 
 
 def _get_explicit_dependencies_from_parsed_pyproject(
     pyproject_data: dict | None,
 ) -> set[str]:
-    """Extracts explicit dependencies from parsed pyproject.toml data.
+    """Extract explicit dependencies from parsed pyproject.toml data.
 
     Prioritizes [project.dependencies] (PEP 621) and then checks
     [tool.poetry.dependencies] and [tool.poetry.group] sections for
@@ -134,9 +135,7 @@ def _get_explicit_dependencies_from_parsed_pyproject(
     tool_data = pyproject_data.get("tool", {})
     poetry_data = tool_data.get("poetry", {})
 
-    if (
-        isinstance(poetry_data, dict) and poetry_data
-    ):  # Solo se la sezione [tool.poetry] esiste ed è un dict
+    if isinstance(poetry_data, dict) and poetry_data:
         logger.info(
             "Reading/adding dependencies from [tool.poetry.dependencies] and groups"
         )
@@ -192,8 +191,8 @@ def get_explicit_package_names_from_requirements(
         return explicit_package_names
 
     try:
-        with open(requirements_filepath, encoding="utf-8") as f:
-            for line in f:
+        with open(requirements_filepath, encoding="utf-8") as f_req:
+            for line in f_req:
                 package_name = _parse_requirement_line(line, requirements_filepath)
                 if package_name:
                     explicit_package_names.add(package_name)
@@ -317,8 +316,8 @@ pylint = "^2.10"
         os.remove(os.path.join(dummy_project_path, "pyproject.toml"))
         os.rmdir(dummy_project_path)
         logger.info("Cleaned up dummy project.")
-    except OSError as e_clean:
-        logger.error(f"Error cleaning up dummy project: {e_clean}")
+    except OSError:
+        logger.exception("Error cleaning up dummy project")
 
     if explicit_names:
         sys.exit(0)

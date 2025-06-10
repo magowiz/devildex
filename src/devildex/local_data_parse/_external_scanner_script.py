@@ -15,7 +15,7 @@ def main() -> None:
         sys.stderr.reconfigure(encoding="utf-8")
 
     package_list = []
-    if len(sys.argv) < 2:
+    if len(sys.argv) < PATHS_LEN:
         logger.debug(
             "DEBUG_HELPER: Error: Output file path not provided as argument.",
         )
@@ -58,13 +58,15 @@ def main() -> None:
             sys.exit(0)
         except OSError as e_io:
             logger.debug(
-                f"DEBUG_HELPER: IOError writing to output file {output_file_path}: {e_io!s}",
+                "DEBUG_HELPER: IOError writing to output file "
+                f"{output_file_path}: {e_io!s}",
             )
             traceback.print_exc(file=sys.stderr)
             sys.exit(3)
         except Exception as e_json:
             logger.debug(
-                f"DEBUG_HELPER: Exception during final JSON dump/file write to {output_file_path}: {type(e_json).__name__}: {e_json!s}"
+                "DEBUG_HELPER: Exception during final JSON dump/file "
+                f"write to {output_file_path}: {type(e_json).__name__}: {e_json!s}"
             )
             traceback.print_exc(file=sys.stderr)
             sys.exit(1)

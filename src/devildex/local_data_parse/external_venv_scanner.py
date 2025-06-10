@@ -90,7 +90,8 @@ class ExternalVenvScanner:
             ) as tmp_file:
                 temp_output_file_path = tmp_file.name
             logger.info(
-                f"Creato file temporaneo per l'output della scansione: {temp_output_file_path}"
+                "Creato file temporaneo per l'output della scansione: "
+                f"{temp_output_file_path}"
             )
             command = [
                 str(self.python_executable_path),
@@ -112,7 +113,8 @@ class ExternalVenvScanner:
             )
             if result.stdout:
                 logger.debug(
-                    f"STDOUT (diagnostica) dello script helper:\n{result.stdout.strip()}"
+                    "STDOUT (diagnostica) dello script "
+                    f"helper:\n{result.stdout.strip()}"
                 )
             if result.stderr:
                 logger.info(
@@ -123,7 +125,8 @@ class ExternalVenvScanner:
 
             if not temp_output_file_path:
                 logger.error(
-                    "Errore interno: temp_output_file_path è None dopo l'esecuzione del subprocess."
+                    "Errore interno: temp_output_file_path è "
+                    "None dopo l'esecuzione del subprocess."
                 )
                 return None
 
@@ -134,7 +137,8 @@ class ExternalVenvScanner:
             ):
                 logger.error(
                     f"Il file di output temporaneo '{temp_output_file_path}' "
-                    "non è stato creato o è vuoto dallo script helper, nonostante l'exit code fosse 0."
+                    "non è stato creato o è vuoto dallo script"
+                    " helper, nonostante l'exit code fosse 0."
                 )
                 return []
 
@@ -143,7 +147,8 @@ class ExternalVenvScanner:
             if not json_output_from_file.strip():
                 logger.info(
                     "Nessun contenuto JSON nel file di output temporaneo "
-                    f"'{temp_output_file_path}' (nessun pacchetto trovato o venv vuoto?)."
+                    f"'{temp_output_file_path}' "
+                    "(nessun pacchetto trovato o venv vuoto?)."
                 )
                 return []
 
@@ -152,7 +157,8 @@ class ExternalVenvScanner:
 
                 if isinstance(data, dict) and "error" in data:
                     logger.error(
-                        f"Lo script helper ha riportato un errore nel file JSON: {data.get('error')}"
+                        "Lo script helper ha riportato un errore "
+                        f"nel file JSON: {data.get('error')}"
                     )
                     if "traceback" in data:
                         logger.error(
@@ -162,11 +168,13 @@ class ExternalVenvScanner:
 
                 if not isinstance(data, list):
                     logger.error(
-                        "Output inatteso (non una lista JSON di pacchetti né un JSON di errore) "
+                        "Output inatteso (non una lista JSON di pacchetti "
+                        "né un JSON di errore) "
                         f"dal file temporaneo '{temp_output_file_path}'."
                     )
                     logger.debug(
-                        f"Contenuto del file (primi 500 caratteri): {json_output_from_file[:500]}..."
+                        "Contenuto del file (primi 500 caratteri):"
+                        f" {json_output_from_file[:500]}..."
                     )
                     return None
 
@@ -174,7 +182,8 @@ class ExternalVenvScanner:
                 for item in data:
                     if not isinstance(item, dict):
                         logger.warning(
-                            f"Elemento non dizionario trovato nei dati JSON dal file: {item}"
+                            "Elemento non dizionario trovato nei "
+                            f"dati JSON dal file: {item}"
                         )
                         continue
                     try:
@@ -191,16 +200,19 @@ class ExternalVenvScanner:
                     f"Scan completed per {self.python_executable_path}. "
                     f"Found {len(package_details_list)} pacchetti leggendo da file."
                 )
-                return package_details_list
 
             except json.JSONDecodeError:
                 logger.exception(
-                    f"Error nel decoding output JSON dal file temporaneo '{temp_output_file_path}'."
+                    "Error nel decoding output JSON dal file "
+                    f"temporaneo '{temp_output_file_path}'."
                 )
                 logger.debug(
-                    f"Contenuto del file non parsable (primi 500 caratteri): {json_output_from_file[:500]}..."
+                    "Contenuto del file non parsable (primi 500 caratteri):"
+                    f" {json_output_from_file[:500]}..."
                 )
                 return None
+            else:
+                return package_details_list
         except subprocess.TimeoutExpired:
             logger.exception(
                 f"Timeout expired durante l'esecuzione dello external script "

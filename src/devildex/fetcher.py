@@ -661,7 +661,7 @@ def main() -> None:
             "version": "2.25.1",
             "project_urls": {"Source Code": "https://github.com/psf/requests"},
         },
-        {"name": "nonexistentpackage", "version": "1.0.0"},
+        {"name": "non_existent_package", "version": "1.0.0"},
         {
             "name": "flask",
             "version": "2.0.1",

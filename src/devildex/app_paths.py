@@ -89,9 +89,6 @@ class AppPaths:
     def active_project_registry_dir(self) -> Path:
         """Directory where the active project registration file is stored."""
         path = self.user_data_dir / ACTIVE_PROJECT_REGISTRY_SUBDIR
-        # La creazione di questa directory è responsabilità di chi scrive il file (es. companion)
-        # ma assicurarsi che esista quando si legge può essere utile in alcuni contesti.
-        # Per ora, lasciamo che sia il companion a crearla.
         return path
 
     @property
@@ -101,7 +98,6 @@ class AppPaths:
         Questo file viene creato dal processo "companion", letto da DevilDexCore
         e poi cancellato da DevilDexApp.OnInit se processato con successo.
         """
-        # Ora usa le costanti definite in questo modulo e la directory corretta
         return self.active_project_registry_dir / ACTIVE_PROJECT_REGISTRATION_FILENAME
 
 

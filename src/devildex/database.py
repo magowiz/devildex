@@ -8,13 +8,24 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Optional, cast
 
-from sqlalchemy import (Column, DateTime, Engine, Executable, ForeignKey,
-                        Integer, Result, String, Table, Text, UniqueConstraint,
-                        create_engine, select)
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Engine,
+    Executable,
+    ForeignKey,
+    Integer,
+    Result,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+    create_engine,
+    select,
+)
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
-from sqlalchemy.orm import (declarative_base, relationship, selectinload,
-                            sessionmaker)
+from sqlalchemy.orm import declarative_base, relationship, selectinload, sessionmaker
 
 from devildex.app_paths import AppPaths
 
