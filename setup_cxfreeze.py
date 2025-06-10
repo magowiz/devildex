@@ -3,7 +3,7 @@
 from cx_Freeze import Executable, setup
 
 build_options = {"packages": ["encodings"], "excludes": []}
-
+zip_include_packages = ["encodings"]
 BASE = "gui"
 
 executables = [Executable("src/devildex/main.py", base=BASE)]
