@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     xvfb \
-    libgl1-mesa-glx \
+    libglx-mesa0 \
     libgtk-3-0 \
     libsm6 \
     libxext6 \
