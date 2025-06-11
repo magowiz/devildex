@@ -356,7 +356,7 @@ pipeline {
                                     rm -rf "${venvPath}"
 
                                     echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
-                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+                                    python -m venv --system-site-packages "${venvPath}"
 
                                     echo "[INFO] Activating Python venv (${venvPath})..."
                                     . "${venvPath}/bin/activate"
@@ -447,7 +447,7 @@ pipeline {
                                     rm -rf "${venvPath}"
 
                                     echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
-                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+                                    python -m venv --system-site-packages "${venvPath}"
 
                                     echo "[INFO] Activating Python venv (${venvPath})..."
                                     . "${venvPath}/bin/activate"
@@ -546,7 +546,7 @@ pipeline {
                                     rm -rf "${venvPath}"
 
                                     echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
-                                    /usr/bin/python3 -m venv --system-site-packages "${venvPath}"
+                                    python -m venv --system-site-packages "${venvPath}"
 
                                     echo "[INFO] Activating Python venv (${venvPath})..."
                                     . "${venvPath}/bin/activate"
