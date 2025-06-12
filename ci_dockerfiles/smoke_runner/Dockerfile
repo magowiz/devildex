@@ -14,6 +14,7 @@ RUN apt-get update && \
     libice6 \
     libdbus-glib-1-2 \
     libnotify4 \
+    libxtst6 \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
