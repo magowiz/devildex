@@ -13,6 +13,7 @@ RUN apt-get update && \
     libfontconfig1 \
     libice6 \
     libdbus-glib-1-2 \
+    libnotify4 \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
