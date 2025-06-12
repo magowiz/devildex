@@ -7,7 +7,6 @@ import threading
 from pathlib import Path
 from typing import Any, ClassVar, Optional
 
-import pyjokes
 import wx
 import wx.grid
 import wx.html2
@@ -352,7 +351,7 @@ class DevilDexCore:
         generation_result = orchestrator.grab_build_doc()
         if isinstance(generation_result, str):
             return True, generation_result
-        elif generation_result is False:
+        elif not generation_result:
             last_op_detail = orchestrator.get_last_operation_result()
             error_msg = f"Failure nella generation del docset per {details.name}."
             if isinstance(last_op_detail, str) and last_op_detail:
@@ -608,14 +607,7 @@ class DevilDexApp(wx.App):
             active_project_file_path.unlink(missing_ok=True)
 
         self.jokes_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.on_jokes_timer_event, self.jokes_timer)
         return True
-
-    def on_jokes_timer_event(self, event: wx.TimerEvent) -> None:
-        """Handle jokes_timer every 3 seconds."""
-        self.jokes(logger)
-        if event:
-            event.Skip()
 
     def init_log(self) -> None:
         """Initialize log."""
@@ -630,12 +622,6 @@ class DevilDexApp(wx.App):
         logger.addHandler(self.gui_log_handler)
         logger.setLevel(logging.INFO)
         logger.propagate = False
-
-    @staticmethod
-    def jokes(my_logger: logging.Logger) -> None:
-        """Log a joke."""
-        joke = pyjokes.get_joke(language="it", category="neutral")
-        my_logger.info(joke)
 
     def _set_button_states_for_selected_row(
         self, package_data: dict, action_buttons: dict
