@@ -217,12 +217,18 @@ def _execute_mkdocs_build_in_venv(  # <<< MODIFIED SIGNATURE
         mkdocs_yml_file=ctx.original_yml_path,  # <<< USING ctx
     )
 
-    with tempfile.TemporaryDirectory(prefix="devildex_mkdocs_theme_") as temp_theme_dir_str:
+    with tempfile.TemporaryDirectory(
+        prefix="devildex_mkdocs_theme_"
+    ) as temp_theme_dir_str:
         temp_theme_dir_path = Path(temp_theme_dir_str)
-        logger.debug(f"Created temporary directory for themed YAML: {temp_theme_dir_path}")
+        logger.debug(
+            f"Created temporary directory for themed YAML: {temp_theme_dir_path}"
+        )
 
         if hasattr(theme_manager, "mkdocs_apply_customizations"):
-            custom_yml_path = theme_manager.mkdocs_apply_customizations(temp_theme_dir_path) # <<< PASS THE PATH
+            custom_yml_path = theme_manager.mkdocs_apply_customizations(
+                temp_theme_dir_path
+            )  # <<< PASS THE PATH
             if custom_yml_path and custom_yml_path.exists():
                 path_to_use_for_mkdocs_yml = custom_yml_path
                 logger.info(f"Using themed mkdocs.yml: {path_to_use_for_mkdocs_yml}")
@@ -250,7 +256,9 @@ def _execute_mkdocs_build_in_venv(  # <<< MODIFIED SIGNATURE
             str(ctx.final_output_dir.resolve()),
             "--clean",
         ]
-        logger.info("Executing MkDocs: " f"{' '.join(mkdocs_command)} in CWD: {build_cwd}")
+        logger.info(
+            "Executing MkDocs: " f"{' '.join(mkdocs_command)} in CWD: {build_cwd}"
+        )
         stdout, stderr, return_code = execute_command(
             mkdocs_command,
             f"MkDocs build for {ctx.project_slug}",
@@ -258,19 +266,15 @@ def _execute_mkdocs_build_in_venv(  # <<< MODIFIED SIGNATURE
         )
 
         if return_code == 0:
-            logger.info(
-                f"MkDocs build for {ctx.project_slug} completed successfully."
-            )
+            logger.info(f"MkDocs build for {ctx.project_slug} completed successfully.")
             return True
 
         logger.error(
-            f"MkDocs build for {ctx.project_slug}"
-            f" failed. RC: {return_code}"
+            f"MkDocs build for {ctx.project_slug}" f" failed. RC: {return_code}"
         )
         logger.error(f"MkDocs stdout:\n{stdout}")
         logger.error(f"MkDocs stderr:\n{stderr}")
         return False
-
 
 
 def process_mkdocs_source_and_build(
