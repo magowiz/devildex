@@ -13,21 +13,19 @@ def _process_requirements_obj(
     file_path_for_logging: Path,
     lines_to_explicitly_remove: set[str],
 ) -> list[str]:
-    """Process a RequirementsFile to extract valid lines and log invalid ones."""
+    """Process to Requirements file to extract valid lines and log invalid ones."""
     valid_lines: list[str] = []
-
     for req in requirements_file_obj.requirements:
         if req.line:
             stripped_line = req.line.strip()
             if stripped_line in lines_to_explicitly_remove:
                 logger.info(
-                    "Rimozione explicit della riga '%s' da '%s'",
+                    "Explicit removal of the line '%s' from '%s'",
                     stripped_line,
                     file_path_for_logging,
                 )
             else:
                 valid_lines.append(req.line)
-
     if requirements_file_obj.invalid_lines:
         invalid_line_content_count = sum(
             1
@@ -36,7 +34,7 @@ def _process_requirements_obj(
         )
         if invalid_line_content_count > 0:
             logger.warning(
-                "Found %s rows not valid " "(discarded dal parser) in '%s'.",
+                "Found %SRS ROWS NOT VALID (landfill from the parser) in ' %s'.",
                 invalid_line_content_count,
                 file_path_for_logging,
             )
@@ -44,38 +42,38 @@ def _process_requirements_obj(
 
 
 def filter_requirements_lines(file_path_str: str) -> list[str] | None:
-    """Read un file requirements.txt, filtra le righe non valid.
+    """Read a file requirements.txt, filter non -valid lines.
 
-    usando pip-requirements-parser e restituisce una lista delle stringhe di
-    requisito valid.
+        Using Pip-Requirements-Parser and returns a list of strings of
+        Valid requirement.
 
     Args:
-        file_path_str (str): Il path al file requirements.txt da read.
+        file_path_str (str): Path to the Requirements.txt file from Read.
 
     Returns:
-        list[str] | None: Una lista di stringhe, ognuna rappresentante una riga
-                          di requisito valida. Restituisce None se il file non
-                          può essere letto, la libreria non è disponibile, o si
-                          verifica un errore imprevisto. Restituisce una lista
-                          vuota se non ci sono requisiti validi.
+        List [str] | None: a list of strings, each representing a line
+                          valid requirement. Returns none if the file does not
+                          It can be read, the library is not available, or yes
+                          Check an unexpected mistake. Return a list
+                          empty if there are no valid requirements.
 
     """
     if RequirementsFile is None:
         logger.error(
-            "La libreria 'pip-requirements-parser' non è installata. "
-            "Impossibile filtrare il file requirements."
+            "The 'pip-requirements-parser' package is not installed."
+            "Unable to filter the requirements file."
         )
         return None
 
     file_path = Path(file_path_str)
     if not file_path.exists():
-        logger.error("Il file requirements '%s' non trovato.", file_path)
+        logger.error("requirements file '%s' not found.", file_path)
         return None
 
     lines_to_explicitly_remove = {"-e .", "-e."}
 
     try:
-        logger.debug("Tentativo di parsificare e filtrare: %s", file_path)
+        logger.debug("Attempt to parse and filter: %s", file_path)
         requirements_file_obj = RequirementsFile.from_file(str(file_path))
 
         valid_lines = _process_requirements_obj(
@@ -87,7 +85,7 @@ def filter_requirements_lines(file_path_str: str) -> list[str] | None:
         )
     except (OSError, UnicodeDecodeError):
         logger.exception(
-            "Errore di I/O o decodifica durante la parsificazione del file '%s'",
+            "Decode or I/O error during parsing file '%s'",
             file_path,
         )
         return None

@@ -7,7 +7,7 @@ from typing import Any
 
 @dataclass
 class PackageDetails:
-    """Contiene i dettagli di un pacchetto software."""
+    """Contains details of a  software package."""
 
     name: str
     version: str
@@ -18,7 +18,7 @@ class PackageDetails:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PackageDetails":
-        """Crea un'istanza di PackageDetails da un dizionario."""
+        """Create an istance of PackageDetails from a dictionary."""
         return cls(
             name=data.get("name", ""),
             version=data.get("version", ""),

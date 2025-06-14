@@ -62,7 +62,7 @@ def _fetch_available_versions(project_slug: str) -> list[dict] | None:
 def _choose_best_version(
     available_versions: list[dict], preferred_versions: list[str]
 ) -> str | None:
-    """Sceglie lo slug della versione migliore tra quelle disponibili."""
+    """Choose the slug of the best version of those available."""
     if not available_versions:
         logger.error("Error: No versions available for choice (list is empty or None).")
         return None

@@ -93,10 +93,10 @@ class AppPaths:
 
     @property
     def active_project_file(self) -> Path:
-        """Path per il file che segnala il progetto attivo all'avvio.
+        """Path for the file that reports the active project at startup.
 
-        Questo file viene creato dal processo "companion", letto da DevilDexCore
-        e poi cancellato da DevilDexApp.OnInit se processato con successo.
+        This file is created by the "Companion" process, read by Devildexcore
+        And then deleted by DevildexApp.oninit if tried successfully.
         """
         return self.active_project_registry_dir / ACTIVE_PROJECT_REGISTRATION_FILENAME
 

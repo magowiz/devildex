@@ -4,9 +4,12 @@
       <w>asctime</w>
       <w>devildex</w>
       <w>docsets</w>
+      <w>htmlzip</w>
       <w>levelname</w>
       <w>megalinter</w>
       <w>oxsecurity</w>
+      <w>packagetype</w>
+      <w>sphinxcontrib</w>
       <w>subdirs</w>
       <w>tablename</w>
     </words>

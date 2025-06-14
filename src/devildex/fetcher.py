@@ -21,7 +21,7 @@ class MissingPackageInfoError(ValueError):
     def __init__(self) -> None:
         """Construct a MissingPackageInfoError object."""
         super().__init__(
-            "Nome del package e version devono essere " "forniti in package_info_dict."
+            "Name of the package and Version must be provided in package_info_dict."
         )
 
 
@@ -47,10 +47,6 @@ class PackageSourceFetcher:
         )
 
         self._determined_vcs_url: str | None = None
-        logger.debug(
-            f"Fetcher inizializzato per {self.package_name} v{self.package_version}."
-            f" Target: {self.download_target_path}"
-        )
 
     @staticmethod
     def _sanitize_path_component(name: str) -> str:
@@ -67,9 +63,9 @@ class PackageSourceFetcher:
         try:
             self.download_target_path.mkdir(parents=True, exist_ok=True)
             logger.info(
-                "Directory di destinazione assicurata/creata: "
-                f"{self.download_target_path}"
+                f"Destination Directory Insured/Created:{self.download_target_path}"
             )
+
         except OSError:
             return False
         else:
@@ -79,8 +75,7 @@ class PackageSourceFetcher:
         if not self.download_target_path.exists():
             return
         logger.info(
-            "Cleaning del content della directory di destinazione: "
-            f"{self.download_target_path}"
+            "Cleaning content of target directory: " f"{self.download_target_path}"
         )
         try:
             for item in self.download_target_path.iterdir():
@@ -90,16 +85,16 @@ class PackageSourceFetcher:
                     item.unlink()
         except OSError:
             logger.exception(
-                "Error durante la pulizia della directory "
-                f"{self.download_target_path}"
+                "Error during cleaning directory " f"{self.download_target_path}"
             )
 
     def _fetch_project_urls_from_pypi(self) -> dict | None:
         """Fetch project_urls from PyPI JSON API for the current package."""
         logger.info(
-            "Tentativo di fetch dei project_urls da PyPI JSON"
-            f" API per {self.package_name}."
+            "Attempted fetch of the project_urls from Pypi Json API for "
+            f"{self.package_name}."
         )
+
         try:
             api_url = (
                 f"https://pypi.org/pypi/{self.package_name}"
@@ -129,7 +124,7 @@ class PackageSourceFetcher:
             url = urls_dict.get(label)
             if url and self._is_valid_vcs_url(url):
                 logger.info(
-                    f"URL VCS determinato ({label} da {source_description}): {url}"
+                    f"URL VCS determined ({label} from {source_description}): {url}"
                 )
                 return url
         return None
@@ -137,7 +132,7 @@ class PackageSourceFetcher:
     def _get_vcs_url(self) -> str | None:
         if self._determined_vcs_url is not None:
             return self._determined_vcs_url
-        vcs_url = self._find_vcs_url_in_dict(self.project_urls, "locali")
+        vcs_url = self._find_vcs_url_in_dict(self.project_urls, "local")
         if vcs_url:
             self._determined_vcs_url = vcs_url
             return vcs_url
@@ -464,7 +459,7 @@ class PackageSourceFetcher:
             ):
                 self._cleanup_git_dir_from_path(self.download_target_path)
                 logger.info(
-                    f"Clone del tag '{tag}' riuscito in {self.download_target_path}."
+                    f"Clone of tag '{tag}' succeeded in {self.download_target_path}."
                 )
                 return True
         return False
@@ -541,8 +536,8 @@ class PackageSourceFetcher:
 
     def _fetch_from_vcs_tag(self, repo_url: str) -> bool:
         logger.info(
-            f"Tentativo di fetch del tag '{self.package_version}' "
-            f"da VCS: {repo_url}"
+            f"Attempt to fetch the tag '{self.package_version}' "
+            f"from VCS: {repo_url}"
         )
         tag_variations_set = {
             self.package_version,
@@ -575,14 +570,11 @@ class PackageSourceFetcher:
 
     def _fetch_from_vcs_main(self, repo_url: str) -> bool:
         """Fetch the main/default branch from VCS into self.download_target_path."""
-        logger.info(
-            f"Tentativo di fetch del branch principale/default da VCS: {repo_url}"
-        )
+        logger.info(f"Attempt to fetch the main/default branch from VCS: {repo_url}")
         self._cleanup_target_dir_content()
         if not self._ensure_target_dir_exists():
             logger.error(
-                "Unable to prepare la directory di destinazione "
-                "per VCS main branch clone."
+                "Unable to prepare target directory " "for the VCS main branch clone."
             )
             return False
 
@@ -591,8 +583,8 @@ class PackageSourceFetcher:
         ):
             self._cleanup_git_dir_from_path(self.download_target_path)
             logger.info(
-                "Clone del branch main/default "
-                f"riuscito in {self.download_target_path}."
+                "branch main/default Clone "
+                f"successful in {self.download_target_path}."
             )
             return True
         return False
@@ -602,12 +594,11 @@ class PackageSourceFetcher:
 
         Returns:
             tuple[bool, bool, str | None]:
-                - fetch_successful: True se il fetch ha avuto succeed,
-                    False altrimenti.
-                - is_master_branch_fetched: True se è stato fatto il fetch del branch
-                    principale/default.
-                - path_to_return: Il path alla directory dei sorgenti downloaded
-                    se il fetch ha success, None altrimenti.
+                - fetch_successful: True se il fetch succeed,
+                    False otherwise.
+                - is_master_branch_fetched: True if master/default branch fetched.
+                - path_to_return: path to sources directory downloaded
+                    if fetch is successful, None otherwise.
 
         """
         fetch_successful = False
@@ -615,7 +606,7 @@ class PackageSourceFetcher:
         path_to_return: str | None = None
 
         logger.info(
-            f"--- Inizio fetch per {self.package_name} v{self.package_version} ---"
+            f"--- Starting fetch for {self.package_name} v{self.package_version} ---"
         )
         if self.download_target_path.exists() and any(
             self.download_target_path.iterdir()

@@ -63,9 +63,9 @@ class DocStringsSrc:
     def _build_pdoc_command(
         self, python_executable: str, project_name: str, output_directory: Path
     ) -> list[str]:
-        """Costruisce la lista di argomenti per il comando pdoc.
+        """Build the list of arguments for the PDOC command.
 
-        Include --template-dir se self.template_dir è impostato.
+        Includes --template-dir if self.template_dir is set.
         """
         pdoc_command_args = [
             python_executable,
@@ -79,7 +79,7 @@ class DocStringsSrc:
 
         if self.template_dir:
             logger.info(
-                "Utilizzo della directory template personalizzata: %s",
+                "Using customized template directory: %s",
                 self.template_dir,
             )
             pdoc_command_args.extend(
@@ -581,7 +581,7 @@ class DocStringsSrc:
         input_folder: str,
         output_folder: str,
     ) -> str | bool:
-        """Genera documentazione HTML usando pdoc in un ambiente isolato."""
+        """Generate HTML documentation using PDOC in an isolated environment."""
         logger.info("\n--- Starting Isolated pdoc Build for %s ---", project_name)
         source_project_path = Path(input_folder)
         logger.info(

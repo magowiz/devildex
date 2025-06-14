@@ -42,23 +42,21 @@ def _find_mkdocs_config_file(project_root_path: Path) -> Optional[Path]:
     """Find the mkdocs.yml file, typically at the project root."""
     mkdocs_conf = project_root_path / MKDOCS_CONFIG_FILE
     if mkdocs_conf.is_file():
-        logger.info(f"Found Mkdocs Confrire file:{mkdocs_conf}")
+        logger.info(f"Found Mkdocs Config file:{mkdocs_conf}")
         return mkdocs_conf
     logger.warning(
-        f"Mkdocs Confrosure Not Found at{mkdocs_conf}. Searching in 'docs' subdir ..."
+        f"Mkdocs Config Not Found at{mkdocs_conf}. Searching in 'docs' subdir ..."
     )
     mkdocs_conf_in_docs = project_root_path / "docs" / MKDOCS_CONFIG_FILE
     if mkdocs_conf_in_docs.is_file():
-        logger.info(
-            f"Found Mkdocs Confrire files in Docs/ Subdir:{mkdocs_conf_in_docs}"
-        )
+        logger.info(f"Found Mkdocs Config files in Docs/ Subdir:{mkdocs_conf_in_docs}")
         return mkdocs_conf_in_docs
     logger.error(f"Mkdocs Confront Found Found in{project_root_path}Now 'docs' subdir.")
     return None
 
 
 def _parse_mkdocs_config(config_file_path: Path) -> Optional[dict]:
-    """Performs the parsing of the mkdocs.yml file."""
+    """Perform the parsing of the mkdocs.yml file."""
     try:
         with open(config_file_path, encoding="utf-8") as f:
             config = yaml.safe_load(f)
@@ -66,7 +64,7 @@ def _parse_mkdocs_config(config_file_path: Path) -> Optional[dict]:
     except yaml.YAMLError:
         logger.exception(f"Error Parsing MKDOCS CONFERENCE FILE:{config_file_path}")
     except OSError:
-        logger.exception(f"Error reading Mkdocs Confrosure:{config_file_path}")
+        logger.exception(f"Error reading Mkdocs Config:{config_file_path}")
     else:
         return config
     return None
@@ -91,7 +89,8 @@ def _get_theme_packages_to_install(
             )
         else:
             logger.debug(
-                f"Theme '{theme_name_to_check}'is specified but not in known_theme_packages or needs no separated install."
+                f"Theme '{theme_name_to_check}'is specified but not in "
+                "known_theme_packages or needs no separated install."
             )
     return theme_packages
 
@@ -99,7 +98,7 @@ def _get_theme_packages_to_install(
 def _get_plugin_packages_to_install(
     plugins_config: Optional[Union[list[Union[str, dict[str, Any]]], dict[str, Any]]],
 ) -> list[str]:
-    """Determine the necessary pip packages based on the configuration of the plugins."""
+    """Determine the pip packages based on the configuration of the plugins."""
     plugin_packages: list[str] = []
     plugin_names_to_check: list[str] = []
     if isinstance(plugins_config, list):
@@ -117,7 +116,8 @@ def _get_plugin_packages_to_install(
             logger.debug(f"Identified Plugin Package for '{name}': {package}")
         else:
             logger.debug(
-                f"Plugin '{name}'is specified but not in known_plugin_packages or needs no separate install."
+                f"Plugin '{name}'is specified but not in known_plugin_packages "
+                "or needs no separate install."
             )
     return plugin_packages
 
@@ -127,9 +127,8 @@ def _install_mkdocs_dependencies_in_venv(
     mkdocs_config: Optional[dict],
     project_root_for_install: Optional[Path] = None,
 ) -> bool:
-    """Installa MkDocs, tema, plugin ed eventualmente il progetto stesso."""
+    """Install Mkdocs, theme, plugins and possibly the project itself."""
     packages_to_install: list[str] = ["mkdocs"]
-
     if mkdocs_config:
         packages_to_install.extend(
             _get_theme_packages_to_install(mkdocs_config.get("theme"))
@@ -137,30 +136,26 @@ def _install_mkdocs_dependencies_in_venv(
         packages_to_install.extend(
             _get_plugin_packages_to_install(mkdocs_config.get("plugins"))
         )
-
     unique_packages = list(set(packages_to_install))
     if unique_packages:
-        logger.info(f"Attempting to install MkDocs related packages: {unique_packages}")
+        logger.info(f"Attempt to Install Mkdocs Related Packages:{unique_packages}")
         pip_command_base = [pip_executable, "install", *unique_packages]
         _, _, return_code_base = execute_command(
             pip_command_base, "Install MkDocs and its dependencies"
         )
         if return_code_base != 0:
-            logger.error("Failed to install MkDocs related packages.")
+            logger.error("Failed to Install Mkdocs Related Packages.")
             return False
     else:
         logger.warning(
-            "No MkDocs related packages identified for "
-            "installation (this is unexpected)."
+            "No Mkdocs Related Packages Identified for Installation "
+            "(This is Unexpected)."
         )
-
     if project_root_for_install and project_root_for_install.exists():
         if (project_root_for_install / "setup.py").exists() or (
             project_root_for_install / "pyproject.toml"
         ).exists():
-            logger.info(
-                f"Attempting to install project from: {project_root_for_install}"
-            )
+            logger.info(f"Attempt to Install Project from:{project_root_for_install}")
             pip_command_project = [
                 pip_executable,
                 "install",
@@ -168,19 +163,17 @@ def _install_mkdocs_dependencies_in_venv(
                 str(project_root_for_install),
             ]
             _, _, return_code_proj = execute_command(
-                pip_command_project, f"Install project {project_root_for_install.name}"
+                pip_command_project, f"Install Project{project_root_for_install.name}"
             )
             if return_code_proj != 0:
                 logger.warning(
-                    f"Failed to install project {project_root_for_install.name}, "
-                    "build might be incomplete if project modules"
-                    " are needed by plugins."
+                    f"Failed to Install Project{project_root_for_install.name}, build "
+                    "might be incomplete if project models are needed by plugins."
                 )
         else:
             logger.debug(
-                f"Project at {project_root_for_install} does not appear"
-                " to be pip installable (no setup.py/pyproject.toml)."
-                " Skipping project install."
+                f"Project at{project_root_for_install}Does Not Sagan to Be Pip "
+                "Installable (no setup.py/pyproject.toml). Skipping Project Install."
             )
     return True
 
