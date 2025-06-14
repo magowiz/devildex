@@ -201,7 +201,7 @@ PACKAGES_TO_TEST = [
         "repo_url_for_clone": "https://github.com/mkdocs/mkdocs.git",
         "expected_preferred_type": "mkdocs",
         "expected_entry_point": "index.html",
-        "expect_grab_success": False,
+        "expect_grab_success": True,
     },
 ]
 
