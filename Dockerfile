@@ -26,11 +26,9 @@ RUN apt-get update && \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-
     build-essential git curl \
     libssl-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
     libsqlite3-dev libreadline-dev libffi-dev libbz2-dev pkg-config \
-
     patchelf \
     libglib2.0-0 \
     cmake \
