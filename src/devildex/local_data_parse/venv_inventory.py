@@ -40,12 +40,12 @@ def get_installed_packages_with_project_urls(explicit: set | None = None) -> lis
                             f"{package_name}: '{url_entry}'"
                         )
                 except AttributeError:
-                        logger.warning(
-                            "AttributeError while parsing Project-URL item "
-                            f"'{url_entry}' "
-                            f"for {package_name}. Expected string parts. Error",
-                            exc_info=True
-                        )
+                    logger.warning(
+                        "AttributeError while parsing Project-URL item "
+                        f"'{url_entry}' "
+                        f"for {package_name}. Expected string parts. Error",
+                        exc_info=True,
+                    )
                 except RuntimeError:
                     logger.exception(
                         f"Runtime error parsing Project-URL item '{url_entry}' "
