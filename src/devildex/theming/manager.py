@@ -127,11 +127,14 @@ class ThemeManager:
                 if config is None:
                     config = {}  # Handle empty YAML file
 
-            # --- Actual Theming Logic Would Go Here ---
-            # For MVP, we'll just copy and potentially add custom_dir
-            # 1. Ensure your DevilDex MkDocs theme assets are in self.mkdocs_theme_assets_source_path
-            # 2. Copy these assets to the source project directory, under self.mkdocs_theme_override_dir_name
-            #    This allows MkDocs to find them via a relative `custom_dir`.
+            # --- MODIFICA CHIAVE PER docs_dir ---
+            # Assicurati che docs_dir nel file YAML temporaneo punti ai sorgenti corretti.
+            # self.mkdocs_yml_file è il percorso del mkdocs.yml *originale* nel progetto clonato.
+            original_yml_parent_dir = self.mkdocs_yml_file.parent
+
+            # Leggi il valore di docs_dir dalla config originale, default a "docs"
+            original_docs_dir_value = config.get("docs_dir", "docs")
+            docs_dir_path_obj_from_config = Path(original_docs_dir_value)
 
             if not docs_dir_path_obj_from_config.is_absolute():
                 # Se docs_dir è relativo, rendilo assoluto rispetto alla posizione del mkdocs.yml originale
@@ -232,5 +235,4 @@ class ThemeManager:
             logger.exception(
                 f"ThemeManager: Error applying MkDocs customizations to {self.mkdocs_yml_file}"
             )
-            # Fallback: if theming fails, the caller might decide to use the original yml
             return None
