@@ -88,14 +88,15 @@ def _parse_mkdocs_config(config_file_path: Path) -> Optional[dict]:
     """Perform the parsing of the mkdocs.yml file."""
     try:
         with open(config_file_path, encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-        logger.info(f"Successfully Parsed Mkdocs Conference:{config_file_path}")
-    except yaml.YAMLError:
-        logger.exception(f"Error Parsing MKDOCS CONFERENCE FILE:{config_file_path}")
-    except OSError:
-        logger.exception(f"Error reading Mkdocs Config:{config_file_path}")
-    else:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        logger.info(f"Successfully parsed MkDocs Config: {config_file_path}")
         return config
+    except yaml.YAMLError:
+        logger.exception(
+            f"Error parsing MkDocs Config file: {config_file_path}"
+        )  # Log corretto
+    except OSError:
+        logger.exception(f"Error reading MkDocs Config file: {config_file_path}")
     return None
 
 
