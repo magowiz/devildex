@@ -9,6 +9,7 @@
       <w>megalinter</w>
       <w>oxsecurity</w>
       <w>packagetype</w>
+      <w>pymdownx</w>
       <w>sphinxcontrib</w>
       <w>subdirs</w>
       <w>tablename</w>
