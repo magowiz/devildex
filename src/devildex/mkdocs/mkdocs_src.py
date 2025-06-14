@@ -2,16 +2,14 @@
 
 import logging
 import shutil
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
 import yaml
 
-from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
-from devildex.utils.venv_utils import execute_command
+from devildex.utils.venv_utils import execute_command, install_environment_dependencies
 
 logger = logging.getLogger(__name__)
 MKDOCS_CONFIG_FILE = "mkdocs.yml"
@@ -173,10 +171,19 @@ def process_mkdocs_source_and_build(
                 final_output_dir=final_html_output_dir,
                 project_slug=project_slug,
             )
-            build_successful = _execute_mkdocs_build_in_venv(venv, build_ctx)
             required_mkdocs_pkgs = _gather_mkdocs_required_packages(
                 mkdocs_config_content
             )
+            # <LOG MIRATO 3 - INIZIO>
+            logger.critical(
+                f"MKDOCS_DEBUG_CHECKPOINT_3: Pacchetti richiesti (required_mkdocs_pkgs) prima di install_environment_dependencies: {required_mkdocs_pkgs}"
+            )
+            # <LOG MIRATO 3 - FINE>
+            logger.info(
+                "MkDocs related packages to install for "
+                f"{project_slug}: {required_mkdocs_pkgs}"
+            )
+
             dependencies_installed_ok = install_environment_dependencies(
                 pip_executable=venv.pip_executable,
                 project_name=f"mkdocs_{project_slug}",
