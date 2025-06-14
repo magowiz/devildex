@@ -7,10 +7,15 @@ from typing import Optional
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
+from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
 from devildex.models import PackageDetails
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
-from devildex.scanner.scanner import has_docstrings, is_sphinx_project
+from devildex.scanner.scanner import (
+    has_docstrings,
+    is_mkdocs_project,
+    is_sphinx_project,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +158,15 @@ class Orchestrator:
                     "existing_clone_path": existing_clone_path_for_sphinx,
                 },
             },
+            "mkdocs": {
+                "function": process_mkdocs_source_and_build,
+                "args": {
+                    "source_project_path": effective_source_path_str,
+                    "project_slug": self.package_details.name,
+                    "version_identifier": self.package_details.version or "main",
+                    "base_output_dir": self.base_output_dir,
+                },
+            },
             "readthedocs": {
                 "function": download_readthedocs_prebuilt_robust,
                 "args": {
@@ -219,7 +233,9 @@ class Orchestrator:
 
             if is_sphinx_project(scan_path_str):
                 self.detected_doc_type = "sphinx"
-            elif has_docstrings(scan_path_str):  # Controlla questo come fallback
+            elif is_mkdocs_project(scan_path_str):
+                self.detected_doc_type = "mkdocs"
+            elif has_docstrings(scan_path_str):
                 self.detected_doc_type = "docstrings"
 
             if self.detected_doc_type == "unknown":

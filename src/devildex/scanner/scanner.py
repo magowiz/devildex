@@ -16,6 +16,7 @@ from devildex.scanner_utils.scanner_utils import (
 
 logger = logging.getLogger(__name__)
 SCORE_MAX = 3
+MKDOCS_CONFIG_FILE = "mkdocs.yml"
 
 
 def is_sphinx_project(project_path: str) -> bool:
@@ -105,6 +106,17 @@ def is_sphinx_project(project_path: str) -> bool:
     logger.error(
         f"  ❌ No criteria Sphinx forte trovato nel file 'conf.py' per {project_path}."
     )
+    return False
+
+
+def is_mkdocs_project(project_root_path: str | Path) -> bool:
+    """Check if the given path is likely an MkDocs project by looking for mkdocs.yml."""
+    root_path = Path(project_root_path)
+    mkdocs_conf_path = root_path / MKDOCS_CONFIG_FILE
+    if mkdocs_conf_path.is_file():
+        logger.info(f"Found MkDocs config file: {mkdocs_conf_path}")
+        return True
+    logger.debug(f"MkDocs config file not found at {mkdocs_conf_path}")
     return False
 
 
