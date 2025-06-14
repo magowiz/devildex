@@ -192,7 +192,13 @@ PACKAGES_TO_TEST = [
 GIT_FULL_PATH = shutil.which("git")
 
 
-@pytest.mark.parametrize("package_config", PACKAGES_TO_TEST)
+orchestrator_test_params = [
+    pytest.param(package_config, id=package_config["details_data"]["name"])
+    for package_config in PACKAGES_TO_TEST
+]
+
+
+@pytest.mark.parametrize("package_config", orchestrator_test_params)
 def test_orchestrator_documentation_retrieval(
     package_config: dict, tmp_path: Path
 ) -> None:
