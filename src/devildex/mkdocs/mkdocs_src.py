@@ -8,7 +8,7 @@ from typing import Any, Optional, Union
 
 import yaml
 
-from devildex.utils.venv_cm import IsolatedVenvManager
+from devildex.utils.venv_cm import IsolatedVenvManager, VenvInitializationError
 from devildex.utils.venv_utils import execute_command, install_environment_dependencies
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,95 @@ class MkDocsBuildContext:
     final_output_dir: Path
     project_slug: str
     processed_yml_path: Path
+    version_identifier: str
+
+
+def _extract_callouts_from_markdown_extensions(
+    current_md_extensions: Optional[Union[list, dict]],
+) -> tuple[Optional[Union[list, dict]], Any, bool]:
+    """Extract 'callouts' from markdown_extensions if present.
+
+    Args:
+        current_md_extensions: The current markdown_extensions configuration.
+
+    Returns:
+        A tuple: (updated_md_extensions, extracted_callouts_value, was_modified).
+        `updated_md_extensions` is a new list/dict if modified, otherwise the original.
+
+    """
+    if not current_md_extensions:
+        return current_md_extensions, None, False
+
+    callouts_value_extracted = None
+    modified = False
+
+    if isinstance(current_md_extensions, list):
+        new_extensions_list = []
+        for ext_item in current_md_extensions:
+            if isinstance(ext_item, str) and ext_item == "callouts":
+                callouts_value_extracted = "callouts"
+                modified = True
+            elif isinstance(ext_item, dict) and "callouts" in ext_item:
+                callouts_value_extracted = ext_item.copy()
+                modified = True
+            else:
+                new_extensions_list.append(ext_item)
+        if modified:
+            logger.info("Removed 'callouts' from 'markdown_extensions' (list).")
+            return new_extensions_list, callouts_value_extracted, True
+        return current_md_extensions, None, False
+
+    if isinstance(current_md_extensions, dict) and "callouts" in current_md_extensions:
+        updated_extensions_dict = current_md_extensions.copy()
+        callouts_value_extracted = {"callouts": updated_extensions_dict.pop("callouts")}
+        logger.info("Removed 'callouts' from 'markdown_extensions' (dict).")
+        return updated_extensions_dict, callouts_value_extracted, True
+
+    return current_md_extensions, None, False
+
+
+def _is_plugin_callouts(plugin_item: Union[str, dict[str, Any]]) -> bool:
+    """Check if a plugin item represents 'callouts'."""
+    if isinstance(plugin_item, str) and plugin_item == "callouts":
+        return True
+    return isinstance(plugin_item, dict) and "callouts" in plugin_item
+
+
+def _add_callouts_to_plugins_if_missing(
+    current_plugins_config: Optional[Union[list, dict]],
+    callouts_value_to_add: Union[str, dict[str, Any]],
+) -> tuple[list, bool]:
+    """Add the extracted 'callouts' value to the plugins list if not already present.
+
+    Args:
+        current_plugins_config: The current 'plugins' configuration.
+        callouts_value_to_add: The 'callouts' configuration extracted
+         from markdown_extensions.
+
+    Returns:
+        A tuple: (updated_plugins_list, was_added_boolean).
+
+    """
+    plugins_list: list = []
+    # Ensure plugins_list is a list, creating a new one if necessary
+    if isinstance(current_plugins_config, list):
+        plugins_list = current_plugins_config.copy()  # Work on a copy
+    elif current_plugins_config is not None:  # It's some other type
+        logger.warning(
+            f"'plugins' in mkdocs.yml was {type(current_plugins_config)}, not a list. "
+            "Initializing as a new list for 'callouts' addition."
+        )
+        # plugins_list remains []
+    # If current_plugins_config was None, plugins_list is already []
+
+    is_already_plugin = any(_is_plugin_callouts(p_item) for p_item in plugins_list)
+
+    if not is_already_plugin:
+        plugins_list.append(callouts_value_to_add)
+        logger.info(f"Added '{callouts_value_to_add}' to 'plugins'.")
+        return plugins_list, True
+
+    return plugins_list, False
 
 
 def _preprocess_mkdocs_config(
@@ -92,63 +181,31 @@ def _preprocess_mkdocs_config(
     if not original_config_content:
         return None, False
 
-    processed_config = original_config_content.copy()
-    config_modified = False
-    callouts_value_to_move = None
+    processed_config = original_config_content.copy()  # Shallow copy
+    overall_config_modified = False
 
-    if "markdown_extensions" in processed_config:
-        md_exts = processed_config["markdown_extensions"]
-        new_md_exts = []
-        found_in_ext = False
-        if isinstance(md_exts, list):
-            for ext_item in md_exts:
-                if isinstance(ext_item, str) and ext_item == "callouts":
-                    callouts_value_to_move = "callouts"
-                    found_in_ext = True
-                elif isinstance(ext_item, dict) and "callouts" in ext_item:
-                    callouts_value_to_move = ext_item.copy()
-                    found_in_ext = True
-                else:
-                    new_md_exts.append(ext_item)
-            if found_in_ext:
-                processed_config["markdown_extensions"] = new_md_exts
-                config_modified = True
-                logger.info("Rimosso 'callouts' da 'markdown_extensions' (lista).")
-        elif isinstance(md_exts, dict) and "callouts" in md_exts:  # Meno comune
-            callouts_value_to_move = {"callouts": md_exts.pop("callouts")}
-            config_modified = True
-            logger.info("Rimosso 'callouts' da 'markdown_extensions' (dict).")
+    current_md_extensions = processed_config.get("markdown_extensions")
+    updated_md_extensions, callouts_value_extracted, ext_was_modified = (
+        _extract_callouts_from_markdown_extensions(current_md_extensions)
+    )
 
-    # Se 'callouts' è stato trovato e rimosso, aggiungilo a 'plugins'
-    if callouts_value_to_move:
-        plugins_list = processed_config.get("plugins", [])
-        if not isinstance(plugins_list, list):
-            logger.warning(
-                f"'plugins' in mkdocs.yml era {type(plugins_list)}, non una lista. "
-                "Inizializzo come nuova lista."
-            )
-            plugins_list = []
+    if ext_was_modified:
+        processed_config["markdown_extensions"] = updated_md_extensions
+        overall_config_modified = True
 
-        already_is_plugin = False
-        for plugin_item in plugins_list:
-            if isinstance(plugin_item, str) and plugin_item == "callouts":
-                already_is_plugin = True
-                break
-            if isinstance(plugin_item, dict) and "callouts" in plugin_item:
-                already_is_plugin = True
-                break
-
-        if not already_is_plugin:
-            plugins_list.append(callouts_value_to_move)
-            processed_config["plugins"] = plugins_list
-            config_modified = True
-            logger.info(f"Aggiunto '{callouts_value_to_move}' a 'plugins'.")
-        else:
-            logger.info(
-                f"'{callouts_value_to_move}' già presente in 'plugins'. Nessuna aggiunta."
+        if callouts_value_extracted is not None:
+            current_plugins = processed_config.get("plugins")
+            updated_plugins_list, plugin_list_was_modified = (
+                _add_callouts_to_plugins_if_missing(
+                    current_plugins, callouts_value_extracted
+                )
             )
 
-    return processed_config, config_modified
+            if plugin_list_was_modified:
+                processed_config["plugins"] = updated_plugins_list
+                # overall_config_modified is already True
+
+    return processed_config, overall_config_modified
 
 
 def _find_mkdocs_config_file(project_root_path: Path) -> Optional[Path]:
@@ -172,7 +229,7 @@ def _parse_mkdocs_config(config_file_path: Path) -> Optional[dict]:
     """Perform the parsing of the mkdocs.yml file."""
     try:
         with open(config_file_path, encoding="utf-8") as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
+            config = yaml.safe_load(f)
         logger.info(f"Successfully parsed MkDocs Config: {config_file_path}")
     except yaml.YAMLError:
         logger.exception(
@@ -210,71 +267,86 @@ def _get_theme_packages_to_install(
     return theme_packages
 
 
-def process_mkdocs_source_and_build(
-    source_project_path: str,
-    project_slug: str,
-    version_identifier: str,
-    base_output_dir: Path,
-) -> Optional[str]:
-    """Process a MKDOCS: Build project.
-
-    Return the path to the dark or none HTML site in case of failure.
-    """
-    logger.info(f"--- Starting Mkdocs Build for{project_slug}v{version_identifier} ---")
-    if not source_project_path:
+# Helper 1: Initial validation and config loading
+def _validate_paths_and_load_config(
+    source_project_path_str: str,
+) -> tuple[Optional[Path], Optional[Path], Optional[dict]]:
+    """Validate input paths and load the MkDocs configuration."""
+    if not source_project_path_str:
         logger.error("Source Project Path Not Provided for Mkdocs Build.")
-        return None
-    project_root_p = Path(source_project_path)
+        return None, None, None
+    project_root_p = Path(source_project_path_str)
     if not project_root_p.is_dir():
-        logger.error(f"Source Project Path{project_root_p}Is Not a Valid Directory.")
-        return None
+        logger.error(f"Source Project Path {project_root_p} Is Not a Valid Directory.")
+        return None, None, None
 
     original_mkdocs_yml_path = _find_mkdocs_config_file(project_root_p)
     if not original_mkdocs_yml_path:
-        logger.error(f"Could Not Find Mkdocs.yml in{project_root_p}. ABORTING.")
-        return None
-    original_config_content = _parse_mkdocs_config(original_mkdocs_yml_path)
+        logger.error(f"Could Not Find Mkdocs.yml in {project_root_p}. ABORTING.")
+        return None, None, None
 
+    original_config_content = _parse_mkdocs_config(original_mkdocs_yml_path)
+    return project_root_p, original_mkdocs_yml_path, original_config_content
+
+
+def _prepare_config_for_build(
+    original_config_content: Optional[dict], original_mkdocs_yml_path: Path
+) -> Path:
+    """Preprocesses MkDocs config and returns the path to the config file to use."""
     config_file_to_use_for_build = original_mkdocs_yml_path
 
-    if original_config_content:
-        processed_config_dict, config_was_modified = _preprocess_mkdocs_config(
-            original_config_content
+    if not original_config_content:
+        logger.warning(
+            "MkDocs config content not parsed or absent, skipping preprocessing."
+            " Using original path: %s",
+            original_mkdocs_yml_path,
         )
+        return original_mkdocs_yml_path
 
-        if config_was_modified and processed_config_dict is not None:
-            processed_yml_filename = (
-                f"{original_mkdocs_yml_path.stem}.devildex_processed.yml"
-            )
-            temp_processed_yml_path = (
-                original_mkdocs_yml_path.parent / processed_yml_filename
-            )
-            try:
-                with open(temp_processed_yml_path, "w", encoding="utf-8") as f_proc:
-                    yaml.dump(
-                        processed_config_dict,
-                        f_proc,
-                        sort_keys=False,
-                        Dumper=yaml.Dumper,
-                    )
-                logger.info(
-                    "Configurazione MkDocs preprocessata e salvata in: "
-                    f"{temp_processed_yml_path}"
+    processed_config_dict, config_was_modified = _preprocess_mkdocs_config(
+        original_config_content
+    )
+
+    if config_was_modified and processed_config_dict is not None:
+        processed_yml_filename = (
+            f"{original_mkdocs_yml_path.stem}.devildex_processed.yml"
+        )
+        temp_processed_yml_path = (
+            original_mkdocs_yml_path.parent / processed_yml_filename
+        )
+        try:
+            with open(temp_processed_yml_path, "w", encoding="utf-8") as f_proc:
+                yaml.dump(
+                    processed_config_dict,
+                    f_proc,
+                    sort_keys=False,
+                    Dumper=yaml.Dumper,
                 )
-                config_file_to_use_for_build = temp_processed_yml_path
-            except Exception:
-                logger.exception(
-                    f"Errore nel salvare mkdocs.yml processato in "
-                    f"{temp_processed_yml_path}"
-                )
-        else:
             logger.info(
-                "Nessuna modifica di preprocessing necessaria per mkdocs.yml o "
-                "il contenuto originale era None."
+                "Preprocessed MkDocs configuration saved to: %s",
+                temp_processed_yml_path,
             )
+            config_file_to_use_for_build = temp_processed_yml_path
+        except (OSError, yaml.YAMLError):
+            logger.exception(
+                "Error saving processed mkdocs.yml to %s. Using original path: %s",
+                temp_processed_yml_path,
+                original_mkdocs_yml_path,
+            )
+            config_file_to_use_for_build = original_mkdocs_yml_path
     else:
-        logger.warning("Contenuto di mkdocs.yml non parsato, skipping preprocessing.")
+        logger.info(
+            "No preprocessing modifications needed for mkdocs.yml or "
+            "original content was None. Using original path: %s",
+            original_mkdocs_yml_path,
+        )
+    return config_file_to_use_for_build
 
+
+def _prepare_mkdocs_output_directory(
+    base_output_dir: Path, project_slug: str, version_identifier: str
+) -> Optional[Path]:
+    """Create or cleans the final output directory for the MkDocs build."""
     final_html_output_dir = (
         base_output_dir / "mkdocs_builds" / project_slug / version_identifier
     ).resolve()
@@ -282,40 +354,38 @@ def process_mkdocs_source_and_build(
         if final_html_output_dir.exists():
             shutil.rmtree(final_html_output_dir)
         final_html_output_dir.mkdir(parents=True, exist_ok=True)
+
     except OSError:
         logger.exception(
-            f"Error Creating/Cleaning Mkdocs Output Directory{final_html_output_dir}"
+            "Error Creating/Cleaning Mkdocs Output Directory %s", final_html_output_dir
         )
         return None
+    else:
+        return final_html_output_dir
 
+
+def _execute_mkdocs_build_in_venv(build_context: MkDocsBuildContext) -> bool:
+    """Manage venv creation, dependency installation, and executes the MkDocs build."""
     build_successful = False
     try:
         with IsolatedVenvManager(
-            project_name=f"mkdocs_{project_slug}-{version_identifier}"
+            project_name=f"mkdocs_{build_context.project_slug}-{build_context.version_identifier}"
         ) as venv:
-            logger.info(f"Created Isolated Venv for Mkdocs at{venv.venv_path}")
-
-            build_ctx = MkDocsBuildContext(
-                config_content=original_config_content,
-                project_root=project_root_p,
-                original_yml_path=original_mkdocs_yml_path,
-                processed_yml_path=config_file_to_use_for_build,
-                final_output_dir=final_html_output_dir,
-                project_slug=project_slug,
-            )
+            logger.info("Created Isolated Venv for Mkdocs at %s", venv.venv_path)
 
             required_mkdocs_pkgs = _gather_mkdocs_required_packages(
-                original_config_content
+                build_context.config_content
             )
             logger.info(
-                "MkDocs related packages to install for "
-                f"{project_slug}: {required_mkdocs_pkgs}"
+                "MkDocs related packages to install for %s: %s",
+                build_context.project_slug,
+                required_mkdocs_pkgs,
             )
 
             dependencies_installed_ok = install_environment_dependencies(
                 pip_executable=venv.pip_executable,
-                project_name=f"mkdocs_{project_slug}",
-                project_root_for_install=project_root_p,
+                project_name=f"mkdocs_{build_context.project_slug}",
+                project_root_for_install=build_context.project_root,
                 tool_specific_packages=required_mkdocs_pkgs,
                 scan_for_project_requirements=True,
                 install_project_editable=True,
@@ -323,18 +393,86 @@ def process_mkdocs_source_and_build(
             if dependencies_installed_ok:
                 build_successful = _perform_actual_mkdocs_build(
                     python_executable=venv.python_executable,
-                    build_context=build_ctx,
+                    build_context=build_context,
                 )
             else:
                 logger.error(
-                    f"Cannot proceed with MkDocs build for {project_slug} "
-                    "due to failed dependency installation."
+                    "Cannot proceed with MkDocs build for %s due to "
+                    "failed dependency installation.",
+                    build_context.project_slug,
                 )
-                build_successful = False
+    except VenvInitializationError:
+        logger.exception(
+            "Failed to initialize virtual environment for MkDocs build for %s.",
+            build_context.project_slug,
+        )
+        build_successful = False
+    except OSError:
+        logger.exception(
+            "Unexpected error during isolated MkDocs build for %s.",
+            build_context.project_slug,
+        )
+        build_successful = False
 
+    return build_successful
+
+
+def process_mkdocs_source_and_build(
+    source_project_path: str,
+    project_slug: str,
+    version_identifier: str,
+    base_output_dir: Path,
+) -> Optional[str]:
+    """Process an MkDocs project: find config, preprocess, install deps, and build."""
+    logger.info(
+        f"--- Starting Mkdocs Build for {project_slug} v{version_identifier} ---"
+    )
+    final_result_path: Optional[str] = None
+
+    try:
+        project_root_p, original_mkdocs_yml_path, original_config_content = (
+            _validate_paths_and_load_config(source_project_path)
+        )
+
+        if not project_root_p or not original_mkdocs_yml_path:
+            return None
+        config_file_to_use_for_build = _prepare_config_for_build(
+            original_config_content, original_mkdocs_yml_path
+        )
+
+        final_html_output_dir = _prepare_mkdocs_output_directory(
+            base_output_dir, project_slug, version_identifier
+        )
+        if not final_html_output_dir:
+            return None
+        build_ctx = MkDocsBuildContext(
+            config_content=original_config_content,
+            project_root=project_root_p,
+            original_yml_path=original_mkdocs_yml_path,
+            final_output_dir=final_html_output_dir,
+            project_slug=project_slug,
+            processed_yml_path=config_file_to_use_for_build,
+            version_identifier=version_identifier,
+        )
+        build_successful = _execute_mkdocs_build_in_venv(build_ctx)
+
+        if build_successful:
+            final_result_path = str(final_html_output_dir)
+
+    except (OSError, RuntimeError):
+        logger.exception(
+            f"Unexpected critical error during MkDocs processing for {project_slug}"
+        )
+        final_result_path = None
     finally:
-        logger.info(f"--- Finished Mkdocs Build for{project_slug} ---")
-    return str(final_html_output_dir) if build_successful else None
+        status_message = (
+            "successfully" if final_result_path else "with errors or aborted"
+        )
+        logger.info(
+            f"--- Finished Mkdocs Build for {project_slug} {status_message} ---"
+        )
+
+    return final_result_path
 
 
 def _perform_actual_mkdocs_build(

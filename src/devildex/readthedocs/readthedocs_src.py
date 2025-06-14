@@ -440,7 +440,7 @@ def run_clone(
                 "during subprocess.run."
             )
             return None
-        except Exception:
+        except OSError:
             logger.exception(
                 "Unexpected error during subprocess run for clone "
                 f"of branch {branch_to_try}"

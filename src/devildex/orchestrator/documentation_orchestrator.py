@@ -105,7 +105,7 @@ class Orchestrator:
                         f"path={fetched_path_str}"
                     )
                     source_path_candidate = None
-            except Exception:
+            except (OSError, RuntimeError):
                 logger.exception(
                     "Orchestrator: Exception during fetch for "
                     f"{self.package_details.name}"

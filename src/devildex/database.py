@@ -275,7 +275,7 @@ class DatabaseManager:
                     f"Retrieved {len(grid_data_to_return)} docset(s) "
                     f"for the {view_type} view."
                 )
-        except Exception:
+        except SQLAlchemyError:
             logger.exception("Error retrieving docsets for the view")
             return []
         return grid_data_to_return
@@ -299,7 +299,7 @@ class DatabaseManager:
                 logger.info(
                     f"Retrieved {len(projects_list)} registered projects from the DB."
                 )
-        except Exception:
+        except SQLAlchemyError:
             logger.exception("Error retrieving all registered projects")
             return []
         return projects_list

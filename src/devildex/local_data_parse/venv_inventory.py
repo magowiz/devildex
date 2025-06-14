@@ -39,10 +39,17 @@ def get_installed_packages_with_project_urls(explicit: set | None = None) -> lis
                             "ATTENTION: impossible to analyze the project-url item for "
                             f"{package_name}: '{url_entry}'"
                         )
-                except Exception:
+                except AttributeError:
+                        logger.warning(
+                            "AttributeError while parsing Project-URL item "
+                            f"'{url_entry}' "
+                            f"for {package_name}. Expected string parts. Error",
+                            exc_info=True
+                        )
+                except RuntimeError:
                     logger.exception(
-                        f"Error in analyzing the Project-Url item {url_entry}' "
-                        f"for{package_name}"
+                        f"Runtime error parsing Project-URL item '{url_entry}' "
+                        f"for {package_name}"
                     )
 
         pkg_details = PackageDetails(

@@ -142,16 +142,11 @@ class ThemeManager:
                         f"ThemeManager: Updated 'docs_dir' in temporary YAML to absolute path: {config['docs_dir']}"
                     )
                 else:
-                    # Se il percorso risolto non esiste, logga un errore grave.
-                    # La build di MkDocs fallirà quasi certamente.
                     logger.error(
                         f"ThemeManager: Original 'docs_dir' ('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
                         f"resolved to non-existent/non-directory path '{absolute_docs_dir}'. "
                         "MkDocs build is expected to fail."
                     )
-                    # Potresti voler restituire None qui per interrompere il processo di theming
-                    # return None
-            # Se docs_dir era già assoluto, verifica solo che esista
             elif (
                 not docs_dir_path_obj_from_config.exists()
                 or not docs_dir_path_obj_from_config.is_dir()
@@ -220,7 +215,7 @@ class ThemeManager:
             )
             return themed_mkdocs_yml_path
 
-        except Exception:
+        except (yaml.YAMLError, OSError, shutil.Error):
             logger.exception(
                 f"ThemeManager: Error applying MkDocs customizations to {self.mkdocs_yml_file}"
             )

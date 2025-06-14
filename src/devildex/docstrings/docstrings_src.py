@@ -188,7 +188,7 @@ class DocStringsSrc:
             )
             return None, e
 
-        except Exception:
+        except RuntimeError:
             logger.exception(
                 "Unexpected error during pdoc.import_module for '%s'", module_name
             )
@@ -285,7 +285,7 @@ class DocStringsSrc:
         package_name = getattr(package_module_obj, "__name__", "unknown package")
 
         for submodule_info in pdoc.iter_submodules(  # pylint: disable=no-member
-            package_module_obj
+            package_module_obj  # pylint: disable=no-member
         ):  # pylint: disable=no-member
             submodule_qualname = submodule_info.name
             logger.debug(

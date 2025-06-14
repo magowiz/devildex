@@ -238,7 +238,7 @@ def _check_file_for_docstrings(file_path: Path) -> bool:
                 return True
     except SyntaxError:
         logging.exception("syntax error exception")
-    except Exception:  # pylint: disable=broad-except
+    except (OSError, ValueError):
         logging.exception("generic exception")
     return False
 

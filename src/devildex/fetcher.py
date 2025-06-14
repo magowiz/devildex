@@ -158,9 +158,7 @@ class PackageSourceFetcher:
         """Check if target_path_abs is safely within base_dir_abs."""
         try:
             return target_path_abs.resolve().is_relative_to(base_dir_abs.resolve())
-        except ValueError:
-            return False
-        except Exception:
+        except (ValueError, OSError):
             return False
 
     @staticmethod
@@ -192,7 +190,7 @@ class PackageSourceFetcher:
                     else:
                         member_dest_path.mkdir(parents=True, exist_ok=True)
 
-        except (zipfile.BadZipFile, OSError, Exception):
+        except (zipfile.BadZipFile, OSError):
             return False
         else:
             return True
@@ -276,7 +274,7 @@ class PackageSourceFetcher:
                 destination_item_path = destination_dir / item.name
                 shutil.move(str(item), str(destination_item_path))
 
-        except Exception:
+        except (OSError, shutil.Error):
             return False
         else:
             return True
@@ -480,7 +478,7 @@ class PackageSourceFetcher:
                 else:
                     shutil.copy2(item, target_item_path)
 
-        except Exception:
+        except (OSError, shutil.Error):
             return False
         else:
             return True
