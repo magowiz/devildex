@@ -95,8 +95,8 @@ class AppPaths:
     def active_project_file(self) -> Path:
         """Path for the file that reports the active project at startup.
 
-        This file is created by the "Companion" process, read by Devildexcore
-        And then deleted by DevildexApp.oninit if tried successfully.
+        This file is created by the "Companion" process, read by DevildexCore
+        And then deleted by DevildexApp.OnInit if tried successfully.
         """
         return self.active_project_registry_dir / ACTIVE_PROJECT_REGISTRATION_FILENAME
 

@@ -212,7 +212,7 @@ def install_project_and_dependencies_in_venv(
     doc_requirements_path: Path | None,
     base_packages_to_install: list[str] | None = None,
 ) -> bool:
-    """Installa il progetto e/o le sue dipendenze nel venv fornito."""
+    """Install the project and/or its dependencies in the Venv provided."""
     if base_packages_to_install is None:
         effective_base_packages = ["sphinx"]
     else:
@@ -233,7 +233,7 @@ def install_project_and_dependencies_in_venv(
 def _prepare_command_env(
     base_env: dict[str, str], additional_env: dict[str, str] | None
 ) -> dict[str, str]:
-    """Prepara il dizionario dell'ambiente per il subprocess."""
+    """Prepare the environment dictionary for subprocess."""
     current_env = base_env.copy()
     if additional_env:
         current_env.update(additional_env)
@@ -288,7 +288,7 @@ def _handle_command_result(
     description: str,
     cwd_param: str | None,
 ) -> int:
-    """Gestisce il risultato del subprocess, logga e stampa info di debug."""
+    """Manage the result of the subprocess, logga and printing of debug info."""
     full_command_str = " ".join(command)
     effective_cwd = _get_effective_cwd(cwd_param)
 
@@ -316,9 +316,9 @@ def execute_command(
     cwd: str | Path | None = None,
     env: Optional[dict] = None,
 ) -> tuple[str, str, int]:
-    """Esegue un comando di shell e restituisce stdout, stderr e return code."""
+    """Execute a command of shell and returns studout, stderr and return code."""
     if not command:
-        return "", "Lista comandi vuota", -1
+        return "", "empty command list", -1
     cwd_str = str(cwd) if cwd else None
     command_str_for_log = " ".join(command)
     try:

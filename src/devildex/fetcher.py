@@ -515,7 +515,7 @@ class PackageSourceFetcher:
                 )
                 if checkout_process and checkout_process.returncode == 0:
                     logger.info(
-                        f"Checkout del tag '{tag}' riuscito in {temp_clone_dir}."
+                        f"Checkout of tag '{tag}' successful in {temp_clone_dir}."
                     )
                     self._cleanup_target_dir_content()
                     if not self._ensure_target_dir_exists():

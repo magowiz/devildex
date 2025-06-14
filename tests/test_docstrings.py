@@ -60,9 +60,9 @@ PACKAGES_TO_TEST = [
 def manage_test_output_directory(
     tmp_path: Path,
 ) -> Path:
-    """Fixture per create e fornire una directory di output documentation.
+    """Fixture for Create and provide an output documentation directory.
 
-    all'interno dello spazio temporaneo di un test specifico.
+    within the temporary space of a specific test.
     """
     test_specific_doc_output_dir = tmp_path / "doc_gen_output"
     test_specific_doc_output_dir.mkdir(parents=True, exist_ok=True)
@@ -88,9 +88,8 @@ def test_documentation_generation_for_package(
     monkeypatch.chdir(clone_cwd)
 
     current_test_docs_output_base = manage_test_output_directory
-    logger.info(
-        f"\n[Testing] Pacchetto: {project_name}, Versione: {version_tag or 'default'}"
-    )
+    logger.info(f"[Testing] package:{project_name}, Version:{version_tag or 'default'}")
+
     logger.info(
         "Output Base Docs (isolato per questo test): "
         f"{current_test_docs_output_base.resolve()}"
@@ -102,19 +101,19 @@ def test_documentation_generation_for_package(
         doc_generator.run(url=repo_url, project_name=project_name)
     except Exception as e:
         pytest.fail(
-            f"L'esecuzione di doc_generator.run per {project_name} ha failed con "
-            f"un'eccezione: {e}\n"
-            f"Controlla i log precedenti per dettagli."
+            f"The execution of doc_generator.run per{project_name} has failed "
+            f"with an exception:{e} Check the previous logs for details."
         )
 
     final_project_version_docs_dir = current_test_docs_output_base / project_name
 
     assert final_project_version_docs_dir.exists(), (
-        "La directory finale della documentazione versionata non esiste: "
+        "The final directory of the versioned documentation does not exist:"
         f"{final_project_version_docs_dir}"
     )
+
     assert final_project_version_docs_dir.is_dir(), (
-        "Il path della documentazione versionata non è una directory: "
+        "The Path of the versioned documentation is not a directory: "
         f"{final_project_version_docs_dir}"
     )
 
@@ -130,8 +129,8 @@ def test_documentation_generation_for_package(
         entry_point_file = final_project_version_docs_dir / expected_entry_point
         assert (
             entry_point_file.exists()
-        ), f"Il file di entry point HTML atteso non è stato trovato: {entry_point_file}"
+        ), f"The expected entry point file was not found:{entry_point_file}"
         assert (
             entry_point_file.is_file()
-        ), f"Il path dell'entry point HTML atteso non è un file: {entry_point_file}"
-        logger.error(f"Trovato entry point HTML atteso: {entry_point_file}")
+        ), f"The expected HTML entry point Path is not a file:{entry_point_file}"
+        logger.error(f"Found entry point html expected:{entry_point_file}")

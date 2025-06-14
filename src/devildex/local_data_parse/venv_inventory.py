@@ -10,10 +10,10 @@ PART_LENGTH = 2
 
 
 def get_installed_packages_with_project_urls(explicit: set | None = None) -> list:
-    """Restituisce una lista di oggetti PackageDetails per tutti i pacchetti installati.
+    """Return a list of PackageDetails objects for all installed packages.
 
-    (o per quelli specificati esplicitamente), includendo nome, versione
-    e un dizionario dei loro Project-URL.
+    (or for those explicitly specified), including name, version
+    and a dictionary of their Project-URL.
     """
     package_list: list[PackageDetails] = []
     for dist in importlib.metadata.distributions():
@@ -36,14 +36,15 @@ def get_installed_packages_with_project_urls(explicit: set | None = None) -> lis
                         current_project_urls[label] = url_value
                     else:
                         logger.warning(
-                            "Attenzione: Impossibile analizzare la voce "
-                            f"Project-URL per {package_name}: '{url_entry}'"
+                            "ATTENTION: impossible to analyze the project-url item for "
+                            f"{package_name}: '{url_entry}'"
                         )
                 except Exception:
                     logger.exception(
-                        "Errore nell'analizzare la voce Project-URL "
-                        f"'{url_entry}' per {package_name}"
+                        f"Error in analyzing the Project-Url item {url_entry}' "
+                        f"for{package_name}"
                     )
+
         pkg_details = PackageDetails(
             name=package_name,
             version=package_version,

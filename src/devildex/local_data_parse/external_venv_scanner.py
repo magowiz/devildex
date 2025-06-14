@@ -26,8 +26,8 @@ class ExternalVenvScanner:
 
         if not self.python_executable_path.is_file():
             logger.warning(
-                f"ExternalVenvScanner: Il path dell'eseguibile Python given "
-                f"'{self.python_executable_path}' non seem to be un file valido."
+                f"ExternalVenvScanner: python executable path given "
+                f"'{self.python_executable_path}' doesn't seem to be a valid file."
             )
         if self.script_content is None:
             logger.error(
@@ -47,8 +47,8 @@ class ExternalVenvScanner:
 
             if not script_resource_path.is_file():
                 logger.error(
-                    f"Helper script '{HELPER_SCRIPT_FILENAME}' non trovato come file "
-                    f"in {script_resource_path} tramite importlib.resources."
+                    f"Helper script '{HELPER_SCRIPT_FILENAME}' not found as file "
+                    f"in {script_resource_path} using importlib.resources."
                 )
                 return None
             return script_resource_path.read_text(encoding="utf-8")
@@ -60,8 +60,7 @@ class ExternalVenvScanner:
             return None
         except (OSError, TypeError, UnicodeDecodeError):
             logger.exception(
-                "Error durante il caricamento dello script helper "
-                f"'{HELPER_SCRIPT_FILENAME}'"
+                "Error during loading helper script " f"'{HELPER_SCRIPT_FILENAME}'"
             )
             return None
 

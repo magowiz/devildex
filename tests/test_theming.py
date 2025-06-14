@@ -1,4 +1,5 @@
 """module that tests theming features."""
+
 import logging
 import shutil
 import webbrowser
@@ -25,11 +26,12 @@ PYDOCTOR_THEME_SOURCE = (
 )
 logger = logging.getLogger(__name__)
 
+
 @pytest.fixture
 def dummy_project_in_tmp_path(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
-    """Fixture che copia il content di 'tests/dummy_project' in una.
+    """Fixture that copies the content of 'Tests/dummy_project' in one.
 
-    subdirectory di tmp_path e restituisce il percorso a questa copia.
+    tmp_path subdirectory and returns the path to this copy.
     """
     create_nested_structure = getattr(request, "param", False)
     project_source_name = ORIGINAL_DUMMY_PROJECT_PATH.name
@@ -48,6 +50,7 @@ def dummy_project_in_tmp_path(tmp_path: Path, request: pytest.FixtureRequest) ->
         shutil.copytree(ORIGINAL_DUMMY_PROJECT_PATH, direct_project_copy_destination)
 
         return direct_project_copy_destination
+
 
 @pytest.mark.focus
 def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
@@ -94,7 +97,7 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
     index_html_path = output_project_docs_path / "index.html"
 
     url_to_open = index_html_path.as_uri()
-    logger.info(f"🔗 Apri manualmente questo URI: {url_to_open}\n")
+    logger.info(f"🔗 Open manually this URI: {url_to_open}\n")
     webbrowser.open_new_tab(url_to_open)
 
 

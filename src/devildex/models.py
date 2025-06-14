@@ -18,7 +18,7 @@ class PackageDetails:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PackageDetails":
-        """Create an istance of PackageDetails from a dictionary."""
+        """Create an instance of PackageDetails from a dictionary."""
         return cls(
             name=data.get("name", ""),
             version=data.get("version", ""),
