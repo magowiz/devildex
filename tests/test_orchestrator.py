@@ -187,6 +187,22 @@ PACKAGES_TO_TEST = [
         "expected_preferred_type": "sphinx",
         "expected_entry_point": "index.html",
     },
+    {
+        "details_data": {
+            "name": "mkdocs",
+            "version": "1.6.0",
+            "project_urls": {
+                "Source Code": "https://github.com/mkdocs/mkdocs.git",
+                "Documentation": "https://www.mkdocs.org/",
+            },
+            "vcs_url": "https://github.com/mkdocs/mkdocs.git",
+            "rtd_url": "https://www.mkdocs.org/",
+        },
+        "repo_url_for_clone": "https://github.com/mkdocs/mkdocs.git",
+        "expected_preferred_type": "mkdocs",
+        "expected_entry_point": "index.html",
+        "expect_grab_success": False,
+    },
 ]
 
 GIT_FULL_PATH = shutil.which("git")
