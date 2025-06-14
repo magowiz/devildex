@@ -21,9 +21,38 @@ KNOWN_THEME_PACKAGES: dict[str, str] = {
     "material": "mkdocs-material",
 }
 
-KNOWN_PLUGIN_PACKAGES: dict[str, str] = {
+
+KNOWN_PLUGIN_PACKAGES: dict[str, str | None] = {
     "mkdocstrings": "mkdocstrings[python]",
     "macros": "mkdocs-macros-plugin",
+    "callouts": "mkdocs-callouts",
+    "pymdownx.arithmatex": "pymdown-extensions",
+    "pymdownx.betterem": "pymdown-extensions",
+    "pymdownx.caret": "pymdown-extensions",
+    "pymdownx.critic": "pymdown-extensions",
+    "pymdownx.details": "pymdown-extensions",
+    "pymdownx.emoji": "pymdown-extensions",
+    "pymdownx.escapeall": "pymdown-extensions",
+    "pymdownx.highlight": "pymdown-extensions",
+    "pymdownx.inlinehilite": "pymdown-extensions",
+    "pymdownx.keys": "pymdown-extensions",
+    "pymdownx.mark": "pymdown-extensions",
+    "pymdownx.magiclink": "pymdown-extensions",
+    "pymdownx.progressbar": "pymdown-extensions",
+    "pymdownx.smartsymbols": "pymdown-extensions",
+    "pymdownx.striphtml": "pymdown-extensions",
+    "pymdownx.superfences": "pymdown-extensions",
+    "pymdownx.tabbed": "pymdown-extensions",
+    "pymdownx.tasklist": "pymdown-extensions",
+    "pymdownx.tilde": "pymdown-extensions",
+    "mkdocs-section-index": "mkdocs-section-index",
+    "toc": None,
+    "admonition": None,
+    "codehilite": "Pygments",
+    "footnotes": None,
+    "attr_list": None,
+    "md_in_html": None,
+    "tables": None,
 }
 
 
