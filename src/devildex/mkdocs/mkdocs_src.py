@@ -207,3 +207,195 @@ def process_mkdocs_source_and_build(
     finally:
         logger.info(f"--- Finished Mkdocs Build for{project_slug} ---")
     return str(final_html_output_dir) if build_successful else None
+
+
+def _perform_actual_mkdocs_build(
+    python_executable: str, build_context: MkDocsBuildContext
+) -> bool:
+    """Execute the mkdocs build using the provided python executable and build context.
+
+    Args:
+        python_executable: Path to the python executable in the virtual environment.
+        build_context: The MkDocsBuildContext containing configuration and paths.
+
+    Returns:
+        True if the build was successful, False otherwise.
+
+    """
+    pip_list_command = [python_executable, "-m", "pip", "list", "--format=json"]
+    logger.critical(
+        f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_2: Attempting to run pip list with command: {' '.join(pip_list_command)}"
+    )
+    stdout_pip_list, stderr_pip_list, ret_code_pip_list = execute_command(
+        pip_list_command,
+        f"Pip list for {build_context.project_slug}",
+    )
+    logger.critical(
+        f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_3: Pip list ret_code: {ret_code_pip_list}"
+    )
+    logger.critical(
+        f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_4: Pip list stdout:\n{stdout_pip_list}"
+    )
+    if stderr_pip_list:  # Logga stderr solo se non è vuoto
+        logger.critical(
+            f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_5: Pip list stderr:\n{stderr_pip_list}"
+        )
+    # <LOG MIRATO MKDOCS_BUILD - PROVA DEL NOVE CON PIP LIST - FINE>
+
+    # <LOG MIRATO MKDOCS_BUILD - CHECK IMPORT CALLOUTS - INIZIO>
+    logger.critical(
+        f"MKDOCS_BUILD_IMPORT_CHECK_X1: Python executable for import check: {python_executable}"
+    )
+    check_import_command = [
+        python_executable,
+        "-c",
+        "import sys; print(f'--- MKDOCS_BUILD sys.path START ---\\n{sys.path}\\n--- MKDOCS_BUILD sys.path END ---'); import callouts; print('--- MKDOCS_BUILD callouts module imported successfully ---')",
+    ]
+    logger.critical(
+        f"MKDOCS_BUILD_IMPORT_CHECK_X2: Attempting to check importability of 'callouts' with command: {' '.join(check_import_command)}"
+    )
+    stdout_check, stderr_check, ret_code_check = execute_command(
+        check_import_command,
+        f"Check import callouts for {build_context.project_slug}",
+    )
+    logger.critical(
+        f"MKDOCS_BUILD_IMPORT_CHECK_X3: Check import ret_code: {ret_code_check}"
+    )
+    logger.critical(
+        f"MKDOCS_BUILD_IMPORT_CHECK_X4: Check import stdout:\n{stdout_check}"
+    )
+    if stderr_check:  # Logga stderr solo se non è vuoto
+        logger.critical(
+            f"MKDOCS_BUILD_IMPORT_CHECK_X5: Check import stderr:\n{stderr_check}"
+        )
+    # <LOG MIRATO MKDOCS_BUILD - CHECK IMPORT CALLOUTS - FINE>
+    mkdocs_build_command = [
+        python_executable,
+        "-m",
+        "mkdocs",
+        "build",
+        "--config-file",
+        str(build_context.original_yml_path.resolve()),
+        "--site-dir",
+        str(build_context.final_output_dir.resolve()),
+    ]
+
+    logger.info(f"Executing MkDocs build command: {' '.join(mkdocs_build_command)}")
+    cwd_for_mkdocs = build_context.original_yml_path.parent
+
+    stdout, stderr, return_code = execute_command(
+        mkdocs_build_command,
+        f"MkDocs build for {build_context.project_slug}",
+        cwd=cwd_for_mkdocs,
+    )
+
+    if return_code == 0:
+        logger.info(
+            f"MkDocs build successful for {build_context.project_slug}. "
+            f"Output: {build_context.final_output_dir}"
+        )
+        return True
+    else:
+        logger.error(
+            f"MkDocs build for {build_context.project_slug} failed. RC: {return_code}"
+        )
+        logger.error(f"MkDocs build STDOUT:\n{stdout}")
+        logger.error(f"MkDocs build STDERR:\n{stderr}")
+        return False
+
+
+def _extract_names_from_config_list_or_dict(
+    config_data: Optional[Union[list[Union[str, dict[str, Any]]], dict[str, Any]]],
+) -> list[str]:
+    """Extract names from a configuration structure typical in mkdocs.yml."""
+    names_to_check: list[str] = []
+    if isinstance(config_data, list):
+        for item in config_data:
+            if isinstance(item, str):
+                names_to_check.append(item)
+            elif isinstance(item, dict) and item:
+                name_candidate = next(iter(item.keys()))
+                if "." in name_candidate and name_candidate.startswith("pymdownx"):
+                    names_to_check.append(name_candidate)
+                else:
+                    names_to_check.append(name_candidate.split(".")[0])
+
+    elif isinstance(config_data, dict):
+        names_to_check.extend(list(config_data.keys()))
+    return names_to_check
+
+
+MkDocsPluginConfigItem = Union[str, dict[str, Any]]
+MkDocsPluginConfigList = list[MkDocsPluginConfigItem]
+MkDocsPluginConfigDict = dict[str, Any]
+
+MkDocsPluginConfigType = Optional[
+    Union[
+        MkDocsPluginConfigList,
+        MkDocsPluginConfigDict,
+    ]
+]
+
+
+def _get_plugin_packages_to_install(
+    plugins_config: Optional[list | dict],
+    markdown_extensions_config: Optional[list | dict],
+) -> list[str]:
+    """Determine pip packages based on the configuration of plugins and extensions."""
+    plugin_packages: list[str] = []
+
+    all_names_to_check: list[str] = []
+    all_names_to_check.extend(_extract_names_from_config_list_or_dict(plugins_config))
+    all_names_to_check.extend(
+        _extract_names_from_config_list_or_dict(markdown_extensions_config)
+    )
+
+    unique_names_to_check = sorted(list(set(all_names_to_check)))
+
+    for name in unique_names_to_check:
+        base_name_for_lookup = name.split(".")[0]
+
+        package = KNOWN_PLUGIN_PACKAGES.get(name)
+        if not package:
+            package = KNOWN_PLUGIN_PACKAGES.get(base_name_for_lookup)
+
+        if package:
+            if package not in plugin_packages:
+                plugin_packages.append(package)
+                logger.debug(
+                    f"Identified Plugin/Extension Package for " f"'{name}': {package}"
+                )
+        else:
+            logger.debug(
+                f"Plugin/Extension '{name}' (or base '{base_name_for_lookup}')"
+                " is specified but not in KNOWN_PLUGIN_PACKAGES "
+                "or needs no separate install."
+            )
+    return plugin_packages
+
+    # In /home/magowiz/MEGA/projects/devildex/src/devildex/utils/venv_utils.py
+    # ... (altri import e funzioni) ...
+
+
+def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]:
+    """Raccoglie tutti i pacchetti Python necessari per una build MkDocs basata sulla configurazione."""
+    packages_to_install: list[str] = ["mkdocs"]
+    if mkdocs_config:
+        packages_to_install.extend(
+            _get_theme_packages_to_install(mkdocs_config.get("theme"))
+        )
+        packages_to_install.extend(
+            _get_plugin_packages_to_install(
+                mkdocs_config.get("plugins"),
+                mkdocs_config.get("markdown_extensions"),
+            )
+        )
+
+    unique_packages = sorted(list(set(pkg for pkg in packages_to_install if pkg)))
+    # <LOG MIRATO 2 - INIZIO>
+    logger.critical(
+        f"MKDOCS_DEBUG_CHECKPOINT_2: Pacchetti unici raccolti da _gather_mkdocs_required_packages: {unique_packages}"
+    )
+    # <LOG MIRATO 2 - FINE>
+
+    return unique_packages
