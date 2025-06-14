@@ -368,8 +368,6 @@ def execute_command(
         return process.stdout, process.stderr, ret_code
 
 
-
-
 def _install_common_project_requirements(
     pip_executable: str, project_root: Path, project_name: str
 ) -> bool:
