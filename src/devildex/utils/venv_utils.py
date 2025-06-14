@@ -316,7 +316,7 @@ def execute_command(
     cwd: str | Path | None = None,
     env: Optional[dict] = None,
 ) -> tuple[str, str, int]:
-    """Execute a command of shell and returns studout, stderr and return code."""
+    """Execute a command of shell and returns stdout, stderr and return code."""
     if not command:
         return "", "empty command list", -1
     cwd_str = str(cwd) if cwd else None
@@ -367,11 +367,7 @@ def execute_command(
     else:
         return process.stdout, process.stderr, ret_code
 
-    # In /home/magowiz/MEGA/projects/devildex/src/devildex/utils/venv_utils.py
-    # ... (dopo _install_common_project_requirements e le altre utility) ...
 
-    # In /home/magowiz/MEGA/projects/devildex/src/devildex/utils/venv_utils.py
-    # ... (altri import e funzioni) ...
 
 
 def _install_common_project_requirements(
@@ -412,14 +408,15 @@ def _install_common_project_requirements(
                 "-r",
                 str(req_file_abs_path),
             ]
-            # Usiamo execute_command da venv_utils.py stesso
             stdout_req, stderr_req, return_code_reqs = execute_command(
                 pip_command_reqs,
-                f"Install project requirements from {req_file_abs_path.name} for {project_name}",
+                f"Install project requirements from {req_file_abs_path.name} "
+                f"for {project_name}",
             )
             if return_code_reqs != 0:
                 logger.warning(
-                    "Failed to install project-specific requirements from %s for '%s'. RC: %s. Stderr: %s",
+                    "Failed to install project-specific requirements from %s for "
+                    "'%s'. RC: %s. Stderr: %s",
                     req_file_abs_path,
                     project_name,
                     return_code_reqs,
@@ -454,7 +451,7 @@ def install_environment_dependencies(
     scan_for_project_requirements: bool = True,
     install_project_editable: bool = True,
 ) -> bool:
-    """Install tool-specific packages, common project requirements, and the project itself."""
+    """Install tool-specific packages, common project requirements, and the project."""
     logger.info("Setting up environment for project '%s'...", project_name)
 
     # 1. Install tool-specific packages (e.g., mkdocs, sphinx, and their plugins)
@@ -468,7 +465,8 @@ def install_environment_dependencies(
             pip_executable, project_name, tool_specific_packages
         ):
             logger.error(
-                "Critical failure: Could not install tool-specific packages for '%s'. Aborting environment setup.",
+                "Critical failure: Could not install tool-specific packages for '%s'."
+                " Aborting environment setup.",
                 project_name,
             )
             return False
@@ -488,7 +486,8 @@ def install_environment_dependencies(
             pip_executable, project_root_for_install, project_name
         ):
             logger.warning(
-                "One or more common project requirements files for '%s' failed to install. "
+                "One or more common project requirements files for '%s' "
+                "failed to install. "
                 "Build might be affected.",
                 project_name,
             )
