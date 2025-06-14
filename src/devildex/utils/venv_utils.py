@@ -366,3 +366,154 @@ def execute_command(
         return "", f"Value error: {e}", -5
     else:
         return process.stdout, process.stderr, ret_code
+
+    # In /home/magowiz/MEGA/projects/devildex/src/devildex/utils/venv_utils.py
+    # ... (dopo _install_common_project_requirements e le altre utility) ...
+
+    # In /home/magowiz/MEGA/projects/devildex/src/devildex/utils/venv_utils.py
+    # ... (altri import e funzioni) ...
+
+
+def _install_common_project_requirements(
+    pip_executable: str, project_root: Path, project_name: str
+) -> bool:
+    """Check for and installs from common project-specific requirements files."""
+    logger.info(
+        "Searching for common project requirements files for '%s' in %s...",
+        project_name,
+        project_root,
+    )
+    potential_req_files_relative = [
+        "requirements.txt",
+        "docs/requirements.txt",
+        "doc/requirements.txt",
+        "requirements/docs.txt",
+        "requirements/doc.txt",
+        "requirements-docs.txt",
+        "dev-requirements.txt",
+    ]
+    all_installations_successful = True
+    found_any_req_file = False
+
+    for req_file_rel_path in potential_req_files_relative:
+        req_file_abs_path = project_root / req_file_rel_path
+        if req_file_abs_path.is_file():
+            found_any_req_file = True
+            logger.info(
+                "Found project-specific requirements file for '%s': %s",
+                project_name,
+                req_file_abs_path,
+            )
+            pip_command_reqs = [
+                pip_executable,
+                "install",
+                "--disable-pip-version-check",
+                "--no-python-version-warning",
+                "-r",
+                str(req_file_abs_path),
+            ]
+            # Usiamo execute_command da venv_utils.py stesso
+            stdout_req, stderr_req, return_code_reqs = execute_command(
+                pip_command_reqs,
+                f"Install project requirements from {req_file_abs_path.name} for {project_name}",
+            )
+            if return_code_reqs != 0:
+                logger.warning(
+                    "Failed to install project-specific requirements from %s for '%s'. RC: %s. Stderr: %s",
+                    req_file_abs_path,
+                    project_name,
+                    return_code_reqs,
+                    stderr_req.strip(),
+                )
+                all_installations_successful = False
+            else:
+                logger.info(
+                    "Successfully installed requirements from %s for '%s'.",
+                    req_file_abs_path,
+                    project_name,
+                )
+                if stdout_req.strip():
+                    logger.debug(
+                        "Stdout from requirements install:\n%s", stdout_req.strip()
+                    )
+
+    if not found_any_req_file:
+        logger.info(
+            "No common project-specific requirements files found for '%s' in %s.",
+            project_name,
+            project_root,
+        )
+    return all_installations_successful
+
+
+def install_environment_dependencies(
+    pip_executable: str,
+    project_name: str,
+    project_root_for_install: Path,
+    tool_specific_packages: list[str],
+    scan_for_project_requirements: bool = True,
+    install_project_editable: bool = True,
+) -> bool:
+    """Install tool-specific packages, common project requirements, and the project itself."""
+    logger.info("Setting up environment for project '%s'...", project_name)
+
+    # 1. Install tool-specific packages (e.g., mkdocs, sphinx, and their plugins)
+    if tool_specific_packages:
+        logger.info(
+            "Installing tool-specific packages for '%s': %s",
+            project_name,
+            tool_specific_packages,
+        )
+        if not _install_base_packages_in_venv(  # Re-using this helper
+            pip_executable, project_name, tool_specific_packages
+        ):
+            logger.error(
+                "Critical failure: Could not install tool-specific packages for '%s'. Aborting environment setup.",
+                project_name,
+            )
+            return False
+    else:
+        logger.info(
+            "No tool-specific packages provided for '%s'. Skipping this step.",
+            project_name,
+        )
+
+    # 2. Install common project requirements if requested
+    if scan_for_project_requirements:
+        logger.info(
+            "Scanning for and installing common project requirements for '%s'.",
+            project_name,
+        )
+        if not _install_common_project_requirements(
+            pip_executable, project_root_for_install, project_name
+        ):
+            logger.warning(
+                "One or more common project requirements files for '%s' failed to install. "
+                "Build might be affected.",
+                project_name,
+            )
+            # Decide on strictness: for now, this is a warning, not a hard fail.
+    else:
+        logger.info(
+            "Skipping scan for common project requirements for '%s'.", project_name
+        )
+
+    # 3. Install the project itself in editable mode if requested and applicable
+    if install_project_editable:
+        logger.info(
+            "Attempting to install project '%s' in editable mode.", project_name
+        )
+        if not _install_project_editable_in_venv(
+            pip_executable, project_name, project_root_for_install
+        ):
+            logger.warning(
+                "Failed to install project '%s' in editable mode. "
+                "Build might be affected if project modules are needed by build tools.",
+                project_name,
+            )
+            # Decide on strictness: for now, this is a warning.
+    else:
+        logger.info("Skipping editable install of project '%s'.", project_name)
+
+    logger.info("Environment setup for project '%s' completed.", project_name)
+    return True  # Returns True if critical steps (tool packages) passed.
