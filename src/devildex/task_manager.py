@@ -197,7 +197,6 @@ class GenerationTaskManager:
             self.update_action_buttons_callback()
             return
 
-
         original_row_idx_of_task = self.active_tasks.pop(package_id, -1)
 
         if original_row_idx_of_task == -1:
@@ -242,8 +241,11 @@ class GenerationTaskManager:
 
     def _stop_animation_timer_if_no_tasks(self) -> None:
         """Stop the animation timer if no generation tasks are active."""
-        if (self.animation_timer and not self.active_tasks and
-                self.animation_timer.IsRunning()):
+        if (
+            self.animation_timer
+            and not self.active_tasks
+            and self.animation_timer.IsRunning()
+        ):
             self.animation_timer.Stop()
             self.current_animation_frame_idx = 0
             logger_task_manager.debug(
