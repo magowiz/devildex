@@ -174,6 +174,29 @@ def process_mkdocs_source_and_build(
                 project_slug=project_slug,
             )
             build_successful = _execute_mkdocs_build_in_venv(venv, build_ctx)
+            required_mkdocs_pkgs = _gather_mkdocs_required_packages(
+                mkdocs_config_content
+            )
+            dependencies_installed_ok = install_environment_dependencies(
+                pip_executable=venv.pip_executable,
+                project_name=f"mkdocs_{project_slug}",
+                project_root_for_install=project_root_p,
+                tool_specific_packages=required_mkdocs_pkgs,
+                scan_for_project_requirements=True,
+                install_project_editable=True,
+            )
+            if dependencies_installed_ok:
+                build_successful = _perform_actual_mkdocs_build(
+                    python_executable=venv.python_executable,
+                    build_context=build_ctx,
+                )
+            else:
+                logger.error(
+                    f"Cannot proceed with MkDocs build for {project_slug} "
+                    "due to failed dependency installation."
+                )
+                build_successful = False
+
     finally:
         logger.info(f"--- Finished Mkdocs Build for{project_slug} ---")
     return str(final_html_output_dir) if build_successful else None
