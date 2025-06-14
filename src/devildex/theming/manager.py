@@ -220,7 +220,6 @@ class ThemeManager:
                     f"ThemeManager: DevilDex MkDocs theme assets not found at {self.mkdocs_theme_assets_source_path}. "
                     "Skipping custom_dir injection."
                 )
-            # --- End Theming Logic ---
 
             temp_dir_for_themed_yml.mkdir(parents=True, exist_ok=True)
             with open(themed_mkdocs_yml_path, "w", encoding="utf-8") as f_out:
