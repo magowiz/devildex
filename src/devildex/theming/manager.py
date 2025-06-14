@@ -114,7 +114,7 @@ class ThemeManager:
                 f"ThemeManager: Not an MkDocs project or mkdocs.yml ({self.mkdocs_yml_file}) "
                 "not found/set for theming. Cannot apply customizations."
             )
-            return None  # Indicate that theming couldn't be applied / use original
+            return None
 
         logger.info(
             f"ThemeManager: Applying MkDocs customizations for {self.mkdocs_yml_file}"
@@ -133,6 +133,41 @@ class ThemeManager:
             # 2. Copy these assets to the source project directory, under self.mkdocs_theme_override_dir_name
             #    This allows MkDocs to find them via a relative `custom_dir`.
 
+            if not docs_dir_path_obj_from_config.is_absolute():
+                # Se docs_dir è relativo, rendilo assoluto rispetto alla posizione del mkdocs.yml originale
+                absolute_docs_dir = (
+                    original_yml_parent_dir / original_docs_dir_value
+                ).resolve()
+
+                if absolute_docs_dir.exists() and absolute_docs_dir.is_dir():
+                    config["docs_dir"] = str(absolute_docs_dir)
+                    logger.info(
+                        f"ThemeManager: Updated 'docs_dir' in temporary YAML to absolute path: {config['docs_dir']}"
+                    )
+                else:
+                    # Se il percorso risolto non esiste, logga un errore grave.
+                    # La build di MkDocs fallirà quasi certamente.
+                    logger.error(
+                        f"ThemeManager: Original 'docs_dir' ('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
+                        f"resolved to non-existent/non-directory path '{absolute_docs_dir}'. "
+                        "MkDocs build is expected to fail."
+                    )
+                    # Potresti voler restituire None qui per interrompere il processo di theming
+                    # return None
+            # Se docs_dir era già assoluto, verifica solo che esista
+            elif (
+                not docs_dir_path_obj_from_config.exists()
+                or not docs_dir_path_obj_from_config.is_dir()
+            ):
+                logger.error(
+                    f"ThemeManager: Original absolute 'docs_dir' ('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
+                    "does not exist or is not a directory. MkDocs build will likely fail."
+                )
+            # --- FINE MODIFICA CHIAVE PER docs_dir ---
+
+            # --- Logica di Theming esistente (copia degli asset e modifica di config["theme"]) ---
+            # Questa parte sembra gestire correttamente la copia degli asset del tema DevilDex
+            # nella directory del progetto e l'impostazione di 'custom_dir' relativo.
             mkdocs_project_actual_root = self.mkdocs_yml_file.parent
             target_theme_override_path_in_project = (
                 mkdocs_project_actual_root / self.mkdocs_theme_override_dir_name
@@ -156,10 +191,7 @@ class ThemeManager:
                     target_theme_override_path_in_project,
                 )
 
-                # Modify the YAML configuration to use the custom_dir
-                current_theme_config = config.get(
-                    "theme", "mkdocs"
-                )  # Default to 'mkdocs' theme name
+                current_theme_config = config.get("theme", "mkdocs")
                 if isinstance(current_theme_config, str):
                     config["theme"] = {
                         "name": current_theme_config,
@@ -169,13 +201,12 @@ class ThemeManager:
                     current_theme_config["custom_dir"] = (
                         self.mkdocs_theme_override_dir_name
                     )
-                    # Ensure 'name' exists if it's a dict, otherwise MkDocs might complain
                     if "name" not in current_theme_config:
-                        current_theme_config["name"] = "mkdocs"  # Default theme name
+                        current_theme_config["name"] = "mkdocs"
                     config["theme"] = current_theme_config
-                else:  # Default if 'theme' is not str or dict (e.g. None or other type)
+                else:
                     config["theme"] = {
-                        "name": "mkdocs",  # Default theme name
+                        "name": "mkdocs",
                         "custom_dir": self.mkdocs_theme_override_dir_name,
                     }
                 logger.info(
