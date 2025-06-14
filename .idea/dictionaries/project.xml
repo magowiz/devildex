@@ -1,18 +1,31 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>arithmatex</w>
       <w>asctime</w>
+      <w>betterem</w>
+      <w>codehilite</w>
       <w>devildex</w>
       <w>docsets</w>
+      <w>escapeall</w>
       <w>htmlzip</w>
+      <w>inlinehilite</w>
+      <w>intersphinx</w>
       <w>levelname</w>
+      <w>magiclink</w>
       <w>megalinter</w>
       <w>oxsecurity</w>
       <w>packagetype</w>
+      <w>pydata</w>
+      <w>pymdown</w>
       <w>pymdownx</w>
+      <w>smartsymbols</w>
       <w>sphinxcontrib</w>
+      <w>striphtml</w>
       <w>subdirs</w>
+      <w>superfences</w>
       <w>tablename</w>
+      <w>viewcode</w>
     </words>
   </dictionary>
 </component>

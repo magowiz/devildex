@@ -125,19 +125,13 @@ class ThemeManager:
             with open(self.mkdocs_yml_file, encoding="utf-8") as f_in:
                 config = yaml.safe_load(f_in)
                 if config is None:
-                    config = {}  # Handle empty YAML file
-
-            # --- MODIFICA CHIAVE PER docs_dir ---
-            # Assicurati che docs_dir nel file YAML temporaneo punti ai sorgenti corretti.
-            # self.mkdocs_yml_file è il percorso del mkdocs.yml *originale* nel progetto clonato.
+                    config = {}
             original_yml_parent_dir = self.mkdocs_yml_file.parent
 
-            # Leggi il valore di docs_dir dalla config originale, default a "docs"
             original_docs_dir_value = config.get("docs_dir", "docs")
             docs_dir_path_obj_from_config = Path(original_docs_dir_value)
 
             if not docs_dir_path_obj_from_config.is_absolute():
-                # Se docs_dir è relativo, rendilo assoluto rispetto alla posizione del mkdocs.yml originale
                 absolute_docs_dir = (
                     original_yml_parent_dir / original_docs_dir_value
                 ).resolve()
@@ -166,11 +160,7 @@ class ThemeManager:
                     f"ThemeManager: Original absolute 'docs_dir' ('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
                     "does not exist or is not a directory. MkDocs build will likely fail."
                 )
-            # --- FINE MODIFICA CHIAVE PER docs_dir ---
 
-            # --- Logica di Theming esistente (copia degli asset e modifica di config["theme"]) ---
-            # Questa parte sembra gestire correttamente la copia degli asset del tema DevilDex
-            # nella directory del progetto e l'impostazione di 'custom_dir' relativo.
             mkdocs_project_actual_root = self.mkdocs_yml_file.parent
             target_theme_override_path_in_project = (
                 mkdocs_project_actual_root / self.mkdocs_theme_override_dir_name

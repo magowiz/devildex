@@ -174,11 +174,6 @@ def process_mkdocs_source_and_build(
             required_mkdocs_pkgs = _gather_mkdocs_required_packages(
                 mkdocs_config_content
             )
-            # <LOG MIRATO 3 - INIZIO>
-            logger.critical(
-                f"MKDOCS_DEBUG_CHECKPOINT_3: Pacchetti richiesti (required_mkdocs_pkgs) prima di install_environment_dependencies: {required_mkdocs_pkgs}"
-            )
-            # <LOG MIRATO 3 - FINE>
             logger.info(
                 "MkDocs related packages to install for "
                 f"{project_slug}: {required_mkdocs_pkgs}"
@@ -223,52 +218,11 @@ def _perform_actual_mkdocs_build(
 
     """
     pip_list_command = [python_executable, "-m", "pip", "list", "--format=json"]
-    logger.critical(
-        f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_2: Attempting to run pip list with command: {' '.join(pip_list_command)}"
-    )
-    stdout_pip_list, stderr_pip_list, ret_code_pip_list = execute_command(
+    _, _, ret_code_pip_list = execute_command(
         pip_list_command,
         f"Pip list for {build_context.project_slug}",
     )
-    logger.critical(
-        f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_3: Pip list ret_code: {ret_code_pip_list}"
-    )
-    logger.critical(
-        f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_4: Pip list stdout:\n{stdout_pip_list}"
-    )
-    if stderr_pip_list:  # Logga stderr solo se non è vuoto
-        logger.critical(
-            f"MKDOCS_BUILD_PIP_LIST_CHECKPOINT_5: Pip list stderr:\n{stderr_pip_list}"
-        )
-    # <LOG MIRATO MKDOCS_BUILD - PROVA DEL NOVE CON PIP LIST - FINE>
 
-    # <LOG MIRATO MKDOCS_BUILD - CHECK IMPORT CALLOUTS - INIZIO>
-    logger.critical(
-        f"MKDOCS_BUILD_IMPORT_CHECK_X1: Python executable for import check: {python_executable}"
-    )
-    check_import_command = [
-        python_executable,
-        "-c",
-        "import sys; print(f'--- MKDOCS_BUILD sys.path START ---\\n{sys.path}\\n--- MKDOCS_BUILD sys.path END ---'); import callouts; print('--- MKDOCS_BUILD callouts module imported successfully ---')",
-    ]
-    logger.critical(
-        f"MKDOCS_BUILD_IMPORT_CHECK_X2: Attempting to check importability of 'callouts' with command: {' '.join(check_import_command)}"
-    )
-    stdout_check, stderr_check, ret_code_check = execute_command(
-        check_import_command,
-        f"Check import callouts for {build_context.project_slug}",
-    )
-    logger.critical(
-        f"MKDOCS_BUILD_IMPORT_CHECK_X3: Check import ret_code: {ret_code_check}"
-    )
-    logger.critical(
-        f"MKDOCS_BUILD_IMPORT_CHECK_X4: Check import stdout:\n{stdout_check}"
-    )
-    if stderr_check:  # Logga stderr solo se non è vuoto
-        logger.critical(
-            f"MKDOCS_BUILD_IMPORT_CHECK_X5: Check import stderr:\n{stderr_check}"
-        )
-    # <LOG MIRATO MKDOCS_BUILD - CHECK IMPORT CALLOUTS - FINE>
     mkdocs_build_command = [
         python_executable,
         "-m",
@@ -373,12 +327,9 @@ def _get_plugin_packages_to_install(
             )
     return plugin_packages
 
-    # In /home/magowiz/MEGA/projects/devildex/src/devildex/utils/venv_utils.py
-    # ... (altri import e funzioni) ...
-
 
 def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]:
-    """Raccoglie tutti i pacchetti Python necessari per una build MkDocs basata sulla configurazione."""
+    """Collect all the Python packages needed for a conf-based MKDOCS Builds."""
     packages_to_install: list[str] = ["mkdocs"]
     if mkdocs_config:
         packages_to_install.extend(
@@ -392,10 +343,5 @@ def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]
         )
 
     unique_packages = sorted(list(set(pkg for pkg in packages_to_install if pkg)))
-    # <LOG MIRATO 2 - INIZIO>
-    logger.critical(
-        f"MKDOCS_DEBUG_CHECKPOINT_2: Pacchetti unici raccolti da _gather_mkdocs_required_packages: {unique_packages}"
-    )
-    # <LOG MIRATO 2 - FINE>
 
     return unique_packages
