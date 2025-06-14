@@ -266,55 +266,55 @@ def _execute_mkdocs_build_in_venv(
         return False
 
 
-
-
-
-
-def process_mkdocs_source_and_build(source_project_path: str, project_slug:
-    str, version_identifier: str, base_output_dir: Path) ->Optional[str]:
+def process_mkdocs_source_and_build(
+    source_project_path: str,
+    project_slug: str,
+    version_identifier: str,
+    base_output_dir: Path,
+) -> Optional[str]:
     """Process a MKDOCS: Build project.
 
     Return the path to the dark or none HTML site in case of failure.
     """
-    logger.info(
-        f'--- Starting Mkdocs Build for{project_slug}v{version_identifier} ---'
-        )
+    logger.info(f"--- Starting Mkdocs Build for{project_slug}v{version_identifier} ---")
     if not source_project_path:
-        logger.error('Source Project Path Not Provided for Mkdocs Build.')
+        logger.error("Source Project Path Not Provided for Mkdocs Build.")
         return None
     project_root_p = Path(source_project_path)
     if not project_root_p.is_dir():
-        logger.error(
-            f'Source Project Path{project_root_p}Is Not a Valid Directory.')
+        logger.error(f"Source Project Path{project_root_p}Is Not a Valid Directory.")
         return None
     original_mkdocs_yml_path = _find_mkdocs_config_file(project_root_p)
     if not original_mkdocs_yml_path:
-        logger.error(f'Could Not Find Mkdocs.yml in{project_root_p}. ABORTING.'
-            )
+        logger.error(f"Could Not Find Mkdocs.yml in{project_root_p}. ABORTING.")
         return None
     mkdocs_config_content = _parse_mkdocs_config(original_mkdocs_yml_path)
-    final_html_output_dir = (base_output_dir / 'mkdocs_builds' /
-        project_slug / version_identifier).resolve()
+    final_html_output_dir = (
+        base_output_dir / "mkdocs_builds" / project_slug / version_identifier
+    ).resolve()
     try:
         if final_html_output_dir.exists():
             shutil.rmtree(final_html_output_dir)
         final_html_output_dir.mkdir(parents=True, exist_ok=True)
     except OSError:
         logger.exception(
-            f'Error Creating/Cleaning Mkdocs Output Directory{final_html_output_dir}'
-            )
+            f"Error Creating/Cleaning Mkdocs Output Directory{final_html_output_dir}"
+        )
         return None
     build_successful = False
     try:
-        with IsolatedVenvManager(project_name=
-            f'mkdocs_{project_slug}-{version_identifier}') as venv:
-            logger.info(f'Created Isolated Venv for Mkdocs at{venv.venv_path}')
-            build_ctx = MkDocsBuildContext(config_content=
-                mkdocs_config_content, project_root=project_root_p,
+        with IsolatedVenvManager(
+            project_name=f"mkdocs_{project_slug}-{version_identifier}"
+        ) as venv:
+            logger.info(f"Created Isolated Venv for Mkdocs at{venv.venv_path}")
+            build_ctx = MkDocsBuildContext(
+                config_content=mkdocs_config_content,
+                project_root=project_root_p,
                 original_yml_path=original_mkdocs_yml_path,
-                final_output_dir=final_html_output_dir, project_slug=
-                project_slug)
+                final_output_dir=final_html_output_dir,
+                project_slug=project_slug,
+            )
             build_successful = _execute_mkdocs_build_in_venv(venv, build_ctx)
     finally:
-        logger.info(f'--- Finished Mkdocs Build for{project_slug} ---')
+        logger.info(f"--- Finished Mkdocs Build for{project_slug} ---")
     return str(final_html_output_dir) if build_successful else None
