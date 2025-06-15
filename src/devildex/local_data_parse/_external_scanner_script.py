@@ -8,18 +8,25 @@ PATHS_LEN = 2
 logger = logging.getLogger(__name__)
 
 
-def main() -> None:
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
-    if hasattr(sys.stderr, "reconfigure"):
-        sys.stderr.reconfigure(encoding="utf-8")
-
-    package_list = []
+def _args_checker() -> None:
     if len(sys.argv) < PATHS_LEN:
         logger.debug(
             "DEBUG_HELPER: Error: Output file path not provided as argument.",
         )
         sys.exit(2)
+
+
+def _reconfigure_logs() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
+
+
+def main() -> None:
+    package_list: list = []
+    _reconfigure_logs()
+    _args_checker()
 
     output_file_path = sys.argv[1]
     try:

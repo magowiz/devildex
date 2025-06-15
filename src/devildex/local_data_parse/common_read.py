@@ -38,6 +38,31 @@ def add_deps_from_poetry_section(section_data: dict, explicit_deps: set) -> None
                 explicit_deps.add(normalized_name)
 
 
+def _parse_pep621_dependencies(project_section: dict, explicit_deps: set[str]) -> None:
+    """Parse [project.dependencies] from pyproject.toml data (PEP 621).
+
+    Args:
+        project_section: The dictionary representing the [project] section.
+        explicit_deps: The set to add discovered dependency names to.
+
+    """
+    if not isinstance(project_section, dict):
+        return
+
+    project_deps_list = project_section.get("dependencies")
+    if not isinstance(project_deps_list, list):
+        return
+
+    logger.info("Reading dependencies from [project.dependencies] (PEP 621)")
+    for dep_string in project_deps_list:
+        if isinstance(dep_string, str):
+            package_name = _parse_requirement_line(
+                dep_string, "pyproject.toml [project.dependencies]"
+            )
+            if package_name:
+                explicit_deps.add(package_name)
+
+
 def _read_and_parse_pyproject_toml(pyproject_path: str) -> dict | None:
     """Read and parses a pyproject.toml file.
 
@@ -117,49 +142,26 @@ def _get_explicit_dependencies_from_parsed_pyproject(
     """
     explicit_deps: set[str] = set()
     if not pyproject_data:
+        logger.info("pyproject.toml data is empty, cannot extract dependencies.")
         return explicit_deps
 
+    # Attempt to parse PEP 621 dependencies
+    # .get() with a default {} ensures project_section is always a dict
     project_section = pyproject_data.get("project", {})
-    if isinstance(project_section, dict):
-        project_deps_list = project_section.get("dependencies")
-        if isinstance(project_deps_list, list):
-            logger.info("Reading dependencies from [project.dependencies] (PEP 621)")
-            for dep_string in project_deps_list:
-                if isinstance(dep_string, str):
-                    package_name = _parse_requirement_line(
-                        dep_string, "pyproject.toml [project.dependencies]"
-                    )
-                    if package_name:
-                        explicit_deps.add(package_name)
+    _parse_pep621_dependencies(project_section, explicit_deps)
 
+    # Attempt to parse Poetry dependencies
+    # .get() with a default {} ensures tool_data and poetry_data are always dicts
     tool_data = pyproject_data.get("tool", {})
     poetry_data = tool_data.get("poetry", {})
+    _parse_poetry_dependencies_sections(poetry_data, explicit_deps)
 
-    if isinstance(poetry_data, dict) and poetry_data:
+    if not explicit_deps:
+        # This log triggers if neither PEP 621 nor Poetry sections yielded dependencies.
         logger.info(
-            "Reading/adding dependencies from [tool.poetry.dependencies] and groups"
+            "No explicit dependencies were successfully extracted from "
+            "[project.dependencies] or [tool.poetry] sections in pyproject.toml."
         )
-        main_deps_data = poetry_data.get("dependencies")
-        if main_deps_data:
-            add_deps_from_poetry_section(main_deps_data, explicit_deps)
-
-        group_section_data = poetry_data.get("group", {})
-        if isinstance(group_section_data, dict):
-            for _group_name, group_content in group_section_data.items():
-                if isinstance(group_content, dict):
-                    group_deps_data = group_content.get("dependencies")
-                    if group_deps_data:
-                        add_deps_from_poetry_section(group_deps_data, explicit_deps)
-    elif explicit_deps:  # Se abbiamo trovato deps da [project] e non c'è [tool.poetry]
-        logger.info(
-            "No [tool.poetry] section found or it's not a dictionary, "
-            "using dependencies from [project] section if any."
-        )
-    elif not explicit_deps:
-        logger.info(
-            "No explicit dependencies found in [project] or [tool.poetry] sections."
-        )
-
     return explicit_deps
 
 
@@ -220,6 +222,35 @@ def find_requirements_txt(start_path: str = ".") -> str | None:
         if parent_path == current_path:
             return None
         current_path = parent_path
+
+
+def _parse_poetry_dependencies_sections(
+    poetry_data: dict, explicit_deps: set[str]
+) -> None:
+    """Parse [tool.poetry.dependencies] and [tool.poetry.group] sections.
+
+    Args:
+        poetry_data: The dictionary representing the [tool.poetry] section.
+        explicit_deps: The set to add discovered dependency names to.
+
+    """
+    if not isinstance(poetry_data, dict) or not poetry_data:
+        return
+
+    logger.info(
+        "Reading/adding dependencies from [tool.poetry.dependencies] and groups"
+    )
+    main_deps_data = poetry_data.get("dependencies")
+    if main_deps_data:  # This should be a dict for add_deps_from_poetry_section
+        add_deps_from_poetry_section(main_deps_data, explicit_deps)
+
+    group_section_data = poetry_data.get("group", {})
+    if isinstance(group_section_data, dict):
+        for _group_name, group_content in group_section_data.items():
+            if isinstance(group_content, dict):
+                group_deps_data = group_content.get("dependencies")
+                if group_deps_data:  # This should be a dict
+                    add_deps_from_poetry_section(group_deps_data, explicit_deps)
 
 
 def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[str]:
@@ -311,7 +342,6 @@ pylint = "^2.10"
             "\n--- No explicit dependency names found or config file missing ---"
         )
 
-    # Cleanup
     try:
         os.remove(os.path.join(dummy_project_path, "pyproject.toml"))
         os.rmdir(dummy_project_path)
