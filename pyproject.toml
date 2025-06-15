@@ -16,6 +16,7 @@ dependencies = [
     "poetry-core (>=2.0.0,<3.0.0)",
     "sqlalchemy (>=2.0.41,<3.0.0)",
     "wxpython (>=4.2.3,<5.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)",
 ]
 
 
