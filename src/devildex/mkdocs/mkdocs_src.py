@@ -9,7 +9,11 @@ from typing import Any, Optional, Union
 import yaml
 
 from devildex.utils.venv_cm import IsolatedVenvManager, VenvInitializationError
-from devildex.utils.venv_utils import execute_command, install_environment_dependencies
+from devildex.utils.venv_utils import (
+    InstallConfig,
+    execute_command,
+    install_environment_dependencies,
+)
 
 logger = logging.getLogger(__name__)
 MKDOCS_CONFIG_FILE = "mkdocs.yml"
@@ -381,14 +385,14 @@ def _execute_mkdocs_build_in_venv(build_context: MkDocsBuildContext) -> bool:
                 build_context.project_slug,
                 required_mkdocs_pkgs,
             )
-
+            install_conf = InstallConfig(
+                project_root_for_install=build_context.project_root,
+                tool_specific_packages=required_mkdocs_pkgs,
+            )
             dependencies_installed_ok = install_environment_dependencies(
                 pip_executable=venv.pip_executable,
                 project_name=f"mkdocs_{build_context.project_slug}",
-                project_root_for_install=build_context.project_root,
-                tool_specific_packages=required_mkdocs_pkgs,
-                scan_for_project_requirements=True,
-                install_project_editable=True,
+                config=install_conf,
             )
             if dependencies_installed_ok:
                 build_successful = _perform_actual_mkdocs_build(

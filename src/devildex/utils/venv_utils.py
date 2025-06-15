@@ -3,12 +3,23 @@
 import logging
 import os
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from devildex.utils.deps_utils import filter_requirements_lines
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class InstallConfig:
+    """Configuration for installing environment dependencies."""
+
+    project_root_for_install: Path
+    tool_specific_packages: list[str]
+    scan_for_project_requirements: bool = True
+    install_project_editable: bool = True
 
 
 def _install_base_packages_in_venv(
@@ -442,25 +453,19 @@ def _install_common_project_requirements(
 
 
 def install_environment_dependencies(
-    pip_executable: str,
-    project_name: str,
-    project_root_for_install: Path,
-    tool_specific_packages: list[str],
-    scan_for_project_requirements: bool = True,
-    install_project_editable: bool = True,
+    pip_executable: str, project_name: str, config: InstallConfig
 ) -> bool:
     """Install tool-specific packages, common project requirements, and the project."""
     logger.info("Setting up environment for project '%s'...", project_name)
 
-    # 1. Install tool-specific packages (e.g., mkdocs, sphinx, and their plugins)
-    if tool_specific_packages:
+    if config.tool_specific_packages:
         logger.info(
             "Installing tool-specific packages for '%s': %s",
             project_name,
-            tool_specific_packages,
+            config.tool_specific_packages,
         )
-        if not _install_base_packages_in_venv(  # Re-using this helper
-            pip_executable, project_name, tool_specific_packages
+        if not _install_base_packages_in_venv(
+            pip_executable, project_name, config.tool_specific_packages
         ):
             logger.error(
                 "Critical failure: Could not install tool-specific packages for '%s'."
@@ -474,14 +479,13 @@ def install_environment_dependencies(
             project_name,
         )
 
-    # 2. Install common project requirements if requested
-    if scan_for_project_requirements:
+    if config.scan_for_project_requirements:
         logger.info(
             "Scanning for and installing common project requirements for '%s'.",
             project_name,
         )
         if not _install_common_project_requirements(
-            pip_executable, project_root_for_install, project_name
+            pip_executable, config.project_root_for_install, project_name
         ):
             logger.warning(
                 "One or more common project requirements files for '%s' "
@@ -489,28 +493,25 @@ def install_environment_dependencies(
                 "Build might be affected.",
                 project_name,
             )
-            # Decide on strictness: for now, this is a warning, not a hard fail.
     else:
         logger.info(
             "Skipping scan for common project requirements for '%s'.", project_name
         )
 
-    # 3. Install the project itself in editable mode if requested and applicable
-    if install_project_editable:
+    if config.install_project_editable:
         logger.info(
             "Attempting to install project '%s' in editable mode.", project_name
         )
         if not _install_project_editable_in_venv(
-            pip_executable, project_name, project_root_for_install
+            pip_executable, project_name, config.project_root_for_install
         ):
             logger.warning(
                 "Failed to install project '%s' in editable mode. "
                 "Build might be affected if project modules are needed by build tools.",
                 project_name,
             )
-            # Decide on strictness: for now, this is a warning.
     else:
         logger.info("Skipping editable install of project '%s'.", project_name)
 
     logger.info("Environment setup for project '%s' completed.", project_name)
-    return True  # Returns True if critical steps (tool packages) passed.
+    return True

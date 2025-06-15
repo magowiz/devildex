@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
 
 import requests
@@ -25,6 +26,214 @@ if not logger.hasHandlers():
 
 CONF_SPHINX_FILE = "conf.py"
 GIT_FULL_PATH = shutil.which("git")
+
+
+@dataclass
+class RtdFinalizeConfig:
+    """Configuration for finalizing the RTD build and cleanup process."""
+
+    output_dir_param: Path | None
+    existing_clone_path: str | None
+    clone_base_dir_override: Path | None
+    actual_clone_base_dir: Path
+
+
+@dataclass
+class RtdCloningConfig:
+    """Configuration for repository cloning for ReadTheDocs sources."""
+
+    repo_url: str | None
+    initial_default_branch: str
+    base_dir: Path
+    project_slug: str
+    bzr: bool
+
+
+class CloneAttemptStatus(Enum):
+    """Represents the status of a single clone attempt."""
+
+    SUCCESS = auto()
+    FAILED_RETRYABLE = auto()
+    FAILED_CRITICAL_PREPARE_DIR = auto()
+    FAILED_CRITICAL_VCS_NOT_FOUND_EXEC = auto()
+
+
+def _get_unique_branches_to_attempt(initial_default_branch: str) -> list[str]:
+    """Generate a list of unique branch names to attempt for cloning."""
+    potential_branches = [initial_default_branch, "master", "main"]
+    unique_branches: list[str] = []
+    for b_candidate in potential_branches:
+        if b_candidate:  # Ensure candidate is not None or empty string
+            stripped_candidate = b_candidate.strip()
+            if stripped_candidate and stripped_candidate not in unique_branches:
+                unique_branches.append(stripped_candidate)
+    return unique_branches
+
+
+def _get_vcs_executable(bzr: bool) -> str | None:
+    """Determine the VCS executable path and logs if not found."""
+    if not bzr:
+        if not GIT_FULL_PATH:
+            logger.error(
+                "Error: 'git' command not found. Ensure Git is installed and in PATH."
+            )
+            return None
+        return GIT_FULL_PATH
+    else:  # bzr
+        bzr_exe = shutil.which("bzr")
+        if not bzr_exe:
+            logger.error(
+                "Error: 'bzr' command not found. Ensure bzr is "
+                "installed and in PATH."
+            )
+            return None
+        return bzr_exe
+
+
+def _attempt_single_branch_clone(
+    repo_url: str,
+    branch_to_try: str,
+    clone_dir_path: Path,
+    bzr: bool,
+    vcs_executable_path: str,
+) -> CloneAttemptStatus:
+    """Attempt to clone a single specified branch of a repository.
+
+    Handles directory preparation, command construction, and execution.
+    """
+    # 1. Prepare clone directory
+    if clone_dir_path.exists():
+        logger.info(f"Cleaning up existing clone directory: {clone_dir_path}")
+        try:
+            shutil.rmtree(clone_dir_path)
+        except OSError:
+            logger.exception(
+                f"Failed to clean up existing clone directory {clone_dir_path}."
+            )
+            return CloneAttemptStatus.FAILED_CRITICAL_PREPARE_DIR
+
+    # 2. Construct command
+    cmd_list: list[str]
+    if not bzr:
+        cmd_list = [
+            vcs_executable_path,
+            "clone",
+            "--depth",
+            "1",
+            "--branch",
+            branch_to_try,
+            repo_url,
+            str(clone_dir_path),
+        ]
+    else:  # bzr
+        cmd_list = [vcs_executable_path, "branch", repo_url, str(clone_dir_path)]
+
+    # 3. Execute command
+    try:
+        logger.debug(f"Executing clone command: {' '.join(cmd_list)}")
+        result = subprocess.run(  # noqa: S603
+            cmd_list,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        if result.returncode == 0:
+            # Logged by the caller upon success to include full context
+            return CloneAttemptStatus.SUCCESS
+        else:
+            logger.warning(
+                f"Failed to clone branch '{branch_to_try}'. "
+                f"Return code: {result.returncode}. "
+                f"Stdout: {result.stdout.strip()} "
+                f"Stderr: {result.stderr.strip()}"
+            )
+            return CloneAttemptStatus.FAILED_RETRYABLE
+    except FileNotFoundError:
+        # This implies the vcs_executable_path, though found initially,
+        # became unavailable or was incorrect for the subprocess.
+        logger.exception(
+            f"Error: VCS command ({vcs_executable_path}) not found "
+            "during subprocess.run. "
+            "This indicates a critical issue with the VCS executable."
+        )
+        return CloneAttemptStatus.FAILED_CRITICAL_VCS_NOT_FOUND_EXEC
+    except OSError:
+        logger.exception(
+            f"OS error during subprocess run for clone of branch {branch_to_try}"
+        )
+        return CloneAttemptStatus.FAILED_RETRYABLE
+
+
+def run_clone(
+    repo_url: str,
+    initial_default_branch: str,
+    clone_dir_path: Path,
+    bzr: bool,
+) -> str | None:
+    """Perform a VCS clone, trying a list of common branches.
+
+    Args:
+        repo_url: The URL of the repository to clone.
+        initial_default_branch: The primary branch to attempt cloning.
+        clone_dir_path: The local path where the repository should be cloned.
+        bzr: True if the repository uses Bazaar, False for Git.
+
+    Returns:
+        The name of the successfully cloned branch, or None if all attempts fail
+        or a critical error occurs.
+
+    """
+    logger.info(
+        "Attempting to clone repository (initial branch "
+        f"'{initial_default_branch}') into: {clone_dir_path}"
+    )
+
+    unique_branches_to_attempt = _get_unique_branches_to_attempt(initial_default_branch)
+    if not unique_branches_to_attempt:
+        logger.error(f"No valid branches to attempt for cloning {repo_url}.")
+        return None
+
+    vcs_executable_path = _get_vcs_executable(bzr)
+    if not vcs_executable_path:
+        # Error is logged by _get_vcs_executable
+        return None
+
+    cloned_branch_name: str | None = None
+    for branch_to_try in unique_branches_to_attempt:
+        logger.info(f"Trying to clone branch: '{branch_to_try}' from {repo_url}")
+
+        status = _attempt_single_branch_clone(
+            repo_url, branch_to_try, clone_dir_path, bzr, vcs_executable_path
+        )
+
+        if status == CloneAttemptStatus.SUCCESS:
+            logger.info(
+                f"Successfully cloned branch '{branch_to_try}' "
+                f"from {repo_url} into {clone_dir_path}"
+            )
+            cloned_branch_name = branch_to_try
+            break  # Exit loop on first successful clone
+        elif status == CloneAttemptStatus.FAILED_CRITICAL_PREPARE_DIR:
+            logger.error(
+                "Critical error preparing clone directory. Aborting all "
+                "clone attempts for this repository."
+            )
+            return None  # Stop all attempts for this repo
+        elif status == CloneAttemptStatus.FAILED_CRITICAL_VCS_NOT_FOUND_EXEC:
+            logger.error(
+                "Critical error: VCS command not found during execution. "
+                "Aborting all clone attempts for this repository."
+            )
+            return None
+
+    if not cloned_branch_name:
+        logger.error(
+            "Failed to clone any of the attempted branches "
+            f"({', '.join(unique_branches_to_attempt)}) for {repo_url}."
+        )
+
+    return cloned_branch_name
 
 
 def find_doc_source_in_clone(repo_path: Path) -> str | None:
@@ -341,115 +550,6 @@ def _extract_repo_url_branch(
     return default_branch, repo_url
 
 
-def run_clone(
-    repo_url: str,
-    initial_default_branch: str,
-    clone_dir_path: Path,
-    bzr: bool,
-) -> str | None:
-    """Perform a clone for matching vcs. Tries initial_default_branch then fallbacks."""
-    logger.info(
-        "Attempting to clone repository (initial branch "
-        f"'{initial_default_branch}') into: {clone_dir_path}"
-    )
-
-    branches_to_attempt = [initial_default_branch, "master", "main"]
-    unique_branches_to_attempt = []
-    for b_candidate in branches_to_attempt:
-        if (
-            b_candidate
-            and b_candidate.strip()
-            and b_candidate.strip() not in unique_branches_to_attempt
-        ):
-            unique_branches_to_attempt.append(b_candidate.strip())
-
-    if not unique_branches_to_attempt:
-        logger.error(f"No valid branches to attempt for cloning {repo_url}.")
-        return None
-
-    vcs_command_path: str | None
-    if not bzr:
-        vcs_command_path = GIT_FULL_PATH
-        if not vcs_command_path:
-            logger.error(
-                "Error: 'git' command not found. Ensure Git is installed and in PATH."
-            )
-            return None
-    else:  # bzr
-        vcs_command_path = shutil.which("bzr")
-        if not vcs_command_path:
-            logger.error("Error: 'bzr' command not found.")
-            return None
-
-    for branch_to_try in unique_branches_to_attempt:
-        logger.info(f"Trying to clone branch: {branch_to_try} from {repo_url}")
-
-        if clone_dir_path.exists():
-            logger.info(f"Cleaning up existing clone directory: {clone_dir_path}")
-            try:
-                shutil.rmtree(clone_dir_path)
-            except OSError:
-                logger.exception(f"Failed to clean up {clone_dir_path}")
-                return None
-
-        if not bzr:
-            if not vcs_command_path:
-                logger.error("GIT_FULL_PATH is None, cannot clone.")
-                return None
-            cmd_list = [
-                vcs_command_path,
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                branch_to_try,
-                repo_url,
-                str(clone_dir_path),
-            ]
-        else:  # bzr
-            if not vcs_command_path:
-                logger.error("bzr path is None, cannot clone.")
-                return None
-            cmd_list = [vcs_command_path, "branch", repo_url, str(clone_dir_path)]
-
-        try:
-            logger.debug(f"Executing clone command: {' '.join(cmd_list)}")
-            result = subprocess.run(  # noqa: S603
-                cmd_list,
-                check=False,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-            if result.returncode == 0:
-                logger.info(
-                    f"Successfully cloned branch '{branch_to_try}' "
-                    f"from {repo_url} into {clone_dir_path}"
-                )
-                return branch_to_try
-            else:
-                logger.warning(
-                    f"Failed to clone branch '{branch_to_try}'. "
-                    f"Return code: {result.returncode}. "
-                    f"Stdout: {result.stdout.strip()} "
-                    f"Stderr: {result.stderr.strip()}"
-                )
-        except FileNotFoundError:
-            logger.exception(
-                f"Error: VCS command ({vcs_command_path}) not found "
-                "during subprocess.run."
-            )
-            return None
-        except OSError:
-            logger.exception(
-                "Unexpected error during subprocess run for clone "
-                f"of branch {branch_to_try}"
-            )
-
-    logger.error(f"Failed to clone any of the attempted branches for {repo_url}.")
-    return None
-
-
 def _attempt_clone_and_process_result(
     repo_url: str,
     initial_default_branch: str,
@@ -482,51 +582,53 @@ def _attempt_clone_and_process_result(
 
 
 def _handle_repository_cloning(
-    repo_url: str | None,
-    initial_default_branch: str,
-    base_output_dir: Path,
-    project_slug: str,
-    bzr: bool,
+    config: RtdCloningConfig,
 ) -> tuple[Path | None, str]:
     """Manage the cloning logic of the repository.
 
     Returns the path of the clone and the actual branch used.
     """
-    clone_dir_name = f"{project_slug}_repo_{initial_default_branch}"
-    clone_dir_path = base_output_dir / clone_dir_name
-    effective_branch = initial_default_branch
+    clone_dir_name = f"{config.project_slug}_repo_{config.initial_default_branch}"
+    clone_dir_path = config.base_dir / clone_dir_name
+    effective_branch = config.initial_default_branch
     cloned_repo_exists_before = clone_dir_path.exists()
-    if repo_url and not cloned_repo_exists_before:
+    if config.repo_url and not cloned_repo_exists_before:
         logger.info(
             "Repository for '%s' not found locally at '%s'. Attempting to clone.",
-            project_slug,
+            config.project_slug,
             clone_dir_path,
         )
         _, branch_after_attempt = _attempt_clone_and_process_result(
-            repo_url, initial_default_branch, clone_dir_path, bzr, project_slug
+            config.repo_url,
+            config.initial_default_branch,
+            clone_dir_path,
+            config.bzr,
+            config.project_slug,
         )
         effective_branch = branch_after_attempt
-    elif repo_url and cloned_repo_exists_before:
+    elif config.repo_url and cloned_repo_exists_before:
         logger.info(
             "Repository for '%s' already exists at '%s'. Skipping clone.",
-            project_slug,
+            config.project_slug,
             clone_dir_path,
         )
-    elif not repo_url:
+    elif not config.repo_url:
         logger.warning(
-            "No repository URL provided for '%s'. Cannot clone.", project_slug
+            "No repository URL provided for '%s'. Cannot clone.", config.project_slug
         )
         if not cloned_repo_exists_before:
             logger.error(
-                "No repository URL and no existing clone for '%s'.", project_slug
+                "No repository URL and no existing clone for '%s'.", config.project_slug
             )
             return None, effective_branch
     if clone_dir_path.exists():
-        logger.info("Using repository for '%s' at: '%s'", project_slug, clone_dir_path)
+        logger.info(
+            "Using repository for '%s' at: '%s'", config.project_slug, clone_dir_path
+        )
         return clone_dir_path, effective_branch
     logger.error(
         "Repository directory for '%s' not found at '%s' after processing.",
-        project_slug,
+        config.project_slug,
         clone_dir_path,
     )
     return None, effective_branch
@@ -585,23 +687,14 @@ def _process_documentation(
     return isolated_source_path, build_output_path
 
 
-def download_readthedocs_source_and_build(
-    project_name: str,
-    project_url: str,
-    existing_clone_path: str | None = None,
-    output_dir: Path | None = None,
-    clone_base_dir_override: Path | None = None,
-) -> str | bool:
-    """Download sources from RTD, clones, isolates doc sources, execute Sphinx."""
-    logger.info(
-        "\n--- Starting RTD Source Download, Build & Cleanup for: %s ---", project_name
-    )
-    logger.info("Project URL: %s", project_url)
-
+def _prepare_rtd_build_environment(
+    project_name: str, clone_base_dir_override: Path | None
+) -> tuple[str | None, str | None, str | None, Path | None, bool]:
+    """Prepare environment for RTD build: validate slug, get repo details, set dirs."""
     project_slug = project_name
     if not project_slug:
         logger.error("Project slug (project_name) cannot be empty.")
-        return False
+        return None, None, None, None, False
 
     logger.info("Project Slug: %s", project_slug)
     api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
@@ -619,31 +712,74 @@ def download_readthedocs_source_and_build(
     actual_clone_base_dir.mkdir(parents=True, exist_ok=True)
 
     bzr = bool(repo_url and repo_url.startswith("lp:"))
+    return (
+        project_slug,
+        initial_default_branch,
+        repo_url,
+        actual_clone_base_dir,
+        bzr,
+    )
+
+
+def _obtain_rtd_source_code(
+    existing_clone_path: str | None,
+    cloning_config: RtdCloningConfig,
+) -> tuple[Path | None, str]:
+    """Obtain the source code, either from existing path or by cloning."""
     clone_dir_path: Path | None
-    effective_branch: str
+    effective_branch: str = cloning_config.initial_default_branch
 
     if existing_clone_path:
         existing_clone_path_obj = Path(existing_clone_path)
         if existing_clone_path_obj.exists() and existing_clone_path_obj.is_dir():
             logger.info("Using existing clone path: %s", existing_clone_path)
             clone_dir_path = existing_clone_path_obj
-            effective_branch = initial_default_branch
         else:
             logger.warning(
                 f"Provided existing_clone_path '{existing_clone_path}'"
                 " not found or not a dir. Attempting clone."
             )
             clone_dir_path, effective_branch = _handle_repository_cloning(
-                repo_url,
-                initial_default_branch,
-                actual_clone_base_dir,
-                project_slug,
-                bzr,
+                cloning_config
             )
     else:
-        clone_dir_path, effective_branch = _handle_repository_cloning(
-            repo_url, initial_default_branch, actual_clone_base_dir, project_slug, bzr
-        )
+        clone_dir_path, effective_branch = _handle_repository_cloning(cloning_config)
+    return clone_dir_path, effective_branch
+
+
+def download_readthedocs_source_and_build(
+    project_name: str,
+    project_url: str,
+    existing_clone_path: str | None = None,
+    output_dir: Path | None = None,
+    clone_base_dir_override: Path | None = None,
+) -> str | bool:
+    """Download sources from RTD, clones, isolates doc sources, execute Sphinx."""
+    logger.info(
+        "\n--- Starting RTD Source Download, Build & Cleanup for: %s ---", project_name
+    )
+    logger.info("Project URL: %s", project_url)
+
+    (
+        project_slug,
+        initial_default_branch,
+        repo_url_from_api,
+        actual_clone_base_dir,
+        bzr,
+    ) = _prepare_rtd_build_environment(project_name, clone_base_dir_override)
+
+    if not project_slug or not actual_clone_base_dir:  # Check if preparation failed
+        return False
+    cloning_conf = RtdCloningConfig(
+        repo_url=repo_url_from_api,
+        initial_default_branch=initial_default_branch,
+        base_dir=actual_clone_base_dir,
+        project_slug=project_slug,
+        bzr=bzr,
+    )
+    clone_dir_path, effective_branch = _obtain_rtd_source_code(
+        existing_clone_path, cloning_conf
+    )
 
     if not clone_dir_path:
         logger.error(
@@ -658,10 +794,28 @@ def download_readthedocs_source_and_build(
         return False
 
     project_context = ProjectContext(slug=project_slug, version=effective_branch)
+    finalize_conf = RtdFinalizeConfig(
+        output_dir_param=output_dir,
+        existing_clone_path=existing_clone_path,
+        clone_base_dir_override=clone_base_dir_override,
+        actual_clone_base_dir=actual_clone_base_dir,
+    )
+    return _finalize_rtd_build_and_cleanup(
+        clone_dir_path,
+        project_context,
+        finalize_conf,
+    )
 
+
+def _finalize_rtd_build_and_cleanup(
+    clone_dir_path: Path,
+    project_context: ProjectContext,
+    config: RtdFinalizeConfig,
+) -> str | bool:
+    """Process documentation, build, cleanup, and return result."""
     final_sphinx_build_destination: Path
-    if output_dir:
-        final_sphinx_build_destination = output_dir
+    if config.output_dir_param:
+        final_sphinx_build_destination = config.output_dir_param
     else:
         final_sphinx_build_destination = (
             PROJECT_ROOT / "devildex_sphinx_build_output_default"
@@ -677,30 +831,29 @@ def download_readthedocs_source_and_build(
         base_output_dir=final_sphinx_build_destination,
     )
 
-    if not existing_clone_path:
+    if not config.existing_clone_path:
         _cleanup(clone_dir_path)
         if (
-            not clone_base_dir_override
-            and actual_clone_base_dir.exists()
-            and not any(actual_clone_base_dir.iterdir())
+            not config.clone_base_dir_override
+            and config.actual_clone_base_dir.exists()
+            and not any(config.actual_clone_base_dir.iterdir())
         ):
             logger.info(
-                f"Cleaning up empty base clone directory: {actual_clone_base_dir}"
+                "Cleaning up empty base clone directory: "
+                f"{config.actual_clone_base_dir}"
             )
-            _cleanup(actual_clone_base_dir)
-    elif existing_clone_path:
+            _cleanup(config.actual_clone_base_dir)
+    elif config.existing_clone_path:
         logger.info(
-            "Skipping cleanup for pre-existing clone path: %s", existing_clone_path
+            "Skipping cleanup for pre-existing clone path: %s",
+            config.existing_clone_path,
         )
 
     final_result_path_str = _download_handle_result(
         isolated_source_path_str, built_docs_path_str
     )
 
-    if final_result_path_str:
-        return final_result_path_str
-    else:
-        return False
+    return final_result_path_str if final_result_path_str else False
 
 
 def _download_handle_result(

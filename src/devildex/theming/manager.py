@@ -98,11 +98,151 @@ class ThemeManager:
         ast.fix_missing_locations(tree)
         Path(conf_file).write_text(ast.unparse(tree), encoding="utf-8")
 
+    def _load_mkdocs_config_for_theming(
+        self,
+    ) -> tuple[Optional[dict], Optional[Path]]:
+        """Load mkdocs.yml and returns its content and parent directory."""
+        try:
+            with open(self.mkdocs_yml_file, encoding="utf-8") as f_in:
+                config = yaml.safe_load(f_in)
+                if config is None:  # Handle empty or all-comment YAML
+                    config = {}
+            original_yml_parent_dir = self.mkdocs_yml_file.parent
+        except (yaml.YAMLError, OSError) as e:
+            logger.error(
+                f"ThemeManager: Error loading/parsing {self.mkdocs_yml_file}: {e}",
+                exc_info=True,
+            )
+            return None, None
+        else:
+            return config, original_yml_parent_dir
+
+    def _process_docs_dir_config(
+        self, config: dict, original_yml_parent_dir: Path
+    ) -> None:
+        """Resolve 'docs_dir' to an absolute path in the config if relative.
+
+        Logs errors if the path is invalid. Modifies config in-place.
+        """
+        original_docs_dir_value = config.get("docs_dir", "docs")
+        docs_dir_path_obj_from_config = Path(original_docs_dir_value)
+
+        if not docs_dir_path_obj_from_config.is_absolute():
+            absolute_docs_dir = (
+                original_yml_parent_dir / original_docs_dir_value
+            ).resolve()
+
+            if absolute_docs_dir.exists() and absolute_docs_dir.is_dir():
+                config["docs_dir"] = str(absolute_docs_dir)
+                logger.info(
+                    "ThemeManager: Updated 'docs_dir' in temporary YAML to absolute"
+                    f" path: {config['docs_dir']}"
+                )
+            else:
+                logger.error(
+                    "ThemeManager: Original 'docs_dir' "
+                    f"('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
+                    "resolved to non-existent/non-directory"
+                    f" path '{absolute_docs_dir}'. "
+                    "MkDocs build is expected to fail."
+                )
+        elif (
+            not docs_dir_path_obj_from_config.exists()
+            or not docs_dir_path_obj_from_config.is_dir()
+        ):
+            logger.error(
+                "ThemeManager: Original absolute 'docs_dir' "
+                f"('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
+                "does not exist or is not a directory. "
+                "MkDocs build will likely fail."
+            )
+
+    def _apply_theme_overrides(
+        self,
+        config: dict,
+        mkdocs_project_actual_root: Path,
+    ) -> None:
+        """Copy DevilDex MkDocs theme assets and updates the 'theme' config.
+
+        Modifies config in-place. Can raise shutil.Error or OSError.
+        """
+        target_theme_override_path_in_project = (
+            mkdocs_project_actual_root / self.mkdocs_theme_override_dir_name
+        )
+
+        if (
+            self.mkdocs_theme_assets_source_path.exists()
+            and self.mkdocs_theme_assets_source_path.is_dir()
+        ):
+            if target_theme_override_path_in_project.exists():
+                logger.debug(
+                    "Removing existing theme override dir: "
+                    f"{target_theme_override_path_in_project}"
+                )
+                shutil.rmtree(target_theme_override_path_in_project)
+            logger.info(
+                "Copying DevilDex MkDocs theme assets from "
+                f"{self.mkdocs_theme_assets_source_path} "
+                f"to {target_theme_override_path_in_project}"
+            )
+            shutil.copytree(
+                self.mkdocs_theme_assets_source_path,
+                target_theme_override_path_in_project,
+            )
+
+            current_theme_config = config.get("theme", "mkdocs")
+            if isinstance(current_theme_config, str):
+                config["theme"] = {
+                    "name": current_theme_config,
+                    "custom_dir": self.mkdocs_theme_override_dir_name,
+                }
+            elif isinstance(current_theme_config, dict):
+                current_theme_config["custom_dir"] = self.mkdocs_theme_override_dir_name
+                if "name" not in current_theme_config:
+                    current_theme_config["name"] = "mkdocs"
+                config["theme"] = current_theme_config
+            else:
+                config["theme"] = {
+                    "name": "mkdocs",
+                    "custom_dir": self.mkdocs_theme_override_dir_name,
+                }
+            logger.info(
+                "ThemeManager: Added/updated 'custom_dir': "
+                f"'{self.mkdocs_theme_override_dir_name}' to MkDocs config."
+            )
+        else:
+            logger.warning(
+                "ThemeManager: DevilDex MkDocs theme assets not found at"
+                f" {self.mkdocs_theme_assets_source_path}. "
+                "Skipping custom_dir injection."
+            )
+
+    @staticmethod
+    def _save_processed_mkdocs_config(
+        config: dict, temp_dir_for_themed_yml: Path
+    ) -> Path:
+        """Save the processed config to a temporary YAML file.
+
+        Can raise OSError or yaml.YAMLError.
+        """
+        themed_mkdocs_yml_path = temp_dir_for_themed_yml / "mkdocs.devildex.yml"
+        temp_dir_for_themed_yml.mkdir(parents=True, exist_ok=True)
+
+        with open(themed_mkdocs_yml_path, "w", encoding="utf-8") as f_out:
+            yaml.dump(config, f_out, sort_keys=False, default_flow_style=False)
+        logger.info(
+            "ThemeManager: Wrote (potentially) themed mkdocs.yml to"
+            f" {themed_mkdocs_yml_path}"
+        )
+        return themed_mkdocs_yml_path
+
     def mkdocs_apply_customizations(
         self, temp_dir_for_themed_yml: Path
     ) -> Optional[Path]:
-        """Applies DevilDex theme customizations to an MkDocs project.
-        MVP: Copies mkdocs.yml to a temporary location and potentially adds `custom_dir`.
+        """Apply DevilDex theme customizations to an MkDocs project.
+
+        Reads mkdocs.yml, resolves docs_dir, copies theme assets,
+        updates theme configuration, and saves to a temporary location.
         Returns the path to the mkdocs.yml file to be used for the build.
         """
         if (
@@ -111,7 +251,8 @@ class ThemeManager:
             or not self.mkdocs_yml_file.is_file()
         ):
             logger.warning(
-                f"ThemeManager: Not an MkDocs project or mkdocs.yml ({self.mkdocs_yml_file}) "
+                "ThemeManager: Not an MkDocs project or mkdocs.yml "
+                f"({self.mkdocs_yml_file}) "
                 "not found/set for theming. Cannot apply customizations."
             )
             return None
@@ -119,104 +260,25 @@ class ThemeManager:
         logger.info(
             f"ThemeManager: Applying MkDocs customizations for {self.mkdocs_yml_file}"
         )
-        themed_mkdocs_yml_path = temp_dir_for_themed_yml / "mkdocs.devildex.yml"
 
         try:
-            with open(self.mkdocs_yml_file, encoding="utf-8") as f_in:
-                config = yaml.safe_load(f_in)
-                if config is None:
-                    config = {}
-            original_yml_parent_dir = self.mkdocs_yml_file.parent
+            config, original_yml_parent_dir = self._load_mkdocs_config_for_theming()
+            if config is None or original_yml_parent_dir is None:
+                return None  # Error already logged by helper
 
-            original_docs_dir_value = config.get("docs_dir", "docs")
-            docs_dir_path_obj_from_config = Path(original_docs_dir_value)
-
-            if not docs_dir_path_obj_from_config.is_absolute():
-                absolute_docs_dir = (
-                    original_yml_parent_dir / original_docs_dir_value
-                ).resolve()
-
-                if absolute_docs_dir.exists() and absolute_docs_dir.is_dir():
-                    config["docs_dir"] = str(absolute_docs_dir)
-                    logger.info(
-                        f"ThemeManager: Updated 'docs_dir' in temporary YAML to absolute path: {config['docs_dir']}"
-                    )
-                else:
-                    logger.error(
-                        f"ThemeManager: Original 'docs_dir' ('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
-                        f"resolved to non-existent/non-directory path '{absolute_docs_dir}'. "
-                        "MkDocs build is expected to fail."
-                    )
-            elif (
-                not docs_dir_path_obj_from_config.exists()
-                or not docs_dir_path_obj_from_config.is_dir()
-            ):
-                logger.error(
-                    f"ThemeManager: Original absolute 'docs_dir' ('{original_docs_dir_value}') from {self.mkdocs_yml_file} "
-                    "does not exist or is not a directory. MkDocs build will likely fail."
-                )
+            self._process_docs_dir_config(config, original_yml_parent_dir)
 
             mkdocs_project_actual_root = self.mkdocs_yml_file.parent
-            target_theme_override_path_in_project = (
-                mkdocs_project_actual_root / self.mkdocs_theme_override_dir_name
+            self._apply_theme_overrides(config, mkdocs_project_actual_root)
+
+            themed_mkdocs_yml_path = self._save_processed_mkdocs_config(
+                config, temp_dir_for_themed_yml
             )
-
-            if (
-                self.mkdocs_theme_assets_source_path.exists()
-                and self.mkdocs_theme_assets_source_path.is_dir()
-            ):
-                if target_theme_override_path_in_project.exists():
-                    logger.debug(
-                        f"Removing existing theme override dir: {target_theme_override_path_in_project}"
-                    )
-                    shutil.rmtree(target_theme_override_path_in_project)
-                logger.info(
-                    f"Copying DevilDex MkDocs theme assets from {self.mkdocs_theme_assets_source_path} "
-                    f"to {target_theme_override_path_in_project}"
-                )
-                shutil.copytree(
-                    self.mkdocs_theme_assets_source_path,
-                    target_theme_override_path_in_project,
-                )
-
-                current_theme_config = config.get("theme", "mkdocs")
-                if isinstance(current_theme_config, str):
-                    config["theme"] = {
-                        "name": current_theme_config,
-                        "custom_dir": self.mkdocs_theme_override_dir_name,
-                    }
-                elif isinstance(current_theme_config, dict):
-                    current_theme_config["custom_dir"] = (
-                        self.mkdocs_theme_override_dir_name
-                    )
-                    if "name" not in current_theme_config:
-                        current_theme_config["name"] = "mkdocs"
-                    config["theme"] = current_theme_config
-                else:
-                    config["theme"] = {
-                        "name": "mkdocs",
-                        "custom_dir": self.mkdocs_theme_override_dir_name,
-                    }
-                logger.info(
-                    f"ThemeManager: Added/updated 'custom_dir': '{self.mkdocs_theme_override_dir_name}' to MkDocs config."
-                )
-            else:
-                logger.warning(
-                    f"ThemeManager: DevilDex MkDocs theme assets not found at {self.mkdocs_theme_assets_source_path}. "
-                    "Skipping custom_dir injection."
-                )
-
-            temp_dir_for_themed_yml.mkdir(parents=True, exist_ok=True)
-            with open(themed_mkdocs_yml_path, "w", encoding="utf-8") as f_out:
-                yaml.dump(config, f_out, sort_keys=False, default_flow_style=False)
-
-            logger.info(
-                f"ThemeManager: Wrote (potentially) themed mkdocs.yml to {themed_mkdocs_yml_path}"
-            )
-            return themed_mkdocs_yml_path
-
         except (yaml.YAMLError, OSError, shutil.Error):
             logger.exception(
-                f"ThemeManager: Error applying MkDocs customizations to {self.mkdocs_yml_file}"
+                f"ThemeManager: Error applying MkDocs customizations "
+                f"to {self.mkdocs_yml_file}"
             )
             return None
+        else:
+            return themed_mkdocs_yml_path
