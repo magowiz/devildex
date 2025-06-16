@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Optional
@@ -26,6 +27,18 @@ GIT_FULL_PATH = shutil.which("git")
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class PDocContext:
+    """Holds context for a pdoc build operation."""
+
+    modules_to_document: list[str]
+    pdoc_cwd: Path
+    project_install_root: Path
+    requirements_file: Path | None
+    pdoc_command_output_dir: Path
+    project_name_for_log: str
+
+
 class GitCloneFailedUnknownReasonError(RuntimeError):
     """Exception raised when a git clone operation fails for an unknown reason.
 
@@ -36,7 +49,6 @@ class GitCloneFailedUnknownReasonError(RuntimeError):
         """Construct a GitCloneFailedUnknownReasonError object."""
         self.repo_url = repo_url
         self.branches_tried = branches_tried
-        # Construct the exact message that was causing the TRY003 warning
         message = (
             f"Could not clone repository {self.repo_url} from branches "
             f"{', '.join(self.branches_tried)}. "
@@ -61,20 +73,28 @@ class DocStringsSrc:
         self.template_dir = template_dir
 
     def _build_pdoc_command(
-        self, python_executable: str, project_name: str, output_directory: Path
+        self,
+        python_executable: str,
+        modules_to_document: list[str],
+        output_directory: Path,
     ) -> list[str]:
-        """Build the list of arguments for the PDOC command.
+        """Build the list of arguments for the PDOC command."""
+        if not modules_to_document:
 
-        Includes --template-dir if self.template_dir is set.
-        """
+            logger.error(
+                "DocstringsSrc: No module specified for PDOC. "
+                "Impossible to build the command."
+            )
+
+            return []
+
+        main_module_for_pdoc = modules_to_document[0]
+
         pdoc_command_args = [
             python_executable,
             "-m",
             "pdoc",
             "--html",
-            project_name,
-            "-o",
-            str(output_directory.resolve()),
         ]
 
         if self.template_dir:
@@ -86,7 +106,465 @@ class DocStringsSrc:
                 ["--template-dir", str(self.template_dir.resolve())]
             )
 
+        pdoc_command_args.extend(
+            [
+                "-o",
+                str(output_directory.resolve()),
+            ]
+        )
+
+        pdoc_command_args.append(main_module_for_pdoc)
+
         return pdoc_command_args
+
+    def _copy_theme_static_files(self, validated_docs_path: Path) -> None:
+        """Copy static files from the theme directory if specified."""
+        if self.template_dir and (self.template_dir / "static").is_dir():
+            source_static_dir = self.template_dir / "static"
+            destination_static_dir = validated_docs_path / "static"
+            if destination_static_dir.exists():
+                shutil.rmtree(destination_static_dir)
+            shutil.copytree(source_static_dir, destination_static_dir)
+
+            logger.info(
+                "DocstringsSrc: copied static files from the theme in %s",
+                destination_static_dir,
+            )
+
+    def _handle_successful_pdoc_generation(
+        self,
+        validated_docs_path_str: str,
+        source_project_path: Path,
+    ) -> str:
+        """Handle post-processing after a successful pdoc build and validation."""
+        validated_docs_path = Path(validated_docs_path_str)
+        self._copy_theme_static_files(validated_docs_path)
+
+        report_file = validated_docs_path / "non_package_folders_report.txt"
+        self._find_and_report_non_package_folders(
+            scan_base_path=source_project_path,
+            project_root_for_relative_paths=source_project_path,
+            output_report_file=report_file,
+        )
+
+        if report_file.exists():
+            self._process_reported_folders(
+                report_file_path=report_file,
+                pdoc_project_output_path=validated_docs_path,
+            )
+        return validated_docs_path_str
+
+    @staticmethod
+    def _cleanup_pdoc_output_on_failure(
+        pdoc_command_output_dir: Path, project_name: str
+    ) -> None:
+        """Clean up pdoc output directories in case of a build/validation failure."""
+        project_specific_output_dir = pdoc_command_output_dir / project_name
+        if project_specific_output_dir.exists():
+            logger.info(
+                "DocStringsSrc: Cleaning up pdoc project specific output directory %s.",
+                project_specific_output_dir,
+            )
+            try:
+                shutil.rmtree(project_specific_output_dir)
+                if pdoc_command_output_dir.exists() and not any(
+                    pdoc_command_output_dir.iterdir()
+                ):
+                    shutil.rmtree(pdoc_command_output_dir)
+                    logger.info(
+                        "DocStringsSrc: Removed empty base pdoc output directory %s.",
+                        pdoc_command_output_dir,
+                    )
+            except OSError:
+                logger.exception(
+                    "DocStringsSrc: Error cleaning up pdoc output directory %s",
+                    project_specific_output_dir,
+                )
+        elif pdoc_command_output_dir.exists():
+            logger.info(
+                "DocStringsSrc: Cleaning up base pdoc output directory %s "
+                "as project specific dir was not found.",
+                pdoc_command_output_dir,
+            )
+            try:
+                shutil.rmtree(pdoc_command_output_dir)
+            except OSError:
+                logger.exception(
+                    "DocStringsSrc: Error cleaning up base pdoc output directory %s",
+                    pdoc_command_output_dir,
+                )
+
+    def generate_docs_from_folder(
+        self,
+        project_name: str,
+        input_folder: str,
+        output_folder: str,
+    ) -> str | bool:
+        """Generate HTML documentation using PDOC in an isolated environment."""
+        logger.info("\n--- Starting Isolated pdoc Build for %s ---", project_name)
+
+        source_project_path = Path(input_folder) / project_name
+        if not source_project_path.is_dir():
+            logger.error(
+                "DocstringsSrc: The Specified Source Project Folder does not exist: %s",
+                source_project_path,
+            )
+
+            return False
+
+        logger.info(
+            "DocStringsSrc: Project source root for pdoc: %s", source_project_path
+        )
+        logger.info(
+            "DocStringsSrc: Main package to document with pdoc: %s", project_name
+        )
+
+        modules_for_pdoc_command = [project_name]
+
+        logger.info(
+            "DocstringsSrc: modules/packages to go to PDOC: %s",
+            modules_for_pdoc_command,
+        )
+
+        pdoc_command_output_dir = self._prepare_pdoc_output_directory(
+            project_name,
+            output_folder,
+        )
+        if not pdoc_command_output_dir:
+            return False
+
+        requirements_file_to_install = self._find_pdoc_project_requirements(
+            source_project_path, project_name
+        )
+
+        build_successful = False
+        try:
+            with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as i_venv:
+                pdoc_exec_context = PDocContext(
+                    modules_to_document=modules_for_pdoc_command,
+                    pdoc_cwd=Path(input_folder),
+                    project_install_root=source_project_path,
+                    requirements_file=requirements_file_to_install,
+                    pdoc_command_output_dir=pdoc_command_output_dir,
+                    project_name_for_log=project_name,
+                )
+                build_successful = self._execute_pdoc_build_in_venv(
+                    i_venv,
+                    pdoc_exec_context,
+                )
+        except RuntimeError:
+            logger.exception(
+                "DocStringsSrc: Critical error during isolated pdoc build setup for %s",
+                project_name,
+            )
+        except (KeyboardInterrupt, SystemExit):
+            logger.warning(
+                "DocStringsSrc: Isolated pdoc build for %s "
+                "interrupted or system exit called.",
+                project_name,
+            )
+            raise
+        finally:
+            logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
+
+        if build_successful:
+            validated_docs_path_str = self._validate_pdoc_output(
+                pdoc_command_output_dir, project_name
+            )
+            if validated_docs_path_str:
+                return self._handle_successful_pdoc_generation(
+                    validated_docs_path_str, source_project_path
+                )
+
+            logger.info(
+                "DocStringsSrc: Build reported success, "
+                "but content validation failed for %s. "
+                "Cleaning up temporary output.",
+                project_name,
+            )
+        else:
+            logger.info(
+                "DocStringsSrc: pdoc build failed for %s. "
+                "Cleaning up temporary output.",
+                project_name,
+            )
+
+        self._cleanup_pdoc_output_on_failure(pdoc_command_output_dir, project_name)
+        return False
+
+    @staticmethod
+    def _find_and_report_non_package_folders(
+        scan_base_path: Path,
+        project_root_for_relative_paths: Path,
+        output_report_file: Path,
+    ) -> None:
+        """Scan recursively scan_base_path for folders that are not packages.
+
+        (i.e., they do not contain __init__.py) and writes their relative paths
+        A Project_root_for_relative_paths in the Output_report_file file.
+        """
+        non_package_folders: list[Path] = []
+
+        def find_recursively(current_path: Path) -> None:
+            for item in current_path.iterdir():
+                if item.name.startswith((".", "__")) or item.name == "site-packages":
+                    continue
+                if item.is_dir():
+                    if not (item / "__init__.py").exists():
+                        non_package_folders.append(
+                            item.relative_to(project_root_for_relative_paths)
+                        )
+                    find_recursively(item)
+
+        logger.info(
+            "DocstringsSrc: Start scan for non-Package folders in: %s", scan_base_path
+        )
+
+        find_recursively(scan_base_path)
+
+        if non_package_folders:
+            try:
+                output_report_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_report_file, "w", encoding="utf-8") as f:
+                    f.write(
+                        f"Non-Package folders (without __init__py) found inside "
+                        f"'{project_root_for_relative_paths.name}':"
+                    )
+
+                    for folder_path in sorted(non_package_folders):
+                        f.write(f"- {folder_path}\n")
+                logger.info(
+                    "DocstringsSrc: Report of non-Package folders saved in: %s",
+                    output_report_file,
+                )
+
+            except OSError:
+                logger.exception(
+                    "DocstringsSrc: Error when writing the report of "
+                    "non-Package folders in %s",
+                    output_report_file,
+                )
+
+        else:
+            logger.info(
+                "DocstringsSrc: no non-payroll folders found in '%s'."
+                " No reports generated.",
+                scan_base_path.name,
+            )
+
+    @staticmethod
+    def _read_non_package_report(report_file_path: Path) -> list[str]:
+        """Read the report and return a list of non-Package folders."""
+        reported_relative_paths: list[str] = []
+        if not report_file_path.exists():
+            logger.warning(
+                "DocstringsSrc: Non-Package Report file not found: %s",
+                report_file_path,
+            )
+            return reported_relative_paths
+
+        try:
+            with open(report_file_path, encoding="utf-8") as f:
+                lines = f.readlines()
+
+            for line in lines[1:]:
+                stripped_line = line.strip()
+                if stripped_line.startswith("- "):
+                    relative_path = stripped_line[2:].strip()
+                    if relative_path:
+                        reported_relative_paths.append(relative_path)
+            logger.info(
+                "DocStringsSrc: Letti %d path dal report non-package: %s",
+                len(reported_relative_paths),
+                report_file_path,
+            )
+        except OSError:
+            logger.exception(
+                "DocstringsSrc: error while reading the non-Package report %s",
+                report_file_path,
+            )
+        return reported_relative_paths
+
+    @staticmethod
+    def _remove_links_from_html_content(
+        html_content: str, folder_to_remove_links_for: str
+    ) -> str:
+        """Remove the HTML links that aim for the specified folder or its content.
+
+        Simplified implementation with regex. Could need refinements.
+        """
+        folder_pattern_part = re.escape(folder_to_remove_links_for.replace(os.sep, "/"))
+
+        link_pattern_str = (
+            r'<a\s+[^>]*href\s*=\s*["\']'
+            rf"({folder_pattern_part}(?:/[^\"\'\s]*)?)"
+            r'["\'][^>]*>.*?</a>'
+        )
+        link_pattern = re.compile(link_pattern_str, re.IGNORECASE | re.DOTALL)
+
+        modified_content = re.sub(link_pattern, "", html_content)
+
+        if modified_content != html_content:
+            logger.debug(
+                "DocstringsSrc: removed tags <a> linking to '%s' by the HTML content.",
+                folder_to_remove_links_for,
+            )
+            html_content = modified_content
+
+        folder_display_name = Path(folder_to_remove_links_for).name
+
+        list_item_pattern_str = (
+            r"<li[^>]*>\s*"
+            r'<a\s+[^>]*href\s*=\s*["\']'
+            rf"({folder_pattern_part}(?:/[^\"\'\s]*)?)"
+            r'["\'][^>]*>\s*'
+            rf"{re.escape(folder_display_name)}\s*</a>\s*</li>"
+        )
+        list_item_pattern = re.compile(list_item_pattern_str, re.IGNORECASE | re.DOTALL)
+
+        further_modified_content = re.sub(list_item_pattern, "", html_content)
+
+        if further_modified_content != html_content:
+            logger.debug(
+                "DocstringsSrc: removed elements <li> containing links to '%s'"
+                " (Text Match: '%s') from the HTML content.",
+                folder_to_remove_links_for,
+                folder_display_name,
+            )
+
+            html_content = further_modified_content
+
+        return html_content
+
+    def _clean_html_file_for_reported_path(
+        self,
+        html_file: Path,
+        reported_folder_path: str,
+        empty_li_pattern: re.Pattern,
+        empty_dt_dd_pattern: re.Pattern,
+    ) -> None:
+        """Clean an HTML file removing links and tags related to a reported folder."""
+        try:
+            original_content = html_file.read_text(encoding="utf-8")
+            current_content = original_content
+
+            content_after_link_removal = self._remove_links_from_html_content(
+                current_content, reported_folder_path
+            )
+            if content_after_link_removal != current_content:
+                logger.debug(
+                    "DocstringsSrc: removed links to ' %s' from %s",
+                    reported_folder_path,
+                    html_file,
+                )
+                current_content = content_after_link_removal
+
+            content_after_empty_li_cleanup = empty_li_pattern.sub("", current_content)
+            if content_after_empty_li_cleanup != current_content:
+                logger.debug(
+                    "DocstringsSrc: Clean <li> <Code> </code> "
+                    "</li> Empty from %s (relative to %s)",
+                    html_file,
+                    reported_folder_path,
+                )
+                current_content = content_after_empty_li_cleanup
+
+            content_after_empty_dt_dd_cleanup = empty_dt_dd_pattern.sub(
+                "", current_content
+            )
+            if content_after_empty_dt_dd_cleanup != current_content:
+                logger.debug(
+                    "DocstringsSrc: clean <dt> <code> </code> </ dt> "
+                    "<dd> ... </dd> empty from %s (relative to %s)",
+                    html_file,
+                    reported_folder_path,
+                )
+                current_content = content_after_empty_dt_dd_cleanup
+
+            if current_content != original_content:
+                html_file.write_text(current_content, encoding="utf-8")
+                logger.info(
+                    "DocstringsSrc: modified HTML %s file for "
+                    "cleaning relating to %s",
+                    html_file,
+                    reported_folder_path,
+                )
+        except OSError:
+            logger.exception(
+                "DocstringsSrc: error during processing the HTML %s"
+                " file for removing links/cleaning.",
+                html_file,
+            )
+
+    def _process_reported_folders(
+        self, report_file_path: Path, pdoc_project_output_path: Path
+    ) -> None:
+        """Read the report of the non-Package folders, delete them from the output.
+
+        and tries to remove the links to them from the HTML files, including cleaning
+        of any tags remained empty.
+        """
+        relative_paths_to_process = self._read_non_package_report(report_file_path)
+
+        if not relative_paths_to_process:
+            logger.info(
+                "DocstringsSrc: no path to be tried from the non-payable report."
+            )
+            return
+
+        empty_li_pattern = re.compile(
+            r"<li[^>]*>\s*<code>\s*</code>\s*</li>", re.IGNORECASE | re.DOTALL
+        )
+        empty_dt_dd_pattern = re.compile(
+            r"<dt[^>]*>\s*<code[^>]*>\s*</code>\s*</dt>\s*<dd[^>]*>.*?</dd>",
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        for rel_path_str in relative_paths_to_process:
+            folder_to_delete_in_pdoc_output = pdoc_project_output_path / rel_path_str
+            if (
+                folder_to_delete_in_pdoc_output.exists()
+                and folder_to_delete_in_pdoc_output.is_dir()
+            ):
+                try:
+                    shutil.rmtree(folder_to_delete_in_pdoc_output)
+                    logger.info(
+                        "DocstringsSrc: canceled non-packing folder from "
+                        "the PDOC Output: %s",
+                        folder_to_delete_in_pdoc_output,
+                    )
+                except OSError:
+                    logger.exception(
+                        "DocstringsSrc: Error during the cancellation of the %s "
+                        "folder from the PDOC output.",
+                        folder_to_delete_in_pdoc_output,
+                    )
+            else:
+                logger.debug(
+                    "DocstringsSrc: delete folder not found in the PDOC Output "
+                    "(or is not a dir): %s",
+                    folder_to_delete_in_pdoc_output,
+                )
+            logger.info(
+                "DocstringsSrc: attempt to removal links and cleaning for ' %s'"
+                " from html files in %s",
+                rel_path_str,
+                pdoc_project_output_path,
+            )
+            for html_file in pdoc_project_output_path.rglob("*.html"):
+                self._clean_html_file_for_reported_path(
+                    html_file, rel_path_str, empty_li_pattern, empty_dt_dd_pattern
+                )
+
+        try:
+            report_file_path.unlink(missing_ok=True)
+            logger.info("DocstringsSrc: deleted report files: %s", report_file_path)
+
+        except OSError:
+            logger.exception(
+                "DocstringsSrc: Error when deleting the Report %s file",
+                report_file_path,
+            )
 
     @staticmethod
     def _attempt_install_missing_dependency(
@@ -274,6 +752,37 @@ class DocStringsSrc:
         )
         return pdoc_module_instance
 
+    def _discover_python_modules_and_packages(
+        self, base_path: Path, current_package_qualname: str = ""
+    ) -> list[str]:
+        """Discover recursively valid Python and packages.
+
+        Return a list of qualified names to move on to PDOC.
+        """
+        entities: list[str] = []
+        for item in base_path.iterdir():
+            if item.name.startswith((".", "__")):
+                continue
+
+            potential_module_name_part = item.stem if item.is_file() else item.name
+
+            if item.is_file() and item.name.endswith(".py"):
+                if item.name == "__init__.py":
+                    continue
+                entities.append(
+                    f"{current_package_qualname}.{potential_module_name_part}"
+                )
+            elif item.is_dir() and (item / "__init__.py").exists():
+                sub_package_qname = (
+                    f"{current_package_qualname}.{potential_module_name_part}"
+                )
+                entities.append(sub_package_qname)
+                entities.extend(
+                    self._discover_python_modules_and_packages(item, sub_package_qname)
+                )
+
+        return entities
+
     def _process_package_submodules(
         self, package_module_obj: ModuleType, context: pdoc.Context
     ) -> list[pdoc.Module]:
@@ -285,8 +794,8 @@ class DocStringsSrc:
         package_name = getattr(package_module_obj, "__name__", "unknown package")
 
         for submodule_info in pdoc.iter_submodules(  # pylint: disable=no-member
-            package_module_obj  # pylint: disable=no-member
-        ):  # pylint: disable=no-member
+            package_module_obj
+        ):
             submodule_qualname = submodule_info.name
             logger.debug(
                 "Attempting to process submodule '%s' of package '%s'.",
@@ -485,13 +994,21 @@ class DocStringsSrc:
         )
         return None
 
+    @dataclass
+    class PDocContext:
+        """Holds context for a pdoc build operation."""
+
+        modules_to_document: list[str]
+        pdoc_cwd: Path
+        project_install_root: Path
+        requirements_file: Path | None
+        pdoc_command_output_dir: Path
+        project_name_for_log: str
+
     def _execute_pdoc_build_in_venv(
         self,
         i_venv: IsolatedVenvManager,
-        project_name: str,
-        source_project_path: Path,
-        requirements_file: Path | None,
-        final_pdoc_output_path: Path,
+        pdoc_context: PDocContext,
     ) -> bool:
         """Installs dependencies and executes pdoc command in the venv."""
         logger.info(
@@ -501,9 +1018,9 @@ class DocStringsSrc:
         base_deps_for_pdoc_and_build = ["pdoc3"]
         install_deps_success = install_project_and_dependencies_in_venv(
             pip_executable=i_venv.pip_executable,
-            project_name=project_name,
-            project_root_for_install=source_project_path,
-            doc_requirements_path=requirements_file,
+            project_name=pdoc_context.project_name_for_log,
+            project_root_for_install=pdoc_context.project_install_root,
+            doc_requirements_path=pdoc_context.requirements_file,
             base_packages_to_install=base_deps_for_pdoc_and_build,
         )
 
@@ -511,30 +1028,36 @@ class DocStringsSrc:
             logger.error(
                 "DocStringsSrc: CRITICAL: Failed to install pdoc3 "
                 "or project dependencies for %s in venv. Aborting pdoc3 build.",
-                project_name,
+                pdoc_context.project_name_for_log,
             )
             return False
 
         pdoc_command = self._build_pdoc_command(
-            i_venv.python_executable, project_name, final_pdoc_output_path
+            i_venv.python_executable,
+            pdoc_context.modules_to_document,
+            pdoc_context.pdoc_command_output_dir,
         )
+        if not pdoc_command:
+            return False
 
         logger.info("DocStringsSrc: Executing pdoc: %s", " ".join(pdoc_command))
+        logger.info("DocStringsSrc: pdoc CWD: %s", pdoc_context.pdoc_cwd)
         stdout, stderr, return_code = execute_command(
             pdoc_command,
-            f"pdoc HTML generation for {project_name}",
-            cwd=source_project_path,
+            f"pdoc HTML generation for {pdoc_context.project_name_for_log}",
+            cwd=pdoc_context.pdoc_cwd,
         )
 
         if return_code == 0:
             logger.info(
-                "DocStringsSrc: pdoc build for %s completed successfully.", project_name
+                "DocStringsSrc: pdoc build for %s completed successfully.",
+                pdoc_context.project_name_for_log,
             )
             return True
 
         logger.error(
             "DocStringsSrc: pdoc build for %s FAILED. Return code: %s",
-            project_name,
+            pdoc_context.project_name_for_log,
             return_code,
         )
         logger.debug("pdoc stdout:\n%s", stdout)
@@ -574,98 +1097,6 @@ class DocStringsSrc:
             actual_docs_path,
         )
         return None
-
-    def generate_docs_from_folder(
-        self,
-        project_name: str,
-        input_folder: str,
-        output_folder: str,
-    ) -> str | bool:
-        """Generate HTML documentation using PDOC in an isolated environment."""
-        logger.info("\n--- Starting Isolated pdoc Build for %s ---", project_name)
-        source_project_path = Path(input_folder)
-        logger.info(
-            "DocStringsSrc: Project root (cloned input): %s", source_project_path
-        )
-        logger.info("DocStringsSrc: Module to document with pdoc: %s", project_name)
-
-        pdoc_base_output_dir = self._prepare_pdoc_output_directory(
-            project_name, output_folder
-        )
-        if not pdoc_base_output_dir:
-            return False
-
-        requirements_file_to_install = self._find_pdoc_project_requirements(
-            source_project_path, project_name
-        )
-
-        build_successful = False
-        try:
-            with IsolatedVenvManager(project_name=f"pdoc_{project_name}") as i_venv:
-                build_successful = self._execute_pdoc_build_in_venv(
-                    i_venv,
-                    project_name,
-                    source_project_path,
-                    requirements_file_to_install,
-                    pdoc_base_output_dir,
-                )
-        except RuntimeError:
-            logger.exception(
-                "DocStringsSrc: Critical error during isolated pdoc "
-                "build setup for %s",
-                project_name,
-            )
-        except (KeyboardInterrupt, SystemExit):
-            logger.warning(
-                "DocStringsSrc: Isolated pdoc build for %s "
-                "interrupted or system exit called.",
-                project_name,
-            )
-            raise
-        finally:
-            logger.info("--- Finished Isolated pdoc Build for %s ---", project_name)
-
-        if build_successful:
-            validated_docs_path = self._validate_pdoc_output(
-                pdoc_base_output_dir, project_name
-            )
-            if validated_docs_path:
-                source_static_dir = self.template_dir / "static"
-                destination_static_dir = Path(validated_docs_path) / "static"
-                if self.template_dir and (self.template_dir / "static").is_dir():
-                    source_static_dir = self.template_dir / "static"
-                    destination_static_dir = Path(validated_docs_path) / "static"
-                    if destination_static_dir.exists():
-                        shutil.rmtree(destination_static_dir)
-                shutil.copytree(source_static_dir, destination_static_dir)
-                return validated_docs_path
-
-            logger.info(
-                "DocStringsSrc: Build reported success, "
-                "but content validation failed for %s. "
-                "Cleaning up temporary output.",
-                project_name,
-            )
-        else:
-            logger.info(
-                "DocStringsSrc: pdoc build failed for %s. "
-                "Cleaning up temporary output.",
-                project_name,
-            )
-
-        if pdoc_base_output_dir.exists():
-            logger.info(
-                "DocStringsSrc: Cleaning up pdoc base output directory %s.",
-                pdoc_base_output_dir,
-            )
-            try:
-                shutil.rmtree(pdoc_base_output_dir)
-            except OSError:
-                logger.exception(
-                    "DocStringsSrc: Error cleaning up pdoc output directory %s",
-                    pdoc_base_output_dir,
-                )
-        return False
 
     @staticmethod
     def cleanup_folder(folder_or_list: Path | str | list[Path | str]) -> None:
