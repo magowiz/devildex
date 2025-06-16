@@ -1052,7 +1052,6 @@ class DocStringsSrc:
         )
         logger.debug("pdoc stdout:\n%s", stdout)
         logger.debug("pdoc stderr:\n%s", stderr)
-        logger.error(">>>> pdoc stderr:\n%s", stderr)  # MODIFICATO TEMPORANEAMENTE
 
         return False
 
@@ -1116,10 +1115,10 @@ class DocStringsSrc:
     @staticmethod
     def git_clone(
         repo_url: str, clone_dir_path: Path
-    ) -> None:  # Rimosso default_branch per ora
+    ) -> None:
         """Clone a git repository, trying 'main' then 'master'."""
         clone_dir_path_str = str(clone_dir_path)
-        branches_to_try = ["main", "master"]  # Tentativi semplificati
+        branches_to_try = ["main", "master"]
         last_error = None
 
         for branch_name in branches_to_try:
@@ -1129,7 +1128,7 @@ class DocStringsSrc:
                 repo_url,
                 clone_dir_path_str,
             )
-            if clone_dir_path.exists():  # Pulisci prima di ogni tentativo
+            if clone_dir_path.exists():
                 logger.debug(f"Cleaning up existing clone directory: {clone_dir_path}")
                 shutil.rmtree(clone_dir_path)
             clone_dir_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1170,13 +1169,11 @@ class DocStringsSrc:
                     "Git command not found. Ensure git is installed and "
                     "in your system's PATH."
                 )
-                # Rilancia un'eccezione specifica o gestisci come errore critico
                 raise GitCloneFailedUnknownReasonError(
                     repo_url, branches_to_try
                 ) from e_fnf
             else:
-                return  # Successo, esci
-        # Se il ciclo finisce, tutti i tentativi sono falliti
+                return
         msg = (
             f"Could not clone repository {repo_url} from branches "
             f"{', '.join(branches_to_try)}."
@@ -1184,33 +1181,29 @@ class DocStringsSrc:
         logger.error(msg)
         if last_error:
             raise RuntimeError(msg) from last_error
-        # Se last_error è None ma siamo qui (improbabile con la logica attuale)
         raise GitCloneFailedUnknownReasonError(repo_url, branches_to_try)
 
     def _define_run_paths(
         self,
-        project_name: str,  # Rimosso version
+        project_name: str,
     ) -> tuple[Path, Path, Path]:
         """Define and returns standard paths used in the run method."""
-        cloned_repo_path = Path(project_name)  # Sarà nella CWD
+        cloned_repo_path = Path(project_name)
 
-        # Semplificato: non c'è più la versione nel path
         final_docs_destination = self.docset_dir / project_name
 
-        # Semplificato: non c'è più la versione nel nome della dir temporanea
         temp_output_dirname = f"tmp_pdoc_output_{project_name}"
         pdoc_operation_basedir = self.docset_dir / temp_output_dirname
 
         return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
 
-    def run(self, url: str, project_name: str) -> str | None:  # Rimosso version
+    def run(self, url: str, project_name: str) -> str | None:
         """Clone, generate docs, and move to final location."""
         cloned_repo_path: Path | None = None
         pdoc_operation_basedir: Path | None = None
         final_docs_path_str: str | None = None
 
         try:
-            # Chiamata modificata a _define_run_paths
             cloned_repo_path, final_docs_destination, pdoc_operation_basedir = (
                 self._define_run_paths(project_name)
             )
@@ -1218,8 +1211,6 @@ class DocStringsSrc:
             self.cleanup_folder(
                 [cloned_repo_path, final_docs_destination, pdoc_operation_basedir]
             )
-
-            # Chiamata modificata a git_clone
             self.git_clone(url, cloned_repo_path)
 
             logger.info("Calling generate_docs_from_folder for isolated build...")
@@ -1239,9 +1230,6 @@ class DocStringsSrc:
                     "Documentation generation failed for %s using isolated build.",
                     project_name,
                 )
-        # ... (resto del blocco try-except-finally rimane simile,
-        #      ma senza riferimenti alla 'version' se non strettamente necessari
-        #      per la logica interna che non abbiamo toccato)
         except subprocess.CalledProcessError as cpe:
             self._log_subprocess_error(cpe, f"Run phase for {project_name}")
         except RuntimeError:  # Include GitCloneFailedUnknownReasonError
