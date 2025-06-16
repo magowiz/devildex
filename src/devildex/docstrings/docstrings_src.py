@@ -95,6 +95,7 @@ class DocStringsSrc:
             "-m",
             "pdoc",
             "--html",
+            "--skip-errors",
         ]
 
         if self.template_dir:
@@ -994,17 +995,6 @@ class DocStringsSrc:
         )
         return None
 
-    @dataclass
-    class PDocContext:
-        """Holds context for a pdoc build operation."""
-
-        modules_to_document: list[str]
-        pdoc_cwd: Path
-        project_install_root: Path
-        requirements_file: Path | None
-        pdoc_command_output_dir: Path
-        project_name_for_log: str
-
     def _execute_pdoc_build_in_venv(
         self,
         i_venv: IsolatedVenvManager,
@@ -1062,6 +1052,8 @@ class DocStringsSrc:
         )
         logger.debug("pdoc stdout:\n%s", stdout)
         logger.debug("pdoc stderr:\n%s", stderr)
+        logger.error(">>>> pdoc stderr:\n%s", stderr)  # MODIFICATO TEMPORANEAMENTE
+
         return False
 
     @staticmethod
@@ -1123,15 +1115,11 @@ class DocStringsSrc:
 
     @staticmethod
     def git_clone(
-        repo_url: str, clone_dir_path: Path, default_branch: str = "master"
-    ) -> None:
-        """Clone a git repository, trying specified branches in order."""
+        repo_url: str, clone_dir_path: Path
+    ) -> None:  # Rimosso default_branch per ora
+        """Clone a git repository, trying 'main' then 'master'."""
         clone_dir_path_str = str(clone_dir_path)
-
-        branches_to_try = [default_branch]
-        if default_branch.lower() != "main":
-            branches_to_try.append("main")
-
+        branches_to_try = ["main", "master"]  # Tentativi semplificati
         last_error = None
 
         for branch_name in branches_to_try:
@@ -1141,6 +1129,11 @@ class DocStringsSrc:
                 repo_url,
                 clone_dir_path_str,
             )
+            if clone_dir_path.exists():  # Pulisci prima di ogni tentativo
+                logger.debug(f"Cleaning up existing clone directory: {clone_dir_path}")
+                shutil.rmtree(clone_dir_path)
+            clone_dir_path.parent.mkdir(parents=True, exist_ok=True)
+
             try:
                 subprocess.run(  # noqa: S603
                     [
@@ -1159,8 +1152,11 @@ class DocStringsSrc:
                     encoding="utf-8",
                 )
                 logger.info(
-                    "Successfully cloned branch '%s' from %s.", branch_name, repo_url
+                    "Successfully cloned branch '%s' from %s.",
+                    branch_name,
+                    repo_url,
                 )
+
             except subprocess.CalledProcessError as e:
                 last_error = e
                 logger.warning(
@@ -1169,14 +1165,18 @@ class DocStringsSrc:
                     repo_url,
                     e.stderr.strip() if e.stderr else "N/A",
                 )
-            except FileNotFoundError as e:
+            except FileNotFoundError as e_fnf:
                 logger.critical(
                     "Git command not found. Ensure git is installed and "
                     "in your system's PATH."
                 )
-                raise GitCloneFailedUnknownReasonError(repo_url, branches_to_try) from e
+                # Rilancia un'eccezione specifica o gestisci come errore critico
+                raise GitCloneFailedUnknownReasonError(
+                    repo_url, branches_to_try
+                ) from e_fnf
             else:
-                return
+                return  # Successo, esci
+        # Se il ciclo finisce, tutti i tentativi sono falliti
         msg = (
             f"Could not clone repository {repo_url} from branches "
             f"{', '.join(branches_to_try)}."
@@ -1184,7 +1184,90 @@ class DocStringsSrc:
         logger.error(msg)
         if last_error:
             raise RuntimeError(msg) from last_error
+        # Se last_error è None ma siamo qui (improbabile con la logica attuale)
         raise GitCloneFailedUnknownReasonError(repo_url, branches_to_try)
+
+    def _define_run_paths(
+        self,
+        project_name: str,  # Rimosso version
+    ) -> tuple[Path, Path, Path]:
+        """Define and returns standard paths used in the run method."""
+        cloned_repo_path = Path(project_name)  # Sarà nella CWD
+
+        # Semplificato: non c'è più la versione nel path
+        final_docs_destination = self.docset_dir / project_name
+
+        # Semplificato: non c'è più la versione nel nome della dir temporanea
+        temp_output_dirname = f"tmp_pdoc_output_{project_name}"
+        pdoc_operation_basedir = self.docset_dir / temp_output_dirname
+
+        return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
+
+    def run(self, url: str, project_name: str) -> str | None:  # Rimosso version
+        """Clone, generate docs, and move to final location."""
+        cloned_repo_path: Path | None = None
+        pdoc_operation_basedir: Path | None = None
+        final_docs_path_str: str | None = None
+
+        try:
+            # Chiamata modificata a _define_run_paths
+            cloned_repo_path, final_docs_destination, pdoc_operation_basedir = (
+                self._define_run_paths(project_name)
+            )
+
+            self.cleanup_folder(
+                [cloned_repo_path, final_docs_destination, pdoc_operation_basedir]
+            )
+
+            # Chiamata modificata a git_clone
+            self.git_clone(url, cloned_repo_path)
+
+            logger.info("Calling generate_docs_from_folder for isolated build...")
+            generation_outcome = self.generate_docs_from_folder(
+                project_name,
+                str(cloned_repo_path.parent.resolve()),
+                str(pdoc_operation_basedir.resolve()),
+            )
+
+            if isinstance(generation_outcome, str):
+                self._handle_successful_doc_move(
+                    generation_outcome, final_docs_destination
+                )
+                final_docs_path_str = str(final_docs_destination.resolve())
+            else:
+                logger.error(
+                    "Documentation generation failed for %s using isolated build.",
+                    project_name,
+                )
+        # ... (resto del blocco try-except-finally rimane simile,
+        #      ma senza riferimenti alla 'version' se non strettamente necessari
+        #      per la logica interna che non abbiamo toccato)
+        except subprocess.CalledProcessError as cpe:
+            self._log_subprocess_error(cpe, f"Run phase for {project_name}")
+        except RuntimeError:  # Include GitCloneFailedUnknownReasonError
+            logger.exception("Runtime error during run for %s", project_name)
+        except OSError:
+            logger.exception("OS error during run for %s", project_name)
+            self._log_traceback()
+        except (KeyboardInterrupt, SystemExit):
+            logger.warning(
+                "Operation interrupted or system exit called for %s.", project_name
+            )
+            raise
+        finally:
+            logger.info("Starting final cleanup for %s...", project_name)
+            if cloned_repo_path and cloned_repo_path.exists():
+                logger.info("Cleaning up cloned repository: %s", cloned_repo_path)
+                self.cleanup_folder(cloned_repo_path)
+            if pdoc_operation_basedir and pdoc_operation_basedir.exists():
+                logger.info(
+                    "Final cleanup of pdoc operation base directory: %s",
+                    pdoc_operation_basedir,
+                )
+                self.cleanup_folder(pdoc_operation_basedir)
+            logger.info("Final cleanup for %s completed.", project_name)
+
+        return final_docs_path_str
 
     @staticmethod
     def _extract_missing_module_name(error_message: str) -> str | None:
@@ -1211,23 +1294,6 @@ class DocStringsSrc:
         shutil.move(str(generated_content_path_str), str(final_docs_destination))
         logger.info("Documentation moved to final location: %s", final_docs_destination)
 
-    def _define_run_paths(
-        self, project_name: str, version: str
-    ) -> tuple[Path, Path, Path]:
-        """Define and returns standard paths used in the run method."""
-        cloned_repo_path = Path(project_name)
-
-        final_docs_destination = self.docset_dir / project_name
-        if version:
-            final_docs_destination /= version
-
-        temp_output_dirname = f"tmp_pdoc_output_{project_name}"
-        if version:
-            temp_output_dirname += f"_v{version}"
-        pdoc_operation_basedir = self.docset_dir / temp_output_dirname
-
-        return cloned_repo_path, final_docs_destination, pdoc_operation_basedir
-
     @staticmethod
     def _log_subprocess_error(
         cpe: subprocess.CalledProcessError, context_msg: str
@@ -1239,63 +1305,6 @@ class DocStringsSrc:
             logger.debug("%s: Stdout:\n%s", context_msg, cpe.stdout.strip())
         if cpe.stderr and cpe.stderr.strip():
             logger.error("%s: Stderr:\n%s", context_msg, cpe.stderr.strip())
-
-    def run(self, url: str, project_name: str, version: str = "") -> str | None:
-        """Clone, generate docs, and move to final location."""
-        cloned_repo_path: Path | None = None
-        pdoc_operation_basedir: Path | None = None
-
-        try:
-            cloned_repo_path, final_docs_destination, pdoc_operation_basedir = (
-                self._define_run_paths(project_name, version)
-            )
-
-            self.cleanup_folder(
-                [cloned_repo_path, final_docs_destination, pdoc_operation_basedir]
-            )
-
-            self.git_clone(url, cloned_repo_path)
-
-            logger.info("Calling generate_docs_from_folder for isolated build...")
-            generation_outcome = self.generate_docs_from_folder(
-                project_name,
-                str(cloned_repo_path.resolve()),
-                str(pdoc_operation_basedir.resolve()),
-            )
-
-            if isinstance(generation_outcome, str):
-                self._handle_successful_doc_move(
-                    generation_outcome, final_docs_destination
-                )
-            else:
-                logger.error(
-                    "Documentation generation failed for %s using isolated build.",
-                    project_name,
-                )
-        except subprocess.CalledProcessError as cpe:
-            self._log_subprocess_error(cpe, f"Run phase for {project_name}")
-        except RuntimeError:
-            logger.exception("Runtime error during run for %s", project_name)
-        except OSError:
-            logger.exception("OS error during run for %s", project_name)
-            self._log_traceback()
-        except (KeyboardInterrupt, SystemExit):
-            logger.warning(
-                "Operation interrupted or system exit called for %s.", project_name
-            )
-            raise
-        finally:
-            logger.info("Starting final cleanup for %s...", project_name)
-            if cloned_repo_path and cloned_repo_path.exists():
-                logger.info("Cleaning up cloned repository: %s", cloned_repo_path)
-                self.cleanup_folder(cloned_repo_path)
-            if pdoc_operation_basedir and pdoc_operation_basedir.exists():
-                logger.info(
-                    "Final cleanup of pdoc operation base directory: %s",
-                    pdoc_operation_basedir,
-                )
-                self.cleanup_folder(pdoc_operation_basedir)
-            logger.info("Final cleanup for %s completed.", project_name)
 
 
 if __name__ == "__main__":
