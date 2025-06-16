@@ -1,31 +1,51 @@
+    <%doc>
+        Extremely basic pdoc3 html.mako template for debugging.
+    </%doc>
     <%
-        # La variabile 'module' è quella principale fornita da pdoc3 per il modulo corrente.
-        # La assegniamo a 'mod' per brevità, come facevi tu nel vecchio file.
-        mod = module
+        mod = module  # Main module object from pdoc
     %>
     <!DOCTYPE html>
-    <html lang="it">
+    <html>
     <head>
-        ${self.include_file('head.mako')}
-        <% # Qui potresti aggiungere altri meta tag o link specifici se necessario in futuro %>
+
+                <%include file="head.mako"/>
+
     </head>
     <body>
+        <h1>Modulo: ${mod.name if mod and hasattr(mod, 'name') else "N/A"}</h1>
 
-        <% # Il contenuto principale della pagina (navbar, corpo, footer) andrà qui nei prossimi passi %>
-        <h1>Contenuto Provvisorio da html.mako</h1>
-        <p>Se vedi questo, html.mako è stato aggiornato e head.mako dovrebbe essere incluso.</p>
-        <p>Verifica il tag &lt;head&gt; per i link CSS!</p>
+        % if mod and hasattr(mod, 'docstring_parsed') and mod.docstring_parsed:
+            <div class="docstring">
+                ${mod.docstring_parsed.html | n}
+            </div>
+        % elif mod and hasattr(mod, 'docstring'):
+            <pre>${mod.docstring}</pre>
+        % else:
+            <p>Nessun docstring per il modulo.</p>
+        % endif
+
+        % if hasattr(mod, 'members') and mod.members:
+            <h2>Membri:</h2>
+            <ul>
+            % for member_name, member_obj in mod.members.items():
+                <li>
+                    <strong>${member_name}</strong> (${member_obj.kind if hasattr(member_obj, 'kind') else 'N/A'})
+                    % if hasattr(member_obj, 'docstring_parsed') and member_obj.docstring_parsed:
+                    <div class="docstring">
+                        ${member_obj.docstring_parsed.html | n}
+                    </div>
+                    % elif hasattr(member_obj, 'docstring') and member_obj.docstring:
+                    <pre>${member_obj.docstring}</pre>
+                    % endif
+                </li>
+            % endfor
+            </ul>
+        % endif
 
         <hr>
-        <h2>Debug Info (Variabile 'mod'):</h2>
-        <pre>
-Tipo di 'mod': ${type(mod)}
-Attributi di 'mod': ${dir(mod) if mod else "N/A"}
-mod.name: ${mod.name if mod and hasattr(mod, 'name') else "Non disponibile"}
-        </pre>
-
+        <p><em>Test base di html.mako completato.</em></p>
         <script src="static/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <script src="static/js/devildex_pdoc3.js"></script>
+        <script src="static/js/pdoc3_devildex.js"></script>
     </body>
     </html>
     

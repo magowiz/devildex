@@ -630,6 +630,14 @@ class DocStringsSrc:
                 pdoc_base_output_dir, project_name
             )
             if validated_docs_path:
+                source_static_dir = self.template_dir / "static"
+                destination_static_dir = Path(validated_docs_path) / "static"
+                if self.template_dir and (self.template_dir / "static").is_dir():
+                    source_static_dir = self.template_dir / "static"
+                    destination_static_dir = Path(validated_docs_path) / "static"
+                    if destination_static_dir.exists():
+                        shutil.rmtree(destination_static_dir)
+                shutil.copytree(source_static_dir, destination_static_dir)
                 return validated_docs_path
 
             logger.info(
