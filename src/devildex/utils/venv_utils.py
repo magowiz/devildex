@@ -248,6 +248,12 @@ def _prepare_command_env(
     current_env = base_env.copy()
     if additional_env:
         current_env.update(additional_env)
+    if "PYTHONPATH" in current_env:
+        logger.debug(
+            "Removing inherited PYTHONPATH ('%s') from environment for subprocess.",
+            current_env["PYTHONPATH"],
+        )
+        del current_env["PYTHONPATH"]
     return current_env
 
 

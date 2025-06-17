@@ -122,13 +122,37 @@ class DocStringsSrc:
         """Copy static files from the theme directory if specified."""
         if self.template_dir and (self.template_dir / "static").is_dir():
             source_static_dir = self.template_dir / "static"
-            destination_static_dir = validated_docs_path / "static"
-            if destination_static_dir.exists():
-                shutil.rmtree(destination_static_dir)
-            shutil.copytree(source_static_dir, destination_static_dir)
+            destination_static_dir: Path
+
+            if validated_docs_path.is_dir():
+                destination_static_dir = validated_docs_path / "static"
+            elif validated_docs_path.is_file():
+                # For a single HTML file, place 'static' in its parent directory
+                destination_static_dir = validated_docs_path.parent / "static"
+            else:
+                logger.error(
+                    "DocStringsSrc: Validated docs path %s is "
+                    "neither file nor dir for static copy.",
+                    validated_docs_path,
+                )
+                return
+
+            if destination_static_dir.exists() and not destination_static_dir.is_dir():
+                logger.warning(
+                    "DocStringsSrc: Static destination %s exists but is not"
+                    " a directory. Removing it.",
+                    destination_static_dir,
+                )
+                destination_static_dir.unlink()
+
+            destination_static_dir.mkdir(parents=True, exist_ok=True)
+
+            shutil.copytree(
+                source_static_dir, destination_static_dir, dirs_exist_ok=True
+            )
 
             logger.info(
-                "DocstringsSrc: copied static files from the theme in %s",
+                "DocstringsSrc: copied static files from the theme to %s",
                 destination_static_dir,
             )
 
@@ -210,7 +234,11 @@ class DocStringsSrc:
                 "DocstringsSrc: The Specified Source Project Folder does not exist: %s",
                 source_project_path,
             )
-
+            logger.error(
+                "DocstringsSrc: Details - input_folder: '%s', project_name: '%s'",
+                input_folder,
+                project_name,
+            )
             return False
 
         logger.info(
@@ -329,7 +357,7 @@ class DocStringsSrc:
                 with open(output_report_file, "w", encoding="utf-8") as f:
                     f.write(
                         f"Non-Package folders (without __init__py) found inside "
-                        f"'{project_root_for_relative_paths.name}':"
+                        f"'{project_root_for_relative_paths.name}':\n"
                     )
 
                     for folder_path in sorted(non_package_folders):
@@ -385,6 +413,7 @@ class DocStringsSrc:
                 report_file_path,
             )
         return reported_relative_paths
+        # In src/devildex/docstrings/docstrings_src.py
 
     @staticmethod
     def _remove_links_from_html_content(
@@ -392,50 +421,110 @@ class DocStringsSrc:
     ) -> str:
         """Remove the HTML links that aim for the specified folder or its content.
 
-        Simplified implementation with regex. Could need refinements.
+        Also removes list items that textually refer to the folder.
         """
-        folder_pattern_part = re.escape(folder_to_remove_links_for.replace(os.sep, "/"))
+        logger.info("--- START _remove_links_from_html_content ---")
 
-        link_pattern_str = (
-            r'<a\s+[^>]*href\s*=\s*["\']'
-            rf"({folder_pattern_part}(?:/[^\"\'\s]*)?)"
-            r'["\'][^>]*>.*?</a>'
-        )
-        link_pattern = re.compile(link_pattern_str, re.IGNORECASE | re.DOTALL)
-
-        modified_content = re.sub(link_pattern, "", html_content)
-
-        if modified_content != html_content:
-            logger.debug(
-                "DocstringsSrc: removed tags <a> linking to '%s' by the HTML content.",
-                folder_to_remove_links_for,
-            )
-            html_content = modified_content
+        current_processing_content = html_content
 
         folder_display_name = Path(folder_to_remove_links_for).name
+        escaped_folder_display_name = re.escape(folder_display_name)
 
-        list_item_pattern_str = (
-            r"<li[^>]*>\s*"
-            r'<a\s+[^>]*href\s*=\s*["\']'
-            rf"({folder_pattern_part}(?:/[^\"\'\s]*)?)"
-            r'["\'][^>]*>\s*'
-            rf"{re.escape(folder_display_name)}\s*</a>\s*</li>"
+        simple_href_pattern_part = re.escape(
+            folder_to_remove_links_for.replace(os.sep, "/")
         )
-        list_item_pattern = re.compile(list_item_pattern_str, re.IGNORECASE | re.DOTALL)
+        logger.info("--- Trying PATTERN 0.A (Specific <li> for 'docs/') ---")
+        specific_li_pattern_str = (
+            r"<li[^>]*>"
+            r"\s*<code[^>]*>\s*"
+            r"<a\s+[^>]*href\s*=\s*[\"']"
+            rf"{simple_href_pattern_part}/[^\"'>\s]*[\"']"
+            r"[^>]*>.*?</a>\s*"
+            r"</code>\s*</li>"
+        )
+        specific_li_pattern = re.compile(
+            specific_li_pattern_str, re.IGNORECASE | re.DOTALL
+        )
 
-        further_modified_content = re.sub(list_item_pattern, "", html_content)
-
-        if further_modified_content != html_content:
-            logger.debug(
-                "DocstringsSrc: removed elements <li> containing links to '%s'"
-                " (Text Match: '%s') from the HTML content.",
-                folder_to_remove_links_for,
-                folder_display_name,
+        matches_0a = list(specific_li_pattern.finditer(current_processing_content))
+        if matches_0a:
+            current_processing_content = specific_li_pattern.sub(
+                "", current_processing_content
             )
 
-            html_content = further_modified_content
+        logger.info("--- Trying PATTERN 0.B (Specific <dt>...<dd> for 'docs/') ---")
+        specific_dt_dd_pattern_str = (
+            r"<dt[^>]*>\s*<code[^>]*>\s*"
+            r"<a\s+[^>]*href\s*=\s*[\"']"
+            rf"{simple_href_pattern_part}/[^\"'>\s]*[\"']"
+            r"[^>]*>.*?</a>\s*"
+            r"</code>\s*</dt>\s*"
+            r"<dd.*?</dd>"
+        )
+        specific_dt_dd_pattern = re.compile(
+            specific_dt_dd_pattern_str, re.IGNORECASE | re.DOTALL
+        )
 
-        return html_content
+        matches_0b = list(specific_dt_dd_pattern.finditer(current_processing_content))
+        if matches_0b:
+            current_processing_content = specific_dt_dd_pattern.sub(
+                "", current_processing_content
+            )
+        logger.info("--- Trying PATTERN 1 (Generic <a> for 'docs/') ---")
+        link_pattern_str_1 = (
+            r'<a\s+[^>]*href\s*=\s*["\']'
+            rf"({simple_href_pattern_part}(?:/[^\"\'\s]*)?)"
+            r'["\'][^>]*>.*?</a>'
+        )
+        link_pattern_1 = re.compile(link_pattern_str_1, re.IGNORECASE | re.DOTALL)
+
+        matches_1 = list(link_pattern_1.finditer(current_processing_content))
+        if matches_1:
+            content_after_pattern_1 = link_pattern_1.sub("", current_processing_content)
+            if content_after_pattern_1 != current_processing_content:
+                current_processing_content = content_after_pattern_1
+
+        logger.info(
+            "--- Trying PATTERN 2 (<li> with <a> to 'docs/' AND text 'docs') ---"
+        )
+        list_item_with_link_pattern_str_2 = (
+            r"<li[^>]*>\s*"
+            r'<a\s+[^>]*href\s*=\s*["\']'
+            rf"({simple_href_pattern_part}(?:/[^\"\'\s]*)?)"  # href="docs/..."
+            r'["\'][^>]*>\s*'
+            rf"{escaped_folder_display_name}\s*</a>"
+            r"\s*</li>"
+        )
+        list_item_with_link_pattern_2 = re.compile(
+            list_item_with_link_pattern_str_2, re.IGNORECASE | re.DOTALL
+        )
+
+        content_after_pattern_2 = list_item_with_link_pattern_2.sub(
+            "", current_processing_content
+        )
+        if content_after_pattern_2 != current_processing_content:
+            current_processing_content = content_after_pattern_2
+
+        logger.info("--- Trying PATTERN 3 (<li> with text 'docs') ---")
+        list_item_text_pattern_str_3 = (
+            r"<li[^>]*>"
+            r"\s*(?:<code[^>]*>\s*)?"
+            rf"{escaped_folder_display_name}"
+            r"(?:\s*</code[^>]*>)?"
+            r"\s*</li>"
+        )
+        list_item_text_pattern_3 = re.compile(
+            list_item_text_pattern_str_3, re.IGNORECASE | re.DOTALL
+        )
+
+        content_after_pattern_3 = list_item_text_pattern_3.sub(
+            "", current_processing_content
+        )
+        if content_after_pattern_3 != current_processing_content:
+            current_processing_content = content_after_pattern_3
+
+        logger.info("--- END _remove_links_from_html_content ---")
+        return current_processing_content
 
     def _clean_html_file_for_reported_path(
         self,
@@ -506,7 +595,6 @@ class DocStringsSrc:
         of any tags remained empty.
         """
         relative_paths_to_process = self._read_non_package_report(report_file_path)
-
         if not relative_paths_to_process:
             logger.info(
                 "DocstringsSrc: no path to be tried from the non-payable report."
@@ -1043,6 +1131,7 @@ class DocStringsSrc:
                 "DocStringsSrc: pdoc build for %s completed successfully.",
                 pdoc_context.project_name_for_log,
             )
+
             return True
 
         logger.error(
@@ -1059,33 +1148,46 @@ class DocStringsSrc:
     def _validate_pdoc_output(
         pdoc_base_output_dir: Path, project_name: str
     ) -> str | None:
-        """Check if pdoc output directory and content are valid.
+        """Check if pdoc output directory or file content are valid.
 
         Args:
             pdoc_base_output_dir: The base directory where pdoc was
                 instructed to output.
-            project_name: The name of the project, used to find the subdirectory.
+            project_name: The name of the project, used to find the subdirectory
+                          or the specific HTML file.
 
         Returns:
-            The path to the actual documentation content as a string if valid,
-            otherwise None.
+            The path to the actual documentation content (directory or file)
+            as a string if valid, otherwise None.
 
         """
-        actual_docs_path = pdoc_base_output_dir / project_name
+        # Case 1: pdoc created a subdirectory for the project (e.g., for packages)
+        project_specific_output_dir = pdoc_base_output_dir / project_name
         if (
-            actual_docs_path.exists()
-            and actual_docs_path.is_dir()
-            and any(actual_docs_path.iterdir())
+            project_specific_output_dir.exists()
+            and project_specific_output_dir.is_dir()
+            and any(project_specific_output_dir.iterdir())  # Ensure it's not empty
         ):
             logger.info(
-                "DocStringsSrc: pdoc content generated successfully in %s.",
-                actual_docs_path,
+                "DocStringsSrc: pdoc content generated "
+                "successfully in subdirectory %s.",
+                project_specific_output_dir,
             )
-            return str(actual_docs_path)
+            return str(project_specific_output_dir)
+
+        single_html_file = pdoc_base_output_dir / f"{project_name}.html"
+        if single_html_file.exists() and single_html_file.is_file():
+            logger.info(
+                "DocStringsSrc: pdoc content is a single HTML file: %s.",
+                single_html_file,
+            )
+            return str(single_html_file)
 
         logger.warning(
-            "DocStringsSrc: Expected pdoc content directory %s not found or empty.",
-            actual_docs_path,
+            "DocStringsSrc: Expected pdoc content directory %s OR "
+            "file %s not found or empty.",
+            project_specific_output_dir,
+            single_html_file,
         )
         return None
 
@@ -1113,9 +1215,7 @@ class DocStringsSrc:
                     item_path.unlink()
 
     @staticmethod
-    def git_clone(
-        repo_url: str, clone_dir_path: Path
-    ) -> None:
+    def git_clone(repo_url: str, clone_dir_path: Path) -> None:
         """Clone a git repository, trying 'main' then 'master'."""
         clone_dir_path_str = str(clone_dir_path)
         branches_to_try = ["main", "master"]
@@ -1276,10 +1376,35 @@ class DocStringsSrc:
             "Documentation generated by isolated build at: %s",
             generated_content_path_str,
         )
+        generated_path_obj = Path(generated_content_path_str)
+
         if final_docs_destination.exists():
             self.cleanup_folder(final_docs_destination)
-        final_docs_destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(generated_content_path_str), str(final_docs_destination))
+        final_docs_destination.mkdir(parents=True, exist_ok=True)
+
+        if generated_path_obj.is_file():
+            target_file_path = final_docs_destination / generated_path_obj.name
+            shutil.move(str(generated_path_obj), str(target_file_path))
+            logger.info("Single documentation file moved to: %s", target_file_path)
+        elif generated_path_obj.is_dir():
+            if final_docs_destination.is_dir() and not any(
+                final_docs_destination.iterdir()
+            ):
+                final_docs_destination.rmdir()  # Remove the empty dir created by mkdir
+
+            final_docs_destination.parent.mkdir(
+                parents=True, exist_ok=True
+            )  # Ensure parent exists
+            shutil.move(str(generated_path_obj), str(final_docs_destination))
+            logger.info("Documentation directory moved to: %s", final_docs_destination)
+        else:
+            logger.error(
+                "DocStringsSrc: Validated pdoc output path '%s' is neither a file"
+                " nor a directory. Cannot move.",
+                generated_path_obj,
+            )
+            return
+
         logger.info("Documentation moved to final location: %s", final_docs_destination)
 
     @staticmethod
