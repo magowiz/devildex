@@ -91,13 +91,9 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
     project_root_for_pdoc3 = dummy_project_in_tmp_path  # This is .../base_dir
     pdoc_build_root_dir.mkdir(parents=True, exist_ok=True)
 
-    # generate_docs_from_folder input_folder is project_root_for_pdoc3,
-    # so source_project_path inside becomes project_root_for_pdoc3 / "dummy_project"
     output_content_path_str = doc_generator.generate_docs_from_folder(
-        project_name="dummy_project",  # This is the module/package name inside the source_project_path
-        input_folder=str(
-            project_root_for_pdoc3.resolve()
-        ),  # Path to where "dummy_project" dir is
+        project_name="dummy_project",
+        input_folder=str(project_root_for_pdoc3.resolve()),
         output_folder=str(pdoc_build_root_dir.resolve()),
     )
 
@@ -109,14 +105,11 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
     ), f"Expected a path string, got {type(output_content_path_str)}"
 
     output_content_path = Path(output_content_path_str)
-    entry_html_path: Path
+    entry_html_path: Path | None = None
 
     if output_content_path.is_dir():
-        # Case: pdoc3 created a directory (e.g., for a package)
         entry_html_path = output_content_path / "index.html"
     elif output_content_path.is_file():
-        # Case: pdoc3 created a single HTML file
-        # Ensure it's the expected HTML file for the dummy_project
         assert (
             output_content_path.name == "dummy_project.html"
         ), f"Expected dummy_project.html, got {output_content_path.name}"
@@ -134,24 +127,22 @@ def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
         entry_html_path.is_file()
     ), f"Expected entry HTML path {entry_html_path} is not a file"
 
-    # Check for static files if a theme was applied
     if doc_generator.template_dir:
-        # Static files should be in the parent of the HTML file, or in the output dir itself
         static_dir_expected_location = entry_html_path.parent / "static"
-        if output_content_path.is_dir():  # If output was a dir, static is inside it
+        if output_content_path.is_dir():
             static_dir_expected_location = output_content_path / "static"
 
-        assert (
-            static_dir_expected_location.exists()
-        ), f"Static directory {static_dir_expected_location} not found for themed output."
+        assert static_dir_expected_location.exists(), (
+            f"Static directory {static_dir_expected_location} not "
+            "found for themed output."
+        )
         assert (
             static_dir_expected_location.is_dir()
         ), f"Static path {static_dir_expected_location} is not a directory."
-        # You could add more specific checks for files within static_dir_expected_location
 
     url_to_open = entry_html_path.as_uri()
     logger.info(f"🔗 Open manually this URI: {url_to_open}\n")
-    webbrowser.open_new_tab(url_to_open)  # Comment out for CI/automated tests
+    webbrowser.open_new_tab(url_to_open)
 
 
 def _minimal_build_pydoctor_docs(
