@@ -127,7 +127,6 @@ class DocStringsSrc:
             if validated_docs_path.is_dir():
                 destination_static_dir = validated_docs_path / "static"
             elif validated_docs_path.is_file():
-                # For a single HTML file, place 'static' in its parent directory
                 destination_static_dir = validated_docs_path.parent / "static"
             else:
                 logger.error(
@@ -413,7 +412,6 @@ class DocStringsSrc:
                 report_file_path,
             )
         return reported_relative_paths
-        # In src/devildex/docstrings/docstrings_src.py
 
     @staticmethod
     def _remove_links_from_html_content(
@@ -490,7 +488,7 @@ class DocStringsSrc:
         list_item_with_link_pattern_str_2 = (
             r"<li[^>]*>\s*"
             r'<a\s+[^>]*href\s*=\s*["\']'
-            rf"({simple_href_pattern_part}(?:/[^\"\'\s]*)?)"  # href="docs/..."
+            rf"({simple_href_pattern_part}(?:/[^\"\'\s]*)?)"
             r'["\'][^>]*>\s*'
             rf"{escaped_folder_display_name}\s*</a>"
             r"\s*</li>"
@@ -1161,12 +1159,11 @@ class DocStringsSrc:
             as a string if valid, otherwise None.
 
         """
-        # Case 1: pdoc created a subdirectory for the project (e.g., for packages)
         project_specific_output_dir = pdoc_base_output_dir / project_name
         if (
             project_specific_output_dir.exists()
             and project_specific_output_dir.is_dir()
-            and any(project_specific_output_dir.iterdir())  # Ensure it's not empty
+            and any(project_specific_output_dir.iterdir())
         ):
             logger.info(
                 "DocStringsSrc: pdoc content generated "
@@ -1332,7 +1329,7 @@ class DocStringsSrc:
                 )
         except subprocess.CalledProcessError as cpe:
             self._log_subprocess_error(cpe, f"Run phase for {project_name}")
-        except RuntimeError:  # Include GitCloneFailedUnknownReasonError
+        except RuntimeError:
             logger.exception("Runtime error during run for %s", project_name)
         except OSError:
             logger.exception("OS error during run for %s", project_name)
@@ -1390,11 +1387,9 @@ class DocStringsSrc:
             if final_docs_destination.is_dir() and not any(
                 final_docs_destination.iterdir()
             ):
-                final_docs_destination.rmdir()  # Remove the empty dir created by mkdir
+                final_docs_destination.rmdir()
 
-            final_docs_destination.parent.mkdir(
-                parents=True, exist_ok=True
-            )  # Ensure parent exists
+            final_docs_destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(generated_path_obj), str(final_docs_destination))
             logger.info("Documentation directory moved to: %s", final_docs_destination)
         else:
