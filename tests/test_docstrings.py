@@ -55,8 +55,11 @@ PACKAGES_TO_TEST = [
     },
 ]
 
-doc_params = [pytest.param(package_info, id=package_info["project_name"])
-              for package_info in PACKAGES_TO_TEST]
+doc_params = [
+    pytest.param(package_info, id=package_info["project_name"])
+    for package_info in PACKAGES_TO_TEST
+]
+
 
 @pytest.fixture
 def manage_test_output_directory(
