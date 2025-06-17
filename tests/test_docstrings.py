@@ -55,6 +55,8 @@ PACKAGES_TO_TEST = [
     },
 ]
 
+doc_params = [pytest.param(package_info, id=package_info["project_name"])
+              for package_info in PACKAGES_TO_TEST]
 
 @pytest.fixture
 def manage_test_output_directory(
@@ -70,7 +72,7 @@ def manage_test_output_directory(
     return test_specific_doc_output_dir
 
 
-@pytest.mark.parametrize("package_info", PACKAGES_TO_TEST)
+@pytest.mark.parametrize("package_info", doc_params)
 def test_documentation_generation_for_package(
     package_info: dict[str, Any],
     tmp_path: Path,
