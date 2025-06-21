@@ -32,6 +32,7 @@ class ThemeManager:
         self.settings = {
             "html_theme": "devildex_sphinx_theme",
             "html_theme_path": [str(theme_container_dir.resolve())],
+            "pygments_style": "tango",
         }
         self.potential_sphinx_conf_paths = [
             self.project_path / "conf.py",
