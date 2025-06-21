@@ -47,13 +47,9 @@
         <div class="col-lg-3 col-md-4">
             <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
                    aria-label="Main navigation">
-                <div class="sphinxsidebarwrapper pt-3">
-                    {%- block sidebarlogo %}{{ super() }}{% endblock %}
-                    {%- block sidebartoc %}{{ super() }}{% endblock %}
-                    {%- block sidebarrel %}{{ super() }}{% endblock %}
-                    {%- block sidebarsourcelink %}{{ super() }}{% endblock %}
-                    {%- if customsidebar %}{% include customsidebar %}{%- endif %}
-                    {%- block sidebarsearch %}{{ super() }}{% endblock %}
+                <div class="devildex-sidebar-wrapper pt-3">
+                    <h5>Navigazione</h5>
+                    {{ toctree(maxdepth=-1, collapse=False, includehidden=True, titles_only=True) }}
                 </div>
             </aside>
         </div>
