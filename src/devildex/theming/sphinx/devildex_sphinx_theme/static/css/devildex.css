@@ -25,3 +25,43 @@
     display: none;
 }
 */
+
+/*
+ * Stile per i blocchi di codice inline (literal) per renderli
+ * simili a dei badge Bootstrap, migliorando la coerenza visiva.
+ * Esempi: `GET`, `POST`, `OPTIONS`, `True`, `None`, etc.
+ */
+/*
+ * Stile per i blocchi di codice inline (literal) per renderli
+ * simili a dei badge Bootstrap, migliorando la coerenza visiva.
+ * Esempi: `GET`, `POST`, `OPTIONS`, `True`, `None`, etc.
+ */
+code.docutils.literal {
+    /* Usiamo le variabili di Bootstrap per i colori */
+    background-color: #f8f9fa;
+    color: var(--bs-body-color); /* MODIFICATO: Colore del testo più scuro e standard */
+
+    padding: 0.1em 0.4em;
+    border-radius: 0.25rem;
+    border: 1px solid #e9ecef;
+
+    font-size: 0.875em;
+    vertical-align: baseline; /* Allinea meglio con il testo circostante */
+    white-space: nowrap; /* Evita che il testo vada a capo */
+    transition: all 0.2s ease-in-out;
+}
+
+
+/*
+ * Annulla lo stile "badge" per i blocchi di codice che sono link.
+ * Questo li fa apparire come testo normale all'interno di un link standard,
+ * ereditando il colore blu e la sottolineatura dal tag <a> genitore.
+ */
+a code.docutils.literal {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-size: inherit;
+    transition: none;
+}
