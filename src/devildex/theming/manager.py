@@ -4,7 +4,7 @@ import ast
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import yaml
 
@@ -20,8 +20,8 @@ class ThemeManager:
         self,
         project_path: Path,
         doc_type: str,
-        sphinx_conf_file: Union[Path | None] = None,
-        mkdocs_yml_file: Union[Path | None] = None,
+        sphinx_conf_file: Optional[Path] = None,
+        mkdocs_yml_file: Optional[Path] = None,
     ) -> None:
         """Initialize ThemeManager."""
         self.project_path = project_path
@@ -33,7 +33,6 @@ class ThemeManager:
             "html_theme": "devildex_sphinx_theme",
             "html_theme_path": [str(theme_container_dir.resolve())],
         }
-        self.new_theme_name = "devildex"
         self.potential_sphinx_conf_paths = [
             self.project_path / "conf.py",
             self.project_path / "source" / "conf.py",
@@ -50,6 +49,63 @@ class ThemeManager:
             / self.mkdocs_theme_override_dir_name
         )
 
+    @staticmethod
+    def _get_value_from_ast(tree: ast.AST, key: str) -> str:
+        """Analizza l'albero sintattico (AST) per trovare un valore.
+
+        Args:
+            tree: L'oggetto AST generato dal parsing del file conf.py.
+            key: key to search
+
+        Returns:
+            Il nome del tema originale come stringa se trovato, altrimenti "unknown".
+
+        """
+        for node in ast.walk(tree):
+            if (
+                (
+                    isinstance(node, ast.Assign)
+                    and len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name)
+                    and node.targets[0].id == key
+                )
+                and isinstance(node.value, ast.Constant)
+                and isinstance(
+                    node.value.value,
+                    str,
+                )
+            ):
+                return node.value.value
+        return "unknown"
+
+    @staticmethod
+    def _get_list_from_ast(tree: ast.AST, key: str) -> list[str]:
+        """Analizza l'albero sintattico (AST) per trovare un valore.
+
+        Args:
+            tree: L'oggetto AST generato dal parsing del file conf.py.
+            key: key to search
+
+        Returns:
+            Il nome del tema originale come stringa se trovato, altrimenti "unknown".
+
+        """
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Assign)
+                and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == key
+            ) and isinstance(node.value, ast.List):
+                elements = []
+                for element_node in node.value.elts:
+                    if isinstance(element_node, ast.Constant) and isinstance(
+                        element_node.value, str
+                    ):
+                        elements.append(element_node.value)
+                return elements
+        return []
+
     def sphinx_change_conf(self) -> None:
         """Patch sphinx configuration."""
         if self.doc_type != "sphinx":
@@ -62,6 +118,10 @@ class ThemeManager:
         with open(conf_file, encoding="utf-8") as f:
             source_code = f.read()
         tree = ast.parse(source_code, filename=str(conf_file))
+        values_context = {
+            "original_theme_name": self._get_value_from_ast(tree, "html_theme"),
+            "extensions": self._get_list_from_ast(tree, "extensions"),
+        }
         for var, value in self.settings.items():
             var_found = False
             for node in tree.body:
@@ -95,8 +155,54 @@ class ThemeManager:
                         ),
                     )
                     tree.body.append(new_assignment)
+
+        self._apply_sphinx_html_context(tree, values_context)
+
         ast.fix_missing_locations(tree)
         Path(conf_file).write_text(ast.unparse(tree), encoding="utf-8")
+
+    @staticmethod
+    def _apply_sphinx_html_context(tree: ast.AST, values_context: dict) -> None:
+        html_context_found = False
+        for node in tree.body:
+            if (
+                isinstance(node, ast.Assign)
+                and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == "html_context"
+            ):
+                if isinstance(node.value, ast.Dict):
+                    for key_to_add, value_to_add in values_context.items():
+                        node.value.keys.append(ast.Constant(value=key_to_add))
+                        if isinstance(value_to_add, list):
+                            list_node = ast.List(
+                                elts=[ast.Constant(s) for s in value_to_add],
+                                ctx=ast.Load(),
+                            )
+                            node.value.values.append(list_node)
+                        else:
+                            node.value.values.append(ast.Constant(value=value_to_add))
+                html_context_found = True
+                break
+
+        if not html_context_found:
+            keys_for_dict = []
+            values_for_dict = []
+            for key, value in values_context.items():
+                keys_for_dict.append(ast.Constant(value=key))
+                if isinstance(value, list):
+                    list_node = ast.List(
+                        elts=[ast.Constant(s) for s in value], ctx=ast.Load()
+                    )
+                    values_for_dict.append(list_node)
+                else:
+                    values_for_dict.append(ast.Constant(value=value))
+
+            new_node = ast.Assign(
+                targets=[ast.Name(id="html_context", ctx=ast.Store())],
+                value=ast.Dict(keys=keys_for_dict, values=values_for_dict),
+            )
+            tree.body.append(new_node)
 
     def _load_mkdocs_config_for_theming(
         self,

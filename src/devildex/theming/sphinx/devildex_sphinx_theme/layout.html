@@ -1,112 +1,106 @@
-    {%- extends "basic/layout.html" %} {# Estendiamo il tema base di Sphinx #}
+{%- extends "basic/layout.html" %}
 
-    {# Blocco Header con la Navbar Bootstrap - NESSUNA MODIFICA QUI #}
-    {%- block header %}
-        <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
-          <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
-        <img src="{{ pathto('_static/imgs/logo-final.png', 1) }}" alt="{{ project }} Logo" class="me-2" height="80">
-    <span>{{ project }}</span>
-</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent" aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="devildexNavbarContent">
-              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+{%- block header %}
+<nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
+            <img src="{{ pathto('_static/imgs/logo-final.png', 1) }}" alt="{{ project }} Logo" class="me-2" height="80">
+            <span>{{ project }}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent"
+                aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="devildexNavbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 {%- set globaltoc = toctree(maxdepth=2, collapse=False, includehidden=True, titles_only=True) %}
                 {%- if globaltoc %}
-                    {{ globaltoc }}
+                {{ globaltoc }}
                 {%- else %}
-                    <li class="nav-item">
-                      <a class="nav-link {% if pagename == master_doc %}active{% endif %}" aria-current="page" href="{{ pathto(master_doc) }}">Home</a>
-                    </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if pagename == master_doc %}active{% endif %}" aria-current="page"
+                       href="{{ pathto(master_doc) }}">Home</a>
+                </li>
                 {%- endif %}
-              </ul>
-              {%- if pagename != "search" %}
-              <form class="d-flex ms-auto" role="search" action="{{ pathto('search') }}" method="get">
-                <input class="form-control me-2" type="search" name="q" placeholder="Cerca documenti..." aria-label="Search">
+            </ul>
+            {%- if pagename != "search" %}
+            <form class="d-flex ms-auto" role="search" action="{{ pathto('search') }}" method="get">
+                <input class="form-control me-2" type="search" name="q" placeholder="Cerca documenti..."
+                       aria-label="Search">
                 <input type="hidden" name="check_keywords" value="yes">
                 <input type="hidden" name="area" value="default">
                 <button class="btn btn-outline-light" type="submit">Cerca</button>
-              </form>
-              {%- endif %}
-            </div>
-          </div>
-        </nav>
-    {%- endblock %}
-
-    {# Rimuoviamo le barre di navigazione "related" del tema base - NESSUNA MODIFICA QUI #}
-    {%- block relbar1 %}{% endblock %}
-    {%- block relbar2 %}{% endblock %}
-
-    {# MODIFICATO: Sovrascriviamo il blocco 'content' invece di 'document' #}
-        {# MODIFICATO: Sovrascriviamo il blocco 'content' invece di 'document' #}
-    {%- block content %}
-    <main role="main" class="container mt-4 mb-4"> {# Contenitore principale Bootstrap #}
-        <div class="row"> {# Riga Bootstrap #}
-            {# Colonna per il contenuto principale #}
-            {# La larghezza della colonna dipende se la sidebar è visualizzata (cioè, NON è la pagina index o search) #}
-            <div class="col-lg-{% if pagename != master_doc and pagename != 'search' %}9{% else %}12{% endif %} col-md-{% if pagename != master_doc and pagename != 'search' %}8{% else %}12{% endif %}">
-                {# Inseriamo qui il contenuto del blocco 'body' del tema base. #}
-                {# Il blocco 'body' è dove Sphinx mette il contenuto principale della pagina. #}
-                {%- block body %}{{ super() }}{% endblock %}
-            </div>
-
-            {# Colonna per la sidebar, se NON è la pagina index o search #}
-            {%- if pagename != master_doc and pagename != 'search' %} {# NUOVA CONDIZIONE #}
-            <div class="col-lg-3 col-md-4">
-                <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation" aria-label="Main navigation">
-                    <div class="sphinxsidebarwrapper pt-3">
-                        {# Includiamo i blocchi standard della sidebar definiti in basic/layout.html #}
-                        {# chiamando super() su ciascuno di essi. Sphinx li popolerà. #}
-                        {%- block sidebarlogo %}{{ super() }}{% endblock %}
-                        {%- block sidebartoc %}{{ super() }}{% endblock %}
-                        {%- block sidebarrel %}{{ super() }}{% endblock %}
-                        {%- block sidebarsourcelink %}{{ super() }}{% endblock %}
-                        {%- if customsidebar %}{% include customsidebar %}{%- endif %} {# Per sidebar personalizzate dall'utente #}
-                        {%- block sidebarsearch %}{{ super() }}{% endblock %}
-                    </div>
-                </aside>
-            </div>
+            </form>
             {%- endif %}
         </div>
-    </main>
-    {# Non chiamare {{ super() }} per il blocco 'content' qui, altrimenti il tema base #}
-    {# aggiungerebbe la sua sidebar originale e il div.clearer di nuovo. #}
-    {%- endblock %}
-    {# Stilizziamo il footer con Bootstrap - NESSUNA MODIFICA QUI #}
-    {%- block footer %}
-    <footer class="footer mt-auto py-3 bg-dark text-light border-top">
-      <div class="container">
+    </div>
+</nav>
+{%- endblock %}
+
+
+{%- block relbar1 %}{% endblock %}
+{%- block relbar2 %}{% endblock %}
+
+{%- block content %}
+<main role="main" class="container mt-4 mb-4">
+    <div class="row">
+        <div class="col-lg-{% if pagename != master_doc and pagename != 'search' %}9{% else %}12{% endif %} col-md-{% if pagename != master_doc and pagename != 'search' %}8{% else %}12{% endif %}">
+            {%- block body %}{{ super() }}{% endblock %}
+        </div>
+
+        {%- if pagename != master_doc and pagename != 'search' %}
+        <div class="col-lg-3 col-md-4">
+            <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
+                   aria-label="Main navigation">
+                <div class="sphinxsidebarwrapper pt-3">
+                    {%- block sidebarlogo %}{{ super() }}{% endblock %}
+                    {%- block sidebartoc %}{{ super() }}{% endblock %}
+                    {%- block sidebarrel %}{{ super() }}{% endblock %}
+                    {%- block sidebarsourcelink %}{{ super() }}{% endblock %}
+                    {%- if customsidebar %}{% include customsidebar %}{%- endif %}
+                    {%- block sidebarsearch %}{{ super() }}{% endblock %}
+                </div>
+            </aside>
+        </div>
+        {%- endif %}
+    </div>
+</main>
+{%- endblock %}
+{%- block footer %}
+<footer class="footer mt-auto py-3 bg-dark text-light border-top">
+    <div class="container">
         <div class="row">
             <div class="col-12 text-center">
                 <small>
                     {%- if show_copyright %}
-                        {%- if hasdoc('copyright') %}
-                            {% trans path=pathto('copyright'), copyright=copyright|e %}&#169; <a href="{{ path }}" class="text-light">Copyright</a> {{ copyright }}.{% endtrans %}
-                        {%- else %}
-                            {% trans copyright=copyright|e %}&#169; Copyright {{ copyright }}.{% endtrans %}
-                        {%- endif %}
+                    {%- if hasdoc('copyright') %}
+                    {% trans path=pathto('copyright'), copyright=copyright|e %}&#169; <a href="{{ path }}"
+                                                                                         class="text-light">Copyright</a>
+                    {{ copyright }}.{% endtrans %}
+                    {%- else %}
+                    {% trans copyright=copyright|e %}&#169; Copyright {{ copyright }}.{% endtrans %}
+                    {%- endif %}
                     {%- endif %}
                     {%- if show_copyright and last_updated %}<br/>{% endif %}
                     {%- if last_updated %}
-                        {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+                    {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
                     {%- endif %}
                     {%- if (show_copyright or last_updated) and show_sphinx %}<br/>{% endif %}
                     {%- if show_sphinx %}
-                        {% trans sphinx_version=sphinx_version|e %}Created using <a href="https://www.sphinx-doc.org/" class="text-light">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+                    {% trans sphinx_version=sphinx_version|e %}Created using <a href="https://www.sphinx-doc.org/"
+                                                                                class="text-light">Sphinx</a> {{
+                    sphinx_version }}.{% endtrans %}
                     {%- endif %}
                 </small>
             </div>
         </div>
-      </div>
-    </footer>
-    {%- endblock %}
+    </div>
+</footer>
+{%- endblock %}
 
-    {# Blocco Scripts - NESSUNA MODIFICA QUI #}
-    {%- block scripts %}
-        <script src="{{ pathto('_static/bootstrap/js/bootstrap.bundle.min.js', 1) }}"></script>
-        <script src="{{ pathto('_static/js/devildex.js', 1) }}"></script>
-        {{ super() }} {# Includiamo gli script di base di Sphinx (es. searchtools.js) #}
-    {%- endblock %}
+{%- block scripts %}
+<script src="{{ pathto('_static/bootstrap/js/bootstrap.bundle.min.js', 1) }}"></script>
+<script src="{{ pathto('_static/js/devildex.js', 1) }}"></script>
+{{ super() }}
+{%- endblock %}
     
