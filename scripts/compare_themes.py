@@ -559,7 +559,6 @@ def sphinx_run(
             devil_entry_point = find_entry_point(devil_built_path, "sphinx")
     return vanilla_entry_point, devil_entry_point
 
-
 def _configure_arg_parser() -> argparse.ArgumentParser:
     """Configure argument parser."""
     parser = argparse.ArgumentParser(
@@ -585,17 +584,28 @@ def _configure_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Conserva le cartelle di build temporanee dopo l'esecuzione.",
     )
-    parser.add_argument(
+
+    # --- INIZIO MODIFICA ---
+    # Gruppo per gestire le build in modo esclusivo
+    build_group = parser.add_mutually_exclusive_group()
+    build_group.add_argument(
+        "--only",
+        choices=["vanilla", "devil"],
+        help="Esegue solo la build specificata (vanilla o devil).",
+    )
+    build_group.add_argument(
         "--skip-vanilla",
         action="store_true",
         help="Salta la build della documentazione vanilla.",
     )
-    parser.add_argument(
+    build_group.add_argument(
         "--skip-devil",
         action="store_true",
         help="Salta la build della documentazione DevilDex.",
     )
+    # --- FINE MODIFICA ---
     return parser
+
 
 
 def _guards(args: Namespace, project_config: dict) -> tuple | None:
@@ -636,7 +646,10 @@ def main() -> None:
     parser = _configure_arg_parser()
     args = parser.parse_args()
     project_config = KNOWN_PROJECTS.get(args.project_name)
-
+    if args.only == "devil":
+        args.skip_vanilla = True
+    elif args.only == "vanilla":
+        args.skip_devil = True
     res = _guards(args=args, project_config=project_config)
     if not res:
         return
