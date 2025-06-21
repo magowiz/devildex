@@ -49,9 +49,15 @@
         <div class="col-lg-3 col-md-4">
             <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
                    aria-label="Main navigation">
-                <div class="devildex-sidebar-wrapper pt-3">
-                    <h5>Navigazione</h5>
-                    {{ toctree(maxdepth=-1, collapse=False, includehidden=True, titles_only=True) }}
+                {# MODIFICATO: Aggiunta la struttura della card Bootstrap #}
+                <div class="devildex-sidebar-wrapper card border-dark">
+                    <div class="card-header bg-dark text-white">
+                        {# MODIFICATO: Usiamo il sistema di traduzione di Sphinx #}
+                        <h5 class="card-title mb-0">{% trans %}Navigation{% endtrans %}</h5>
+                    </div>
+                    <div class="card-body p-2 bg-light">
+                        {{ toctree(maxdepth=-1, collapse=False, includehidden=True, titles_only=True) }}
+                    </div>
                 </div>
             </aside>
         </div>
