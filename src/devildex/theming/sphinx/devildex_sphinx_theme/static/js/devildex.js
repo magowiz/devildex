@@ -69,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const contentImages = document.querySelectorAll('main img');
 
-    // Aggiungi la classe 'img-fluid' a ciascuna immagine per renderla responsive
     contentImages.forEach(function(img) {
         img.classList.add('img-fluid');
     });
