@@ -1,0 +1,7 @@
+{# src/devildex/theming/assets/sphinx_layout.html #}
+{% extends "!layout.html" %}
+
+{%- block scripts %}
+{{ super() }}
+<script src="{{ pathto('_static/live_reload.js', 1) }}"></script>
+{%- endblock %}

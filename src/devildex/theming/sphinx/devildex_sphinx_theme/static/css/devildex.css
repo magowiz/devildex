@@ -21,6 +21,7 @@
     text-decoration: var(--bs-link-hover-decoration, underline);
 }
 
-.page-index main section > section:has(.toctree-wrapper) {
+/*.page-index main section > section:has(.toctree-wrapper) {
     display: none;
 }
+*/

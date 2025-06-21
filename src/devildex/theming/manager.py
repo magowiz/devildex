@@ -10,6 +10,12 @@ import yaml
 
 from devildex.info import PROJECT_ROOT
 
+DEVILDEX_THEMING_ASSETS_PATH = (
+    PROJECT_ROOT / "src" / "devildex" / "theming" / "common_assets"
+)
+LIVE_RELOAD_JS_PATH = DEVILDEX_THEMING_ASSETS_PATH / "live_reload.js"
+SPHINX_LAYOUT_TEMPLATE_PATH = DEVILDEX_THEMING_ASSETS_PATH / "sphinx_layout.html"
+
 logger = logging.getLogger(__name__)
 
 
@@ -107,11 +113,44 @@ class ThemeManager:
                 return elements
         return []
 
-    def sphinx_change_conf(self) -> None:
+    def sphinx_change_conf(self, dev_mode: bool = False) -> None:
         """Patch sphinx configuration."""
         if self.doc_type != "sphinx":
             return
         conf_file = self.sphinx_conf_file
+        conf_dir = self.sphinx_conf_file.parent
+        static_dir = conf_dir / "_static"
+        static_dir.mkdir(exist_ok=True)
+        templates_dir = conf_dir / "_templates"
+        templates_dir.mkdir(exist_ok=True)
+        static_dir.mkdir(exist_ok=True)
+        if dev_mode:
+            shutil.copy(LIVE_RELOAD_JS_PATH, static_dir / "live_reload.js")
+            shutil.copy(SPHINX_LAYOUT_TEMPLATE_PATH, templates_dir / "layout.html")
+            with self.sphinx_conf_file.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+            devil_config = [
+                "\n# --- DevilDex Theme Configuration ---",
+                "import os",
+                "import sys",
+                f"sys.path.insert(0, r'{self.project_path.resolve()!s}')",
+                f"sys.path.insert(0, r'{DEVILDEX_THEMING_ASSETS_PATH.parent.resolve()!s}')",
+                "html_theme = 'devildex_sphinx_theme'",
+                "html_theme_path = [os.path.abspath(os.path.dirname('devildex_sphinx_theme'))]",
+                "templates_path = ['_templates']",
+                "html_js_files = ['live_reload.js']",
+                "# --- End DevilDex Theme Configuration ---\n",
+            ]
+            with self.sphinx_conf_file.open("w", encoding="utf-8") as f:
+                f.writelines(lines)
+                f.write("\n".join(devil_config))
+        shutil.copytree(
+            Path(self.settings["html_theme_path"][0])
+            / self.settings["html_theme"]
+            / "static",
+            static_dir,
+            dirs_exist_ok=True,
+        )
         if not conf_file or not conf_file.is_file():
             conf_file = next(
                 (p for p in self.potential_sphinx_conf_paths if p.is_file()), None

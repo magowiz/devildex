@@ -15,6 +15,7 @@
       <w>levelname</w>
       <w>magiclink</w>
       <w>megalinter</w>
+      <w>noqa</w>
       <w>oxsecurity</w>
       <w>packagetype</w>
       <w>pydata</w>
