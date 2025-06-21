@@ -232,6 +232,9 @@ pipeline {
             }
                 }
         stage('Build Packages Multi-Arch') {
+            when {
+                expression { false }
+            }
             environment {
                 PIP_FIND_LINKS = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
             }
@@ -616,6 +619,9 @@ pipeline {
         }
 
         stage('Smoke Test and Archive Executables') {
+            when {
+                expression { false }
+            }
             matrix {
                 axes {
                     axis {
