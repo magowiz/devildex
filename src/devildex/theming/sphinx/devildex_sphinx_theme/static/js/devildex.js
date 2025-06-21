@@ -45,8 +45,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /* --- Rendi le immagini nel contenuto principale responsive --- */
-    // Seleziona tutte le immagini all'interno del tag <main>
+    /* --- Gestione della Sidebar --- */
+    // Trova il contenitore della sidebar
+    const sidebar = document.querySelector('.sphinxsidebar .devildex-sidebar-wrapper');
+    if (sidebar) {
+        // Trova tutte le liste di navigazione generate da toctree() nella sidebar
+        const sidebarTocs = sidebar.querySelectorAll('ul');
+        sidebarTocs.forEach(function(toc) {
+            // Applica le classi per una navigazione verticale di Bootstrap
+            toc.classList.add('nav', 'flex-column');
+
+            // Aggiungi le classi a ogni link e item della lista
+            const listItems = toc.querySelectorAll('li');
+            listItems.forEach(function(li) {
+                li.classList.add('nav-item');
+                const link = li.querySelector('a');
+                if (link) {
+                    link.classList.add('nav-link');
+                }
+            });
+        });
+    }
+
     const contentImages = document.querySelectorAll('main img');
 
     // Aggiungi la classe 'img-fluid' a ciascuna immagine per renderla responsive
