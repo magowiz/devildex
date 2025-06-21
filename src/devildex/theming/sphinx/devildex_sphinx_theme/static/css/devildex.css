@@ -1,22 +1,26 @@
 .headerlink {
-    display: inline-block; 
-    text-decoration: none; 
-    margin-left: 6px;      
-    line-height: 1;        
+    display: inline-block;
+    text-decoration: none;
+    margin-left: 6px;
+    line-height: 1;
     vertical-align: middle;
-    color: transparent !important; 
+    color: transparent !important;
 }
 
 .headerlink::before {
-    content: "#";          
-    font-size: 0.8em;      
-    color: var(--bs-link-color); 
-    display: inline;       
+    content: "#";
+    font-size: 0.8em;
+    color: var(--bs-link-color);
+    display: inline;
     text-indent: 0;
-    text-decoration: none; 
+    text-decoration: none;
 }
 
 .headerlink:hover::before {
-    color: var(--bs-link-hover-color); 
-    text-decoration: var(--bs-link-hover-decoration, underline); 
+    color: var(--bs-link-hover-color);
+    text-decoration: var(--bs-link-hover-decoration, underline);
+}
+
+.page-index main section > section:has(.toctree-wrapper) {
+    display: none;
 }

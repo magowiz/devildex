@@ -1,5 +1,7 @@
 {%- extends "basic/layout.html" %}
-
+{%- block body_tag %}
+<body class="page-{{ pagename|replace('/', '-') }}">
+{%- endblock %}
 {%- block header %}
 <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
     <div class="container-fluid">
