@@ -8,8 +8,10 @@
       <w>codehilite</w>
       <w>devildex</w>
       <w>docsets</w>
+      <w>endblock</w>
       <w>escapeall</w>
       <w>htmlzip</w>
+      <w>imgs</w>
       <w>inlinehilite</w>
       <w>intersphinx</w>
       <w>levelname</w>
@@ -18,6 +20,7 @@
       <w>noqa</w>
       <w>oxsecurity</w>
       <w>packagetype</w>
+      <w>pagename</w>
       <w>pydata</w>
       <w>pymdown</w>
       <w>pymdownx</w>

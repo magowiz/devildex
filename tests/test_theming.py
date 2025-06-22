@@ -207,3 +207,185 @@ def test_pydoctor_theme(dummy_project_in_tmp_path: Path) -> None:
     url_to_open = index_html_path.as_uri()
     logger.info("🔗 Apri manually questo URI: %s", url_to_open)
     webbrowser.open_new_tab(url_to_open)
+
+
+# Aggiungi questo nuovo test alla fine del file tests/test_theming.py
+
+
+def test_build_context_difference_for_relative_includes(
+    dummy_project_in_tmp_path: Path,
+) -> None:
+    """PROVA DEFINITIVA: Dimostra la differenza tra i contesti di build.
+
+    Questo test verifica che la build di Sphinx funzioni correttamente quando
+    eseguita sul clone completo (logica di readthedocs_src.py), ma fallisca
+    silenziosamente (non includendo il file) quando eseguita su una copia
+    parziale della directory dei sorgenti (logica di compare_themes.py).
+    """
+    logger.info("--- INIZIO PROVA: Differenza Contesti di Build ---")
+
+    # --- 1. Setup: Simula la struttura di Flask nel nostro dummy_project ---
+    # Il contenuto che ci aspettiamo di trovare nell'HTML finale
+    included_content = "Questo è il contenuto del changelog che deve essere incluso."
+
+    # Crea il file CHANGES.rst alla radice del progetto
+    root_changes_file = dummy_project_in_tmp_path / "CHANGES.rst"
+    root_changes_file.write_text(included_content)
+    logger.info(f"Creato file di test da includere: {root_changes_file}")
+
+    # Crea/Modifica il file changes.rst nella cartella docs per includere quello alla radice
+    sphinx_source_dir = dummy_project_in_tmp_path / "docs" / "source"
+    doc_changes_file = sphinx_source_dir / "changes.rst"
+    doc_changes_file.write_text(
+        "Test Changes\n============\n\n.. include:: ../../CHANGES.rst\n"
+    )
+    logger.info(f"Creato file che usa '.. include::': {doc_changes_file}")
+
+    # Aggiungi 'changes' alla toctree in index.rst per essere sicuri che venga processato
+    index_rst_path = sphinx_source_dir / "index.rst"
+    with index_rst_path.open("a") as f:
+        f.write("\n\n.. toctree::\n   :hidden:\n\n   changes\n")
+
+    # --- 2. Test del Metodo "Corretto" (Logica di readthedocs_src.py) ---
+    logger.info("\n--- ESECUZIONE 1: Metodo 'readthedocs_src.py' (clone completo) ---")
+    build_output_full = build_sphinx_docs(
+        isolated_source_path=str(sphinx_source_dir.resolve()),
+        project_slug="dummy_full_clone",
+        version_identifier="test_v1",
+        original_clone_dir_path=str(dummy_project_in_tmp_path.resolve()),
+        base_output_dir=dummy_project_in_tmp_path / "build_outputs",
+    )
+    assert build_output_full, "La build con il metodo 'completo' non doveva fallire"
+    output_html_full = Path(build_output_full) / "changes.html"
+    assert output_html_full.exists(), "changes.html non generato nella build 'completa'"
+
+    html_content_full = output_html_full.read_text()
+    assert included_content in html_content_full
+    logger.info(">>> SUCCESSO: Il contenuto è stato incluso correttamente. <<<")
+
+    # --- 3. Test del Metodo "Fallato" (Logica di compare_themes.py) ---
+    logger.info("\n--- ESECUZIONE 2: Metodo 'compare_themes.py' (copia parziale) ---")
+
+    # Simula la copia parziale fatta da _guard_sphinx
+    partial_source_copy_dir = dummy_project_in_tmp_path / "partial_source_copy"
+    shutil.copytree(sphinx_source_dir, partial_source_copy_dir)
+    logger.warning(
+        f"Copiata solo la cartella 'docs/source' in: {partial_source_copy_dir}"
+    )
+    logger.warning(f"Il file '{root_changes_file.name}' NON è stato copiato.")
+
+    # Esegui la build sulla copia parziale.
+    # NOTA: passiamo la stessa path sia come sorgente che come "clone root",
+    # simulando l'ambiente rotto.
+    build_output_partial = build_sphinx_docs(
+        isolated_source_path=str(partial_source_copy_dir.resolve()),
+        project_slug="dummy_partial_clone",
+        version_identifier="test_v2",
+        original_clone_dir_path=str(partial_source_copy_dir.resolve()),
+        base_output_dir=dummy_project_in_tmp_path / "build_outputs",
+    )
+    assert (
+        build_output_partial
+    ), "La build con il metodo 'parziale' non doveva fallire (fallisce silenziosamente)"
+    output_html_partial = Path(build_output_partial) / "changes.html"
+    assert (
+        output_html_partial.exists()
+    ), "changes.html non generato nella build 'parziale'"
+
+    html_content_partial = output_html_partial.read_text()
+    assert included_content not in html_content_partial
+    logger.error(
+        ">>> PROVA CONFERMATA: Il contenuto NON è stato incluso. L'include è fallito silenziosamente. <<<"
+    )
+    logger.info("--- FINE PROVA ---")
+
+
+# Aggiungi questo nuovo test alla fine del file tests/test_theming.py
+
+
+def test_build_context_difference_for_relative_includes(
+    dummy_project_in_tmp_path: Path,
+) -> None:
+    """PROVA DEFINITIVA: Dimostra la differenza tra i contesti di build.
+
+    Questo test verifica che la build di Sphinx funzioni correttamente quando
+    eseguita sul clone completo (logica di readthedocs_src.py), ma fallisca
+    silenziosamente (non includendo il file) quando eseguita su una copia
+    parziale della directory dei sorgenti (logica di compare_themes.py).
+    """
+    logger.info("--- INIZIO PROVA: Differenza Contesti di Build ---")
+
+    # --- 1. Setup: Simula la struttura di Flask nel nostro dummy_project ---
+    # Il contenuto che ci aspettiamo di trovare nell'HTML finale
+    included_content = "Questo è il contenuto del changelog che deve essere incluso."
+
+    # Crea il file CHANGES.rst alla radice del progetto
+    root_changes_file = dummy_project_in_tmp_path / "CHANGES.rst"
+    root_changes_file.write_text(included_content)
+    logger.info(f"Creato file di test da includere: {root_changes_file}")
+
+    # Crea/Modifica il file changes.rst nella cartella docs per includere quello alla radice
+    sphinx_source_dir = dummy_project_in_tmp_path / "docs" / "source"
+    doc_changes_file = sphinx_source_dir / "changes.rst"
+    doc_changes_file.write_text(
+        "Test Changes\n============\n\n.. include:: ../../CHANGES.rst\n"
+    )
+    logger.info(f"Creato file che usa '.. include::': {doc_changes_file}")
+
+    # Aggiungi 'changes' alla toctree in index.rst per essere sicuri che venga processato
+    index_rst_path = sphinx_source_dir / "index.rst"
+    with index_rst_path.open("a") as f:
+        f.write("\n\n.. toctree::\n   :hidden:\n\n   changes\n")
+
+    # --- 2. Test del Metodo "Corretto" (Logica di readthedocs_src.py) ---
+    logger.info("\n--- ESECUZIONE 1: Metodo 'readthedocs_src.py' (clone completo) ---")
+    build_output_full = build_sphinx_docs(
+        isolated_source_path=str(sphinx_source_dir.resolve()),
+        project_slug="dummy_full_clone",
+        version_identifier="test_v1",
+        original_clone_dir_path=str(dummy_project_in_tmp_path.resolve()),
+        base_output_dir=dummy_project_in_tmp_path / "build_outputs",
+    )
+    assert build_output_full, "La build con il metodo 'completo' non doveva fallire"
+    output_html_full = Path(build_output_full) / "changes.html"
+    assert output_html_full.exists(), "changes.html non generato nella build 'completa'"
+
+    html_content_full = output_html_full.read_text()
+    assert included_content in html_content_full
+    logger.info(">>> SUCCESSO: Il contenuto è stato incluso correttamente. <<<")
+
+    # --- 3. Test del Metodo "Fallato" (Logica di compare_themes.py) ---
+    logger.info("\n--- ESECUZIONE 2: Metodo 'compare_themes.py' (copia parziale) ---")
+
+    # Simula la copia parziale fatta da _guard_sphinx
+    partial_source_copy_dir = dummy_project_in_tmp_path / "partial_source_copy"
+    shutil.copytree(sphinx_source_dir, partial_source_copy_dir)
+    logger.warning(
+        f"Copiata solo la cartella 'docs/source' in: {partial_source_copy_dir}"
+    )
+    logger.warning(f"Il file '{root_changes_file.name}' NON è stato copiato.")
+
+    # Esegui la build sulla copia parziale.
+    # NOTA: passiamo la stessa path sia come sorgente che come "clone root",
+    # simulando l'ambiente rotto.
+    build_output_partial = build_sphinx_docs(
+        isolated_source_path=str(partial_source_copy_dir.resolve()),
+        project_slug="dummy_partial_clone",
+        version_identifier="test_v2",
+        original_clone_dir_path=str(partial_source_copy_dir.resolve()),
+        base_output_dir=dummy_project_in_tmp_path / "build_outputs",
+    )
+    assert (
+        build_output_partial
+    ), "La build con il metodo 'parziale' non doveva fallire (fallisce silenziosamente)"
+    output_html_partial = Path(build_output_partial) / "changes.html"
+    assert (
+        output_html_partial.exists()
+    ), "changes.html non generato nella build 'parziale'"
+
+    html_content_partial = output_html_partial.read_text()
+    assert included_content not in html_content_partial
+    logger.error(
+        ">>> PROVA CONFERMATA: Il contenuto NON è stato incluso. L'include è fallito silenziosamente. <<<"
+    )
+    logger.info("--- FINE PROVA ---")

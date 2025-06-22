@@ -19,15 +19,9 @@ from devildex.mkdocs.mkdocs_src import (
     process_mkdocs_source_and_build,
 )
 from devildex.readthedocs.readthedocs_src import (
-    CONF_SPHINX_FILE,
+    download_readthedocs_source_and_build,
 )
 from devildex.theming.manager import ThemeManager
-from devildex.utils.venv_cm import IsolatedVenvManager, VenvInitializationError
-from devildex.utils.venv_utils import (
-    InstallConfig,
-    execute_command,
-    install_environment_dependencies,
-)
 
 SERVER_PORT = 8001
 SPHINX_COMMON_PACKAGES = [
@@ -208,311 +202,118 @@ def clone_repository(repo_url: str, target_dir: Path, branch: str) -> bool:
         return False
 
 
-def build_sphinx_vanilla(
-    project_slug: str,
-    cloned_repo_path: Path,
-    doc_source_relative_path: str,
-    output_base_dir: Path,
+def build_sphinx_vanilla(ctx: BuildContext) -> Path | None:
+    """Build the original Sphinx documentation by delegating to the core builder."""
+    logger.info(f"--- Build Sphinx VANILLA for {ctx.args.project_name} ---")
+
+    output_path_str = download_readthedocs_source_and_build(
+        project_name=f"{ctx.args.project_name}_vanilla",
+        project_url=ctx.args.project_url,
+        existing_clone_path=str(ctx.cloned_repo_path),
+        output_dir=ctx.build_outputs_base_dir,
+    )
+
+    if output_path_str and isinstance(output_path_str, str):
+        logger.info(f"Sphinx Vanilla build successful: {output_path_str}")
+        return Path(output_path_str)
+    else:
+        logger.error("Sphinx Vanilla build failed.")
+        return None
+
+
+def _run_pdoc3_build(
+    ctx: BuildContext, module_name: str, is_devil: bool
 ) -> Path | None:
-    """Build Sphinx documentation with the project's original theme.
+    """Help function to run a pdoc3 build, either vanilla or devil."""
+    build_type = "devil" if is_devil else "vanilla"
+    logger.info(
+        f"--- Building pdoc3 {build_type.upper()} for "
+        f"{ctx.args.project_name} (module: {module_name}) ---"
+    )
 
-    This function sets up an isolated virtual environment, installs the
-    project's dependencies, and runs the standard Sphinx build command
-    without applying any DevilDex modifications.
+    final_output_dir = (
+        ctx.build_outputs_base_dir / f"{ctx.args.project_name}_pdoc3_{build_type}"
+    ).resolve()
+    temp_build_target = (
+        ctx.build_outputs_base_dir / f"{ctx.args.project_name}"
+        f"_pdoc3_{build_type}_temp_build"
+    )
+    template_dir = PDOC3_DEVILDEX_THEME_PATH if is_devil else None
 
-    Args:
-    project_slug: A short name for the project, used for naming directories.
-    cloned_repo_path: The path to the cloned source code of the project.
-    doc_source_relative_path: The relative path within the repo to the
-    Sphinx 'source' directory (containing conf.py).
-    output_base_dir: The base directory where the build output folder
-    will be created.
+    doc_generator = DocStringsSrc(template_dir=template_dir)
+    result_path_str = doc_generator.generate_docs_from_folder(
+        project_name=module_name,
+        input_folder=str(ctx.cloned_repo_path.resolve()),
+        output_folder=str(temp_build_target.resolve()),
+    )
 
-    Returns:
-        The path to the generated documentation directory on success,
-            or None on failure.
-
-    """
-    logger.info(f"--- Build Sphinx VANILLA per {project_slug} ---")
-    doc_source_absolute_path = (cloned_repo_path / doc_source_relative_path).resolve()
-    vanilla_output_dir = (output_base_dir / f"{project_slug}_sphinx_vanilla").resolve()
-    if not (doc_source_absolute_path / CONF_SPHINX_FILE).exists():
-        logger.error(
-            f"File conf.py di Sphinx non trovato in {doc_source_absolute_path}"
-        )
+    if isinstance(result_path_str, str):
+        if final_output_dir.exists():
+            shutil.rmtree(final_output_dir)
+        shutil.move(result_path_str, final_output_dir)
+        logger.info(f"pdoc3 {build_type} build successful: {final_output_dir}")
+        if temp_build_target.exists() and not any(temp_build_target.iterdir()):
+            shutil.rmtree(temp_build_target)
+        return final_output_dir
+    else:
+        logger.error(f"pdoc3 {build_type} build failed.")
+        if temp_build_target.exists():
+            shutil.rmtree(temp_build_target)
         return None
-    try:
-        with IsolatedVenvManager(project_name=f"{project_slug}_sphinx_vanilla") as venv:
-            current_tool_specific_packages = SPHINX_COMMON_PACKAGES
-            install_conf = InstallConfig(
-                project_root_for_install=cloned_repo_path,
-                tool_specific_packages=current_tool_specific_packages,
-                scan_for_project_requirements=True,
-                install_project_editable=True,
-            )
-            if not install_environment_dependencies(
-                venv.pip_executable, f"{project_slug}_vanilla_deps", install_conf
-            ):
-                logger.error("Dependency installation failed for Sphinx vanilla build.")
-                return None
-            if vanilla_output_dir.exists():
-                shutil.rmtree(vanilla_output_dir)
-            vanilla_output_dir.mkdir(parents=True, exist_ok=True)
-            sphinx_command = [
-                venv.python_executable,
-                "-m",
-                "sphinx",
-                "-b",
-                "html",
-                str(doc_source_absolute_path),
-                str(vanilla_output_dir),
-            ]
-            logger.info(f"Executing Sphinx vanilla build: {' '.join(sphinx_command)}")
-            _stdout, stderr_out, ret_code = execute_command(
-                sphinx_command,
-                f"Build Sphinx vanilla per {project_slug}",
-                cwd=str(doc_source_absolute_path),
-            )
-            if ret_code == 0 and (vanilla_output_dir / "index.html").exists():
-                logger.info(f"Sphinx vanilla build successful: {vanilla_output_dir}")
-                return vanilla_output_dir
-            else:
-                logger.error(
-                    f"Sphinx vanilla build failed. RC: {ret_code}\n"
-                    f"Stderr:\n{stderr_out}"
-                )
-                return None
-    except (VenvInitializationError, RuntimeError):
-        logger.exception("Error during Sphinx vanilla build")
-        return None
-
-
-def _guard_sphinx(
-    cloned_repo_path: Path,
-    doc_source_relative_path: str,
-    output_base_dir: Path,
-    project_name: str,
-    rebuild: bool = False,
-) -> tuple | None:
-    original_doc_source_path = (cloned_repo_path / doc_source_relative_path).resolve()
-    devil_output_dir = (output_base_dir / f"{project_name}_sphinx_devil").resolve()
-
-    temp_devil_doc_source = output_base_dir / f"{project_name}_temp_devil_docs_src"
-    if temp_devil_doc_source.exists() and not rebuild:
-        shutil.rmtree(temp_devil_doc_source)
-    shutil.copytree(original_doc_source_path, temp_devil_doc_source)
-    devil_conf_py_file = temp_devil_doc_source / CONF_SPHINX_FILE
-
-    if not devil_conf_py_file.exists():
-        logger.error(
-            f"Sphinx conf.py file not found in the temporary copy: {devil_conf_py_file}"
-        )
-        if temp_devil_doc_source.exists():
-            shutil.rmtree(temp_devil_doc_source)
-        return None
-    return devil_conf_py_file, temp_devil_doc_source, devil_output_dir
 
 
 def build_sphinx_devil(ctx: BuildContext, doc_source_relative_path: str) -> Path | None:
-    """Build Sphinx documentation with the DevilDex theme.
-
-    This function prepares a temporary copy of the documentation source,
-    applies the DevilDex theme modifications to its conf.py, sets up an
-    isolated virtual environment, and runs the Sphinx build command.
-
-    Args:
-        ctx: BuildContext
-        doc_source_relative_path: The relative path within the repo to the
-            Sphinx 'source' directory (containing conf.py).
-
-    Returns:
-        The path to the generated documentation directory on success,
-        or None on failure.
-
-    """
+    """Build Sphinx documentation with the DevilDex theme."""
     logger.info(f"--- Build Sphinx DEVIL for {ctx.args.project_name} ---")
-    devil_conf_py_file, temp_devil_doc_source, devil_output_dir = _guard_sphinx(
-        cloned_repo_path=ctx.cloned_repo_path,
-        doc_source_relative_path=doc_source_relative_path,
-        output_base_dir=ctx.build_outputs_base_dir,
-        project_name=ctx.args.project_name,
-        rebuild=ctx.args.serve,
-    )
+
+    original_doc_source_path = (
+        ctx.cloned_repo_path / doc_source_relative_path
+    ).resolve()
+    original_conf_py = original_doc_source_path / "conf.py"
+    build_result: Path | None = None
+    if not original_conf_py.exists():
+        logger.error(f"Original conf.py not found at {original_conf_py}")
+        return None
 
     try:
+        with tempfile.NamedTemporaryFile(suffix=".bak", delete=False) as backup_file:
+            backup_conf_py = Path(backup_file.name)
+        shutil.copy(original_conf_py, backup_conf_py)
+        logger.info(f"Backed up original conf.py to {backup_conf_py}")
         theme_manager = ThemeManager(
             project_path=ctx.cloned_repo_path,
             doc_type="sphinx",
-            sphinx_conf_file=devil_conf_py_file,
+            sphinx_conf_file=original_conf_py,
         )
         theme_manager.sphinx_change_conf(dev_mode=ctx.args.serve)
-        logger.info(f"DevilDex theme applied to: {devil_conf_py_file}")
+        logger.info(f"Applied DevilDex theme to: {original_conf_py}")
 
-        with IsolatedVenvManager(
-            project_name=f"{ctx.args.project_name}_sphinx_devil"
-        ) as venv:
-            install_conf = InstallConfig(
-                project_root_for_install=ctx.cloned_repo_path,
-                tool_specific_packages=SPHINX_COMMON_PACKAGES,
-                scan_for_project_requirements=True,
-                install_project_editable=True,
+        output_path_str = download_readthedocs_source_and_build(
+            project_name=f"{ctx.args.project_name}_devil",
+            project_url=ctx.project_config["repo_url"],
+            existing_clone_path=str(ctx.cloned_repo_path),
+            output_dir=ctx.build_outputs_base_dir,
+        )
+
+        if output_path_str and isinstance(output_path_str, str):
+            logger.info(f"Sphinx Devil build successful: {output_path_str}")
+            build_result = Path(output_path_str)
+        else:
+            logger.error("Sphinx Devil build failed.")
+    except (OSError, shutil.Error, subprocess.CalledProcessError):
+        logger.exception("A critical error occurred during the Devil build process")
+        build_result = None
+
+    finally:
+        if backup_conf_py and backup_conf_py.exists():
+            logger.info("Restoring original conf.py from backup...")
+            shutil.move(str(backup_conf_py), original_conf_py)
+            logger.info("Original conf.py restored.")
+        else:
+            logger.warning(
+                "Backup file for conf.py was not found or not created. Cannot restore."
             )
-            if not install_environment_dependencies(
-                venv.pip_executable, f"{ctx.args.project_name}_devil_deps", install_conf
-            ):
-                logger.error("Dependency installation failed for Sphinx Devil build.")
-                if temp_devil_doc_source.exists():
-                    shutil.rmtree(temp_devil_doc_source)
-                return None
-
-            if devil_output_dir.exists():
-                shutil.rmtree(devil_output_dir)
-            devil_output_dir.mkdir(parents=True, exist_ok=True)
-
-            sphinx_command = [
-                venv.python_executable,
-                "-m",
-                "sphinx",
-                "-b",
-                "html",
-                "-c",
-                str(temp_devil_doc_source),
-                str(temp_devil_doc_source),
-                str(devil_output_dir),
-            ]
-            logger.info(f"Executing Sphinx Devil build: {' '.join(sphinx_command)}")
-            _stdout, stderr_out, ret_code = execute_command(
-                sphinx_command,
-                f"Build Sphinx Devil for {ctx.args.project_name}",
-                cwd=str(temp_devil_doc_source),
-            )
-
-            if temp_devil_doc_source.exists():
-                shutil.rmtree(temp_devil_doc_source)
-
-            if ret_code == 0 and (devil_output_dir / "index.html").exists():
-                logger.info(f"Sphinx Devil build successful: {devil_output_dir}")
-                return devil_output_dir
-            else:
-                logger.error(
-                    f"Sphinx Devil build failed. RC: {ret_code}\nStderr:\n{stderr_out}"
-                )
-                return None
-    except (VenvInitializationError, RuntimeError):
-        logger.exception("Error during Sphinx Devil build")
-        if temp_devil_doc_source.exists():
-            shutil.rmtree(temp_devil_doc_source)
-        return None
-
-
-def build_pdoc3_vanilla(
-    project_slug: str,
-    cloned_repo_path: Path,
-    module_name: str,
-    output_base_dir: Path,
-) -> Path | None:
-    """Build pdoc3 documentation with its default theme.
-
-    This function generates HTML documentation from a Python module using
-    pdoc3's standard, built-in templates. It does not apply any DevilDex
-    customizations.
-
-    Args:
-        project_slug: A short name for the project, used for naming directories.
-        cloned_repo_path: The path to the cloned source code of the project.
-        module_name: The name of the Python module to document.
-        output_base_dir: The base directory where the build output folder
-            will be created.
-
-    Returns:
-        The path to the generated documentation directory on success,
-        or None on failure.
-
-    """
-    logger.info(
-        f"--- Building pdoc3 VANILLA for {project_slug} (module: {module_name}) ---"
-    )
-    vanilla_output_dir = (output_base_dir / f"{project_slug}_pdoc3_vanilla").resolve()
-    temp_pdoc_build_target = (
-        output_base_dir / f"{project_slug}_pdoc3_vanilla_temp_build"
-    )
-
-    doc_generator = DocStringsSrc(template_dir=None)
-    result_path_str = doc_generator.generate_docs_from_folder(
-        project_name=module_name,
-        input_folder=str(cloned_repo_path.resolve()),
-        output_folder=str(temp_pdoc_build_target.resolve()),
-    )
-
-    if isinstance(result_path_str, str):
-        if vanilla_output_dir.exists():
-            shutil.rmtree(vanilla_output_dir)
-        shutil.move(result_path_str, vanilla_output_dir)
-        logger.info(f"pdoc3 vanilla build successful: {vanilla_output_dir}")
-        if temp_pdoc_build_target.exists() and not any(
-            temp_pdoc_build_target.iterdir()
-        ):
-            shutil.rmtree(temp_pdoc_build_target)
-        return vanilla_output_dir
-    else:
-        logger.error("pdoc3 vanilla build failed.")
-        if temp_pdoc_build_target.exists():
-            shutil.rmtree(temp_pdoc_build_target)
-        return None
-
-
-def build_pdoc3_devil(
-    project_slug: str,
-    cloned_repo_path: Path,
-    module_name: str,
-    output_base_dir: Path,
-) -> Path | None:
-    """Build pdoc3 documentation with the DevilDex theme.
-
-    This function generates HTML documentation from a Python module using
-    a custom DevilDex template directory to override the default pdoc3 look
-    and feel.
-
-    Args:
-        project_slug: A short name for the project, used for naming directories.
-        cloned_repo_path: The path to the cloned source code of the project.
-        module_name: The name of the Python module to document.
-        output_base_dir: The base directory where the build output folder
-            will be created.
-
-    Returns:
-        The path to the generated documentation directory on success,
-        or None on failure.
-
-    """
-    logger.info(
-        f"--- Building pdoc3 DEVIL for {project_slug} (module: {module_name}) ---"
-    )
-    devil_output_dir = (output_base_dir / f"{project_slug}_pdoc3_devil").resolve()
-    temp_pdoc_build_target = output_base_dir / f"{project_slug}_pdoc3_devil_temp_build"
-
-    doc_generator = DocStringsSrc(template_dir=PDOC3_DEVILDEX_THEME_PATH)
-    result_path_str = doc_generator.generate_docs_from_folder(
-        project_name=module_name,
-        input_folder=str(cloned_repo_path.resolve()),
-        output_folder=str(temp_pdoc_build_target.resolve()),
-    )
-
-    if isinstance(result_path_str, str):
-        if devil_output_dir.exists():
-            shutil.rmtree(devil_output_dir)
-        shutil.move(result_path_str, devil_output_dir)
-        logger.info(f"pdoc3 Devil build successful: {devil_output_dir}")
-        if temp_pdoc_build_target.exists() and not any(
-            temp_pdoc_build_target.iterdir()
-        ):
-            shutil.rmtree(temp_pdoc_build_target)
-        return devil_output_dir
-    else:
-        logger.error("pdoc3 Devil build failed.")
-        if temp_pdoc_build_target.exists():
-            shutil.rmtree(temp_pdoc_build_target)
-        return None
+    return build_result
 
 
 def build_mkdocs_vanilla(
@@ -700,7 +501,7 @@ def run_server_mode(base_context: BuildContext) -> None:
         logger.error("Initial DEVIL build failed. Cannot start the server.")
 
 
-def pdoc3_run(ctx: BuildContext) -> tuple[Path | None, Path | None] | None:
+def pdoc3_run(ctx: BuildContext) -> tuple[Path | None, Path | None]:
     """Run pdoc3 build."""
     vanilla_entry_point: Path | None = None
     devil_entry_point: Path | None = None
@@ -712,26 +513,27 @@ def pdoc3_run(ctx: BuildContext) -> tuple[Path | None, Path | None] | None:
             f"for project {ctx.args.project_name}"
         )
         return None, None
+
     if not ctx.args.skip_vanilla:
-        vanilla_built_path = build_pdoc3_vanilla(
-            ctx.args.project_name,
-            ctx.cloned_repo_path,
-            module_name,
-            ctx.build_outputs_base_dir,
+        vanilla_built_path = _run_pdoc3_build(
+            ctx=ctx,
+            module_name=module_name,
+            is_devil=False,
         )
         if vanilla_built_path:
             vanilla_entry_point = find_entry_point(
                 vanilla_built_path, "pdoc3", module_name
             )
+
     if not ctx.args.skip_devil:
-        devil_built_path = build_pdoc3_devil(
-            ctx.args.project_name,
-            ctx.cloned_repo_path,
-            module_name,
-            ctx.build_outputs_base_dir,
+        devil_built_path = _run_pdoc3_build(
+            ctx=ctx,
+            module_name=module_name,
+            is_devil=True,
         )
         if devil_built_path:
             devil_entry_point = find_entry_point(devil_built_path, "pdoc3", module_name)
+
     return vanilla_entry_point, devil_entry_point
 
 
@@ -766,12 +568,7 @@ def sphinx_run(ctx: BuildContext) -> tuple[Path | None, Path | None] | None:
     devil_entry_point: Path | None = None
     doc_source_rel = ctx.project_config.get("doc_source_path_relative", "docs/")
     if not ctx.args.skip_vanilla:
-        vanilla_built_path = build_sphinx_vanilla(
-            ctx.args.project_name,
-            ctx.cloned_repo_path,
-            doc_source_rel,
-            ctx.build_outputs_base_dir,
-        )
+        vanilla_built_path = build_sphinx_vanilla(ctx=ctx)
         if vanilla_built_path:
             vanilla_entry_point = find_entry_point(vanilla_built_path, "sphinx")
     if not ctx.args.skip_devil:
