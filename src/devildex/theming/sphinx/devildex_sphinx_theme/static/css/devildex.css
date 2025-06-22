@@ -65,3 +65,18 @@ a code.docutils.literal {
     font-size: inherit;
     transition: none;
 }
+
+/*
+ * Stile per la Sidebar per renderla scrollabile internamente.
+ * Risolve il problema della sidebar che non può essere scrollata
+ * se il suo contenuto è più lungo della finestra del browser.
+ */
+.sphinxsidebar {
+    /* Imposta un'altezza massima basata sulla finestra del browser,
+       sottraendo lo spazio occupato dalla navbar in alto (top: 5rem)
+       e un piccolo margine in basso. */
+    max-height: calc(100vh - 6rem);
+
+    /* Aggiunge una scrollbar verticale SOLO se il contenuto supera l'altezza massima. */
+    overflow-y: auto;
+}
