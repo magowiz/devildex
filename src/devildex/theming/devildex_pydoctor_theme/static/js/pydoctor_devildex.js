@@ -1,4 +1,33 @@
 // pydoctor_devildex.js
+
+/**
+ * Funzione "cecchino": va a caccia di elementi con uno specifico colore di sfondo
+ * (il "giallino" di pydoctor) e lo rende trasparente.
+ * È una soluzione forzata quando il CSS non collabora.
+ */
+function removeOffendingBackgrounds() {
+    // Il colore esatto che stiamo cercando.
+    // getComputedStyle di solito restituisce il formato rgb(), anche se nel CSS è rgba().
+    const offendingColor = 'rgb(253, 255, 223)';
+
+    // Seleziona TUTTI gli elementi della pagina.
+    const allElements = document.querySelectorAll('*');
+
+    allElements.forEach(element => {
+        // Per ogni elemento, otteniamo il suo stile "calcolato" dal browser.
+        const style = window.getComputedStyle(element);
+        const bgColor = style.backgroundColor;
+
+        // Se il colore di sfondo corrisponde al nostro nemico...
+        if (bgColor === offendingColor) {
+            // ...lo annientiamo, forzando lo sfondo a essere trasparente.
+            // Usiamo setProperty per poter aggiungere '!important' e vincere qualsiasi battaglia.
+            element.style.setProperty('background-color', 'transparent', 'important');
+        }
+    });
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     // Codice esistente per i link interni (a.internal-link)
     var internalLinks = document.querySelectorAll('a.internal-link');
@@ -37,4 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Codice per i tag <code> inline (già presente e corretto)
     // Non è necessario duplicarlo qui se è già in extra.css
+
+    // --- NUOVA CHIAMATA ---
+    // Esegui la nostra funzione "cecchino" per eliminare il giallo residuo.
+    removeOffendingBackgrounds();
 });
