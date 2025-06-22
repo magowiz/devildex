@@ -1,2 +1,2 @@
 #!/bin/bash
-python scripts/compare_themes.py --doc-type sphinx --keep-builds flask
+python scripts/compare_themes.py --doc-type sphinx --keep-builds --serve flask
