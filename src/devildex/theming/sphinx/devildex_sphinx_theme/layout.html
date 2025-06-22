@@ -22,7 +22,7 @@
             </ul>
             {%- if pagename != "search" %}
             <form class="d-flex ms-auto" role="search" action="{{ pathto('search') }}" method="get">
-                <input class="form-control me-2" type="search" name="q" placeholder="Cerca documenti..."
+                <input class="form-control me-2" type="search" name="q" placeholder="Search documents..."
                        aria-label="Search">
                 <input type="hidden" name="check_keywords" value="yes">
                 <input type="hidden" name="area" value="default">
@@ -39,28 +39,35 @@
 {%- block relbar2 %}{% endblock %}
 
 {%- block content %}
-<main role="main" class="container mt-4 mb-4">
+<main role="main" class="container-fluid mt-4 mb-4">
     <div class="row">
-        <div class="col-lg-{% if pagename != master_doc and pagename != 'search' %}9{% else %}12{% endif %} col-md-{% if pagename != master_doc and pagename != 'search' %}8{% else %}12{% endif %}">
-            {%- block body %}{{ super() }}{% endblock %}
-        </div>
-
-        {%- if pagename != master_doc and pagename != 'search' %}
-        <div class="col-lg-3 col-md-4">
+        {%- if pagename != 'search' %}
+        <div class="col-lg-2 col-md-3">
             <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
                    aria-label="Main navigation">
-                {# MODIFICATO: Aggiunta la struttura della card Bootstrap #}
                 <div class="devildex-sidebar-wrapper card border-dark">
                     <div class="card-header bg-light text-dark">
                         <h5 class="card-title mb-0">{% trans %}Navigation{% endtrans %}</h5>
                     </div>
                     <div class="card-body p-2 bg-light">
+                        {% if project_links and pagename == master_doc %}
+                        <ul>
+                            {% for link in project_links %}
+                            <li><a class="nav-link" href="{{link.url}}">{{link.title}}</a></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                        {% if pagename != master_doc %}
                         {{ toctree(maxdepth=-1, collapse=False, includehidden=True, titles_only=True) }}
+                        {% endif %}
                     </div>
                 </div>
             </aside>
         </div>
         {%- endif %}
+        <div class="col-lg-{% if pagename != 'search' %}10{% else %}12{% endif %} col-md-{% if pagename != 'search' %}9{% else %}12{% endif %}">
+            {%- block body %}{{ super() }}{% endblock %}
+        </div>
     </div>
 </main>
 {%- endblock %}
