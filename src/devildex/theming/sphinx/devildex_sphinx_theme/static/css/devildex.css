@@ -26,37 +26,18 @@
 }
 */
 
-/*
- * Stile per i blocchi di codice inline (literal) per renderli
- * simili a dei badge Bootstrap, migliorando la coerenza visiva.
- * Esempi: `GET`, `POST`, `OPTIONS`, `True`, `None`, etc.
- */
-/*
- * Stile per i blocchi di codice inline (literal) per renderli
- * simili a dei badge Bootstrap, migliorando la coerenza visiva.
- * Esempi: `GET`, `POST`, `OPTIONS`, `True`, `None`, etc.
- */
 code.docutils.literal {
-    /* Usiamo le variabili di Bootstrap per i colori */
     background-color: #f8f9fa;
-    color: var(--bs-body-color); /* MODIFICATO: Colore del testo più scuro e standard */
-
+    color: var(--bs-body-color);
     padding: 0.1em 0.4em;
     border-radius: 0.25rem;
     border: 1px solid #e9ecef;
-
     font-size: 0.875em;
-    vertical-align: baseline; /* Allinea meglio con il testo circostante */
-    white-space: nowrap; /* Evita che il testo vada a capo */
+    vertical-align: baseline;
+    white-space: nowrap;
     transition: all 0.2s ease-in-out;
 }
 
-
-/*
- * Annulla lo stile "badge" per i blocchi di codice che sono link.
- * Questo li fa apparire come testo normale all'interno di un link standard,
- * ereditando il colore blu e la sottolineatura dal tag <a> genitore.
- */
 a code.docutils.literal {
     background-color: transparent;
     color: inherit;
@@ -66,17 +47,7 @@ a code.docutils.literal {
     transition: none;
 }
 
-/*
- * Stile per la Sidebar per renderla scrollabile internamente.
- * Risolve il problema della sidebar che non può essere scrollata
- * se il suo contenuto è più lungo della finestra del browser.
- */
 .sphinxsidebar {
-    /* Imposta un'altezza massima basata sulla finestra del browser,
-       sottraendo lo spazio occupato dalla navbar in alto (top: 5rem)
-       e un piccolo margine in basso. */
     max-height: calc(100vh - 6rem);
-
-    /* Aggiunge una scrollbar verticale SOLO se il contenuto supera l'altezza massima. */
     overflow-y: auto;
 }
