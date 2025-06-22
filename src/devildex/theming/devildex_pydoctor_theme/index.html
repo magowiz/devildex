@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:t="http://twistedmatrix.com/ns/twisted.web.template/0.1">
+<meta name="pydoctor-template-version" content="3"/>
+
+<t:transparent t:render="head">Head</t:transparent>
+
+<body>
+
+<!-- Il nostro custom header.html verrà renderizzato qui. Contiene la nostra navbar Bootstrap e il banner. -->
+<div t:render="header"/>
+
+<!-- RIMOSSO: La navbar predefinita di pydoctor, che era:
+<nav class="navbar navbar-default mainnavbar">
+  <t:transparent t:render="nav" />
+</nav>
+-->
+
+<div class="container-fluid mt-4 mb-4">
+    <div class="row">
+        <!-- Sidebar (se presente, dal sidebar.html predefinito di pydoctor) -->
+        <div class="col-lg-2 col-md-3">
+            <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
+                   aria-label="Main navigation">
+                <div class="devildex-sidebar-wrapper card border-dark">
+                    <div class="card-header bg-light text-dark">
+                        <h5 class="card-title mb-0">Navigation</h5>
+                    </div>
+                    <div class="card-body p-2 bg-light">
+                        <t:transparent t:render="sidebar"/>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Area del contenuto principale -->
+        <div class="col-lg-10 col-md-9">
+            <div t:render="subheader"/>
+
+            <h2>
+                Get Started
+            </h2>
+            <ul>
+                <li>
+                    A listing of <a href="moduleIndex.html">all modules and
+                    packages</a>, organized by package hierarchy.
+                </li>
+                <li>
+                    A listing of <a href="classIndex.html">all classes</a>,
+                    organized by inheritance hierarchy.
+                </li>
+                <li>
+                    A listing of <a href="nameIndex.html">all functions, classes,
+                    modules and packages</a>, ordered by name.
+                </li>
+                <li>
+                    Or start at one of the root
+                    <t:transparent t:render="rootkind">
+                        packages
+                    </t:transparent>
+                    :
+                    <ul>
+                        <li t:render="roots">
+                            <t:slot name="root"/>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<footer class="container-fluid" t:render="footer"/>
+
+</body>
+</html>

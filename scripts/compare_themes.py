@@ -23,6 +23,9 @@ from devildex.readthedocs.readthedocs_src import (
 )
 from devildex.theming.manager import ThemeManager
 
+PYDOCTOR_DEVILDEX_THEME_PATH = (
+    DEVILDEX_PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
+)
 SERVER_PORT = 8001
 SPHINX_COMMON_PACKAGES = [
     "sphinx",
@@ -31,7 +34,7 @@ SPHINX_COMMON_PACKAGES = [
     "sphinx-tabs",
 ]
 
-SUPPORTED_TYPES = ["sphinx", "pdoc3", "mkdocs"]
+SUPPORTED_TYPES = ["sphinx", "pdoc3", "mkdocs", "pydoctor"]
 KNOWN_PROJECTS = {
     "black": {
         "repo_url": "https://github.com/psf/black.git",
@@ -55,6 +58,12 @@ KNOWN_PROJECTS = {
         "repo_url": "https://github.com/mkdocs/mkdocs.git",
         "doc_type": "mkdocs",
         "default_branch": "master",
+    },
+    "incremental": {
+        "repo_url": "https://github.com/twisted/incremental.git",
+        "doc_type": "pydoctor",
+        "package_source_path_relative": "src/incremental",
+        "default_branch": "trunk",
     },
 }
 FIXED_BUILD_OUTPUT_DIR = DEVILDEX_PROJECT_ROOT / "build" / "devildex_docs"
@@ -260,6 +269,109 @@ def _run_pdoc3_build(
         if temp_build_target.exists():
             shutil.rmtree(temp_build_target)
         return None
+
+
+def _run_pydoctor_build(
+    ctx: BuildContext, package_source_relative_path: str, is_devil: bool
+) -> Path | None:
+    """Help function to run a pydoctor build, either vanilla or devil."""
+    build_type = "devil" if is_devil else "vanilla"
+    logger.info(
+        f"--- Building pydoctor {build_type.upper()} for "
+        f"{ctx.args.project_name} ---"
+    )
+
+    final_output_dir = (
+        ctx.build_outputs_base_dir / f"{ctx.args.project_name}_pydoctor_{build_type}"
+    ).resolve()
+
+    input_path = ctx.cloned_repo_path / package_source_relative_path
+
+    theme_dir = PYDOCTOR_DEVILDEX_THEME_PATH if is_devil else None
+
+    cmd = [
+        "pydoctor",
+        "--html-output",
+        str(final_output_dir),
+        "--project-name",
+        ctx.args.project_name,
+        "--project-version",
+        ctx.branch_to_clone,
+    ]
+
+    if theme_dir and theme_dir.exists():
+        cmd.extend(["--template-dir", str(theme_dir)])
+    elif is_devil:
+        logger.warning(
+            f"DevilDex pydoctor theme not found at {theme_dir}. "
+            "Building with default pydoctor theme."
+        )
+    cmd.append(str(input_path))
+    if final_output_dir.exists():
+        shutil.rmtree(final_output_dir)
+    final_output_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        logger.info(f"Executing pydoctor command: {' '.join(cmd)}")
+        process = subprocess.run(  # noqa: S603
+            cmd,
+            capture_output=True,
+            text=True,
+            check=True,
+            encoding="utf-8",
+            cwd=ctx.cloned_repo_path,
+        )
+        logger.info(f"pydoctor stdout:\n{process.stdout}")
+        if process.stderr:
+            logger.warning(f"pydoctor stderr:\n{process.stderr}")
+
+        logger.info(f"pydoctor {build_type} build successful: {final_output_dir}")
+    except FileNotFoundError:
+        logger.exception(
+            "pydoctor command not found. Please ensure pydoctor is "
+            "installed and in your PATH."
+        )
+        return None
+    except subprocess.CalledProcessError as e:
+        logger.exception(f"pydoctor {build_type} build failed with error")
+        logger.exception(f"pydoctor stdout:\n{e.stdout}")
+        logger.exception(f"pydoctor stderr:\n{e.stderr}")
+        return None
+    except (OSError, ValueError):
+        logger.exception(
+            f"An unexpected error occurred during pydoctor {build_type} build"
+        )
+        return None
+    else:
+        return final_output_dir
+
+
+def pydoctor_run(ctx: BuildContext) -> tuple[Path | None, Path | None]:
+    """Run pydoctor build."""
+    vanilla_entry_point: Path | None = None
+    devil_entry_point: Path | None = None
+
+    package_source_rel = ctx.project_config.get("package_source_path_relative", ".")
+
+    if not ctx.args.skip_vanilla:
+        vanilla_built_path = _run_pydoctor_build(
+            ctx=ctx,
+            package_source_relative_path=package_source_rel,
+            is_devil=False,
+        )
+        if vanilla_built_path:
+            vanilla_entry_point = find_entry_point(vanilla_built_path, "pydoctor")
+
+    if not ctx.args.skip_devil:
+        devil_built_path = _run_pydoctor_build(
+            ctx=ctx,
+            package_source_relative_path=package_source_rel,
+            is_devil=True,
+        )
+        if devil_built_path:
+            devil_entry_point = find_entry_point(devil_built_path, "pydoctor")
+
+    return vanilla_entry_point, devil_entry_point
 
 
 def build_sphinx_devil(ctx: BuildContext, doc_source_relative_path: str) -> Path | None:
@@ -595,6 +707,8 @@ def _perform_builds(
         vanilla_entry_point, devil_entry_point = pdoc3_run(ctx=ctx)
     elif doc_type_to_build == "mkdocs":
         vanilla_entry_point, devil_entry_point = mkdocs_run(ctx=ctx)
+    elif doc_type_to_build == "pydoctor":
+        vanilla_entry_point, devil_entry_point = pydoctor_run(ctx=ctx)
     else:
         logger.error(f"Unsupported documentation type: {doc_type_to_build}")
     return vanilla_entry_point, devil_entry_point

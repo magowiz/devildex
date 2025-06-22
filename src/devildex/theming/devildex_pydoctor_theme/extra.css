@@ -1,10 +1,185 @@
-    /* /home/magowiz/MEGA/projects/devildex/src/devildex/theming/devildex_pydoctor_theme/extra.css */
-    body {
-        background-color: lightcoral !important; /* Applica lo sfondo desiderato */
-        font-family: sans-serif; /* Esempio di altro stile base */
-    }
+/* Importa Bootstrap CSS. Il percorso è relativo alla posizione del CSS nel sito generato. */
 
-    /* Puoi aggiungere qui altre regole CSS per personalizzare ulteriormente l'aspetto */
-    h1, h2, h3 {
-        color: navy;
-    }
+
+/* Stili per il banner/header personalizzato */
+#banner {
+    background: rgb(150, 150, 150);
+    /* Corretto 'bottom' in 'to top' per la sintassi CSS standard */
+    background-image: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, .3));
+    width: 100%;
+    padding: 10px;
+    color: white;
+}
+
+#banner img {
+    vertical-align: middle;
+}
+
+#banner div a {
+    color: white;
+    margin: 0 10px;
+    text-decoration: none;
+}
+
+#banner div a:hover {
+    text-decoration: underline;
+}
+
+/* Altri stili personalizzati */
+body {
+    font-family: sans-serif;
+}
+
+/*
+ * Minimal CSS overrides for pydoctor's default styles.
+ * These rules use `!important` to ensure they take precedence over
+ * `apidocs.css` for specific properties (background-color, border-color)
+ * that are difficult to override with Bootstrap classes alone due to specificity.
+ * Other styling (padding, margin, border-radius) will be handled by Bootstrap classes via JS.
+ */
+
+/* Sovrascrivi sfondo e bordo inferiore per le righe delle tabelle in #splitTables */
+#splitTables > table tr.package,
+#splitTables > table tr.module,
+#splitTables > table tr.class,
+#splitTables > table tr.classvariable,
+#splitTables > table tr.baseclassvariable,
+#splitTables > table tr.exception,
+#splitTables > table tr.instancevariable,
+#splitTables > table tr.baseinstancevariable,
+#splitTables > table tr.variable,
+#splitTables > table tr.attribute,
+#splitTables > table tr.property,
+#splitTables > table tr.interface,
+#splitTables > table tr.method,
+#splitTables > table tr.function,
+#splitTables > table tr.basemethod,
+#splitTables > table tr.baseclassmethod,
+#splitTables > table tr.classmethod,
+#splitTables > table tr.private {
+    /* Usa uno sfondo scuro e sottile dalle variabili Bootstrap */
+    background-color: var(--bs-dark-subtle) !important;
+    /* Usa un colore di bordo traslucido per i temi scuri */
+    border-bottom-color: var(--bs-border-color-translucent) !important;
+}
+
+/* Sovrascrivi sfondo e bordo sinistro per i blocchi 'basefunction' */
+#childList > div.basefunction {
+    /* Usa uno sfondo scuro e sottile dalle variabili Bootstrap */
+    background-color: var(--bs-dark-subtle) !important;
+    /* Usa il colore primario di Bootstrap per il bordo sinistro di accento */
+    border-left-color: var(--bs-primary) !important;
+    border-left-width: 5px !important; /* Rendi il bordo più spesso */
+    border-left-style: solid !important;
+    /* Gli angoli arrotondati, padding e margin-bottom saranno gestiti dalle classi Bootstrap via JS */
+}
+
+/*
+ * Regole per i tag <code> inline (non all'interno di <pre>).
+ * Li facciamo assomigliare di più al `code` di Bootstrap, ma con font sans-serif
+ * per un aspetto meno "anacronistico" nel testo normale.
+ */
+code:not(pre > code) {
+    font-family: var(--bs-font-sans-serif) !important; /* Usa il font sans-serif del body */
+    background-color: var(--bs-tertiary-bg) !important; /* Sfondo grigio chiaro di Bootstrap */
+    color: var(--bs-body-color) !important; /* Colore del testo normale di Bootstrap */
+    padding: .2em .4em !important; /* Padding standard di Bootstrap per il codice inline */
+    border-radius: .25rem !important; /* Bordi arrotondati standard di Bootstrap */
+    font-size: .875em !important; /* Dimensione del font standard di Bootstrap */
+}
+
+/*
+ * Regole specifiche per i link interni (a.internal-link) che si trovano all'interno
+ * di tag <code>. Questo assicura che il link stesso non abbia uno sfondo o padding indesiderati
+ * e che il suo colore sia gestito dalle classi Bootstrap aggiunte via JS.
+ */
+code a.internal-link {
+    /* Rimuove qualsiasi sfondo o padding che potrebbe essere ereditato dal <code> */
+    background-color: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+
+    /* Assicura che la decorazione del testo sia gestita dalle classi Bootstrap (es. link-underline-opacity-X) */
+    text-decoration: none !important;
+
+    /* Re-applica il colore del link di Bootstrap, nel caso in cui il genitore `code` abbia sovrascritto */
+    color: var(--bs-link-color) !important;
+}
+
+/*
+ * Regole per i link interni (a.internal-link) in generale, per assicurarsi che
+ * non abbiano stili indesiderati da `apidocs.css` che potrebbero non essere
+ * completamente sovrascritti dalle classi Bootstrap.
+ */
+a.internal-link {
+    /* Assicura che il font sia sempre sans-serif per i link interni */
+    font-family: var(--bs-font-sans-serif) !important;
+
+    /* Rimuove il colore rosa e lo sfondo di default di pydoctor */
+    color: var(--bs-link-color); /* Verrà sovrascritto da link-primary via JS */
+    background-color: transparent;
+    text-decoration: none; /* Verrà sovrascritto da link-underline-opacity-X via JS */
+}
+
+/*
+ * Stili hover per i link interni, se non completamente gestiti dalle classi Bootstrap.
+ * Le classi `link-underline-opacity-100-hover` dovrebbero già occuparsene.
+ */
+a.internal-link:hover {
+    /* Le classi Bootstrap dovrebbero gestire questo, ma è un fallback */
+    text-decoration: underline;
+}
+
+/* extra.css */
+
+/* ... (il tuo codice CSS esistente) ... */
+
+/* Stile per il nome del metodo/funzione (py-defname) */
+/* extra.css */
+
+/* ... (tutto il tuo CSS precedente) ... */
+
+/* Stile per il nome del metodo/funzione (py-defname) */
+.py-defname {
+    font-family: var(--bs-font-sans-serif) !important; /* Mantiene il font sans-serif di Bootstrap */
+    color: #336791 !important; /* Un blu scuro, leggibile e professionale */
+    font-weight: 500 !important; /* Mantiene un grassetto meno "pesante" */
+}
+
+/* ... (il resto del tuo CSS) ... */
+/* extra.css */
+
+/* Sovrascrivi le variabili CSS di Bootstrap per i colori dei link */
+/* extra.css */
+
+/* Sovrascrivi le variabili CSS di Bootstrap per i colori dei link */
+:root {
+    --bs-link-color: #4a6e8f; /* Un blu più scuro e profondo, meno brillante */
+    --bs-link-hover-color: #5a7e9f; /* Una tonalità leggermente più chiara per l'hover */
+}
+
+/* ... (il tuo codice CSS esistente) ... */
+
+/* ... (il tuo codice CSS esistente) ... */
+        /* extra.css */
+
+/* ... (tutto il tuo CSS precedente) ... */
+
+/* Sovrascrivi sfondo e bordo sinistro per i blocchi 'basefunction' */
+#childList > div.basefunction {
+    /* Usa uno sfondo scuro e sottile dalle variabili Bootstrap */
+    background-color: var(--bs-dark-subtle) !important;
+
+    /*
+     * MODIFICA QUI:
+     * Sostituiamo il blu primario con un grigio chiaro e neutro di Bootstrap.
+     * Questo crea un accento visibile ma non invadente, perfettamente a tema.
+     */
+    border-left-color: var(--bs-dark-color) !important;
+
+    border-left-width: 5px !important; /* Mantiene il bordo spesso */
+    border-left-style: solid !important;
+    /* Gli angoli arrotondati, padding e margin-bottom sono gestiti dalle classi Bootstrap via JS */
+}
+
+/* ... (il resto del tuo CSS) ... */
