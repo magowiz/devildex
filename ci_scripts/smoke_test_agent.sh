@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-# $1: Percorso dell'eseguibile da testare
-# $2: Directory di output per i log e lo stato
 EXECUTABLE_PATH="$1"
 OUTPUT_DIR="$2"
 
@@ -10,12 +8,13 @@ LOG_FILE="${OUTPUT_DIR}/smoke_test_run.log"
 STATUS_FILE="${OUTPUT_DIR}/smoke_test_status.txt"
 MONITOR_DURATION_SECONDS=60
 GRACEFUL_SHUTDOWN_WAIT_SECONDS=5
-
-echo "Smoke Test Log for: ${EXECUTABLE_PATH}" > "${LOG_FILE}"
-echo "Start Time: $(date)" >> "${LOG_FILE}"
-echo "Output Directory: ${OUTPUT_DIR}" >> "${LOG_FILE}"
-echo "Monitoring Duration: ${MONITOR_DURATION_SECONDS}s" >> "${LOG_FILE}"
-echo "---" >> "${LOG_FILE}"
+{
+  echo "Smoke Test Log for: ${EXECUTABLE_PATH}";
+  echo "Start Time: $(date)";
+  echo "Output Directory: ${OUTPUT_DIR}";
+  echo "Monitoring Duration: ${MONITOR_DURATION_SECONDS}s";
+  echo "---";
+} > "${LOG_FILE}"
 
 echo "Making executable runnable: chmod +x ${EXECUTABLE_PATH}" >> "${LOG_FILE}"
 chmod +x "${EXECUTABLE_PATH}"
@@ -105,9 +104,12 @@ else
     fi
 fi
 
-echo "---" >> "${LOG_FILE}"
-echo "Final Smoke Test Status: ${SMOKE_TEST_RESULT}" >> "${LOG_FILE}"
-echo "End Time: $(date)" >> "${LOG_FILE}"
+{
+  echo "---";
+  echo "Final Smoke Test Status: ${SMOKE_TEST_RESULT}";
+  echo "End Time: $(date)";
+} >> "${LOG_FILE}"
+
 
 echo "${SMOKE_TEST_RESULT}" > "${STATUS_FILE}"
 
