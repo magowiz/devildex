@@ -682,7 +682,7 @@ if __name__ == "__main__":
             for ds in retrieved_project1.docsets:
                 logger.info(
                     f"  - {ds} (Info: {ds.package_info.summary[:30]
-                    if ds.package_info.summary else 'N/A'}...)"
+                     if ds.package_info.summary else 'N/A'}...)"
                 )
 
         logger.info("-" * 20)

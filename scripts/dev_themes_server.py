@@ -26,7 +26,11 @@ class LiveReloadHandler(http.server.SimpleHTTPRequestHandler):
     """
 
     def __init__(
-        self, *args, build_dir: Path, rebuild_callback: Callable[[], None], **kwargs
+        self,
+        *args: object,
+        build_dir: Path,
+        rebuild_callback: Callable[[], None],
+        **kwargs: object,
     ) -> None:
         """Initialize the handler with the build directory and rebuild callback."""
         self.build_dir = build_dir

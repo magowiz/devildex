@@ -449,7 +449,7 @@ pipeline {
                                     echo "[INFO] Preparing Python virtual environment (venv) for PyOxidizer..."
                                     rm -rf "${venvPath}"
 
-                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    echo "[INFO] Creating venv with system-site-packages at ${venvPath}."
                                     python -m venv --system-site-packages "${venvPath}"
 
                                     echo "[INFO] Activating Python venv (${venvPath})..."
@@ -466,7 +466,7 @@ pipeline {
                                 """
 
                                 sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for PyOxidizer requirements management..."
+                                    echo "[INFO] Activating venv (${venvPath}) for PyOxidizer requirements."
                                     . "${venvPath}/bin/activate"
 
                                     echo "[INFO] Exporting requirements.txt using globally installed poetry..."
@@ -548,7 +548,7 @@ pipeline {
                                     echo "[INFO] Preparing Python virtual environment (venv) for PyInstaller..."
                                     rm -rf "${venvPath}"
 
-                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath}."
                                     python -m venv --system-site-packages "${venvPath}"
 
                                     echo "[INFO] Activating Python venv (${venvPath})..."
@@ -565,7 +565,7 @@ pipeline {
                                 """
 
                                 sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller requirements management..."
+                                    echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller requirements."
                                     . "${venvPath}/bin/activate"
 
                                     echo "[INFO] Exporting requirements.txt using globally installed poetry..."
