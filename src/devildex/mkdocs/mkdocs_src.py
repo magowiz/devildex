@@ -373,7 +373,8 @@ def _execute_mkdocs_build_in_venv(build_context: MkDocsBuildContext) -> bool:
     build_successful = False
     try:
         with IsolatedVenvManager(
-            project_name=f"mkdocs_{build_context.project_slug}-{build_context.version_identifier}"
+            project_name=f"mkdocs_{build_context.project_slug}-"
+            f"{build_context.version_identifier}"
         ) as venv:
             logger.info("Created Isolated Venv for Mkdocs at %s", venv.venv_path)
 

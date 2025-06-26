@@ -324,7 +324,6 @@ def test_build_context_difference_for_relative_includes(
     root_changes_file.write_text(included_content)
     logger.info(f"Creato file di test da includere: {root_changes_file}")
 
-    # Crea/Modifica il file changes.rst nella cartella docs per includere quello alla radice
     sphinx_source_dir = dummy_project_in_tmp_path / "docs" / "source"
     doc_changes_file = sphinx_source_dir / "changes.rst"
     doc_changes_file.write_text(
@@ -332,7 +331,6 @@ def test_build_context_difference_for_relative_includes(
     )
     logger.info(f"Creato file che usa '.. include::': {doc_changes_file}")
 
-    # Aggiungi 'changes' alla toctree in index.rst per essere sicuri che venga processato
     index_rst_path = sphinx_source_dir / "index.rst"
     with index_rst_path.open("a") as f:
         f.write("\n\n.. toctree::\n   :hidden:\n\n   changes\n")
@@ -386,6 +384,7 @@ def test_build_context_difference_for_relative_includes(
     html_content_partial = output_html_partial.read_text()
     assert included_content not in html_content_partial
     logger.error(
-        ">>> PROVA CONFERMATA: Il contenuto NON è stato incluso. L'include è fallito silenziosamente. <<<"
+        ">>> PROVA CONFERMATA: Il contenuto NON è stato incluso. "
+        "L'include è fallito silenziosamente. <<<"
     )
     logger.info("--- FINE PROVA ---")

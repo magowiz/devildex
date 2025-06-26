@@ -434,7 +434,8 @@ def build_sphinx_docs(
     build_successful = False
     try:
         with IsolatedVenvManager(
-            project_name=f"{sphinx_build_ctx.project_slug}-{sphinx_build_ctx.version_identifier}"
+            project_name=f"{sphinx_build_ctx.project_slug}-"
+            f"{sphinx_build_ctx.version_identifier}"
         ) as venv:
             install_success = install_project_and_dependencies_in_venv(
                 pip_executable=venv.pip_executable,

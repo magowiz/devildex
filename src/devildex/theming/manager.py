@@ -129,12 +129,13 @@ class ThemeManager:
             shutil.copy(SPHINX_LAYOUT_TEMPLATE_PATH, templates_dir / "layout.html")
             with self.sphinx_conf_file.open("r", encoding="utf-8") as f:
                 lines = f.readlines()
+            path = DEVILDEX_THEMING_ASSETS_PATH.parent.resolve()
             devil_config = [
                 "\n# --- DevilDex Theme Configuration ---",
                 "import os",
                 "import sys",
                 f"sys.path.insert(0, r'{self.project_path.resolve()!s}')",
-                f"sys.path.insert(0, r'{DEVILDEX_THEMING_ASSETS_PATH.parent.resolve()!s}')",
+                f"sys.path.insert(0, r'{path!s}')",
                 "html_theme = 'devildex_sphinx_theme'",
                 "html_theme_path = [os.path.abspath(os.path.dirname('devildex_sphinx_theme'))]",
                 "templates_path = ['_templates']",

@@ -69,7 +69,9 @@ class PackageInfo(Base):  # type: ignore[valid-type,misc]
         """Get project_urls come dictionary."""
         if self._project_urls_json:
             try:
-                return json.loads(self._project_urls_json)  # type: ignore[no-any-return]
+                return json.loads(
+                    self._project_urls_json
+                )  # type: ignore[no-any-return]
             except json.JSONDecodeError:
                 logger.exception(
                     "Error nel decoding project_urls JSON per package_info "
@@ -680,7 +682,7 @@ if __name__ == "__main__":
             for ds in retrieved_project1.docsets:
                 logger.info(
                     f"  - {ds} (Info: {ds.package_info.summary[:30]
-                if ds.package_info.summary else 'N/A'}...)"
+                    if ds.package_info.summary else 'N/A'}...)"
                 )
 
         logger.info("-" * 20)

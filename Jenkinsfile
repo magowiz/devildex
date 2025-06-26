@@ -273,7 +273,7 @@ pipeline {
                                     echo "[INFO] Initializing Conda and activating environment (conda_env)..."
                                     rm -rf "${venvPath}"
 
-                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    echo "[INFO] Creating venv with system-site-packages at ${venvPath}"
 
                                     python -m venv --system-site-packages "${venvPath}"
                                     echo "[INFO] Activating Python venv (${venvPath})..."
@@ -358,7 +358,7 @@ pipeline {
                                     echo "[INFO] Preparing Python virtual environment (venv) for Nuitka..."
                                     rm -rf "${venvPath}"
 
-                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath} using system python3..."
+                                    echo "[INFO] Creating venv with system-site-packages at ${venvPath}."
                                     python -m venv --system-site-packages "${venvPath}"
 
                                     echo "[INFO] Activating Python venv (${venvPath})..."
@@ -375,7 +375,7 @@ pipeline {
                                 """
 
                                 sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for Nuitka requirements management..."
+                                    echo "[INFO] Activating Python venv (${venvPath}) for Nuitka requirements."
                                     . "${venvPath}/bin/activate"
 
                                     echo "[INFO] Exporting requirements.txt using globally installed poetry..."

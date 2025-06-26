@@ -27,7 +27,7 @@ class LiveReloadHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(
         self, *args, build_dir: Path, rebuild_callback: Callable[[], None], **kwargs
-    ):
+    ) -> None:
         """Initialize the handler with the build directory and rebuild callback."""
         self.build_dir = build_dir
         self.rebuild_callback = rebuild_callback
@@ -61,8 +61,8 @@ def start_server(
 
     """
 
-    def handler_factory(*args, **kwargs):
-        """Factory to create handler instances with custom arguments."""
+    def handler_factory(*args: object, **kwargs: object) -> LiveReloadHandler:
+        """Create Factory for handler instances with custom arguments."""
         return LiveReloadHandler(
             *args,
             build_dir=build_dir,
