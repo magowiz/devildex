@@ -420,7 +420,7 @@ class PackageSourceFetcher:
                 f"refs/tags/{tag_for_url}.zip",
                 f"https://github.com/{repo_path_segment}/archive/"
                 f"{tag_for_url}.tar.gz",
-                f"https://github.com/{repo_path_segment}/archive/" f"{tag_for_url}.zip",
+                f"https://github.com/{repo_path_segment}/archive/{tag_for_url}.zip",
             ]
             for archive_url in archive_urls_to_try:
                 temp_dir_for_archive_download = (
