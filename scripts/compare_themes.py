@@ -249,20 +249,16 @@ def _run_pdoc3_build(
     final_output_dir = (
         ctx.build_outputs_base_dir / f"{ctx.args.project_name}_pdoc3_{build_type}"
     ).resolve()
-    # Questa è la cartella temporanea dove pdoc3 metterà TUTTO (html e static)
     temp_build_target = (
         ctx.build_outputs_base_dir / f"{ctx.args.project_name}"
         f"_pdoc3_{build_type}_temp_build"
     )
     template_dir = PDOC3_DEVILDEX_THEME_PATH if is_devil else None
-
-    # Assicuriamoci che la cartella temporanea sia pulita prima di iniziare
     if temp_build_target.exists():
         shutil.rmtree(temp_build_target)
     temp_build_target.mkdir(parents=True)
 
     doc_generator = DocStringsSrc(template_dir=template_dir)
-    # Diciamo a pdoc di costruire dentro la nostra cartella temporanea
     result_path_str = doc_generator.generate_docs_from_folder(
         project_name=module_name,
         input_folder=str(ctx.cloned_repo_path.resolve()),
@@ -270,12 +266,9 @@ def _run_pdoc3_build(
     )
 
     if result_path_str:
-        # Ora, invece di controllare file o cartelle, spostiamo l'intera
-        # cartella temporanea (che contiene tutto) nella destinazione finale.
         if final_output_dir.exists():
             shutil.rmtree(final_output_dir)
 
-        # Sposta e rinomina la cartella temporanea nella sua destinazione finale
         shutil.move(str(temp_build_target), final_output_dir)
 
         logger.info(f"pdoc3 {build_type} build successful: {final_output_dir}")
@@ -576,26 +569,21 @@ def find_entry_point(
     if not built_docs_path.exists() or not built_docs_path.is_dir():
         return None
 
-    # 1. Cerca 'index.html' al primo livello (caso più comune)
     index_html = built_docs_path / "index.html"
     if index_html.is_file():
         return index_html
 
-    # 2. Logica specifica per pdoc3
     if doc_type == "pdoc3" and module_name_for_pdoc:
-        # Cerca 'modulo.html' al primo livello
         module_html = built_docs_path / f"{module_name_for_pdoc}.html"
         if module_html.is_file():
             return module_html
 
-        # NUOVA LOGICA: Cerca in una sottocartella con il nome del modulo
         nested_dir = built_docs_path / module_name_for_pdoc
         if nested_dir.is_dir():
             nested_index = nested_dir / "index.html"
             if nested_index.is_file():
                 return nested_index
 
-    # 3. Fallback: se non trova nulla, prendi il primo file .html che capita
     logger.warning(
         f"index.html file not found in {built_docs_path} for type {doc_type}. "
         "Attempting fallback."
