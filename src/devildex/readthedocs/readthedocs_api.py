@@ -134,7 +134,7 @@ def _get_download_url(version_details: dict, download_format: str) -> str | None
     """Extract download URL for specific format from version details."""
     if not version_details:
         logger.error(
-            "Error: version details not available to search for " "the download URL."
+            "Error: version details not available to search for the download URL."
         )
         return None
 
