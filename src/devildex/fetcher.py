@@ -217,7 +217,7 @@ class PackageSourceFetcher:
                         )
                     elif member.issym() or member.islnk():
                         pass
-        except (tarfile.TarError, tarfile.ReadError, OSError, Exception):
+        except (tarfile.TarError, OSError, Exception):
             return False
         else:
             return True
