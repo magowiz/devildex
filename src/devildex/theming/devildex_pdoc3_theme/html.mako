@@ -1,9 +1,8 @@
     <%doc>
-        Template HTML per pdoc3 personalizzato DevilDex
+        HTML Template for pdoc3 customized DevilDex
     </%doc>
 
     <%
-      # Blocco Python/Mako iniziale con import e funzioni helper
       import os
       import pdoc
       from pdoc.html_helpers import extract_toc, glimpse, to_html as _to_html, format_git_link
@@ -18,25 +17,22 @@
       git_link_template = context.get('git_link_template', None)
       sort_identifiers = context.get('sort_identifiers', True)
       show_type_annotations = context.get('show_type_annotations', True)
-      http_server = context.get('http_server', False) # Per la modalità server
+      http_server = context.get('http_server', False)
       extract_module_toc_into_sidebar = context.get('extract_module_toc_into_sidebar', True)
       list_class_variables_in_index = context.get('list_class_variables_in_index', True)
       google_search_query = context.get('google_search_query', '')
       lunr_search = context.get('lunr_search', None)
       html_lang = context.get('html_lang', 'en')
-      # La variabile 'module' è l'oggetto modulo corrente, fornita da pdoc3.
 
       def link(dobj: pdoc.Doc, name=None):
         name = name or dobj.qualname + ('()' if isinstance(dobj, pdoc.Function) else '')
         if isinstance(dobj, pdoc.External) and not external_links:
             return name
-        # 'module' qui si riferisce alla variabile globale 'module' fornita da pdoc3
         url = dobj.url(relative_to=module, link_prefix=link_prefix,
                        top_ancestor=not show_inherited_members)
         return f'<a title="{dobj.refname}" href="{url}">{name}</a>'
 
       def to_html(text_input):
-        # 'module' qui si riferisce alla variabile globale 'module' fornita da pdoc3
         return _to_html(text_input, docformat=docformat, module=module, link=link, latex_math=latex_math)
 
       def get_annotation(bound_method, sep=':'):
@@ -119,7 +115,6 @@
 
     <%def name="show_module(module_param)">
       <%
-      # All'interno di questa definizione, usa 'module_param'
       variables = module_param.variables(sort=sort_identifiers)
       classes = module_param.classes(sort=sort_identifiers)
       functions = module_param.functions(sort=sort_identifiers)
@@ -130,8 +125,6 @@
         <dt id="${f.refname}"><code class="name flex">
             <%
                 params_list = f.params(annotate=show_type_annotations, link=link)
-                # sum(map(len, params_list)) può dare errore se params_list è vuota,
-                # meglio controllare la lunghezza della stringa unita.
                 joined_params_for_len_check = ', '.join(params_list)
                 sep = ',<br>' if len(joined_params_for_len_check) > 75 else ', '
                 params_str = sep.join(params_list)
@@ -209,8 +202,7 @@
           inst_vars = c.instance_variables(show_inherited_members, sort=sort_identifiers)
           methods = c.methods(show_inherited_members, sort=sort_identifiers)
           mro = c.mro()
-          subclasses_list = c.subclasses() # Rinominato per evitare conflitto con variabile 'subclasses'
-          # Calcolo params per la classe
+          subclasses_list = c.subclasses()
           class_params_list = c.params(annotate=show_type_annotations, link=link)
           joined_class_params_for_len_check = ', '.join(class_params_list)
           class_sep = ',<br>' if len(joined_class_params_for_len_check) > 75 else ', '
@@ -281,7 +273,6 @@
 
           % if not show_inherited_members:
               <%
-                  # 'members' qui è una variabile locale a questo blocco
                   inherited_members_list = c.inherited_members()
               %>
               % if inherited_members_list:
@@ -308,7 +299,6 @@
 
     <%def name="module_index(module_param)">
       <%
-      # All'interno di questa definizione, usa 'module_param'
       idx_variables = module_param.variables(sort=sort_identifiers)
       idx_classes = module_param.classes(sort=sort_identifiers)
       idx_functions = module_param.functions(sort=sort_identifiers)
@@ -368,7 +358,6 @@
             <li>
             <h4><code>${link(c_idx)}</code></h4>
             <%
-                # 'members' qui è una variabile locale a questo blocco
                 idx_members_list = c_idx.functions(sort=sort_identifiers) + c_idx.methods(sort=sort_identifiers)
                 if list_class_variables_in_index:
                     idx_members_list += (c_idx.instance_variables(sort=sort_identifiers) +
@@ -422,17 +411,12 @@
             <div class="row">
                 <aside class="col-md-3">
                     <div class="position-sticky" style="top: 5rem;">
-                        <%
-                            # 'module' è la variabile globale fornita da pdoc3 per la pagina del modulo corrente.
-                            # 'context' è un dizionario fornito da Mako/pdoc3.
-                            # 'module_list' e 'modules' sono usati da pdoc3 in modalità server per la pagina indice.
-                        %>
                         % if module:
-                            ${module_index(module)}
+                            <%include file="module_index.mako" />
                         % elif context.get('module_list') and context.get('modules'):
                             ${show_module_list(context.get('modules'))}
                         % else:
-                            Indice non disponibile (module non definito e non è module_list)
+                            Index unavailable(module undefined and is not in module_list)
                         % endif
                     </div>
                 </aside>
@@ -443,7 +427,7 @@
                     % elif context.get('module_list') and context.get('modules'):
                         ${show_module_list(context.get('modules'))}
                     % else:
-                        Contenuto del modulo non disponibile (module non definito e non è module_list)
+                        Module Content unavailable (module undefined and is not in module_list)
                     % endif
                 </article>
             </div>

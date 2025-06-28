@@ -1,0 +1,117 @@
+/* ==========================================================================
+   DevilDex pdoc3 Theme - Stile Finale e Pulito
+   ========================================================================== */
+
+:root {
+    --bs-link-color: #6c95ba;
+    --bs-link-hover-color: #8ab0d1;
+    --dd-code-bg: #212529;
+}
+
+/* ==========================================================================
+   Stile Contenuto Principale (Article)
+   ========================================================================== */
+
+article .section-title {
+    border-bottom: 1px solid var(--bs-border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    margin-top: 2rem;
+    font-weight: 500;
+    color: var(--bs-secondary-color);
+}
+
+
+/* ==========================================================================
+   Stile per il Codice Inline (tag <code>)
+   ========================================================================== */
+
+/*
+  Questa regola è più specifica di quella generica di Bootstrap,
+  quindi vince lei. Annulla lo stile di default e imposta il nostro.
+*/
+article code {
+    background-color: var(--bs-color-bg); /* Sfondo scuro, coerente col tema */
+    color: var(--bs-secondary); /* Un colore arancione/ambra, ottimo per la leggibilità su sfondo scuro */
+}
+
+/* Resetta lo stile per il codice DENTRO un link */
+article a code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-size: inherit;
+}
+
+
+
+
+/* ==========================================================================
+   Stile per i Blocchi di Definizione (dl, dt, dd)
+   ========================================================================== */
+
+article section > dl > dt {
+    background-color: var(--bs-tertiary-bg);
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--bs-border-color);
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+    margin-top: 1.5rem;
+}
+
+article section > dl > dd {
+    padding: 1.25rem;
+    border: 1px solid var(--bs-border-color);
+    border-top: 0;
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    margin-bottom: 0;
+}
+
+dt .ident {
+    font-family: var(--bs-font-monospace);
+    font-weight: 600;
+    color: #8cb3d9;
+}
+
+details > summary {
+    cursor: pointer;
+    color: var(--bs-link-color);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+details > summary:hover {
+    color: var(--bs-link-hover-color);
+}
+
+/* ==========================================================================
+   Stile per Admonitions (Note, Tip, etc.)
+   ========================================================================== */
+
+.admonition {
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+}
+
+.admonition-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.admonition.note {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
+}
+.admonition.note .admonition-title {
+    color: inherit;
+}
+
+.admonition.tip {
+    color: #0f5132;
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+}
