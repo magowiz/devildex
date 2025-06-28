@@ -47,7 +47,7 @@ class DatabaseNotInitializedError(RuntimeError):
     """Raised when an operation is attempted before the database is initialized."""
 
     def __init__(
-        self, message: str = "Database not initialized. " "Call init_db() first."
+        self, message: str = "Database not initialized. Call init_db() first."
     ) -> None:
         """Construct a new DatabaseNotInitializedError."""
         super().__init__(message)
