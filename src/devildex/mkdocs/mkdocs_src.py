@@ -597,7 +597,7 @@ def _get_plugin_packages_to_install(
             if package not in plugin_packages:
                 plugin_packages.append(package)
                 logger.debug(
-                    f"Identified Plugin/Extension Package for " f"'{name}': {package}"
+                    f"Identified Plugin/Extension Package for '{name}': {package}"
                 )
         else:
             logger.debug(
