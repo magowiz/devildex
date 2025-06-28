@@ -494,7 +494,7 @@ def _perform_actual_mkdocs_build(
 
     """
     pip_list_command = [python_executable, "-m", "pip", "list", "--format=json"]
-    _, _, ret_code_pip_list = execute_command(
+    _, _, _ = execute_command(
         pip_list_command,
         f"Pip list for {build_context.project_slug}",
     )
