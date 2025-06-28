@@ -2,20 +2,14 @@
  * Trova tutti i blocchi <pre> e aggiunge la classe 'highlight'
  * per attivare la colorazione della sintassi di Pygments.
  */
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
-
     const pdocClasses = [
         'ident'
     ];
-
     const pdocToPygmentsMap = {
         'ident': 'nv',
-        'name':
+        'name': 'n'
     };
-
     pdocClasses.forEach(pdocClass => {
         const elementsToEdit = document.querySelectorAll(`.${pdocClass}`);
 
@@ -29,8 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     const tuttiIBlocchiDiCodice = document.querySelectorAll('article pre');
-    tuttiIBlocchiDiCodice.forEach(blocco => {
-        blocco.classList.add('highlight');
+    tuttiIBlocchiDiCodice.forEach(block => {
+        block.classList.add('highlight');
     });
-
 });

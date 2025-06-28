@@ -35,7 +35,7 @@ article code {
     color: var(--bs-secondary); /* Un colore arancione/ambra, ottimo per la leggibilità su sfondo scuro */
 }
 
-/* Resetta lo stile per il codice DENTRO un link */
+
 article a code {
     background-color: transparent;
     color: inherit;
