@@ -57,7 +57,7 @@
                   <a href="${git_link}" class="git-link" target="_blank">Browse git</a>
                 %endif
             </summary>
-            <pre><code class="python">${d.source | h}</code></pre>
+            <pre><code>${d.source | n}</code></pre>
           </details>
         % elif git_link:
           <div class="git-link-div"><a href="${git_link}" class="git-link">Browse git</a></div>
