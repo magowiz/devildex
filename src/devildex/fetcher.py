@@ -612,8 +612,6 @@ class PackageSourceFetcher:
             self._cleanup_git_dir_from_path(self.download_target_path)
             fetch_successful = True
             path_to_return = str(self.download_target_path)
-        elif self.download_target_path.exists():
-            pass
         if not fetch_successful and self._fetch_from_pypi():
             fetch_successful = True
             path_to_return = str(self.download_target_path)
