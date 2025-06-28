@@ -45,10 +45,8 @@ RUN apt-get update && \
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN git clone https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" && \
     pyenv install "${PYTHON_VERSION}" && \
-    pyenv global "${PYTHON_VERSION}"
-
-
-RUN curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} && \
+    pyenv global "${PYTHON_VERSION}" && \
+    curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} && \
     poetry self add poetry-plugin-export
 
 
