@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 PYPROJECT_FILENAME = "pyproject.toml"
 
+
 def find_pyproject_toml(start_path: str = ".") -> str | None:
     """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
 

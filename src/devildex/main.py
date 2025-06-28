@@ -134,7 +134,6 @@ class DevilDexApp(wx.App):
         matched_top_level_dir_names: set[str] = self.scan_docset_dir(
             self.current_grid_source_data
         )
-        updated_count = 0
         for pkg_data in self.current_grid_source_data:
             pkg_name = pkg_data.get("name")
             pkg_version = pkg_data.get("version")
@@ -161,7 +160,6 @@ class DevilDexApp(wx.App):
                     pkg_data["docset_path"] = str(
                         found_specific_docset_subdir.resolve()
                     )
-                    updated_count += 1
                 else:
                     pkg_data["docset_status"] = "Not Available"
                     if "docset_path" in pkg_data:
