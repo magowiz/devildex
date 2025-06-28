@@ -9,6 +9,7 @@ from packaging.requirements import InvalidRequirement, Requirement
 
 logger = logging.getLogger(__name__)
 
+PYPROJECT_FILENAME = "pyproject.toml"
 
 def find_pyproject_toml(start_path: str = ".") -> str | None:
     """Cerca pyproject.toml nella directory start_path e nelle sue parent directories.
@@ -17,7 +18,7 @@ def find_pyproject_toml(start_path: str = ".") -> str | None:
     """
     current_path = os.path.abspath(start_path)
     while True:
-        pyproject_path = os.path.join(current_path, "pyproject.toml")
+        pyproject_path = os.path.join(current_path, PYPROJECT_FILENAME)
         if os.path.exists(pyproject_path):
             return pyproject_path
         parent_path = os.path.dirname(current_path)
@@ -325,7 +326,7 @@ pandas = { version = "^1.3", optional = true }
 pylint = "^2.10"
 """
     with open(
-        os.path.join(dummy_project_path, "pyproject.toml"), "w", encoding="utf-8"
+        os.path.join(dummy_project_path, PYPROJECT_FILENAME), "w", encoding="utf-8"
     ) as f:
         f.write(dummy_pyproject_content_pep621)
 
@@ -343,7 +344,7 @@ pylint = "^2.10"
         )
 
     try:
-        os.remove(os.path.join(dummy_project_path, "pyproject.toml"))
+        os.remove(os.path.join(dummy_project_path, PYPROJECT_FILENAME))
         os.rmdir(dummy_project_path)
         logger.info("Cleaned up dummy project.")
     except OSError:
