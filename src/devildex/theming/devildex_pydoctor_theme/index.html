@@ -6,18 +6,11 @@
 
 <body>
 
-<!-- Il nostro custom header.html verrà renderizzato qui. Contiene la nostra navbar Bootstrap e il banner. -->
-<div t:render="header"/>
 
-<!-- RIMOSSO: La navbar predefinita di pydoctor, che era:
-<nav class="navbar navbar-default mainnavbar">
-  <t:transparent t:render="nav" />
-</nav>
--->
+<div t:render="header"/>
 
 <div class="container-fluid mt-4 mb-4">
     <div class="row">
-        <!-- Sidebar (se presente, dal sidebar.html predefinito di pydoctor) -->
         <div class="col-lg-2 col-md-3">
             <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
                    aria-label="Main navigation">
@@ -32,7 +25,6 @@
             </aside>
         </div>
 
-        <!-- Area del contenuto principale -->
         <div class="col-lg-10 col-md-9">
             <div t:render="subheader"/>
 
