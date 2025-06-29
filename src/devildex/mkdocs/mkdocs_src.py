@@ -71,11 +71,10 @@ class MkDocsBuildContext:
 
     config_content: Optional[dict]
     project_root: Path
-    original_yml_path: Path
     final_output_dir: Path
     project_slug: str
-    processed_yml_path: Path
     version_identifier: str
+    source_config_path: Path
 
 
 def _extract_callouts_from_markdown_extensions(
@@ -166,48 +165,178 @@ def _add_callouts_to_plugins_if_missing(
     return plugins_list, False
 
 
+def process_mkdocs_source_and_build(
+    source_project_path: str,
+    project_slug: str,
+    version_identifier: str,
+    base_output_dir: Path,
+    theme_custom_dir_override: Optional[str] = None,
+) -> Optional[str]:
+    """Process an MkDocs project: find config, preprocess, install deps, and build."""
+    logger.info(
+        "--- Starting MkDocs Build for %s v%s ---", project_slug, version_identifier
+    )
+    final_result_path: Optional[str] = None
+
+    try:
+        original_config_path = _find_mkdocs_config_file(Path(source_project_path))
+        if not original_config_path:
+            logger.error("No mkdocs.yml found in source project. Aborting build.")
+            return None
+
+        config_content = _parse_mkdocs_config(original_config_path)
+        if config_content is None:
+            logger.error(
+                "Failed to parse config file %s. Aborting.", original_config_path
+            )
+            return None
+
+        if theme_custom_dir_override:
+            logger.info(
+                "Applying theme override. Custom directory: %s",
+                theme_custom_dir_override,
+            )
+            if "theme" not in config_content or not isinstance(
+                config_content.get("theme"), dict
+            ):
+                config_content["theme"] = {}
+            config_content["theme"]["custom_dir"] = theme_custom_dir_override
+            config_content["theme"]["name"] = None
+
+        processed_config, was_modified = _preprocess_mkdocs_config(
+            config_content, original_config_path
+        )
+
+        if processed_config:
+            logger.info(
+                "Overwriting original mkdocs.yml with final processed config..."
+            )
+            try:
+                with open(original_config_path, "w", encoding="utf-8") as f_out:
+
+                    class NullSafeDumper(yaml.SafeDumper):
+                        def represent_none(self, _):
+                            return self.represent_scalar(
+                                "tag:yaml.org,2002:null", "null"
+                            )
+
+                    NullSafeDumper.add_representer(
+                        type(None), NullSafeDumper.represent_none
+                    )
+
+                    yaml.dump(
+                        processed_config,
+                        f_out,
+                        Dumper=NullSafeDumper,
+                        sort_keys=False,
+                        default_flow_style=False,
+                    )
+                logger.info("Successfully overwrote: %s", original_config_path)
+                try:
+                    patched_content = original_config_path.read_text(encoding="utf-8")
+                    logger.info(
+                        "---\nCONTENT OF PATCHED mkdocs.yml:\n%s\n---",
+                        patched_content,
+                    )
+                except OSError:
+                    logger.warning("Could not read back patched config for logging.")
+
+            except (OSError, yaml.YAMLError):
+                logger.exception(
+                    "FATAL: Could not overwrite modified config to %s. Aborting.",
+                    original_config_path,
+                )
+                return None
+        final_html_output_dir = _prepare_mkdocs_output_directory(
+            base_output_dir, project_slug, version_identifier
+        )
+        if not final_html_output_dir:
+            return None
+
+        build_ctx = MkDocsBuildContext(
+            config_content=processed_config,
+            project_root=Path(source_project_path),
+            source_config_path=original_config_path,
+            final_output_dir=final_html_output_dir,
+            project_slug=project_slug,
+            version_identifier=version_identifier,
+        )
+
+        build_successful = _execute_mkdocs_build_in_venv(build_ctx)
+
+        if build_successful:
+            final_result_path = str(final_html_output_dir)
+
+    except (OSError, RuntimeError):
+        logger.exception(
+            "Unexpected critical error during MkDocs processing for %s", project_slug
+        )
+        final_result_path = None
+    finally:
+        status_message = (
+            "successfully" if final_result_path else "with errors or aborted"
+        )
+        logger.info(
+            "--- Finished MkDocs Build for %s %s ---", project_slug, status_message
+        )
+
+    return final_result_path
+
+
 def _preprocess_mkdocs_config(
-    original_config_content: Optional[dict],
+    original_config_content: Optional[dict], original_config_path: Path
 ) -> tuple[Optional[dict], bool]:
     """Preprocess the MkDocs config content.
 
-    Currently, it moves 'callouts' from 'markdown_extensions' to 'plugins'.
-    Operates on a copy of the input dictionary.
-
-    Args:
-        original_config_content: The parsed content of the original mkdocs.yml.
-
-    Returns:
-        A tuple: (processed_config_content, was_modified_boolean).
-        Returns (None, False) if original_config_content is None.
-
+    - Moves 'callouts' from 'markdown_extensions' to 'plugins' for compatibility.
+    - Resolves relative 'docs_dir' to an absolute path.
     """
     if not original_config_content:
         return None, False
 
-    processed_config = original_config_content.copy()  # Shallow copy
+    processed_config = original_config_content.copy()
     overall_config_modified = False
+    original_config_dir = original_config_path.parent
 
     current_md_extensions = processed_config.get("markdown_extensions")
-    updated_md_extensions, callouts_value_extracted, ext_was_modified = (
-        _extract_callouts_from_markdown_extensions(current_md_extensions)
-    )
+    (
+        updated_md_extensions,
+        extracted_callouts,
+        md_ext_modified,
+    ) = _extract_callouts_from_markdown_extensions(current_md_extensions)
 
-    if ext_was_modified:
+    if md_ext_modified and extracted_callouts:
         processed_config["markdown_extensions"] = updated_md_extensions
         overall_config_modified = True
 
-        if callouts_value_extracted is not None:
-            current_plugins = processed_config.get("plugins")
-            updated_plugins_list, plugin_list_was_modified = (
-                _add_callouts_to_plugins_if_missing(
-                    current_plugins, callouts_value_extracted
-                )
-            )
+        current_plugins = processed_config.get("plugins")
+        updated_plugins, plugin_was_added = _add_callouts_to_plugins_if_missing(
+            current_plugins, extracted_callouts
+        )
+        if plugin_was_added:
+            processed_config["plugins"] = updated_plugins
 
-            if plugin_list_was_modified:
-                processed_config["plugins"] = updated_plugins_list
-                # overall_config_modified is already True
+    docs_dir_value = processed_config.get("docs_dir")
+    if (
+        docs_dir_value
+        and isinstance(docs_dir_value, str)
+        and not Path(docs_dir_value).is_absolute()
+    ):
+        absolute_docs_dir = (original_config_dir / docs_dir_value).resolve()
+        if absolute_docs_dir.is_dir():
+            processed_config["docs_dir"] = str(absolute_docs_dir)
+            logger.info(
+                "Resolved relative 'docs_dir' to absolute path: %s",
+                absolute_docs_dir,
+            )
+            overall_config_modified = True
+        else:
+            logger.warning(
+                "Could not resolve relative 'docs_dir' path: %s. "
+                "Directory not found at %s",
+                docs_dir_value,
+                absolute_docs_dir,
+            )
 
     return processed_config, overall_config_modified
 
@@ -236,9 +365,7 @@ def _parse_mkdocs_config(config_file_path: Path) -> Optional[dict]:
             config = yaml.safe_load(f)
         logger.info(f"Successfully parsed MkDocs Config: {config_file_path}")
     except yaml.YAMLError:
-        logger.exception(
-            f"Error parsing MkDocs Config file: {config_file_path}"
-        )  # Log corretto
+        logger.exception(f"Error parsing MkDocs Config file: {config_file_path}")
     except OSError:
         logger.exception(f"Error reading MkDocs Config file: {config_file_path}")
     else:
@@ -269,82 +396,6 @@ def _get_theme_packages_to_install(
                 "known_theme_packages or needs no separated install."
             )
     return theme_packages
-
-
-# Helper 1: Initial validation and config loading
-def _validate_paths_and_load_config(
-    source_project_path_str: str,
-) -> tuple[Optional[Path], Optional[Path], Optional[dict]]:
-    """Validate input paths and load the MkDocs configuration."""
-    if not source_project_path_str:
-        logger.error("Source Project Path Not Provided for Mkdocs Build.")
-        return None, None, None
-    project_root_p = Path(source_project_path_str)
-    if not project_root_p.is_dir():
-        logger.error(f"Source Project Path {project_root_p} Is Not a Valid Directory.")
-        return None, None, None
-
-    original_mkdocs_yml_path = _find_mkdocs_config_file(project_root_p)
-    if not original_mkdocs_yml_path:
-        logger.error(f"Could Not Find Mkdocs.yml in {project_root_p}. ABORTING.")
-        return None, None, None
-
-    original_config_content = _parse_mkdocs_config(original_mkdocs_yml_path)
-    return project_root_p, original_mkdocs_yml_path, original_config_content
-
-
-def _prepare_config_for_build(
-    original_config_content: Optional[dict], original_mkdocs_yml_path: Path
-) -> Path:
-    """Preprocesses MkDocs config and returns the path to the config file to use."""
-    config_file_to_use_for_build = original_mkdocs_yml_path
-
-    if not original_config_content:
-        logger.warning(
-            "MkDocs config content not parsed or absent, skipping preprocessing."
-            " Using original path: %s",
-            original_mkdocs_yml_path,
-        )
-        return original_mkdocs_yml_path
-
-    processed_config_dict, config_was_modified = _preprocess_mkdocs_config(
-        original_config_content
-    )
-
-    if config_was_modified and processed_config_dict is not None:
-        processed_yml_filename = (
-            f"{original_mkdocs_yml_path.stem}.devildex_processed.yml"
-        )
-        temp_processed_yml_path = (
-            original_mkdocs_yml_path.parent / processed_yml_filename
-        )
-        try:
-            with open(temp_processed_yml_path, "w", encoding="utf-8") as f_proc:
-                yaml.dump(
-                    processed_config_dict,
-                    f_proc,
-                    sort_keys=False,
-                    Dumper=yaml.Dumper,
-                )
-            logger.info(
-                "Preprocessed MkDocs configuration saved to: %s",
-                temp_processed_yml_path,
-            )
-            config_file_to_use_for_build = temp_processed_yml_path
-        except (OSError, yaml.YAMLError):
-            logger.exception(
-                "Error saving processed mkdocs.yml to %s. Using original path: %s",
-                temp_processed_yml_path,
-                original_mkdocs_yml_path,
-            )
-            config_file_to_use_for_build = original_mkdocs_yml_path
-    else:
-        logger.info(
-            "No preprocessing modifications needed for mkdocs.yml or "
-            "original content was None. Using original path: %s",
-            original_mkdocs_yml_path,
-        )
-    return config_file_to_use_for_build
 
 
 def _prepare_mkdocs_output_directory(
@@ -422,96 +473,21 @@ def _execute_mkdocs_build_in_venv(build_context: MkDocsBuildContext) -> bool:
     return build_successful
 
 
-def process_mkdocs_source_and_build(
-    source_project_path: str,
-    project_slug: str,
-    version_identifier: str,
-    base_output_dir: Path,
-) -> Optional[str]:
-    """Process an MkDocs project: find config, preprocess, install deps, and build."""
-    logger.info(
-        f"--- Starting Mkdocs Build for {project_slug} v{version_identifier} ---"
-    )
-    final_result_path: Optional[str] = None
-
-    try:
-        project_root_p, original_mkdocs_yml_path, original_config_content = (
-            _validate_paths_and_load_config(source_project_path)
-        )
-
-        if not project_root_p or not original_mkdocs_yml_path:
-            return None
-        config_file_to_use_for_build = _prepare_config_for_build(
-            original_config_content, original_mkdocs_yml_path
-        )
-
-        final_html_output_dir = _prepare_mkdocs_output_directory(
-            base_output_dir, project_slug, version_identifier
-        )
-        if not final_html_output_dir:
-            return None
-        build_ctx = MkDocsBuildContext(
-            config_content=original_config_content,
-            project_root=project_root_p,
-            original_yml_path=original_mkdocs_yml_path,
-            final_output_dir=final_html_output_dir,
-            project_slug=project_slug,
-            processed_yml_path=config_file_to_use_for_build,
-            version_identifier=version_identifier,
-        )
-        build_successful = _execute_mkdocs_build_in_venv(build_ctx)
-
-        if build_successful:
-            final_result_path = str(final_html_output_dir)
-
-    except (OSError, RuntimeError):
-        logger.exception(
-            f"Unexpected critical error during MkDocs processing for {project_slug}"
-        )
-        final_result_path = None
-    finally:
-        status_message = (
-            "successfully" if final_result_path else "with errors or aborted"
-        )
-        logger.info(
-            f"--- Finished Mkdocs Build for {project_slug} {status_message} ---"
-        )
-
-    return final_result_path
-
-
 def _perform_actual_mkdocs_build(
     python_executable: str, build_context: MkDocsBuildContext
 ) -> bool:
-    """Execute the mkdocs build using the provided python executable and build context.
-
-    Args:
-        python_executable: Path to the python executable in the virtual environment.
-        build_context: The MkDocsBuildContext containing configuration and paths.
-
-    Returns:
-        True if the build was successful, False otherwise.
-
-    """
-    pip_list_command = [python_executable, "-m", "pip", "list", "--format=json"]
-    _, _, _ = execute_command(
-        pip_list_command,
-        f"Pip list for {build_context.project_slug}",
-    )
-    config_file_for_command = build_context.processed_yml_path
+    """Execute the mkdocs build using the provided python executable and build context."""
     mkdocs_build_command = [
         python_executable,
         "-m",
         "mkdocs",
         "build",
-        "--config-file",
-        str(config_file_for_command.resolve()),
         "--site-dir",
         str(build_context.final_output_dir.resolve()),
     ]
 
     logger.info(f"Executing MkDocs build command: {' '.join(mkdocs_build_command)}")
-    cwd_for_mkdocs = build_context.original_yml_path.parent
+    cwd_for_mkdocs = build_context.source_config_path.parent
 
     stdout, stderr, return_code = execute_command(
         mkdocs_build_command,
@@ -521,17 +497,20 @@ def _perform_actual_mkdocs_build(
 
     if return_code == 0:
         logger.info(
-            f"MkDocs build successful for {build_context.project_slug}. "
-            f"Output: {build_context.final_output_dir}"
+            "MkDocs build for %s completed successfully.", build_context.project_slug
         )
+        logger.debug("MkDocs stdout:\n%s", stdout)
         return True
-    else:
-        logger.error(
-            f"MkDocs build for {build_context.project_slug} failed. RC: {return_code}"
-        )
-        logger.error(f"MkDocs build STDOUT:\n{stdout}")
-        logger.error(f"MkDocs build STDERR:\n{stderr}")
-        return False
+
+    logger.error(
+        "MkDocs build for %s failed with return code %d.",
+        build_context.project_slug,
+        return_code,
+    )
+    logger.error("MkDocs stderr:\n%s", stderr)
+    if stdout:
+        logger.info("MkDocs stdout:\n%s", stdout)
+    return False
 
 
 def _extract_names_from_config_list_or_dict(
@@ -621,7 +600,14 @@ def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]
                 mkdocs_config.get("markdown_extensions"),
             )
         )
-
+        plugin_names = _extract_names_from_config_list_or_dict(
+            mkdocs_config.get("plugins")
+        )
+        if "mkdocstrings" in plugin_names:
+            logger.info(
+                "mkdocstrings plugin detected. Adding 'ruff' for code formatting."
+            )
+            packages_to_install.append("ruff")
     unique_packages = sorted(list(set(pkg for pkg in packages_to_install if pkg)))
 
     return unique_packages
