@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{# Inseriamo i nostri fogli di stile e il logo come icona #}
+{% block extrahead %}
+{{ super() }}
+<link rel="stylesheet" href="{{ 'css/bootstrap.min.css' | url }}">
+<link rel="stylesheet" href="{{ 'css/devildex_mkdocs.css' | url }}">
+<link rel="icon" href="{{ 'img/logo-final.png' | url }}">
+{% endblock %}
+
+{# Inseriamo la nostra navbar sopra tutto il resto #}
+{% block header %}
+<!-- DevilDex Top Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{{ nav.homepage.url | url }}">
+            <img src="{{ 'img/logo-final.png' | url }}" alt="{{ config.site_name }} Logo" class="me-2" height="80">
+            <span>{{ config.site_name }}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devildexNavbarContent"
+                aria-controls="devildexNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="devildexNavbarContent">
+            <!-- I link di navigazione originali verranno gestiti dal tema sottostante -->
+        </div>
+    </div>
+</nav>
+{{ super() }}
+{% endblock %}
+
+{# Aggiungiamo il nostro footer in fondo #}
+{% block footer %}
+{{ super() }}
+<footer class="footer mt-auto py-3 bg-dark text-light border-top">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <small>
+                    Themed with 😈 DevilDex
+                </small>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
+{# Aggiungiamo i nostri script JS #}
+{% block scripts %}
+{{ super() }}
+<script src="{{ 'js/bootstrap.bundle.min.js' | url }}"></script>
+<script src="{{ 'js/devildex_mkdocs.js' | url }}"></script>
+{% endblock %}
