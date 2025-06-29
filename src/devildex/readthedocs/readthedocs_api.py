@@ -220,8 +220,6 @@ def _download_file(file_url: str, local_filepath: Path) -> bool | None:
                 logger.info(f"partial File removed: {local_filepath}")
             except OSError:
                 logger.exception("Error while removing partial file")
-            else:
-                return None
 
 
 def download_readthedocs_prebuilt_robust(
