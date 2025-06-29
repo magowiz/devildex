@@ -11,6 +11,7 @@ from typing import Any
 
 from devildex.models import PackageDetails
 NOT_INSTALLED_STATUS = "Not Installed"
+SOURCE_CODE = "Source Code"
 PACKAGES_DATA: list[dict[str, Any]] = [
     {
         "id": "real_pkg_black",
@@ -19,7 +20,7 @@ PACKAGES_DATA: list[dict[str, Any]] = [
         "description": "The uncompromising Python code formatter",
         "status": NOT_INSTALLED_STATUS,
         "project_urls": {
-            "Source Code": "https://github.com/psf/black.git",
+            SOURCE_CODE: "https://github.com/psf/black.git",
             "Documentation": "https://black.readthedocs.io/",
         },
     },
@@ -30,7 +31,7 @@ PACKAGES_DATA: list[dict[str, Any]] = [
         "description": "A microframework for Python web applications",
         "status": NOT_INSTALLED_STATUS,
         "project_urls": {
-            "Source Code": "https://github.com/pallets/flask.git",
+            SOURCE_CODE: "https://github.com/pallets/flask.git",
             "Documentation": "https://flask.palletsprojects.com/",
         },
     },
@@ -41,7 +42,7 @@ PACKAGES_DATA: list[dict[str, Any]] = [
         "description": "Python HTTP for Humans.",
         "status": NOT_INSTALLED_STATUS,
         "project_urls": {
-            "Source Code": "https://github.com/requests/requests.git",
+            SOURCE_CODE: "https://github.com/requests/requests.git",
             "Documentation": "https://requests.readthedocs.io/",
         },
     },
