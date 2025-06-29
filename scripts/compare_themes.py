@@ -35,6 +35,10 @@ SPHINX_COMMON_PACKAGES = [
     "sphinx-tabs",
 ]
 
+DEVILDEX_THEME_PATH = (
+    DEVILDEX_PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_mkdocs_theme"
+)
+
 SUPPORTED_TYPES = ["sphinx", "pdoc3", "mkdocs", "pydoctor"]
 KNOWN_PROJECTS = {
     "black": {
@@ -83,6 +87,27 @@ logger = logging.getLogger("theme_comparator")
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+MKDOCS_CONFIG_FILE = "mkdocs.yml"
+
+
+def _find_mkdocs_config_file(project_root_path: Path) -> Path | None:
+    """Find the mkdocs.yml file, typically at the project root."""
+    mkdocs_conf = project_root_path / MKDOCS_CONFIG_FILE
+    if mkdocs_conf.is_file():
+        logger.info(f"Found MkDocs config file: {mkdocs_conf}")
+        return mkdocs_conf
+    logger.warning(
+        f"MkDocs config not found at {mkdocs_conf}. Searching in 'docs' subdir..."
+    )
+    mkdocs_conf_in_docs = project_root_path / "docs" / MKDOCS_CONFIG_FILE
+    if mkdocs_conf_in_docs.is_file():
+        logger.info(f"Found MkDocs config file in docs/ subdir: {mkdocs_conf_in_docs}")
+        return mkdocs_conf_in_docs
+    logger.error(
+        f"MkDocs config not found in {project_root_path} or its 'docs' subdir."
+    )
+    return None
 
 
 @dataclass
@@ -444,25 +469,7 @@ def build_mkdocs_vanilla(
     output_base_dir: Path,
     version_id: str = "vanilla",
 ) -> Path | None:
-    """Build MkDocs documentation with its original configuration.
-
-    This function runs the standard MkDocs build process for a project
-    without applying any DevilDex theme modifications. It uses a temporary
-    directory for the build process and moves the final site to a
-    version-specific output folder.
-
-    Args:
-        project_slug: A short name for the project, used for naming directories.
-        cloned_repo_path: The path to the cloned source code of the project.
-        output_base_dir: The base directory where the build output folder
-            will be created.
-        version_id: A string identifier for this build version.
-
-    Returns:
-        The path to the generated documentation directory on success,
-        or None on failure.
-
-    """
+    """Build MkDocs documentation with its original configuration."""
     logger.info(f"--- Building MkDocs VANILLA for {project_slug} ---")
     vanilla_output_dir = (output_base_dir / f"{project_slug}_mkdocs_vanilla").resolve()
     temp_base_for_mkdocs_build = (
@@ -474,6 +481,7 @@ def build_mkdocs_vanilla(
         project_slug=project_slug,
         version_identifier=version_id,
         base_output_dir=temp_base_for_mkdocs_build,
+        theme_custom_dir_override=None,
     )
     if built_path_str:
         if vanilla_output_dir.exists():
@@ -490,55 +498,35 @@ def build_mkdocs_vanilla(
         return None
 
 
-def build_mkdocs_devil(
-    project_slug: str,
-    cloned_repo_path: Path,
-    output_base_dir: Path,
-    version_id: str = "devil",
-) -> Path | None:
-    """Build MkDocs documentation (placeholder for the DevilDex theme).
-
-    Note: This function currently performs a standard MkDocs build and does
-    not yet apply a specific DevilDex theme. It serves as a placeholder
-    for future theme integration.
-
-    Args:
-        project_slug: A short name for the project, used for naming directories.
-        cloned_repo_path: The path to the cloned source code of the project.
-        output_base_dir: The base directory where the build output folder
-            will be created.
-        version_id: A string identifier for this build version.
-
-    Returns:
-        The path to the generated documentation directory on success,
-        or None on failure.
-
-    """
+def build_mkdocs_devil(ctx: BuildContext) -> Path | None:
+    """Build MkDocs documentation with the DevilDex theme customizations."""
+    project_slug = ctx.args.project_name
     logger.info(f"--- Building MkDocs DEVIL for {project_slug} ---")
-    devil_output_dir = (output_base_dir / f"{project_slug}_mkdocs_devil").resolve()
+
+    devil_output_dir = (
+        ctx.build_outputs_base_dir / f"{project_slug}_mkdocs_devil"
+    ).resolve()
     temp_base_for_mkdocs_build = (
-        output_base_dir / f"{project_slug}_mkdocs_devil_temp_base"
-    )
-    logger.warning(
-        "The MkDocs Devil build does not yet apply a specific DevilDex theme. "
-        "It is performing a standard build as a placeholder."
+        ctx.build_outputs_base_dir / f"{project_slug}_mkdocs_devil_temp_base"
     )
     built_path_str = process_mkdocs_source_and_build(
-        source_project_path=str(cloned_repo_path.resolve()),
+        source_project_path=str(ctx.cloned_repo_path.resolve()),
         project_slug=project_slug,
-        version_identifier=version_id,
+        version_identifier="devil",
         base_output_dir=temp_base_for_mkdocs_build,
+        theme_custom_dir_override=str(DEVILDEX_THEME_PATH.resolve()),
     )
+
     if built_path_str:
         if devil_output_dir.exists():
             shutil.rmtree(devil_output_dir)
         shutil.move(built_path_str, devil_output_dir)
-        logger.info(f"MkDocs Devil (standard) build successful: {devil_output_dir}")
+        logger.info(f"MkDocs Devil build successful: {devil_output_dir}")
         if temp_base_for_mkdocs_build.exists():
             shutil.rmtree(temp_base_for_mkdocs_build)
         return devil_output_dir
     else:
-        logger.error("MkDocs Devil (standard) build failed.")
+        logger.error("MkDocs Devil build failed.")
         if temp_base_for_mkdocs_build.exists():
             shutil.rmtree(temp_base_for_mkdocs_build)
         return None
@@ -682,12 +670,7 @@ def mkdocs_run(ctx: BuildContext) -> tuple[str | None, str | None]:
         if vanilla_built_path:
             vanilla_entry_point = find_entry_point(vanilla_built_path, "mkdocs")
     if not ctx.args.skip_devil:
-        devil_built_path = build_mkdocs_devil(
-            ctx.args.project_name,
-            ctx.cloned_repo_path,
-            ctx.build_outputs_base_dir,
-            version_id=ctx.branch_to_clone,
-        )
+        devil_built_path = build_mkdocs_devil(ctx=ctx)
         if devil_built_path:
             devil_entry_point = find_entry_point(devil_built_path, "mkdocs")
     return vanilla_entry_point, devil_entry_point
