@@ -1,0 +1,55 @@
+/* --- BLOCCO CORRETTO PER I PERMALINK --- */
+
+/* Rendi il titolo un punto di riferimento per il posizionamento */
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+}
+
+/* Stile per il link stesso (l'elemento <a>) */
+.headerlink {
+/* Nascondilo di default */
+    opacity: 0;
+
+    /* Rimuovi la sottolineatura */
+    text-decoration: none;
+
+    /* Posizionalo leggermente a destra del titolo */
+    margin-left: 0.5rem;
+
+    /* Aggiungi una transizione per un effetto graduale */
+    transition: opacity 0.2s ease-in-out;
+
+    /* --- TRUCCO CHIAVE #1: Nascondi il testo originale (il carattere '') --- */
+    font-size: 0;
+}
+
+/* Usa un pseudo-elemento ::before per INSERIRE la nostra icona */
+.headerlink::before {
+/* --- TRUCCO CHIAVE #2: Ripristina la dimensione del font solo per l'icona --- */
+    font-size: 0.8rem; /* Puoi aggiustare questo valore */
+
+    /* Specifica che deve usare il font di Font Awesome */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900; /* Necessario per le icone "solid" */
+
+    /* Questo è il codice Unicode per l'icona "link" */
+    content: "\f0c1";
+
+    /* Colore e stile dell'icona */
+    color: #adb5bd; /* Un grigio chiaro */
+}
+
+/* Mostra il link solo quando si passa il mouse sopra al titolo genitore */
+h1:hover .headerlink,
+h2:hover .headerlink,
+h3:hover .headerlink,
+h4:hover .headerlink,
+h5:hover .headerlink,
+h6:hover .headerlink {
+    opacity: 1;
+}
+
+/* Cambia il colore dell'icona quando ci passi sopra il mouse */
+.headerlink:hover::before {
+    color: #0d6efd; /* Un blu standard */
+}
