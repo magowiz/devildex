@@ -1,16 +1,21 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{# Inseriamo i nostri fogli di stile e il logo come icona #}
-{% block extrahead %}
-{{ super() }}
-<link rel="stylesheet" href="{{ 'css/bootstrap.min.css' | url }}">
-<link rel="stylesheet" href="{{ 'css/devildex_mkdocs.css' | url }}">
-<link rel="icon" href="{{ 'img/logo-final.png' | url }}">
-{% endblock %}
+    {# Titolo dinamico della pagina #}
+    <title>{% if page.title %}{{ page.title }} - {% endif %}{{ config.site_name }}</title>
 
-{# Inseriamo la nostra navbar sopra tutto il resto #}
-{% block header %}
-<!-- DevilDex Top Bar -->
+    {# Inseriamo i nostri fogli di stile e il logo come icona #}
+    <link rel="stylesheet" href="{{ 'css/bootstrap.min.css' | url }}">
+    <link rel="stylesheet" href="{{ 'css/devildex_mkdocs.css' | url }}">
+    <link rel="icon" href="{{ 'img/logo-final.png' | url }}">
+    <link rel="stylesheet" href="{{ 'css/all.css' | url }}">
+</head>
+<body>
+
+
 <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="{{ nav.homepage.url | url }}">
@@ -22,16 +27,27 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="devildexNavbarContent">
-            <!-- I link di navigazione originali verranno gestiti dal tema sottostante -->
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {% for nav_item in nav %}
+                <li class="nav-item">
+                    <a href="{{ nav_item.url|url }}" class="nav-link {% if nav_item.active %}active{% endif %}">
+                        {{ nav_item.title }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </nav>
-{{ super() }}
-{% endblock %}
 
-{# Aggiungiamo il nostro footer in fondo #}
-{% block footer %}
-{{ super() }}
+<div class="container mt-4">
+    <div class="row">
+        <main class="col-md-12">
+            {{ page.content }}
+        </main>
+    </div>
+</div>
+
 <footer class="footer mt-auto py-3 bg-dark text-light border-top">
     <div class="container">
         <div class="row">
@@ -43,11 +59,9 @@
         </div>
     </div>
 </footer>
-{% endblock %}
 
-{# Aggiungiamo i nostri script JS #}
-{% block scripts %}
-{{ super() }}
 <script src="{{ 'js/bootstrap.bundle.min.js' | url }}"></script>
 <script src="{{ 'js/devildex_mkdocs.js' | url }}"></script>
-{% endblock %}
+
+</body>
+</html>
