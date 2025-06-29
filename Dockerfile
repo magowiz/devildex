@@ -26,16 +26,26 @@ RUN apt-get update && \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    build-essential git curl \
-    libssl-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
-    libsqlite3-dev libreadline-dev libffi-dev libbz2-dev pkg-config \
-    patchelf \
-    libglib2.0-0 \
+    build-essential \
     cmake \
+    curl \
+    git \
     libcairo2-dev \
+    libffi-dev \
+    libgdbm-dev \
+    libglib2.0-0 \
+    libncurses5-dev \
+    libnss3-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libbz2-dev \
+    patchelf \
+    pkg-config \
+    python3 \
     python3-wxgtk4.0 \
     python3-wxgtk-webview4.0 \
-    python3 \
+    zlib1g-dev \
     && \
     rm -rf /var/lib/apt/lists/*
 
