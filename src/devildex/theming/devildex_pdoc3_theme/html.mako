@@ -57,7 +57,7 @@
                   <a href="${git_link}" class="git-link" target="_blank">Browse git</a>
                 %endif
             </summary>
-            <pre><code>${d.source | n}</code></pre>
+            <pre><code>${d.source | h}</code></pre>
           </details>
         % elif git_link:
           <div class="git-link-div"><a href="${git_link}" class="git-link">Browse git</a></div>
@@ -448,5 +448,19 @@
 
         <script src="static/bootstrap/js/bootstrap.bundle.min.js"></script>
         <script src="static/js/pdoc3_devildex.js"></script>
+
+
+        <script src="static/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+        % if syntax_highlighting:
+              <script defer src="static/highlight/highlight.min.js"></script>
+          <script>
+            window.addEventListener('DOMContentLoaded', () => {
+              hljs.highlightAll();
+            })
+          </script>
+        % endif
+
+
     </body>
     </html>

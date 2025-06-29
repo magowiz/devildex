@@ -5,5 +5,7 @@
 
     <link rel="stylesheet" href="static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="static/pdoc3_devildex.css">
-    <link rel="stylesheet" href="static/pygments.css">
-
+    <!-- <link rel="stylesheet" href="static/pygments.css"> -->
+% if syntax_highlighting:
+  <link rel="stylesheet" href="static/highlight/${hljs_style}.min.css">
+% endif
