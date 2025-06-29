@@ -30,6 +30,7 @@ RUN apt-get update && \
     cmake \
     curl \
     git \
+    libbz2-dev \
     libcairo2-dev \
     libffi-dev \
     libgdbm-dev \
@@ -39,7 +40,6 @@ RUN apt-get update && \
     libreadline-dev \
     libsqlite3-dev \
     libssl-dev \
-    libbz2-dev \
     patchelf \
     pkg-config \
     python3 \

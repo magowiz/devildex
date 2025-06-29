@@ -268,7 +268,7 @@ def _log_command_failure_details(
         stripped_stderr = stderr_text.strip()
         logger.debug("Stderr:\n%s", stripped_stderr)
         logger.debug(
-            f"DEBUG STDERR from FAILED command '{description}':" f"\n{stripped_stderr}"
+            f"DEBUG STDERR from FAILED command '{description}':\n{stripped_stderr}"
         )
 
 

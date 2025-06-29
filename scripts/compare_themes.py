@@ -27,6 +27,7 @@ PYDOCTOR_DEVILDEX_THEME_PATH = (
     DEVILDEX_PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
 )
 SERVER_PORT = 8001
+DOCS_FOLDER = "docs/"
 SPHINX_COMMON_PACKAGES = [
     "sphinx",
     "pallets-sphinx-themes",
@@ -39,13 +40,13 @@ KNOWN_PROJECTS = {
     "black": {
         "repo_url": "https://github.com/psf/black.git",
         "doc_type": "sphinx",
-        "doc_source_path_relative": "docs/",
+        "doc_source_path_relative": DOCS_FOLDER,
         "default_branch": "main",
     },
     "flask": {
         "repo_url": "https://github.com/pallets/flask.git",
         "doc_type": "sphinx",
-        "doc_source_path_relative": "docs/",
+        "doc_source_path_relative": DOCS_FOLDER,
         "default_branch": "main",
     },
     "fastapi": {
@@ -421,7 +422,7 @@ def build_sphinx_devil(ctx: BuildContext, doc_source_relative_path: str) -> Path
             build_result = Path(output_path_str)
         else:
             logger.error("Sphinx Devil build failed.")
-    except (OSError, shutil.Error, subprocess.CalledProcessError):
+    except (OSError, subprocess.CalledProcessError):
         logger.exception("A critical error occurred during the Devil build process")
         build_result = None
 

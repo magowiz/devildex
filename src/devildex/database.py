@@ -169,7 +169,7 @@ class DatabaseManager:
     """Manages the database engine and session creation."""
 
     _engine: Optional[Engine] = None
-    _SessionLocal: Optional[sessionmaker[SQLAlchemySession]] = None
+    _session_local: Optional[sessionmaker[SQLAlchemySession]] = None
 
     @staticmethod
     def get_db_path() -> Path:
@@ -323,7 +323,7 @@ class DatabaseManager:
             connect_args={"check_same_thread": False},
             echo=False,
         )
-        cls._SessionLocal = sessionmaker(
+        cls._session_local = sessionmaker(
             autocommit=False, autoflush=False, bind=cls._engine
         )
 
@@ -368,19 +368,19 @@ class DatabaseManager:
 
         Ensures that init_db() was called.
         """
-        if not cls._SessionLocal:
+        if not cls._session_local:
             logger.warning(
                 "Attempting to get a DB session, but init_db() was not called. "
                 "Initializing with default path."
             )
             cls.init_db()
-            if not cls._SessionLocal:
+            if not cls._session_local:
                 raise DatabaseNotInitializedError(
                     message="Failed to initialize SessionLocal even "
                     "after attempting default init."
                 )
 
-        db = cls._SessionLocal()
+        db = cls._session_local()
         try:
             yield db
         finally:
