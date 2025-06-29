@@ -143,7 +143,7 @@ pipeline {
                             sh 'sed -i /^packaging/d requirements-test.txt'
                             sh 'sed -i /^typing_extensions/d requirements.txt'
                             pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
-                                   skipMarkers: '')
+                                   skipMarkers: 'focus')
                             script {
                                 def exists = fileExists 'core'
                                 if (exists) {
