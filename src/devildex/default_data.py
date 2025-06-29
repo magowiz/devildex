@@ -10,14 +10,14 @@ This module includes:
 from typing import Any
 
 from devildex.models import PackageDetails
-
+NOT_INSTALLED_STATUS = "Not Installed"
 PACKAGES_DATA: list[dict[str, Any]] = [
     {
         "id": "real_pkg_black",
         "name": "black",
         "version": "24.4.2",
         "description": "The uncompromising Python code formatter",
-        "status": "Not Installed",
+        "status": NOT_INSTALLED_STATUS,
         "project_urls": {
             "Source Code": "https://github.com/psf/black.git",
             "Documentation": "https://black.readthedocs.io/",
@@ -28,7 +28,7 @@ PACKAGES_DATA: list[dict[str, Any]] = [
         "name": "flask",
         "version": "3.0.3",
         "description": "A microframework for Python web applications",
-        "status": "Not Installed",
+        "status": NOT_INSTALLED_STATUS,
         "project_urls": {
             "Source Code": "https://github.com/pallets/flask.git",
             "Documentation": "https://flask.palletsprojects.com/",
@@ -39,7 +39,7 @@ PACKAGES_DATA: list[dict[str, Any]] = [
         "name": "requests",
         "version": "2.31.0",
         "description": "Python HTTP for Humans.",
-        "status": "Not Installed",
+        "status": NOT_INSTALLED_STATUS,
         "project_urls": {
             "Source Code": "https://github.com/requests/requests.git",
             "Documentation": "https://requests.readthedocs.io/",
