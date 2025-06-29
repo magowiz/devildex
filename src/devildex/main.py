@@ -27,6 +27,7 @@ AVAILABLE_BTN_LABEL = "📖 Available"
 NO_SELECTION_MSG = "No Selection"
 INTERNAL_ERROR_MSG = "Internal Error"
 ERROR_BTN_LABEL = "❌ Error"
+NOT_AVAILABLE_BTN_LABEL = "Not Available"
 
 
 class GuiLogHandler(logging.Handler):
@@ -166,11 +167,11 @@ class DevilDexApp(wx.App):
                         found_specific_docset_subdir.resolve()
                     )
                 else:
-                    pkg_data["docset_status"] = "Not Available"
+                    pkg_data["docset_status"] = NOT_AVAILABLE_BTN_LABEL
                     if "docset_path" in pkg_data:
                         del pkg_data["docset_path"]
             else:
-                pkg_data["docset_status"] = "Not Available"
+                pkg_data["docset_status"] = NOT_AVAILABLE_BTN_LABEL
                 if "docset_path" in pkg_data:
                     del pkg_data["docset_path"]
 
@@ -864,7 +865,7 @@ class DevilDexApp(wx.App):
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_message_to_append)
 
-        final_status_text = AVAILABLE_BTN_LABEL if success else "❌ Error"
+        final_status_text = AVAILABLE_BTN_LABEL if success else ERROR_BTN_LABEL
         if (
             self.data_grid
             and self.docset_status_col_grid_idx != -1
@@ -919,7 +920,7 @@ class DevilDexApp(wx.App):
 
         package_name = selected_package_data_initial.get("name", "N/D")
         current_status = selected_package_data_initial.get(
-            "docset_status", "Not Available"
+            "docset_status", NOT_AVAILABLE_BTN_LABEL
         )
         package_id = selected_package_data_initial.get("id")
         if (
@@ -942,7 +943,7 @@ class DevilDexApp(wx.App):
         )
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_msg)
-        if current_status in [AVAILABLE_BTN_LABEL, "❌ Error"]:
+        if current_status in [AVAILABLE_BTN_LABEL, ERROR_BTN_LABEL]:
             self.on_delete_docset(event=None)
 
         self.on_generate_docset(event=None)
@@ -1008,7 +1009,7 @@ class DevilDexApp(wx.App):
                 self.data_grid.SetCellValue(
                     self.selected_row_index,
                     self.docset_status_col_grid_idx,
-                    "Not Available",
+                    NOT_AVAILABLE_BTN_LABEL,
                 )
                 self.data_grid.ForceRefresh()
                 wx.MessageBox(
@@ -1275,7 +1276,7 @@ class DevilDexApp(wx.App):
             )
             return False
 
-        current_status = package_data.get("docset_status", "Not Available")
+        current_status = package_data.get("docset_status", NOT_AVAILABLE_BTN_LABEL)
         if current_status == AVAILABLE_BTN_LABEL:
             wx.MessageBox(
                 f"The docset for '{package_name}' is already available.",
