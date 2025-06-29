@@ -19,12 +19,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --reinstall ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-
-
-
-RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -46,8 +40,12 @@ RUN apt-get update && \
     python3-wxgtk4.0 \
     python3-wxgtk-webview4.0 \
     zlib1g-dev \
-    && \
-    rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
+
+
+
+
+
 
 
 

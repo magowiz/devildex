@@ -15,14 +15,13 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    python3 \
-    python3-venv \
-    python3-pip \
     libegl1 \
-    python-is-python3 &&\
-    rm -rf /var/lib/apt/lists/*
-
-RUN pip install --no-cache-dir --break-system-packages poetry && poetry self add poetry-plugin-export
+    python-is-python3 \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir --break-system-packages poetry && poetry self add poetry-plugin-export
 
 
 WORKDIR /app

@@ -215,7 +215,7 @@ class PackageSourceFetcher:
                         tar_ref.extract(
                             member, path=temp_extract_dir_abs, set_attrs=False
                         )
-        except (tarfile.TarError, OSError):
+        except tarfile.TarError:
             return False
         else:
             return True
@@ -272,7 +272,7 @@ class PackageSourceFetcher:
                 destination_item_path = destination_dir / item.name
                 shutil.move(str(item), str(destination_item_path))
 
-        except (OSError, shutil.Error):
+        except OSError:
             return False
         else:
             return True
@@ -476,7 +476,7 @@ class PackageSourceFetcher:
                 else:
                     shutil.copy2(item, target_item_path)
 
-        except (OSError, shutil.Error):
+        except OSError:
             return False
         else:
             return True
@@ -570,7 +570,7 @@ class PackageSourceFetcher:
         self._cleanup_target_dir_content()
         if not self._ensure_target_dir_exists():
             logger.error(
-                "Unable to prepare target directory " "for the VCS main branch clone."
+                "Unable to prepare target directory for the VCS main branch clone."
             )
             return False
 
