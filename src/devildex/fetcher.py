@@ -481,6 +481,26 @@ class PackageSourceFetcher:
         else:
             return True
 
+    def _try_fetch_tag_variations(
+        self, tag_variations: list[str], temp_clone_dir: Path
+    ) -> bool:
+        tag_checkout_and_copy_successful = False
+        for tag in tag_variations:
+            checkout_process = self._run_git_command(
+                ["git", "-C", str(temp_clone_dir), "checkout", tag],
+                check_errors=False,
+            )
+            if checkout_process and checkout_process.returncode == 0:
+                logger.info(f"Checkout of tag '{tag}' successful in {temp_clone_dir}.")
+                self._cleanup_target_dir_content()
+                if not self._ensure_target_dir_exists():
+                    break
+
+                if self._copy_cloned_content(temp_clone_dir, self.download_target_path):
+                    tag_checkout_and_copy_successful = True
+                break
+        return tag_checkout_and_copy_successful
+
     def _try_fetch_tag_full_clone_checkout(
         self, repo_url: str, tag_variations: list[str]
     ) -> bool:
@@ -492,7 +512,6 @@ class PackageSourceFetcher:
         )
 
         cloned_successfully = False
-        tag_checkout_and_copy_successful = False
 
         try:
             if temp_clone_dir.exists():
@@ -504,24 +523,9 @@ class PackageSourceFetcher:
                 return False
             cloned_successfully = True
 
-            for tag in tag_variations:
-                checkout_process = self._run_git_command(
-                    ["git", "-C", str(temp_clone_dir), "checkout", tag],
-                    check_errors=False,
-                )
-                if checkout_process and checkout_process.returncode == 0:
-                    logger.info(
-                        f"Checkout of tag '{tag}' successful in {temp_clone_dir}."
-                    )
-                    self._cleanup_target_dir_content()
-                    if not self._ensure_target_dir_exists():
-                        break
-
-                    if self._copy_cloned_content(
-                        temp_clone_dir, self.download_target_path
-                    ):
-                        tag_checkout_and_copy_successful = True
-                    break
+            tag_checkout_and_copy_successful = self._try_fetch_tag_variations(
+                tag_variations=tag_variations, temp_clone_dir=temp_clone_dir
+            )
 
             return tag_checkout_and_copy_successful
         finally:

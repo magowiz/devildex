@@ -75,35 +75,6 @@ class ThemeManager:
                 return node.value.value
         return "unknown"
 
-    def mkdocs_apply_customizations(self, config: dict) -> dict:
-        """Apply DevilDex theme customizations to an MkDocs config dictionary."""
-        if self.doc_type != "mkdocs":
-            logger.warning(
-                "ThemeManager: Attempted to apply MkDocs customizations on a non-mkdocs project."
-            )
-            return config
-
-        logger.info(
-            "ThemeManager: Applying MkDocs theme customizations to config dict."
-        )
-
-        theme_dir_abs = (
-            PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_mkdocs_theme"
-        ).resolve()
-
-        if not theme_dir_abs.is_dir():
-            logger.warning(
-                "ThemeManager: DevilDex MkDocs theme assets not found at %s. "
-                "Skipping 'custom_dir' injection.",
-                theme_dir_abs,
-            )
-            return config
-        logger.info(
-            "ThemeManager: Patched config with 'custom_dir': '%s'",
-            str(theme_dir_abs),
-        )
-        return config
-
     @staticmethod
     def _get_list_from_ast(tree: ast.AST, key: str) -> list[str]:
         """Analyze the syntactic tree (AST) to find a value.

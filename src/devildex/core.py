@@ -5,8 +5,12 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from devildex import database
 from devildex.app_paths import AppPaths
+from devildex.database import Docset
 from devildex.local_data_parse import registered_project_parser
 from devildex.local_data_parse.common_read import (
     get_explicit_dependencies_from_project_config,
@@ -219,49 +223,68 @@ class DevilDexCore:
         logger.info("Core: Initial DB population completed.")
 
         logger.info("Core: Loading data from database for the grid...")
-        grid_data_to_return: list[dict[str, Any]] = []
         with database.get_session() as session:
-            docsets_to_load_from_db: list[database.Docset] = []
-            if project_db_name:
-                current_project_obj = (
-                    session.query(database.RegisteredProject)
-                    .filter_by(project_name=project_db_name)
-                    .first()
-                )
-                if current_project_obj:
-                    docsets_to_load_from_db = current_project_obj.docsets
-                    logger.info(
-                        f"Core: Loading {len(docsets_to_load_from_db)} "
-                        f"docsets for project '{project_db_name}'."
-                    )
-                else:
-                    logger.warning(
-                        f"Core: Project '{project_db_name}' not found in "
-                        "DB for loading its docsets."
-                    )
-            else:
-                docsets_to_load_from_db = session.query(database.Docset).all()
-                logger.info(
-                    "Core: No active project, loading all "
-                    f"{len(docsets_to_load_from_db)} docsets from DB."
-                )
-
-            for db_docset in docsets_to_load_from_db:
-                pkg_info = db_docset.package_info
-                grid_row = {
-                    "id": db_docset.id,
-                    "name": db_docset.package_name,
-                    "version": db_docset.package_version,
-                    "description": pkg_info.summary if pkg_info else "N/A",
-                    "docset_status": db_docset.status,
-                }
-                if pkg_info and pkg_info.project_urls:
-                    grid_row["project_urls"] = pkg_info.project_urls
-                grid_data_to_return.append(grid_row)
-
-            logger.info(
-                f"Core: Loaded {len(grid_data_to_return)} records from DB for the grid."
+            docsets_to_load_from_db = self._bootstrap_database_read_db(
+                project_db_name, session
             )
+            grid_data_to_return = self._bootstrap_database_loop_docsets(
+                docsets_to_load_from_db
+            )
+        return grid_data_to_return
+
+    @staticmethod
+    def _bootstrap_database_read_db(
+        project_db_name: str, session: Session
+    ) -> list[Docset]:
+        docsets_to_load_from_db: list[database.Docset] = []
+        if project_db_name:
+            current_project_obj = (
+                session.query(database.RegisteredProject)
+                .filter_by(project_name=project_db_name)
+                .first()
+            )
+            if current_project_obj:
+                docsets_to_load_from_db = list(current_project_obj.docsets)
+                logger.info(
+                    f"Core: Loading {len(docsets_to_load_from_db)} "
+                    f"docsets for project '{project_db_name}'."
+                )
+            else:
+                logger.warning(
+                    f"Core: Project '{project_db_name}' not found in "
+                    "DB for loading its docsets."
+                )
+        else:
+            docsets_to_load_from_db = list(
+                session.scalars(select(database.Docset)).all()
+            )
+            logger.info(
+                "Core: No active project, loading all "
+                f"{len(docsets_to_load_from_db)} docsets from DB."
+            )
+        return docsets_to_load_from_db
+
+    @staticmethod
+    def _bootstrap_database_loop_docsets(
+        docsets_to_load_from_db: list[Docset],
+    ) -> list[dict[str, Any]]:
+        grid_data_to_return: list[dict[str, Any]] = []
+        for db_docset in docsets_to_load_from_db:
+            pkg_info = db_docset.package_info
+            grid_row = {
+                "id": db_docset.id,
+                "name": db_docset.package_name,
+                "version": db_docset.package_version,
+                "description": pkg_info.summary if pkg_info else "N/A",
+                "docset_status": db_docset.status,
+            }
+            if pkg_info and pkg_info.project_urls:
+                grid_row["project_urls"] = pkg_info.project_urls
+            grid_data_to_return.append(grid_row)
+
+        logger.info(
+            f"Core: Loaded {len(grid_data_to_return)} records from DB for the grid."
+        )
         return grid_data_to_return
 
     def list_package_dirs(self) -> list[str]:

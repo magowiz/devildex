@@ -322,8 +322,8 @@ class DocStringsSrc:
         self._cleanup_pdoc_output_on_failure(pdoc_command_output_dir, project_name)
         return False
 
-    @staticmethod
     def _find_and_report_non_package_folders(
+        self,
         scan_base_path: Path,
         project_root_for_relative_paths: Path,
         output_report_file: Path,
@@ -351,7 +351,20 @@ class DocStringsSrc:
         )
 
         find_recursively(scan_base_path)
+        self._find_and_non_package_folder(
+            non_package_folders,
+            output_report_file,
+            project_root_for_relative_paths,
+            scan_base_path,
+        )
 
+    @staticmethod
+    def _find_and_non_package_folder(
+        non_package_folders: list[Path],
+        output_report_file: Path,
+        project_root_for_relative_paths: Path,
+        scan_base_path: Path,
+    ) -> None:
         if non_package_folders:
             try:
                 output_report_file.parent.mkdir(parents=True, exist_ok=True)

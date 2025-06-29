@@ -10,6 +10,7 @@ from argparse import Namespace
 from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
 from dev_themes_server import start_server
 
@@ -174,9 +175,12 @@ class ServerRebuilder:
         """
         logger.info("\n--- Starting browser-requested rebuild ---")
 
-        rebuild_ctx = replace(
-            self.base_context,
-            build_id=datetime.now().strftime("%H:%M:%S"),
+        rebuild_ctx: BuildContext = cast(
+            BuildContext,
+            replace(
+                self.base_context,
+                build_id=datetime.now().strftime("%H:%M:%S"),
+            ),
         )
 
         _, devil_entry_point = _perform_builds(ctx=rebuild_ctx)
@@ -599,7 +603,10 @@ def run_server_mode(base_context: BuildContext) -> None:
 
     """
     logger.info("Performing initial DEVIL build for the server...")
-    initial_ctx = replace(base_context, build_id=datetime.now().strftime("%H:%M:%S"))
+    initial_ctx = cast(
+        BuildContext,
+        replace(base_context, build_id=datetime.now().strftime("%H:%M:%S")),
+    )
     _, devil_entry_point = _perform_builds(ctx=initial_ctx)
 
     if devil_entry_point:
@@ -676,7 +683,7 @@ def mkdocs_run(ctx: BuildContext) -> tuple[str | None, str | None]:
     return vanilla_entry_point, devil_entry_point
 
 
-def sphinx_run(ctx: BuildContext) -> tuple[Path | None, Path | None] | None:
+def sphinx_run(ctx: BuildContext) -> tuple[Path | None, Path | None]:
     """Run Sphinx build."""
     vanilla_entry_point: Path | None = None
     devil_entry_point: Path | None = None

@@ -1,4 +1,5 @@
 """scan project env module."""
+
 import logging
 import os
 import sys
@@ -7,6 +8,8 @@ from pathlib import Path
 import toml
 
 logger = logging.getLogger(__name__)
+
+
 def find_pyproject_toml(start_path: str = ".") -> Path | None:
     """Cerca pyproject.toml nella current directory or nelle parent directory.
 
@@ -42,6 +45,14 @@ def _read_project_data_toml(pyproject_path: Path | str) -> set | dict:
     return pyproject_data
 
 
+def _add_deps_from_section(section_data: dict, deps_set: set) -> None:
+    if isinstance(section_data, dict):
+        for name in section_data:
+            normalized_name = name.lower().replace("_", "-")
+            if normalized_name != "python":
+                deps_set.add(normalized_name)
+
+
 def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
     """Read pyproject.toml e returns un set con i nomi delle direct dependencies.
 
@@ -49,20 +60,14 @@ def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
     """
     pyproject_data = _read_project_data_toml(pyproject_path)
     explicit_deps = set()
-
-    def add_deps_from_section(section_data: dict) -> None:
-        if isinstance(section_data, dict):
-            for name in section_data:
-                normalized_name = name.lower().replace("_", "-")
-                if normalized_name != "python":
-                    explicit_deps.add(normalized_name)
-
     if (
         "tool" in pyproject_data
         and "poetry" in pyproject_data["tool"]
         and "dependencies" in pyproject_data["tool"]["poetry"]
     ):
-        add_deps_from_section(pyproject_data["tool"]["poetry"]["dependencies"])
+        _add_deps_from_section(
+            pyproject_data["tool"]["poetry"]["dependencies"], explicit_deps
+        )
 
     if (
         "tool" in pyproject_data
@@ -71,7 +76,7 @@ def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
     ):
         for _, group_data in pyproject_data["tool"]["poetry"]["group"].items():
             if isinstance(group_data, dict) and "dependencies" in group_data:
-                add_deps_from_section(group_data["dependencies"])
+                _add_deps_from_section(group_data["dependencies"], explicit_deps)
 
     return explicit_deps
 

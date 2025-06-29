@@ -37,8 +37,8 @@ RUN apt-get update && \
     patchelf \
     pkg-config \
     python3 \
-    python3-wxgtk4.0 \
     python3-wxgtk-webview4.0 \
+    python3-wxgtk4.0 \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 

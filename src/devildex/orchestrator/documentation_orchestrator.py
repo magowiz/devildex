@@ -44,6 +44,35 @@ class Orchestrator:
         self.doc_strings.docset_dir = self.base_output_dir
         self._effective_source_path = None
 
+    def _fetch_repo_fetch(
+        self, fetcher_storage_base: object, package_info_for_fetcher: dict
+    ) -> Path | None:
+        fetcher = PackageSourceFetcher(
+            base_save_path=str(fetcher_storage_base),
+            package_info_dict=package_info_for_fetcher,
+        )
+        try:
+            fetch_successful, _is_master_branch, fetched_path_str = fetcher.fetch()
+
+            if fetch_successful and fetched_path_str:
+                logger.info(
+                    f"Orchestrator: Fetch successful. Sources at: {fetched_path_str}"
+                )
+                source_path_candidate = Path(fetched_path_str).resolve()
+            else:
+                logger.error(
+                    f"Orchestrator: Fetch failed for {self.package_details.name}."
+                    f" Fetcher returned: success={fetch_successful}, "
+                    f"path={fetched_path_str}"
+                )
+                source_path_candidate = None
+        except (OSError, RuntimeError):
+            logger.exception(
+                f"Orchestrator: Exception during fetch for {self.package_details.name}"
+            )
+            source_path_candidate = None
+        return source_path_candidate
+
     def fetch_repo(self) -> bool:
         """Ensure that project sources are available, either from an initial path.
 
@@ -85,32 +114,9 @@ class Orchestrator:
                 "project_urls": self.package_details.project_urls or {},
             }
 
-            fetcher = PackageSourceFetcher(
-                base_save_path=str(fetcher_storage_base),
-                package_info_dict=package_info_for_fetcher,
+            source_path_candidate = self._fetch_repo_fetch(
+                fetcher_storage_base, package_info_for_fetcher
             )
-            try:
-                fetch_successful, _is_master_branch, fetched_path_str = fetcher.fetch()
-
-                if fetch_successful and fetched_path_str:
-                    logger.info(
-                        "Orchestrator: Fetch successful. Sources "
-                        f"at: {fetched_path_str}"
-                    )
-                    source_path_candidate = Path(fetched_path_str).resolve()
-                else:
-                    logger.error(
-                        f"Orchestrator: Fetch failed for {self.package_details.name}."
-                        f" Fetcher returned: success={fetch_successful}, "
-                        f"path={fetched_path_str}"
-                    )
-                    source_path_candidate = None
-            except (OSError, RuntimeError):
-                logger.exception(
-                    "Orchestrator: Exception during fetch for "
-                    f"{self.package_details.name}"
-                )
-                source_path_candidate = None
 
         if (
             source_path_candidate

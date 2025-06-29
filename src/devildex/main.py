@@ -324,7 +324,9 @@ class DevilDexApp(wx.App):
     ) -> None:
         """Help to set states for action buttons based on selected package data."""
         selected_package_id = package_data.get("id")
-        current_docset_status = package_data.get("docset_status", "Not Available")
+        current_docset_status = package_data.get(
+            "docset_status", NOT_AVAILABLE_BTN_LABEL
+        )
         is_generating_this_row = (
             self.generation_task_manager.is_task_active_for_package(selected_package_id)
             if self.generation_task_manager and selected_package_id
@@ -655,13 +657,46 @@ class DevilDexApp(wx.App):
             if self.log_text_ctrl:
                 self.log_text_ctrl.Show(False)
 
-    def _set_log_panel_visibility(self, visible: bool) -> None:
+        # In /home/magowiz/MEGA/projects/devildex/src/devildex/main.py
+
+    def _show_log_panel(self) -> None:
+        """Handle the logic to make the log panel visible."""
         if (
             not self.splitter
             or not self.top_splitter_panel
             or not self.bottom_splitter_panel
         ):
+            return
 
+        if not self.splitter.IsSplit():
+            self.splitter.SplitHorizontally(
+                self.top_splitter_panel,
+                self.bottom_splitter_panel,
+                self.last_sash_position,
+            )
+        self.bottom_splitter_panel.Show(True)
+        if self.log_text_ctrl:
+            self.log_text_ctrl.Show(True)
+        self.splitter.SetSashPosition(self.last_sash_position, redraw=True)
+        self.bottom_splitter_panel.Layout()
+
+    def _hide_log_panel(self) -> None:
+        """Handle the logic to hide the log panel."""
+        if not self.splitter or not self.bottom_splitter_panel:
+            return
+
+        if self.splitter.IsSplit():
+            self.last_sash_position = self.splitter.GetSashPosition()
+            self.splitter.Unsplit(self.bottom_splitter_panel)
+        self.bottom_splitter_panel.Show(False)
+        if self.log_text_ctrl:
+            self.log_text_ctrl.Show(False)
+
+    def _set_log_panel_visibility(self, visible: bool) -> None:
+        """Set the visibility of the log panel by dispatching to helper methods."""
+        # Guard clause: if the splitter isn't ready, just toggle the text control
+        # This handles a potential edge case if called before full UI initialization.
+        if not self.splitter:
             if self.log_text_ctrl:
                 self.log_text_ctrl.Show(visible)
             if self.panel:
@@ -672,25 +707,11 @@ class DevilDexApp(wx.App):
         self.is_log_panel_visible = visible
 
         if self.is_log_panel_visible:
-            if not self.splitter.IsSplit():
-                self.splitter.SplitHorizontally(
-                    self.top_splitter_panel,
-                    self.bottom_splitter_panel,
-                    self.last_sash_position,
-                )
-            self.bottom_splitter_panel.Show(True)
-            if self.log_text_ctrl:
-                self.log_text_ctrl.Show(True)
-            self.splitter.SetSashPosition(self.last_sash_position, redraw=True)
-            self.bottom_splitter_panel.Layout()
+            self._show_log_panel()
         else:
-            if self.splitter.IsSplit():
-                self.last_sash_position = self.splitter.GetSashPosition()
-                self.splitter.Unsplit(self.bottom_splitter_panel)
-            self.bottom_splitter_panel.Show(False)
-            if self.log_text_ctrl:
-                self.log_text_ctrl.Show(False)
+            self._hide_log_panel()
 
+        # Final UI updates, common to both actions
         if self.panel:
             self.panel.Layout()
         self._update_log_toggle_button_icon()
@@ -1002,7 +1023,7 @@ class DevilDexApp(wx.App):
 
                 self.current_grid_source_data[self.selected_row_index][
                     "docset_status"
-                ] = "Not Available"
+                ] = NOT_AVAILABLE_BTN_LABEL
                 self.current_grid_source_data[self.selected_row_index].pop(
                     "docset_path", None
                 )
@@ -1229,21 +1250,26 @@ class DevilDexApp(wx.App):
             "log": self.view_log_action_button,
             "delete": self.delete_action_button,
         }
+        self._update_action_perform(action_buttons)
 
+    def _update_action_perform(self, action_buttons: dict) -> None:
         if self.selected_row_index is None:
             for button_widget in action_buttons.values():
                 if button_widget:
                     button_widget.Enable(False)
         else:
-            selected_package_data = self.get_selected_row()
-            if selected_package_data:
-                self._set_button_states_for_selected_row(
-                    selected_package_data, action_buttons
-                )
-            else:
-                for button_widget in action_buttons.values():
-                    if button_widget:
-                        button_widget.Enable(False)
+            self._update_action_p2(action_buttons)
+
+    def _update_action_p2(self, action_buttons: dict) -> None:
+        selected_package_data = self.get_selected_row()
+        if selected_package_data:
+            self._set_button_states_for_selected_row(
+                selected_package_data, action_buttons
+            )
+        else:
+            for button_widget in action_buttons.values():
+                if button_widget:
+                    button_widget.Enable(False)
         disable_if_any_task_running = self.is_task_running
         if self.home_button:
             self.home_button.Enable(not disable_if_any_task_running)
