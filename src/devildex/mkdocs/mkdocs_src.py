@@ -203,7 +203,7 @@ def process_mkdocs_source_and_build(
             config_content["theme"]["custom_dir"] = theme_custom_dir_override
             config_content["theme"]["name"] = None
 
-        processed_config, was_modified = _preprocess_mkdocs_config(
+        processed_config, _ = _preprocess_mkdocs_config(
             config_content, original_config_path
         )
 

@@ -39,8 +39,6 @@ def _fetch_available_versions(project_slug: str) -> list[dict] | None:
 
             next_page_url = data.get("next")
             page_num += 1
-            if next_page_url:
-                pass
 
         except requests.exceptions.RequestException:
             logger.exception(f"Error calling API list versions ({next_page_url})")

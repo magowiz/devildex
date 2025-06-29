@@ -23,6 +23,11 @@ COL_WIDTH_DESC = 200
 COL_WIDTH_STATUS = 120
 COL_WIDTH_DOCSET_STATUS = 140
 
+AVAILABLE_BTN_LABEL = "📖 Available"
+NO_SELECTION_MSG = "No Selection"
+INTERNAL_ERROR_MSG = "Internal Error"
+ERROR_BTN_LABEL = "❌ Error"
+
 
 class GuiLogHandler(logging.Handler):
     """Class define Gui Log Handler."""
@@ -156,7 +161,7 @@ class DevilDexApp(wx.App):
                         break
 
                 if found_specific_docset_subdir:
-                    pkg_data["docset_status"] = "📖 Available"
+                    pkg_data["docset_status"] = AVAILABLE_BTN_LABEL
                     pkg_data["docset_path"] = str(
                         found_specific_docset_subdir.resolve()
                     )
@@ -328,22 +333,24 @@ class DevilDexApp(wx.App):
         open_btn = action_buttons.get("open")
         if open_btn:
             can_open = (
-                current_docset_status == "📖 Available" and not is_generating_this_row
+                current_docset_status == AVAILABLE_BTN_LABEL
+                and not is_generating_this_row
             )
             open_btn.Enable(can_open)
 
         generate_btn = action_buttons.get("generate")
         if generate_btn:
             can_generate = (
-                not is_generating_this_row and current_docset_status != "📖 Available"
+                not is_generating_this_row
+                and current_docset_status != AVAILABLE_BTN_LABEL
             )
             generate_btn.Enable(can_generate)
 
         regenerate_btn = action_buttons.get("regenerate")
         if regenerate_btn:
             can_regenerate = not is_generating_this_row and current_docset_status in [
-                "📖 Available",
-                "❌ Error",
+                AVAILABLE_BTN_LABEL,
+                ERROR_BTN_LABEL,
             ]
             regenerate_btn.Enable(can_regenerate)
 
@@ -354,8 +361,8 @@ class DevilDexApp(wx.App):
         delete_btn = action_buttons.get("delete")
         if delete_btn:
             can_delete = not is_generating_this_row and current_docset_status in [
-                "📖 Available",
-                "❌ Error",
+                AVAILABLE_BTN_LABEL,
+                ERROR_BTN_LABEL,
             ]
             delete_btn.Enable(can_delete)
 
@@ -692,7 +699,7 @@ class DevilDexApp(wx.App):
         if self.selected_row_index is None:
             wx.MessageBox(
                 "Please select a package from the grid to open its docset.",
-                "No Selection",
+                NO_SELECTION_MSG,
                 wx.OK | wx.ICON_INFORMATION,
             )
             event.Skip()
@@ -703,7 +710,7 @@ class DevilDexApp(wx.App):
         if not selected_package_data:
             wx.MessageBox(
                 "Could not retrieve data for the selected row.",
-                "Internal Error",
+                INTERNAL_ERROR_MSG,
                 wx.OK | wx.ICON_ERROR,
             )
             event.Skip()
@@ -766,7 +773,7 @@ class DevilDexApp(wx.App):
         if self.selected_row_index is None:
             wx.MessageBox(
                 "Please select a package from the grid.",
-                "No Selection",
+                NO_SELECTION_MSG,
                 wx.OK | wx.ICON_INFORMATION,
             )
             if event:
@@ -777,7 +784,7 @@ class DevilDexApp(wx.App):
         if not selected_package_data:
             wx.MessageBox(
                 "Selected package data not found.",
-                "Internal Error",
+                INTERNAL_ERROR_MSG,
                 wx.OK | wx.ICON_ERROR,
             )
             if event:
@@ -857,7 +864,7 @@ class DevilDexApp(wx.App):
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_message_to_append)
 
-        final_status_text = "📖 Available" if success else "❌ Error"
+        final_status_text = AVAILABLE_BTN_LABEL if success else "❌ Error"
         if (
             self.data_grid
             and self.docset_status_col_grid_idx != -1
@@ -892,7 +899,7 @@ class DevilDexApp(wx.App):
         if self.selected_row_index is None:
             wx.MessageBox(
                 "Please select a package to regenerate its docset.",
-                "No Selection",
+                NO_SELECTION_MSG,
                 wx.OK | wx.ICON_INFORMATION,
             )
             if event:
@@ -903,7 +910,7 @@ class DevilDexApp(wx.App):
         if not selected_package_data_initial:
             wx.MessageBox(
                 "Could not retrieve data for the selected row.",
-                "Internal Error",
+                INTERNAL_ERROR_MSG,
                 wx.OK | wx.ICON_ERROR,
             )
             if event:
@@ -935,7 +942,7 @@ class DevilDexApp(wx.App):
         )
         if self.log_text_ctrl:
             self.log_text_ctrl.AppendText(log_msg)
-        if current_status in ["📖 Available", "❌ Error"]:
+        if current_status in [AVAILABLE_BTN_LABEL, "❌ Error"]:
             self.on_delete_docset(event=None)
 
         self.on_generate_docset(event=None)
@@ -1269,7 +1276,7 @@ class DevilDexApp(wx.App):
             return False
 
         current_status = package_data.get("docset_status", "Not Available")
-        if current_status == "📖 Available":
+        if current_status == AVAILABLE_BTN_LABEL:
             wx.MessageBox(
                 f"The docset for '{package_name}' is already available.",
                 "Already Available",

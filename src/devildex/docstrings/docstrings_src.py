@@ -26,6 +26,8 @@ GIT_FULL_PATH = shutil.which("git")
 
 logger = logging.getLogger(__name__)
 
+INIT_FILENAME = "__init__.py"
+
 
 @dataclass
 class PDocContext:
@@ -338,7 +340,7 @@ class DocStringsSrc:
                 if item.name.startswith((".", "__")) or item.name == "site-packages":
                     continue
                 if item.is_dir():
-                    if not (item / "__init__.py").exists():
+                    if not (item / INIT_FILENAME).exists():
                         non_package_folders.append(
                             item.relative_to(project_root_for_relative_paths)
                         )
@@ -854,12 +856,12 @@ class DocStringsSrc:
             potential_module_name_part = item.stem if item.is_file() else item.name
 
             if item.is_file() and item.name.endswith(".py"):
-                if item.name == "__init__.py":
+                if item.name == INIT_FILENAME:
                     continue
                 entities.append(
                     f"{current_package_qualname}.{potential_module_name_part}"
                 )
-            elif item.is_dir() and (item / "__init__.py").exists():
+            elif item.is_dir() and (item / INIT_FILENAME).exists():
                 sub_package_qname = (
                     f"{current_package_qualname}.{potential_module_name_part}"
                 )
@@ -1010,10 +1012,9 @@ class DocStringsSrc:
                 if module_name == "__init__":
                     continue
                 discovered_names.append(module_name)
-            elif item_path.is_dir():
-                if (item_path / "__init__.py").exists():
-                    package_name = item_name
-                    discovered_names.append(package_name)
+            elif item_path.is_dir() and (item_path / INIT_FILENAME).exists():
+                package_name = item_name
+                discovered_names.append(package_name)
         return discovered_names
 
     @staticmethod

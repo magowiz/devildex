@@ -127,7 +127,7 @@ def test_documentation_generation_for_package(
         len(html_files) > 0
     ), f"No file HTML trovato in: {final_project_version_docs_dir}"
     logger.info(
-        f"Found {len(html_files)} file HTML in " f"{final_project_version_docs_dir}."
+        f"Found {len(html_files)} file HTML in {final_project_version_docs_dir}."
     )
 
     if expected_entry_point:

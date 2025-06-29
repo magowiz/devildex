@@ -34,7 +34,7 @@ def _process_requirements_obj(
         )
         if invalid_line_content_count > 0:
             logger.warning(
-                "Found %SRS ROWS NOT VALID (landfill from the parser) in ' %s'.",
+                "Found %s RS ROWS NOT VALID (landfill from the parser) in ' %s'.",
                 invalid_line_content_count,
                 file_path_for_logging,
             )

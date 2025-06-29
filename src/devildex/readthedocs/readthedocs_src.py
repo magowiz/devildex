@@ -26,6 +26,7 @@ if not logger.hasHandlers():
 
 CONF_SPHINX_FILE = "conf.py"
 GIT_FULL_PATH = shutil.which("git")
+REQUIREMENTS_FILENAME = "requirements.txt"
 
 
 @dataclass
@@ -254,7 +255,7 @@ def find_doc_source_in_clone(repo_path: Path) -> str | None:
     doc_source_path = _find_doc_dir_in_repo(str(repo_path), potential_doc_dirs)
     if not doc_source_path:
         logger.error(
-            "No documentation source directory with conf.py " "found in the clone."
+            "No documentation source directory with conf.py found in the clone."
         )
         return None
     logger.info(f"Documentation source directory identified at: {doc_source_path}")
@@ -334,17 +335,17 @@ def _find_sphinx_doc_requirements_file(
 ) -> Path | None:
     """Find the specific requirements file for SPHINX documentation."""
     candidate_req_paths = [
-        source_dir_path / "requirements.txt",
-        source_dir_path.parent / "requirements.txt",
+        source_dir_path / REQUIREMENTS_FILENAME,
+        source_dir_path.parent / REQUIREMENTS_FILENAME,
         clone_root_path / "doc-requirements.txt",
         clone_root_path / "docs-requirements.txt",
         clone_root_path / "dev-requirements.txt",
         clone_root_path / "requirements-doc.txt",
         clone_root_path / "requirements-docs.txt",
         clone_root_path / "requirements-dev.txt",
-        clone_root_path / "requirements.txt",
-        clone_root_path / "docs" / "requirements.txt",
-        clone_root_path / "doc" / "requirements.txt",
+        clone_root_path / REQUIREMENTS_FILENAME,
+        clone_root_path / "docs" / REQUIREMENTS_FILENAME,
+        clone_root_path / "doc" / REQUIREMENTS_FILENAME,
         clone_root_path / "requirements" / "docs.txt",
         clone_root_path / "requirements" / "doc.txt",
     ]
@@ -546,7 +547,7 @@ def _extract_repo_url_branch(
     except requests.exceptions.RequestException:
         logger.exception("Warning: Error durante la richiesta API: ")
         logger.exception(
-            "Provo a search la repository cloned locally " "if already exists."
+            "Provo a search la repository cloned locally if already exists."
         )
     return default_branch, repo_url
 

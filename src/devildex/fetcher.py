@@ -215,9 +215,7 @@ class PackageSourceFetcher:
                         tar_ref.extract(
                             member, path=temp_extract_dir_abs, set_attrs=False
                         )
-                    elif member.issym() or member.islnk():
-                        pass
-        except (tarfile.TarError, OSError, Exception):
+        except (tarfile.TarError, OSError):
             return False
         else:
             return True
@@ -618,19 +616,16 @@ class PackageSourceFetcher:
 
         if not fetch_successful:
             vcs_url = self._get_vcs_url()
-            if not vcs_url:
-                pass
-            elif self._fetch_from_vcs_tag(vcs_url):
-                fetch_successful = True
-                path_to_return = str(self.download_target_path)
-            elif self._fetch_from_vcs_main(vcs_url):
-                fetch_successful = True
-                is_master_branch_fetched = True
-                path_to_return = str(self.download_target_path)
+            if vcs_url:
+                if self._fetch_from_vcs_tag(vcs_url):
+                    fetch_successful = True
+                    path_to_return = str(self.download_target_path)
+                elif self._fetch_from_vcs_main(vcs_url):
+                    fetch_successful = True
+                    is_master_branch_fetched = True
+                    path_to_return = str(self.download_target_path)
 
-        if fetch_successful:
-            pass
-        else:
+        if not fetch_successful:
             self._cleanup_target_dir_content()
 
         return fetch_successful, is_master_branch_fetched, path_to_return

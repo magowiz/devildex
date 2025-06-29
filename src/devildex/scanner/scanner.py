@@ -7,6 +7,7 @@ import re
 import shutil
 from pathlib import Path
 
+from devildex.constants import CONF_FILENAME
 from devildex.scanner_utils.scanner_utils import (
     check_content_patterns,
     count_matching_strings,
@@ -33,7 +34,7 @@ def is_sphinx_project(project_path: str) -> bool:
 
     potential_conf_dirs = [project_dir, project_dir / "docs", project_dir / "doc"]
 
-    conf_file_paths = find_config_files(potential_conf_dirs, "conf.py")
+    conf_file_paths = find_config_files(potential_conf_dirs, CONF_FILENAME)
 
     if not conf_file_paths:
         logger.error(
@@ -123,7 +124,7 @@ def is_mkdocs_project(project_root_path: str | Path) -> bool:
 if __name__ == "__main__":
     test_sphinx_dir = Path("./SPHINX_DOCS_EXAMPLE")
     test_sphinx_dir.mkdir(exist_ok=True)
-    (test_sphinx_dir / "conf.py").write_text(
+    (test_sphinx_dir / CONF_FILENAME).write_text(
         """
 # conf.py
 # Configuration file for the Sphinx documentation builder.

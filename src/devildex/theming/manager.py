@@ -15,6 +15,7 @@ LIVE_RELOAD_JS_PATH = DEVILDEX_THEMING_ASSETS_PATH / "live_reload.js"
 SPHINX_LAYOUT_TEMPLATE_PATH = DEVILDEX_THEMING_ASSETS_PATH / "sphinx_layout.html"
 
 logger = logging.getLogger(__name__)
+CONF_FILENAME = "conf.py"
 
 
 class ThemeManager:
@@ -39,10 +40,10 @@ class ThemeManager:
             "pygments_style": "tango",
         }
         self.potential_sphinx_conf_paths = [
-            self.project_path / "conf.py",
-            self.project_path / "source" / "conf.py",
-            self.project_path / "docs" / "conf.py",
-            self.project_path / "doc" / "conf.py",
+            self.project_path / CONF_FILENAME,
+            self.project_path / "source" / CONF_FILENAME,
+            self.project_path / "docs" / CONF_FILENAME,
+            self.project_path / "doc" / CONF_FILENAME,
         ]
 
     @staticmethod
@@ -74,9 +75,7 @@ class ThemeManager:
                 return node.value.value
         return "unknown"
 
-    def mkdocs_apply_customizations(
-        self, config: dict, original_yml_path: Path
-    ) -> dict:
+    def mkdocs_apply_customizations(self, config: dict) -> dict:
         """Apply DevilDex theme customizations to an MkDocs config dictionary."""
         if self.doc_type != "mkdocs":
             logger.warning(

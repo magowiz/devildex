@@ -204,8 +204,6 @@ class GenerationTaskManager:
                 f"Task for package_id '{package_id}' was not "
                 "found in active_tasks upon completion."
             )
-        else:
-            pass
 
         self._stop_animation_timer_if_no_tasks()
         self.on_task_complete_callback(
