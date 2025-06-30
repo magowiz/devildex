@@ -30,7 +30,7 @@ function removeOffendingBackgrounds() {
 
 document.addEventListener('DOMContentLoaded', function() {
     // Codice esistente per i link interni (a.internal-link)
-    var internalLinks = document.querySelectorAll('a.internal-link');
+    let internalLinks = document.querySelectorAll('a.internal-link');
     internalLinks.forEach(function(link) {
         link.classList.add('link-primary');
         link.classList.add('link-underline-opacity-75');
