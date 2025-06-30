@@ -8,6 +8,7 @@ from devildex.models import PackageDetails
 logger = logging.getLogger(__name__)
 PART_LENGTH = 2
 
+
 def _handle_project_urls(project_url_entries: list, package_name: str) -> dict:
     current_project_urls = {}
     if project_url_entries:
@@ -36,6 +37,7 @@ def _handle_project_urls(project_url_entries: list, package_name: str) -> dict:
                 )
 
     return current_project_urls
+
 
 def get_installed_packages_with_project_urls(explicit: set | None = None) -> list:
     """Return a list of PackageDetails objects for all installed packages.
