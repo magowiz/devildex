@@ -103,6 +103,47 @@ class ThemeManager:
                 return elements
         return []
 
+    @staticmethod
+    def _sphinx_tree_create_value(
+        tree: ast.Module, var_found: bool, value: str | list[str], var: str
+    ) -> None:
+        if not var_found:
+            if isinstance(value, str):
+                new_assignment = ast.Assign(
+                    targets=[ast.Name(id=var, ctx=ast.Store())],
+                    value=ast.Constant(value=value),
+                )
+                tree.body.append(new_assignment)
+            else:
+                new_assignment = ast.Assign(
+                    targets=[ast.Name(id=var, ctx=ast.Store())],
+                    value=ast.List(
+                        elts=[ast.Constant(value=s) for s in value], ctx=ast.Load()
+                    ),
+                )
+                tree.body.append(new_assignment)
+
+    def _sphinx_change_conf_alter_tree(self, tree: ast.Module) -> None:
+        for var, value in self.settings.items():
+            var_found = False
+            for node in tree.body:
+                if (
+                    isinstance(node, ast.Assign)
+                    and len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name)
+                    and node.targets[0].id == var
+                ):
+                    if isinstance(value, str):
+                        node.value = ast.Constant(value=value)
+                        var_found = True
+                        break
+                    node.value = ast.List(
+                        elts=[ast.Constant(value=s) for s in value], ctx=ast.Load()
+                    )
+                    var_found = True
+                    break
+            self._sphinx_tree_create_value(tree, var_found, value, var)
+
     def sphinx_change_conf(self, dev_mode: bool = False) -> None:
         """Patch sphinx configuration."""
         if self.doc_type != "sphinx":
@@ -153,69 +194,16 @@ class ThemeManager:
             "original_theme_name": self._get_value_from_ast(tree, "html_theme"),
             "extensions": self._get_list_from_ast(tree, "extensions"),
         }
-        for var, value in self.settings.items():
-            var_found = False
-            for node in tree.body:
-                if (
-                    isinstance(node, ast.Assign)
-                    and len(node.targets) == 1
-                    and isinstance(node.targets[0], ast.Name)
-                    and node.targets[0].id == var
-                ):
-                    if isinstance(value, str):
-                        node.value = ast.Constant(value=value)
-                        var_found = True
-                        break
-                    node.value = ast.List(
-                        elts=[ast.Constant(value=s) for s in value], ctx=ast.Load()
-                    )
-                    var_found = True
-                    break
-            if not var_found:
-                if isinstance(value, str):
-                    new_assignment = ast.Assign(
-                        targets=[ast.Name(id=var, ctx=ast.Store())],
-                        value=ast.Constant(value=value),
-                    )
-                    tree.body.append(new_assignment)
-                else:
-                    new_assignment = ast.Assign(
-                        targets=[ast.Name(id=var, ctx=ast.Store())],
-                        value=ast.List(
-                            elts=[ast.Constant(value=s) for s in value], ctx=ast.Load()
-                        ),
-                    )
-                    tree.body.append(new_assignment)
-
+        self._sphinx_change_conf_alter_tree(tree)
         self._apply_sphinx_html_context(tree, values_context)
 
         ast.fix_missing_locations(tree)
         Path(conf_file).write_text(ast.unparse(tree), encoding="utf-8")
 
     @staticmethod
-    def _apply_sphinx_html_context(tree: ast.AST, values_context: dict) -> None:
-        html_context_found = False
-        for node in tree.body:
-            if (
-                isinstance(node, ast.Assign)
-                and len(node.targets) == 1
-                and isinstance(node.targets[0], ast.Name)
-                and node.targets[0].id == "html_context"
-            ):
-                if isinstance(node.value, ast.Dict):
-                    for key_to_add, value_to_add in values_context.items():
-                        node.value.keys.append(ast.Constant(value=key_to_add))
-                        if isinstance(value_to_add, list):
-                            list_node = ast.List(
-                                elts=[ast.Constant(s) for s in value_to_add],
-                                ctx=ast.Load(),
-                            )
-                            node.value.values.append(list_node)
-                        else:
-                            node.value.values.append(ast.Constant(value=value_to_add))
-                html_context_found = True
-                break
-
+    def _apply_sphinx_html_write(tree: ast.Module,
+                                 html_context_found: bool,
+                                 values_context: dict) -> None:
         if not html_context_found:
             keys_for_dict = []
             values_for_dict = []
@@ -234,3 +222,34 @@ class ThemeManager:
                 value=ast.Dict(keys=keys_for_dict, values=values_for_dict),
             )
             tree.body.append(new_node)
+
+    @staticmethod
+    def _apply_sphinx_html_replace(node: ast.Assign, values_context: dict) -> None:
+        if isinstance(node.value, ast.Dict):
+            for key_to_add, value_to_add in values_context.items():
+                node.value.keys.append(ast.Constant(value=key_to_add))
+                if isinstance(value_to_add, list):
+                    list_node = ast.List(
+                        elts=[ast.Constant(s) for s in value_to_add],
+                        ctx=ast.Load(),
+                    )
+                    node.value.values.append(list_node)
+                else:
+                    node.value.values.append(ast.Constant(value=value_to_add))
+
+    def _apply_sphinx_html_context(self,
+                                   tree: ast.Module,
+                                   values_context: dict) -> None:
+        html_context_found = False
+        for node in tree.body:
+            if (
+                isinstance(node, ast.Assign)
+                and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == "html_context"
+            ):
+                self._apply_sphinx_html_replace(node, values_context)
+                html_context_found = True
+                break
+        self._apply_sphinx_html_write(tree, html_context_found, values_context)
+

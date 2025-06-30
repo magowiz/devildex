@@ -132,6 +132,28 @@ class DevilDexApp(wx.App):
         """Check if a package name is matching a package in grid."""
         return pkg == grid_pkg.get("name")
 
+    @staticmethod
+    def _docset_scan_subdir(
+        subdirs_to_check: list, package_root_on_disk: Path
+    ) -> Path | None:
+        for subdir_candidate_name in subdirs_to_check:
+            potential_docset_path = package_root_on_disk / subdir_candidate_name
+            if potential_docset_path.exists() and potential_docset_path.is_dir():
+                found_specific_docset_subdir = potential_docset_path
+                return found_specific_docset_subdir
+        return None
+
+    @staticmethod
+    def _docset_scan_set_status(
+        found_specific_docset_subdir: Path | None, pkg_data: dict
+    ) -> None:
+        if found_specific_docset_subdir:
+            pkg_data["docset_status"] = AVAILABLE_BTN_LABEL
+            pkg_data["docset_path"] = str(found_specific_docset_subdir.resolve())
+        else:
+            pkg_data["docset_status"] = NOT_AVAILABLE_BTN_LABEL
+            pkg_data.pop("docset_path", None)
+
     def _perform_startup_docset_scan(self) -> None:
         """Execute the scan dei existing docsets on startup e updates.
 
@@ -151,25 +173,10 @@ class DevilDexApp(wx.App):
                 if pkg_version:
                     subdirs_to_check.append(str(pkg_version))
                 subdirs_to_check.extend(["main", "master"])
-                found_specific_docset_subdir: Optional[Path] = None
-                for subdir_candidate_name in subdirs_to_check:
-                    potential_docset_path = package_root_on_disk / subdir_candidate_name
-                    if (
-                        potential_docset_path.exists()
-                        and potential_docset_path.is_dir()
-                    ):
-                        found_specific_docset_subdir = potential_docset_path
-                        break
-
-                if found_specific_docset_subdir:
-                    pkg_data["docset_status"] = AVAILABLE_BTN_LABEL
-                    pkg_data["docset_path"] = str(
-                        found_specific_docset_subdir.resolve()
-                    )
-                else:
-                    pkg_data["docset_status"] = NOT_AVAILABLE_BTN_LABEL
-                    if "docset_path" in pkg_data:
-                        del pkg_data["docset_path"]
+                found_specific_docset_subdir: Optional[Path] = self._docset_scan_subdir(
+                    subdirs_to_check, package_root_on_disk
+                )
+                self._docset_scan_set_status(found_specific_docset_subdir, pkg_data)
             else:
                 pkg_data["docset_status"] = NOT_AVAILABLE_BTN_LABEL
                 if "docset_path" in pkg_data:
