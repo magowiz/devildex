@@ -201,9 +201,9 @@ class ThemeManager:
         Path(conf_file).write_text(ast.unparse(tree), encoding="utf-8")
 
     @staticmethod
-    def _apply_sphinx_html_write(tree: ast.Module,
-                                 html_context_found: bool,
-                                 values_context: dict) -> None:
+    def _apply_sphinx_html_write(
+        tree: ast.Module, html_context_found: bool, values_context: dict
+    ) -> None:
         if not html_context_found:
             keys_for_dict = []
             values_for_dict = []
@@ -237,9 +237,9 @@ class ThemeManager:
                 else:
                     node.value.values.append(ast.Constant(value=value_to_add))
 
-    def _apply_sphinx_html_context(self,
-                                   tree: ast.Module,
-                                   values_context: dict) -> None:
+    def _apply_sphinx_html_context(
+        self, tree: ast.Module, values_context: dict
+    ) -> None:
         html_context_found = False
         for node in tree.body:
             if (
@@ -252,4 +252,3 @@ class ThemeManager:
                 html_context_found = True
                 break
         self._apply_sphinx_html_write(tree, html_context_found, values_context)
-
