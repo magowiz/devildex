@@ -10,6 +10,7 @@ This module includes:
 from typing import Any
 
 from devildex.models import PackageDetails
+
 NOT_INSTALLED_STATUS = "Not Installed"
 SOURCE_CODE = "Source Code"
 PACKAGES_DATA: list[dict[str, Any]] = [
