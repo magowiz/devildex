@@ -1,0 +1,29 @@
+# .github/workflows/megalinter.yml
+name: Esegui MegaLinter
+
+# Questo workflow si avvia ogni volta che fai un push sul branch 'master'
+on:
+  push:
+    branches:
+      - master # Assicurati che questo corrisponda al nome del tuo branch principale
+
+jobs:
+  lint-code:
+    runs-on: ubuntu-latest # Questo job verrà eseguito su una macchina virtuale Linux
+
+    steps:
+      - name: Checkout del codice
+        uses: actions/checkout@v4 # Scarica il tuo repository sul runner
+
+      - name: Esegui MegaLinter
+        uses: oxsecurity/megalinter@v7 # Usa l'Action ufficiale di MegaLinter
+        env:
+          # Questa variabile replica il tuo 'VALIDATE_ALL_CODEBASE=true' di Jenkins
+          VALIDATE_ALL_CODEBASE: true
+
+      - name: Carica i Report di MegaLinter
+        uses: actions/upload-artifact@v4 # Salva i report come artefatti del workflow
+        with:
+          name: megalinter-reports
+          path: megalinter-reports/ # MegaLinter salva i report qui di default
+          # Questa linea è l'equivalente del tuo 'archiveArtifacts' di Jenkins
