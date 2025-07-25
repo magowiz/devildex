@@ -230,7 +230,7 @@ class GenerationTaskManager:
             docset_status_col_idx = self.owner_for_timer.docset_status_col_grid_idx
 
         if docset_status_col_idx != -1:
-            for _, row_idx in list(self.active_tasks.items()):
+            for _, row_idx in self.active_tasks.items():
                 self.update_grid_cell_callback(
                     row_idx, docset_status_col_idx, current_frame_char
                 )

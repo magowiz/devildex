@@ -552,9 +552,7 @@ class PackageSourceFetcher:
         if self.package_version.startswith("v") and len(self.package_version) > 1:
             tag_variations_set.add(self.package_version[1:])
 
-        # Convert to list, filter out empty strings if any were generated
-        tag_variations = [t for t in list(tag_variations_set) if t]
-        # Prioritize exact match and v-prefix
+        tag_variations = [t for t in tag_variations_set if t]
         preferred_order = [self.package_version, f"v{self.package_version}"]
         ordered_tag_variations = preferred_order + [
             t for t in tag_variations if t not in preferred_order

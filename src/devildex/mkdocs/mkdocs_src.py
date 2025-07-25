@@ -559,7 +559,7 @@ def _get_plugin_packages_to_install(
         _extract_names_from_config_list_or_dict(markdown_extensions_config)
     )
 
-    unique_names_to_check = sorted(list(set(all_names_to_check)))
+    unique_names_to_check = sorted(set(all_names_to_check))
 
     for name in unique_names_to_check:
         base_name_for_lookup = name.split(".")[0]
@@ -608,6 +608,6 @@ def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]
                 "mkdocstrings plugin detected. Adding 'ruff' for code formatting."
             )
             packages_to_install.append("ruff")
-    unique_packages = sorted(list(set(pkg for pkg in packages_to_install if pkg)))
+    unique_packages = sorted(set(pkg for pkg in packages_to_install if pkg))
 
     return unique_packages
