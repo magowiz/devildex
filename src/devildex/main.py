@@ -10,10 +10,12 @@ import wx.grid
 import wx.html2
 from wx import Size
 
+from devildex.constants import AVAILABLE_BTN_LABEL, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
 from devildex.default_data import COLUMNS_ORDER, PACKAGES_DATA_AS_DETAILS
 from devildex.models import PackageDetails
 from devildex.task_manager import GenerationTaskManager
+from devildex.ui import ActionsPanel
 
 logger = logging.getLogger(__name__)
 COL_WIDTH_ID = 60
@@ -23,10 +25,9 @@ COL_WIDTH_DESC = 200
 COL_WIDTH_STATUS = 120
 COL_WIDTH_DOCSET_STATUS = 140
 
-AVAILABLE_BTN_LABEL = "📖 Available"
+
 NO_SELECTION_MSG = "No Selection"
 INTERNAL_ERROR_MSG = "Internal Error"
-ERROR_BTN_LABEL = "❌ Error"
 NOT_AVAILABLE_BTN_LABEL = "Not Available"
 
 
@@ -84,14 +85,8 @@ class DevilDexApp(wx.App):
         self.panel: Optional[wx.Panel] = None
         self.main_panel_sizer: Optional[wx.BoxSizer] = None
         self.data_grid: wx.grid.Grid | None = None
-
         self.current_grid_source_data: list[dict[str, Any]] = []
-
-        self.open_action_button: wx.Button | None = None
-        self.generate_action_button: wx.Button | None = None
-        self.regenerate_action_button: wx.Button | None = None
-        self.view_log_action_button: wx.Button | None = None
-        self.delete_action_button: wx.Button | None = None
+        self.actions_panel: ActionsPanel | None = None
         self.selected_row_index: int | None = None
         self.custom_highlighted_row_index: Optional[int] = None
         self.custom_row_highlight_attr: Optional[wx.grid.GridCellAttr] = None
@@ -325,56 +320,6 @@ class DevilDexApp(wx.App):
         logger.addHandler(self.gui_log_handler)
         logger.setLevel(logging.INFO)
         logger.propagate = False
-
-    def _set_button_states_for_selected_row(
-        self, package_data: dict, action_buttons: dict
-    ) -> None:
-        """Help to set states for action buttons based on selected package data."""
-        selected_package_id = package_data.get("id")
-        current_docset_status = package_data.get(
-            "docset_status", NOT_AVAILABLE_BTN_LABEL
-        )
-        is_generating_this_row = (
-            self.generation_task_manager.is_task_active_for_package(selected_package_id)
-            if self.generation_task_manager and selected_package_id
-            else False
-        )
-
-        open_btn = action_buttons.get("open")
-        if open_btn:
-            can_open = (
-                current_docset_status == AVAILABLE_BTN_LABEL
-                and not is_generating_this_row
-            )
-            open_btn.Enable(can_open)
-
-        generate_btn = action_buttons.get("generate")
-        if generate_btn:
-            can_generate = (
-                not is_generating_this_row
-                and current_docset_status != AVAILABLE_BTN_LABEL
-            )
-            generate_btn.Enable(can_generate)
-
-        regenerate_btn = action_buttons.get("regenerate")
-        if regenerate_btn:
-            can_regenerate = not is_generating_this_row and current_docset_status in [
-                AVAILABLE_BTN_LABEL,
-                ERROR_BTN_LABEL,
-            ]
-            regenerate_btn.Enable(can_regenerate)
-
-        log_btn = action_buttons.get("log")
-        if log_btn:
-            log_btn.Enable(True)
-
-        delete_btn = action_buttons.get("delete")
-        if delete_btn:
-            can_delete = not is_generating_this_row and current_docset_status in [
-                AVAILABLE_BTN_LABEL,
-                ERROR_BTN_LABEL,
-            ]
-            delete_btn.Enable(can_delete)
 
     def go_home(self, event: wx.CommandEvent | None = None) -> None:
         """Go to initial view."""
@@ -633,8 +578,8 @@ class DevilDexApp(wx.App):
             self._configure_grid_columns()
 
         content_sizer.Add(self.data_grid, 1, wx.EXPAND | wx.ALL, 5)
-        action_buttons_sizer = self._setup_action_buttons_panel(self.top_splitter_panel)
-        content_sizer.Add(action_buttons_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        self.actions_panel = ActionsPanel(self.top_splitter_panel, self)
+        content_sizer.Add(self.actions_panel, 0, wx.EXPAND | wx.ALL, 5)
         self.top_splitter_panel.SetSizer(content_sizer)
 
         self.bottom_splitter_panel = wx.Panel(self.splitter)
@@ -1069,6 +1014,14 @@ class DevilDexApp(wx.App):
 
         event.Skip()
 
+    def _update_action_buttons_state(self) -> None:
+        """Update the state of the action buttons by delegating to the ActionsPanel."""
+        if self.actions_panel:
+            selected_package_data = self.get_selected_row()
+            self.actions_panel.update_button_states(
+                selected_package_data, self.is_task_running
+            )
+
     def on_log_toggle_button_click(self, event: wx.CommandEvent) -> None:
         """Toggle visibility of the log panel."""
         self._set_log_panel_visibility(not self.is_log_panel_visible)
@@ -1224,11 +1177,7 @@ class DevilDexApp(wx.App):
         self.view_mode_selector = None
         self.selected_row_index = None
         self.custom_highlighted_row_index = None
-        self.open_action_button = None
-        self.generate_action_button = None
-        self.regenerate_action_button = None
-        self.view_log_action_button = None
-        self.delete_action_button = None
+        self.actions_panel = None
         self.log_text_ctrl = None
         self.log_toggle_button = None
         self.package_display_label = None
@@ -1241,45 +1190,6 @@ class DevilDexApp(wx.App):
             self.panel.Layout()
         if self.main_frame:
             self.main_frame.Layout()
-
-    def _update_action_buttons_state(self) -> None:
-        """Update state (enabled/disabled) of action buttons."""
-        self.is_task_running = (
-            self.generation_task_manager.has_any_active_tasks()
-            if self.generation_task_manager
-            else False
-        )
-
-        action_buttons = {
-            "open": self.open_action_button,
-            "generate": self.generate_action_button,
-            "regenerate": self.regenerate_action_button,
-            "log": self.view_log_action_button,
-            "delete": self.delete_action_button,
-        }
-        self._update_action_perform(action_buttons)
-
-    def _update_action_perform(self, action_buttons: dict) -> None:
-        if self.selected_row_index is None:
-            for button_widget in action_buttons.values():
-                if button_widget:
-                    button_widget.Enable(False)
-        else:
-            self._update_action_p2(action_buttons)
-
-    def _update_action_p2(self, action_buttons: dict) -> None:
-        selected_package_data = self.get_selected_row()
-        if selected_package_data:
-            self._set_button_states_for_selected_row(
-                selected_package_data, action_buttons
-            )
-        else:
-            for button_widget in action_buttons.values():
-                if button_widget:
-                    button_widget.Enable(False)
-        disable_if_any_task_running = self.is_task_running
-        if self.home_button:
-            self.home_button.Enable(not disable_if_any_task_running)
 
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.
@@ -1326,33 +1236,6 @@ class DevilDexApp(wx.App):
             )
             return False
         return True
-
-    def _setup_action_buttons_panel(self, parent: wx.Window) -> wx.Sizer:
-        action_box = wx.StaticBox(parent, label="Docset Actions")
-        static_box_sizer = wx.StaticBoxSizer(action_box, wx.VERTICAL)
-        buttons_internal_sizer = wx.BoxSizer(wx.VERTICAL)
-
-        button_definitions = [
-            ("Open Docset 📖", "open_action_button", self.on_open_docset),
-            ("Generate Docset 🛠️", "generate_action_button", self.on_generate_docset),
-            (
-                "Regenerate Docset 🔄",
-                "regenerate_action_button",
-                self.on_regenerate_docset,
-            ),
-            ("View Error Log 📄", "view_log_action_button", self.on_view_log),
-            ("Delete Docset 🗑️", "delete_action_button", self.on_delete_docset),
-        ]
-        for label_text, attr_name, handler in button_definitions:
-            button = wx.Button(action_box, label=label_text)
-            setattr(self, attr_name, button)
-
-            button.Bind(wx.EVT_BUTTON, handler)
-            buttons_internal_sizer.Add(button, 0, wx.EXPAND | wx.ALL, 5)
-            button.Enable(False)
-
-        static_box_sizer.Add(buttons_internal_sizer, 1, wx.EXPAND | wx.ALL, 5)
-        return static_box_sizer
 
 
 def main() -> None:
