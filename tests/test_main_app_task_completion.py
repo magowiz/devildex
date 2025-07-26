@@ -38,7 +38,8 @@ def app(mocker: MockerFixture) -> DevilDexApp:
 
 
 def test_on_generation_complete_success(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify UI updates correctly on a successful generation."""
     # Arrange
     row_to_update = 0
@@ -74,7 +75,8 @@ def test_on_generation_complete_success(
 
 
 def test_on_generation_complete_failure(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify UI updates correctly on a failed generation."""
     # Arrange
     row_to_update = 0

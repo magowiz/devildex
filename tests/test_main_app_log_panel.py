@@ -46,7 +46,8 @@ def test_on_log_toggle_button_click_toggles_visibility(
 
 
 def test_set_log_panel_visibility_to_visible(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify the correct helper is called to show the log panel."""
     # Arrange
     mock_show_panel = mocker.patch.object(app, "_show_log_panel")
@@ -63,7 +64,8 @@ def test_set_log_panel_visibility_to_visible(
 
 
 def test_set_log_panel_visibility_to_hidden(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify the correct helper is called to hide the log panel."""
     # Arrange
     app.is_log_panel_visible = True  # Start with it visible
@@ -81,7 +83,8 @@ def test_set_log_panel_visibility_to_hidden(
 
 
 def test_on_view_log_opens_panel_if_hidden(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify 'View Log' action opens the log panel if it's currently hidden."""
     # Arrange
     app.is_log_panel_visible = False

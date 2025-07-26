@@ -83,7 +83,8 @@ def test_ensure_target_dir_exists_os_error(
 
 
 def test_cleanup_target_dir_content_success(
-        fetcher_instance: PackageSourceFetcher) -> None:
+    fetcher_instance: PackageSourceFetcher,
+) -> None:
     """Verify it removes all files and subdirectories from the target directory."""
     # Arrange
     target_dir = fetcher_instance.download_target_path

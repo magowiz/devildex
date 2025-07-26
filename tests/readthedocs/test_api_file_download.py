@@ -14,7 +14,7 @@ FAKE_FILE_CONTENT = b"some-binary-zip-content"
 class MockStreamResponse:
     """A mock class to simulate a streaming requests.Response for testing."""
 
-    def __init__(self, content, status_code : int =200) -> None:
+    def __init__(self, content, status_code: int = 200) -> None:
         """Initialize the mock stream response."""
         self.status_code = status_code
         self._content_iterator = iter([content])
@@ -24,7 +24,7 @@ class MockStreamResponse:
         if self.status_code >= 400:
             raise requests.exceptions.HTTPError(f"Error {self.status_code}")
 
-    def iter_content(self, chunk_size: int =8192) -> collections.abc:
+    def iter_content(self, chunk_size: int = 8192) -> collections.abc:
         """Mock iter_content to return our fake content."""
         return self._content_iterator
 
@@ -62,7 +62,8 @@ def test_download_file_success(mocker: MockerFixture, tmp_path: Path) -> None:
 
 
 def test_download_file_handles_network_error(
-        mocker: MockerFixture, tmp_path: Path) -> None:
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
     """Verify it returns False and cleans up a partial file on a network error."""
     # Arrange
     file_url = "https://example.com/file.zip"
@@ -84,7 +85,8 @@ def test_download_file_handles_network_error(
 
 
 def test_download_file_handles_os_error_on_write(
-        mocker: MockerFixture, tmp_path: Path) -> None:
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
     """Verify it returns False and cleans up if writing to disk fails."""
     # Arrange
     file_url = "https://example.com/file.zip"

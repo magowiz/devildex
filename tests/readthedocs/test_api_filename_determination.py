@@ -66,10 +66,11 @@ test_cases = [
     test_cases,
 )
 def test_determine_local_filename(
-    project_slug: str, version_slug: str,
+    project_slug: str,
+    version_slug: str,
     download_url: str,
     download_format,
-    expected_filename: str
+    expected_filename: str,
 ) -> None:
     """Verify local filename is determined correctly across various scenarios."""
     result = _determine_local_filename(

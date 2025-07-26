@@ -21,7 +21,8 @@ def sample_versions() -> list[dict]:
 
 
 def test_choose_best_version_finds_first_preference(
-        sample_versions: list[dict]) -> None:
+    sample_versions: list[dict],
+) -> None:
     """Verify it selects the first preferred version if available."""
     preferred = ["stable", "latest"]
     result = _choose_best_version(sample_versions, preferred)
@@ -29,7 +30,8 @@ def test_choose_best_version_finds_first_preference(
 
 
 def test_choose_best_version_finds_second_preference(
-        sample_versions: list[dict]) -> None:
+    sample_versions: list[dict],
+) -> None:
     """Verify it selects the second preferred version if the first is not ideal."""
     # Make 'stable' unavailable
     sample_versions[0]["active"] = False

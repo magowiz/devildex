@@ -14,7 +14,8 @@ class MockResponse:
     """A mock class to simulate requests.Response for testing."""
 
     def __init__(
-            self, json_data=None, text_data: str = "", status_code:int =200) -> None:
+        self, json_data=None, text_data: str = "", status_code: int = 200
+    ) -> None:
         """Initialize the mock response."""
         self._json_data = json_data
         self._text_data = text_data
@@ -93,7 +94,8 @@ def test_fetch_available_versions_handles_network_error(mocker: MockerFixture) -
 
 
 def test_fetch_available_versions_handles_json_decode_error(
-        mocker: MockerFixture) -> None:
+    mocker: MockerFixture,
+) -> None:
     """Verify it returns None when the API response is not valid JSON."""
     mocker.patch("requests.get", return_value=MockResponse(text_data="invalid json"))
     assert _fetch_available_versions("my-project") is None

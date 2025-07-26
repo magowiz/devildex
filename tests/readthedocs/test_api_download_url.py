@@ -27,14 +27,16 @@ def test_get_download_url_success(sample_version_details: dict) -> None:
 
 
 def test_get_download_url_handles_protocol_relative_url(
-        sample_version_details: dict) -> None:
+    sample_version_details: dict,
+) -> None:
     """Verify it correctly prepends 'https:' to protocol-relative URLs."""
     url = _get_download_url(sample_version_details, "epub")
     assert url == "https://example.com/docs/project-stable.epub"
 
 
 def test_get_download_url_returns_none_for_missing_format(
-        sample_version_details: dict) -> None:
+    sample_version_details: dict,
+) -> None:
     """Verify it returns None when the requested format is not available."""
     url = _get_download_url(sample_version_details, "nonexistent_format")
     assert url is None

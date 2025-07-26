@@ -134,7 +134,8 @@ def test_on_delete_docset_core_fails(app: DevilDexApp, mocker: MockerFixture) ->
 
 
 def test_on_delete_docset_no_path_in_data(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it shows a message box if the selected package has no path."""
     # Arrange
     selected_data = {"name": "test-package"}  # No 'docset_path'
@@ -177,7 +178,8 @@ def test_on_generate_docset_success(app: DevilDexApp, mocker: MockerFixture) -> 
 
 
 def test_on_generate_docset_no_selection(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it shows a message box if no package is selected."""
     # Arrange
     app.selected_row_index = None  # Explicitly set no selection
@@ -194,7 +196,8 @@ def test_on_generate_docset_no_selection(
 
 
 def test_on_generate_docset_validation_fails(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify nothing happens if pre-generation validation fails."""
     # Arrange
     selected_data = {"id": "pkg-123", "name": "test-package"}
@@ -284,7 +287,8 @@ def test_on_open_docset_no_selection(app: DevilDexApp, mocker: MockerFixture) ->
 
 
 def test_on_open_docset_no_path_in_data(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it shows a message box if the selected package has no docset_path."""
     # Arrange
     app.selected_row_index = 0
@@ -302,7 +306,8 @@ def test_on_open_docset_no_path_in_data(
 
 
 def test_on_open_docset_fallback_to_other_html(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it opens the first available HTML file if index.html is missing."""
     # Arrange
     app.selected_row_index = 0
@@ -335,7 +340,8 @@ def test_on_open_docset_fallback_to_other_html(
 
 
 def test_on_open_docset_no_html_files_found(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it shows an error if no HTML files are found in the docset dir."""
     # Arrange
     app.selected_row_index = 0
@@ -391,8 +397,10 @@ def test_on_view_mode_changed_success(app: DevilDexApp, mocker: MockerFixture) -
     app.panel.Layout.assert_called_once()
     mock_event.Skip.assert_called_once()
 
+
 def test_on_view_mode_changed_cannot_process(
-        app: DevilDexApp, mocker: MockerFixture) -> None:
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it aborts early if _can_process_view_change is False."""
     # Arrange
     mock_event = mocker.MagicMock(spec=wx.CommandEvent)
@@ -426,7 +434,6 @@ def test_on_view_mode_changed_core_setting_fails(
     # Assert
     mock_bootstrap.assert_not_called()
     mock_event.Skip.assert_called_once()
-
 
 
 @pytest.mark.parametrize(
@@ -509,9 +516,3 @@ def test_validate_can_generate_scenarios(
 
 
 # --- Tests for on_view_mode_changed ---
-
-
-
-
-
-

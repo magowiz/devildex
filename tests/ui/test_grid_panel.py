@@ -50,7 +50,8 @@ def grid_panel(
 
 
 def test_update_data_populates_grid(
-        grid_panel: DocsetGridPanel, mocker: MockerFixture) -> None:
+    grid_panel: DocsetGridPanel, mocker: MockerFixture
+) -> None:
     """Verify that update_data correctly populates the grid with new data."""
     # Arrange
     # Provide data for all columns to make the test robust
