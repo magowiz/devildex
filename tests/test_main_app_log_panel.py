@@ -1,4 +1,5 @@
-"""Tests for the log panel visibility logic within the DevilDexApp class.
+"""
+Tests for the log panel visibility logic within the DevilDexApp class.
 """
 
 import pytest
@@ -10,7 +11,8 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """Provides a DevilDexApp instance for testing without a running event loop.
+    """
+    Provides a DevilDexApp instance for testing without a running event loop.
     """
     # Prevent the real wx.App from initializing
     mocker.patch("wx.App.__init__", return_value=None)
