@@ -1,5 +1,6 @@
 """Tests for the PackageSourceFetcher class and its utility functions."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -145,3 +146,51 @@ vcs_url_test_cases = [
 def test_is_valid_vcs_url(url, expected):
     """Verify VCS URL validation for various inputs."""
     assert PackageSourceFetcher._is_valid_vcs_url(url) is expected
+
+
+# --- Security Tests for Archive Extraction ---
+
+
+def test_is_path_safe_allows_paths_within_base(tmp_path: Path):
+    """Verify _is_path_safe correctly identifies paths inside the base directory."""
+    base_dir = tmp_path.resolve()
+    safe_path1 = base_dir / "file.txt"
+    safe_path2 = base_dir / "subdir" / "another_file.txt"
+    assert PackageSourceFetcher._is_path_safe(base_dir, safe_path1) is True
+    assert PackageSourceFetcher._is_path_safe(base_dir, safe_path2) is True
+    assert PackageSourceFetcher._is_path_safe(base_dir, base_dir) is True
+
+
+def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path):
+    """Verify _is_path_safe rejects paths that resolve outside the base directory."""
+    base_dir = tmp_path.resolve()
+    # Path traversal attempt
+    unsafe_path1 = base_dir / ".." / "outside_file.txt"
+    # Absolute path outside the base
+    unsafe_path2 = Path("/etc/passwd")
+
+    assert PackageSourceFetcher._is_path_safe(base_dir, unsafe_path1) is False
+    assert PackageSourceFetcher._is_path_safe(base_dir, unsafe_path2) is False
+
+
+@pytest.mark.parametrize(
+    "member_name, expected",
+    [
+        # Standard safe cases
+        ("file.txt", True),
+        ("subdir/file.txt", True),
+        ("subdir/deeper/file.txt", True),
+        # Unsafe path traversal
+        ("../evil.txt", False),
+        ("subdir/../../evil.txt", False),
+        # Unsafe absolute paths (POSIX style)
+        ("/absolute/path.txt", False),
+        # Platform-dependent check for Windows-style absolute paths
+        # This path is UNSAFE (is_absolute() -> True) only on Windows.
+        # On Linux/macOS, it's a valid relative filename, so it's SAFE.
+        ("C:\\windows\\system32", sys.platform != "win32"),
+    ],
+)
+def test_is_member_name_safe(member_name, expected):
+    """Verify _is_member_name_safe correctly identifies safe and unsafe archive member names."""
+    assert PackageSourceFetcher._is_member_name_safe(member_name) is expected

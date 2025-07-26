@@ -163,8 +163,22 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _is_member_name_safe(member_name: str) -> bool:
-        """Check if member name is safe (no '..' or absolute paths)."""
-        return not (".." in member_name or member_name.startswith(("/", "\\")))
+        """Check if member name is safe (no '..' or absolute paths).
+
+        This check correctly depends on the OS where the code is running.
+        pathlib.Path.is_absolute() correctly identifies absolute paths
+        for the current platform (e.g., /... on Linux, C:\\... on Windows).
+        """
+        # A path traversal attempt is always unsafe on any platform.
+        if ".." in member_name:
+            return False
+
+        # An absolute path is unsafe if it's considered absolute by the
+        # current operating system.
+        if pathlib.Path(member_name).is_absolute():
+            return False
+
+        return True
 
     @staticmethod
     def _extract_zip_safely(
