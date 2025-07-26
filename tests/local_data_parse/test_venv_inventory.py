@@ -24,8 +24,7 @@ def create_mock_distribution(
 
 @patch("devildex.local_data_parse.venv_inventory.importlib.metadata.distributions")
 def test_get_installed_packages_success(mock_distributions: MagicMock) -> None:
-    """
-    Verify that installed packages are correctly identified and their
+    """Verify that installed packages are correctly identified and their
     project URLs are parsed.
     """
     # Arrange
@@ -68,9 +67,7 @@ def test_get_installed_packages_success(mock_distributions: MagicMock) -> None:
 def test_get_installed_packages_with_explicit_filter(
     mock_distributions: MagicMock,
 ) -> None:
-    """
-    Verify that providing an 'explicit' set correctly filters the packages.
-    """
+    """Verify that providing an 'explicit' set correctly filters the packages."""
     # Arrange
     mock_distributions.return_value = [
         create_mock_distribution("requests", "2.25.1", []),
@@ -92,9 +89,7 @@ def test_get_installed_packages_with_explicit_filter(
 def test_handle_project_urls_malformed_entry(
     mock_distributions: MagicMock, caplog
 ) -> None:
-    """
-    Verify that a malformed Project-URL entry is skipped and a warning is logged.
-    """
+    """Verify that a malformed Project-URL entry is skipped and a warning is logged."""
     # Arrange
     mock_distributions.return_value = [
         create_mock_distribution(
@@ -128,9 +123,7 @@ def test_handle_project_urls_malformed_entry(
 def test_get_installed_packages_no_packages_found(
     mock_distributions: MagicMock,
 ) -> None:
-    """
-    Verify that an empty list is returned when no packages are found.
-    """
+    """Verify that an empty list is returned when no packages are found."""
     # Arrange
     mock_distributions.return_value = []
 
