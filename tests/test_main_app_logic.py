@@ -1,5 +1,4 @@
-"""
-Tests for the business logic within the DevilDexApp class.
+"""Tests for the business logic within the DevilDexApp class.
 
 These tests focus on the application's logic, mocking UI components
 and core functionalities to ensure methods behave as expected without
@@ -17,8 +16,7 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """
-    Provides a DevilDexApp instance for testing without a running event loop.
+    """Provides a DevilDexApp instance for testing without a running event loop.
 
     Mocks the wx.App.__init__ to prevent it from starting a real GUI.
     Also mocks the core and UI panel dependencies.
@@ -56,8 +54,7 @@ def test_update_action_buttons_state_delegates_correctly(
     is_task_running: bool,
     case_id: str,
 ):
-    """
-    Verify that _update_action_buttons_state correctly calls the
+    """Verify that _update_action_buttons_state correctly calls the
     ActionsPanel with the current state.
     """
     # Arrange
@@ -356,3 +353,68 @@ def test_on_open_docset_no_html_files_found(app: DevilDexApp, mocker: MockerFixt
         "Could not find 'index.html' or any other HTML" in wx.MessageBox.call_args[0][0]
     )
     app.show_document.assert_not_called()
+
+
+# --- Tests for on_view_mode_changed ---
+
+
+def test_on_view_mode_changed_success(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the full success path for changing the view mode."""
+    # Arrange
+    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
+    app.view_mode_selector = mocker.MagicMock()
+    app.view_mode_selector.GetValue.return_value = "Project: MyProject"
+
+    mocker.patch.object(app, "_can_process_view_change", return_value=True)
+    mock_handle_core = mocker.patch.object(
+        app, "_handle_core_project_setting", return_value=True
+    )
+    mock_bootstrap = app.core.bootstrap_database_and_load_data
+    mock_update_ui = mocker.patch.object(app, "_update_ui_after_data_load")
+    app.panel = mocker.MagicMock()
+
+    # Act
+    app.on_view_mode_changed(mock_event)
+
+    # Assert
+    mock_handle_core.assert_called_once_with("Project: MyProject")
+    mock_bootstrap.assert_called_once()
+    mock_update_ui.assert_called_once()
+    app.panel.Layout.assert_called_once()
+    mock_event.Skip.assert_called_once()
+
+
+def test_on_view_mode_changed_cannot_process(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it aborts early if _can_process_view_change is False."""
+    # Arrange
+    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
+    mocker.patch.object(app, "_can_process_view_change", return_value=False)
+    mock_handle_core = mocker.patch.object(app, "_handle_core_project_setting")
+
+    # Act
+    app.on_view_mode_changed(mock_event)
+
+    # Assert
+    mock_handle_core.assert_not_called()
+    mock_event.Skip.assert_called_once()
+
+
+def test_on_view_mode_changed_core_setting_fails(
+    app: DevilDexApp, mocker: MockerFixture
+):
+    """Verify it aborts if setting the project in the core fails."""
+    # Arrange
+    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
+    app.view_mode_selector = mocker.MagicMock()
+    app.view_mode_selector.GetValue.return_value = "Project: BadProject"
+
+    mocker.patch.object(app, "_can_process_view_change", return_value=True)
+    mocker.patch.object(app, "_handle_core_project_setting", return_value=False)
+    mock_bootstrap = app.core.bootstrap_database_and_load_data
+
+    # Act
+    app.on_view_mode_changed(mock_event)
+
+    # Assert
+    mock_bootstrap.assert_not_called()
+    mock_event.Skip.assert_called_once()
