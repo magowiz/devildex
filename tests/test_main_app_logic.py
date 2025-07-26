@@ -6,6 +6,7 @@ a running GUI.
 """
 
 import pytest
+import wx
 from pytest_mock import MockerFixture
 
 from devildex.main import DevilDexApp
@@ -27,8 +28,10 @@ def app(mocker: MockerFixture) -> DevilDexApp:
     # Create the app instance with the mocked core
     app_instance = DevilDexApp(core=mock_core)
 
-    # Attach a mock for the ActionsPanel, as it's a key collaborator
+    # Attach mocks for UI collaborators
     app_instance.actions_panel = mocker.MagicMock(name="ActionsPanel")
+    # Mock MessageBox to prevent dialogs from popping up during tests
+    mocker.patch("wx.MessageBox")
 
     return app_instance
 
@@ -66,3 +69,76 @@ def test_update_action_buttons_state_delegates_correctly(
     mock_actions_panel.update_button_states.assert_called_once_with(
         package_data, is_task_running
     )
+
+
+# --- Tests for on_delete_docset ---
+
+
+def test_on_delete_docset_success(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the full success path for deleting a docset."""
+    # Arrange
+    selected_data = {"name": "test-package", "docset_path": "/fake/path/docset"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    mocker.patch.object(app, "_confirm_deletion", return_value=True)
+    app.core.delete_docset_build.return_value = (True, "Success")
+
+    mock_handle_success = mocker.patch.object(app, "_handle_delete_success")
+    mock_update_buttons = mocker.patch.object(app, "_update_action_buttons_state")
+
+    # Act
+    app.on_delete_docset(event=None)
+
+    # Assert
+    app.core.delete_docset_build.assert_called_once_with("/fake/path/docset")
+    mock_handle_success.assert_called_once_with("test-package")
+    mock_update_buttons.assert_called_once()
+
+
+def test_on_delete_docset_user_cancels(app: DevilDexApp, mocker: MockerFixture):
+    """Verify nothing happens if the user cancels the deletion."""
+    # Arrange
+    selected_data = {"name": "test-package", "docset_path": "/fake/path/docset"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    mocker.patch.object(app, "_confirm_deletion", return_value=False)  # User says NO
+
+    # Act
+    app.on_delete_docset(event=None)
+
+    # Assert
+    # The core deletion method should NOT be called
+    app.core.delete_docset_build.assert_not_called()
+
+
+def test_on_delete_docset_core_fails(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the failure path is handled when the core cannot delete."""
+    # Arrange
+    selected_data = {"name": "test-package", "docset_path": "/fake/path/docset"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    mocker.patch.object(app, "_confirm_deletion", return_value=True)
+    app.core.delete_docset_build.return_value = (False, "Permission denied")
+
+    mock_handle_failure = mocker.patch.object(app, "_handle_delete_failure")
+    mock_update_buttons = mocker.patch.object(app, "_update_action_buttons_state")
+
+    # Act
+    app.on_delete_docset(event=None)
+
+    # Assert
+    app.core.delete_docset_build.assert_called_once_with("/fake/path/docset")
+    mock_handle_failure.assert_called_once_with("test-package", "Permission denied")
+    mock_update_buttons.assert_called_once()
+
+
+def test_on_delete_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it shows a message box if the selected package has no path."""
+    # Arrange
+    selected_data = {"name": "test-package"}  # No 'docset_path'
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+
+    # Act
+    app.on_delete_docset(event=None)
+
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert "No docset path found" in wx.MessageBox.call_args[0][0]
+    app.core.delete_docset_build.assert_not_called()
