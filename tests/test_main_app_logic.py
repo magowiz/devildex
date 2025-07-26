@@ -5,6 +5,7 @@ and core functionalities to ensure methods behave as expected without
 a running GUI.
 """
 
+from pathlib import Path
 
 import pytest
 import wx
@@ -222,3 +223,133 @@ def test_on_generate_docset_task_manager_not_ready(
     # Act
     app.on_generate_docset(event=None)
 
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert "Generation system not ready" in wx.MessageBox.call_args[0][0]
+
+
+# --- Tests for on_open_docset ---
+
+
+def test_on_open_docset_success(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the success path for opening a docset with an index.html."""
+    # Arrange
+    app.selected_row_index = 0
+    selected_data = {"name": "test-package", "docset_path": "/fake/path"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+
+    # Mock Path objects robustly
+    mock_docset_path = mocker.MagicMock(spec=Path)
+    mock_index_path = mocker.MagicMock(spec=Path)
+    mock_index_path.exists.return_value = True
+    mock_index_path.is_file.return_value = True
+    mock_index_path.as_uri.return_value = "file:///fake/path/index.html"
+    mock_docset_path.__truediv__.return_value = mock_index_path
+    mocker.patch("devildex.main.Path", return_value=mock_docset_path)
+
+    # Mock the UI methods that get called
+    mocker.patch.object(app, "show_document")
+    app.document_view_panel = mocker.MagicMock()
+
+    # Act
+    app.on_open_docset(event=mocker.MagicMock())
+
+    # Assert
+    app.show_document.assert_called_once_with(
+        package_data_to_show={"name": "test-package"}
+    )
+    app.document_view_panel.load_url.assert_called_once_with(
+        "file:///fake/path/index.html"
+    )
+
+
+def test_on_open_docset_no_selection(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it shows a message box if no package is selected."""
+    # Arrange
+    app.selected_row_index = None
+    mock_show_doc = mocker.patch.object(app, "show_document")
+
+    # Act
+    app.on_open_docset(event=mocker.MagicMock())
+
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert "Please select a package" in wx.MessageBox.call_args[0][0]
+    mock_show_doc.assert_not_called()
+
+
+def test_on_open_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it shows a message box if the selected package has no docset_path."""
+    # Arrange
+    app.selected_row_index = 0
+    selected_data = {"name": "test-package"}  # No 'docset_path'
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    mocker.patch.object(app, "show_document")
+
+    # Act
+    app.on_open_docset(event=mocker.MagicMock())
+
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert "Docset path not found" in wx.MessageBox.call_args[0][0]
+    app.show_document.assert_not_called()
+
+
+def test_on_open_docset_fallback_to_other_html(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it opens the first available HTML file if index.html is missing."""
+    # Arrange
+    app.selected_row_index = 0
+    selected_data = {"name": "test-package", "docset_path": "/fake/path"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+
+    # Mock Path objects robustly
+    mock_docset_path = mocker.MagicMock(spec=Path)
+    mock_index_path = mocker.MagicMock(spec=Path)
+    mock_index_path.exists.return_value = False  # index.html does NOT exist
+    mock_docset_path.__truediv__.return_value = mock_index_path
+
+    # Mock the glob call to find a fallback
+    fallback_html_path = mocker.MagicMock(spec=Path)
+    fallback_html_path.as_uri.return_value = "file:///fake/path/docs.html"
+    mock_docset_path.glob.return_value = [fallback_html_path]
+
+    mocker.patch("devildex.main.Path", return_value=mock_docset_path)
+
+    mocker.patch.object(app, "show_document")
+    app.document_view_panel = mocker.MagicMock()
+
+    # Act
+    app.on_open_docset(event=mocker.MagicMock())
+
+    # Assert
+    app.document_view_panel.load_url.assert_called_once_with(
+        "file:///fake/path/docs.html"
+    )
+
+
+def test_on_open_docset_no_html_files_found(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it shows an error if no HTML files are found in the docset dir."""
+    # Arrange
+    app.selected_row_index = 0
+    selected_data = {"name": "test-package", "docset_path": "/fake/path"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+
+    # Mock Path objects robustly
+    mock_docset_path = mocker.MagicMock(spec=Path)
+    mock_index_path = mocker.MagicMock(spec=Path)
+    mock_index_path.exists.return_value = False  # index.html does NOT exist
+    mock_docset_path.__truediv__.return_value = mock_index_path
+    mock_docset_path.glob.return_value = []  # No fallback files either
+    mocker.patch("devildex.main.Path", return_value=mock_docset_path)
+
+    mocker.patch.object(app, "show_document")
+
+    # Act
+    app.on_open_docset(event=mocker.MagicMock())
+
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert (
+        "Could not find 'index.html' or any other HTML" in wx.MessageBox.call_args[0][0]
+    )
+    app.show_document.assert_not_called()
