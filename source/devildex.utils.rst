@@ -9,6 +9,14 @@ devildex.utils package
 Submodules
 ----------
 
+devildex.utils.companion module
+-------------------------------
+
+.. automodule:: devildex.utils.companion
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 devildex.utils.deps\_utils module
 ---------------------------------
 

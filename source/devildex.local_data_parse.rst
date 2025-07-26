@@ -17,6 +17,22 @@ devildex.local\_data\_parse.common\_read module
    :show-inheritance:
    :undoc-members:
 
+devildex.local\_data\_parse.external\_venv\_scanner module
+----------------------------------------------------------
+
+.. automodule:: devildex.local_data_parse.external_venv_scanner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+devildex.local\_data\_parse.registered\_project\_parser module
+--------------------------------------------------------------
+
+.. automodule:: devildex.local_data_parse.registered_project_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 devildex.local\_data\_parse.venv\_inventory module
 --------------------------------------------------
 
