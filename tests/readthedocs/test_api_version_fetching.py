@@ -6,7 +6,7 @@ import requests
 from pytest_mock import MockerFixture
 
 from devildex.readthedocs.readthedocs_api import (
-    _fetch_available_versions,
+    _fetch_available_versions,  # noqa: SLF001
 )
 
 
