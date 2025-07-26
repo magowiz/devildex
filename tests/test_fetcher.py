@@ -74,3 +74,54 @@ def test_ensure_target_dir_exists_os_error(
 
     # Assert
     assert result is False
+
+
+# --- Tests for _cleanup_target_dir_content ---
+
+
+def test_cleanup_target_dir_content_success(fetcher_instance: PackageSourceFetcher):
+    """Verify it removes all files and subdirectories from the target directory."""
+    # Arrange
+    target_dir = fetcher_instance.download_target_path
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create some content to be deleted
+    (target_dir / "file_to_delete.txt").touch()
+    subdir = target_dir / "subdir_to_delete"
+    subdir.mkdir()
+    (subdir / "nested_file.txt").touch()
+
+    # Pre-condition: The directory contains items
+    assert any(target_dir.iterdir())
+
+    # Act
+    fetcher_instance._cleanup_target_dir_content()
+
+    # Assert
+    # Post-condition: The directory itself should still exist, but be empty.
+    assert target_dir.exists()
+    assert not any(target_dir.iterdir())
+
+
+def test_cleanup_target_dir_content_handles_os_error(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify it handles an OSError during cleanup without crashing."""
+    # Arrange
+    target_dir = fetcher_instance.download_target_path
+    target_dir.mkdir(parents=True, exist_ok=True)
+    (target_dir / "a_file.txt").touch()  # Add a file
+    (target_dir / "a_subdir").mkdir()  # Add a directory
+
+    # Mock shutil.rmtree to fail, simulating a permissions error on a subdirectory
+    mocker.patch("shutil.rmtree", side_effect=OSError("Permission denied"))
+
+    # Act & Assert
+    # The method should catch the exception and log it, not crash.
+    # So, we just call it and expect no exception to be raised.
+    try:
+        fetcher_instance._cleanup_target_dir_content()
+    except OSError:
+        pytest.fail(
+            "The _cleanup_target_dir_content method raised an unhandled OSError."
+        )
