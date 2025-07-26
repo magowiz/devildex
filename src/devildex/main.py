@@ -1,7 +1,6 @@
 """main application."""
 
 import logging
-import shutil
 from pathlib import Path
 from typing import Any, Optional
 
@@ -802,14 +801,8 @@ class DevilDexApp(wx.App):
                     del self.current_grid_source_data[row_idx_to_update]["docset_path"]
 
             self.grid_panel.grid.ForceRefresh()
-
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
-        """Handle regenerate docset action.
-
-        This will attempt to delete the existing docset
-            (if one exists and user confirms via on_delete_docset)
-        and then trigger a new generation.
-        """
+        """Handle regenerate docset action by chaining delete and generate actions."""
         if self.selected_row_index is None:
             wx.MessageBox(
                 "Please select a package to regenerate its docset.",
@@ -820,45 +813,21 @@ class DevilDexApp(wx.App):
                 event.Skip()
             return
 
-        selected_package_data_initial = self.get_selected_row()
-        if not selected_package_data_initial:
-            wx.MessageBox(
-                "Could not retrieve data for the selected row.",
-                INTERNAL_ERROR_MSG,
-                wx.OK | wx.ICON_ERROR,
-            )
-            if event:
-                event.Skip()
-            return
+        # Log the user's intent
+        selected_package = self.get_selected_row()
+        if selected_package:
+            package_name = selected_package.get("name", "N/D")
+            log_msg = f"INFO: Regeneration requested for '{package_name}'.\n"
+            if self.log_text_ctrl:
+                self.log_text_ctrl.AppendText(log_msg)
 
-        package_name = selected_package_data_initial.get("name", "N/D")
-        current_status = selected_package_data_initial.get(
-            "docset_status", NOT_AVAILABLE_BTN_LABEL
-        )
-        package_id = selected_package_data_initial.get("id")
-        if (
-            self.generation_task_manager
-            and self.generation_task_manager.is_task_active_for_package(package_id)
-        ):
-            wx.MessageBox(
-                f"A task for '{package_name}' is already in progress. "
-                "Cannot regenerate now.",
-                "Task Active",
-                wx.OK | wx.ICON_INFORMATION,
-            )
-            if event:
-                event.Skip()
-            return
+        # 1. Call the delete handler. It will ask for confirmation and handle
+        #    all cases (e.g., if the docset doesn't even exist).
+        self.on_delete_docset(event=None)
 
-        log_msg = (
-            f"INFO: Regeneration requested for '{package_name}'. "
-            f"Current status: {current_status}.\n"
-        )
-        if self.log_text_ctrl:
-            self.log_text_ctrl.AppendText(log_msg)
-        if current_status in [AVAILABLE_BTN_LABEL, ERROR_BTN_LABEL]:
-            self.on_delete_docset(event=None)
-
+        # 2. Call the generate handler. It will perform its own validation,
+        #    like checking if a task is already running or if the docset is
+        #    still available (if the user cancelled the deletion).
         self.on_generate_docset(event=None)
 
         if event:
@@ -879,80 +848,94 @@ class DevilDexApp(wx.App):
         if sel_data and not self.is_log_panel_visible:
             self._set_log_panel_visibility(True)
         event.Skip()
-
     def on_delete_docset(self, event: wx.CommandEvent | None) -> None:
-        """Handle delete docset action."""
+        """Handle delete docset action by delegating to the core."""
         selected_package_data = self.get_selected_row()
+        if not selected_package_data:
+            if event:
+                event.Skip()
+            return
+
         package_name = selected_package_data.get("name", "N/D")
         docset_path_str = selected_package_data.get("docset_path")
-        path_of_specific_docset_build = Path(docset_path_str)
-        package_level_docset_dir = path_of_specific_docset_build.parent
+
+        if not docset_path_str:
+            wx.MessageBox(
+                f"No docset path found for '{package_name}'. Cannot delete.",
+                "Deletion Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            if event:
+                event.Skip()
+            return
+
+        # --- UI Logic: Confirmation ---
         confirm_dialog = wx.MessageDialog(
             self.main_frame,
-            "Are you sure you want to delete this specific docset build for"
-            f" '{package_name}'?\n"
-            f"Path: {path_of_specific_docset_build}\n\n"
-            f"If this is the last docset in the '{package_name}' directory, "
-            f"the entire '{package_name}' directory will also be removed.\n\n"
+            f"Are you sure you want to delete the docset for '{package_name}'?\n"
+            f"Path: {docset_path_str}\n\n"
             "This action cannot be undone.",
             "Confirm Deletion",
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING,
         )
-
         user_choice = confirm_dialog.ShowModal()
         confirm_dialog.Destroy()
 
-        if user_choice == wx.ID_YES:
-            log_message = ""
-            try:
-                shutil.rmtree(path_of_specific_docset_build)
-                if (
-                    package_level_docset_dir.exists()
-                    and package_level_docset_dir.is_dir()
-                    and not list(package_level_docset_dir.iterdir())
-                ):
-                    shutil.rmtree(package_level_docset_dir)
+        if user_choice != wx.ID_YES:
+            if event:
+                event.Skip()
+            return
 
+        # --- Delegation to Core ---
+        if not self.core:
+            wx.MessageBox(
+                "Core system not available.", INTERNAL_ERROR_MSG, wx.OK | wx.ICON_ERROR
+            )
+            if event:
+                event.Skip()
+            return
+
+        success, message = self.core.delete_docset_build(docset_path_str)
+
+        # --- UI Logic: Update based on result ---
+        if success:
+            logger.info(f"GUI: Successfully deleted docset for '{package_name}'.")
+            wx.MessageBox(
+                f"The docset for '{package_name}' has been deleted.",
+                "Deletion Successful",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+            # Update data source and grid view
+            if self.selected_row_index is not None:
                 self.current_grid_source_data[self.selected_row_index][
                     "docset_status"
                 ] = NOT_AVAILABLE_BTN_LABEL
                 self.current_grid_source_data[self.selected_row_index].pop(
                     "docset_path", None
                 )
-                self.grid_panel.grid.SetCellValue(
-                    self.selected_row_index,
-                    self.docset_status_col_grid_idx,
-                    NOT_AVAILABLE_BTN_LABEL,
-                )
-                self.grid_panel.grid.ForceRefresh()
-                wx.MessageBox(
-                    f"The selected docset build for '{package_name}'"
-                    f" has been processed.\n"
-                    "Check logs for details.",
-                    "Deletion Processed",
-                    wx.OK | wx.ICON_INFORMATION,
-                )
+                if self.grid_panel and self.grid_panel.grid:
+                    self.grid_panel.grid.SetCellValue(
+                        self.selected_row_index,
+                        self.docset_status_col_grid_idx,
+                        NOT_AVAILABLE_BTN_LABEL,
+                    )
+                    self.grid_panel.grid.ForceRefresh()
+        else:
+            logger.error(
+                f"GUI: Core failed to delete docset for '{package_name}'. Reason:"
+                f" {message}"
+            )
+            wx.MessageBox(
+                f"Could not delete the docset for '{package_name}'.\n\n"
+                f"Reason: {message}",
+                "Deletion Failed",
+                wx.OK | wx.ICON_ERROR,
+            )
 
-            except OSError as e:
-                log_message += (
-                    f"ERROR: Failed to delete files/directories for '{package_name}'. "
-                    f"Attempted path(s): '{path_of_specific_docset_build}' and possibly"
-                    f" '{package_level_docset_dir}'. Error: {e}\n"
-                )
-                wx.MessageBox(
-                    "Could not complete the deletion process for"
-                    f" '{package_name}'.\n"
-                    f"Error: {e}",
-                    "Deletion Failed",
-                    wx.OK | wx.ICON_ERROR,
-                )
+        self._update_action_buttons_state()
 
-            if self.log_text_ctrl and log_message:
-                self.log_text_ctrl.AppendText(log_message)
-
-            self._update_action_buttons_state()
-
-        event.Skip()
+        if event:
+            event.Skip()
 
     def _update_action_buttons_state(self) -> None:
         """Update the state of the action buttons by delegating to the ActionsPanel."""
