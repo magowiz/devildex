@@ -801,6 +801,7 @@ class DevilDexApp(wx.App):
                     del self.current_grid_source_data[row_idx_to_update]["docset_path"]
 
             self.grid_panel.grid.ForceRefresh()
+
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
         """Handle regenerate docset action by chaining delete and generate actions."""
         if self.selected_row_index is None:
@@ -848,6 +849,7 @@ class DevilDexApp(wx.App):
         if sel_data and not self.is_log_panel_visible:
             self._set_log_panel_visibility(True)
         event.Skip()
+
     def on_delete_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle delete docset action by delegating to the core."""
         selected_package_data = self.get_selected_row()
