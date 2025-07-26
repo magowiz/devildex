@@ -1,7 +1,7 @@
 .. devildex documentation master file, created by
-   sphinx-quickstart on Sun May 11 22:15:32 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+sphinx-quickstart on Sun May 11 22:15:32 2025.
+You can adapt this file completely to your liking, but it should at least
+contain the root `toctree` directive.
 
 devildex documentation
 ======================
@@ -14,4 +14,6 @@ documentation for details.
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   modules
 
