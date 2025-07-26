@@ -1,9 +1,11 @@
 """Tests for the PackageSourceFetcher class and its utility functions."""
 
+import json
 import sys
 from pathlib import Path
 
 import pytest
+import requests
 from pytest_mock import MockerFixture
 
 from devildex.fetcher import PackageSourceFetcher
@@ -247,3 +249,155 @@ def test_find_vcs_url_in_dict(
     # The 'source_description' argument is only for logging, so we use a dummy value.
     found_url = fetcher_instance._find_vcs_url_in_dict(urls_dict, "test_source")
     assert found_url == expected_url
+
+
+# --- Tests for _get_vcs_url ---
+
+
+def test_get_vcs_url_uses_local_url_first(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify _get_vcs_url returns a local URL without calling PyPI if one is valid."""
+    # Arrange
+    fetcher_instance.project_urls = {"Source Code": "https://github.com/local/repo.git"}
+    mock_fetch_from_pypi = mocker.patch.object(
+        fetcher_instance, "_fetch_project_urls_from_pypi"
+    )
+
+    # Act
+    found_url = fetcher_instance._get_vcs_url()
+
+    # Assert
+    assert found_url == "https://github.com/local/repo.git"
+    mock_fetch_from_pypi.assert_not_called()
+
+
+def test_get_vcs_url_falls_back_to_pypi(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify _get_vcs_url calls PyPI when no local URL is valid."""
+    # Arrange
+    fetcher_instance.project_urls = {"Homepage": "https://not-a-vcs.com"}
+    mock_fetch_from_pypi = mocker.patch.object(
+        fetcher_instance,
+        "_fetch_project_urls_from_pypi",
+        return_value={"Repository": "https://github.com/pypi/repo.git"},
+    )
+
+    # Act
+    found_url = fetcher_instance._get_vcs_url()
+
+    # Assert
+    assert found_url == "https://github.com/pypi/repo.git"
+    mock_fetch_from_pypi.assert_called_once()
+
+
+def test_get_vcs_url_returns_none_if_no_url_found(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify _get_vcs_url returns None if no valid URL is found anywhere."""
+    # Arrange
+    fetcher_instance.project_urls = {}  # No local URLs
+    mock_fetch_from_pypi = mocker.patch.object(
+        fetcher_instance, "_fetch_project_urls_from_pypi", return_value=None
+    )
+
+    # Act
+    found_url = fetcher_instance._get_vcs_url()
+
+    # Assert
+    assert found_url is None
+    mock_fetch_from_pypi.assert_called_once()
+
+
+def test_get_vcs_url_caches_result(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify that after the first call, the result is cached and not re-calculated."""
+    # Arrange
+    fetcher_instance.project_urls = {}
+    mock_fetch_from_pypi = mocker.patch.object(
+        fetcher_instance,
+        "_fetch_project_urls_from_pypi",
+        return_value={"Source": "https://github.com/cached/repo.git"},
+    )
+
+    # Act
+    first_call_url = fetcher_instance._get_vcs_url()
+    second_call_url = fetcher_instance._get_vcs_url()  # This should hit the cache
+
+    # Assert
+    assert first_call_url == "https://github.com/cached/repo.git"
+    assert second_call_url == first_call_url
+    # The expensive network call should only happen once
+    mock_fetch_from_pypi.assert_called_once()
+
+
+# --- Tests for _fetch_project_urls_from_pypi ---
+
+
+def test_fetch_from_pypi_success(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify it returns the correct dict on a successful API call."""
+    # Arrange
+    expected_urls = {"Homepage": "http://example.com"}
+    mock_response = mocker.Mock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"info": {"project_urls": expected_urls}}
+    mocker.patch("requests.get", return_value=mock_response)
+
+    # Act
+    result = fetcher_instance._fetch_project_urls_from_pypi()
+
+    # Assert
+    assert result == expected_urls
+
+
+def test_fetch_from_pypi_request_exception(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify it returns None when a network error occurs."""
+    # Arrange
+    mocker.patch("requests.get", side_effect=requests.RequestException("Network Error"))
+
+    # Act
+    result = fetcher_instance._fetch_project_urls_from_pypi()
+
+    # Assert
+    assert result is None
+
+
+def test_fetch_from_pypi_bad_json(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify it returns None when the API response is not valid JSON."""
+    # Arrange
+    mock_response = mocker.Mock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.side_effect = json.JSONDecodeError("msg", "doc", 0)
+    mocker.patch("requests.get", return_value=mock_response)
+
+    # Act
+    result = fetcher_instance._fetch_project_urls_from_pypi()
+
+    # Assert
+    assert result is None
+
+
+def test_fetch_from_pypi_missing_keys(
+    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+):
+    """Verify it returns None if the JSON response is missing expected keys."""
+    # Arrange
+    mock_response = mocker.Mock()
+    mock_response.raise_for_status.return_value = None
+    # Simulate a valid JSON response, but without the 'project_urls' key
+    mock_response.json.return_value = {"info": {"version": "1.0.0"}}
+    mocker.patch("requests.get", return_value=mock_response)
+
+    # Act
+    result = fetcher_instance._fetch_project_urls_from_pypi()
+
+    # Assert
+    assert result is None
