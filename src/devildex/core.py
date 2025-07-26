@@ -2,6 +2,7 @@
 
 import logging
 import os
+import shutil
 from pathlib import Path
 from typing import Any, Optional
 
@@ -147,6 +148,59 @@ class DevilDexCore:
                 result = packages
             return result
         return None
+
+    @staticmethod
+    def delete_docset_build(docset_path_str: str) -> tuple[bool, str]:
+        """Delete a specific docset build directory and its parent if it becomes empty.
+
+        Args:
+            docset_path_str: The string path to the specific docset build to delete.
+
+        Returns:
+            A tuple containing:
+            - bool: True if deletion was successful, False otherwise.
+            - str: A message describing the outcome.
+
+        """
+        try:
+            path_of_specific_docset_build = Path(docset_path_str)
+            if (
+                not path_of_specific_docset_build.exists()
+                or not path_of_specific_docset_build.is_dir()
+            ):
+                msg = (
+                    f"Docset path does not exist or is not a directory: "
+                    f"{docset_path_str}"
+                )
+                logger.warning(msg)
+                return False, msg
+
+            package_level_docset_dir = path_of_specific_docset_build.parent
+
+            # Delete the specific build directory
+            shutil.rmtree(path_of_specific_docset_build)
+            logger.info(
+                f"Successfully deleted docset build: {path_of_specific_docset_build}"
+            )
+
+            # Check if the parent package directory is now empty and delete it if so
+            if (
+                package_level_docset_dir.exists()
+                and package_level_docset_dir.is_dir()
+                and not any(package_level_docset_dir.iterdir())
+            ):
+                shutil.rmtree(package_level_docset_dir)
+                logger.info(
+                    "Parent directory was empty and has been deleted:"
+                    f" {package_level_docset_dir}"
+                )
+
+        except OSError as e:
+            error_msg = f"Failed to delete docset at {docset_path_str}. Error: {e}"
+            logger.exception(error_msg)
+            return False, str(e)
+        else:
+            return True, f"Successfully deleted {path_of_specific_docset_build.name}."
 
     def load_all_registered_projects_details(self) -> dict:
         """Get all registered project details."""

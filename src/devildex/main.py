@@ -106,6 +106,70 @@ class DevilDexApp(wx.App):
                     break
         return available_pkg
 
+    def _confirm_deletion(self, package_name: str, docset_path: str) -> bool:
+        """Show a confirmation dialog for deletion.
+
+        Returns:
+            True if the user clicks 'Yes', False otherwise.
+
+        """
+        confirm_dialog = wx.MessageDialog(
+            self.main_frame,
+            f"Are you sure you want to delete the docset for '{package_name}'?\n"
+            f"Path: {docset_path}\n\n"
+            "This action cannot be undone.",
+            "Confirm Deletion",
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING,
+        )
+        user_choice = confirm_dialog.ShowModal()
+        confirm_dialog.Destroy()
+        return user_choice == wx.ID_YES
+
+    def _update_grid_after_delete(self) -> None:
+        """Update the data source and the grid UI after a successful deletion."""
+        if self.selected_row_index is None:
+            return
+
+        # Update the in-memory data source first
+        self.current_grid_source_data[self.selected_row_index][
+            "docset_status"
+        ] = NOT_AVAILABLE_BTN_LABEL
+        self.current_grid_source_data[self.selected_row_index].pop("docset_path", None)
+
+        # Then, update the visual grid component
+        if self.grid_panel and self.grid_panel.grid:
+            self.grid_panel.grid.SetCellValue(
+                self.selected_row_index,
+                self.docset_status_col_grid_idx,
+                NOT_AVAILABLE_BTN_LABEL,
+            )
+            self.grid_panel.grid.ForceRefresh()
+
+    def _handle_delete_success(self, package_name: str) -> None:
+        """Handle all UI updates after a successful docset deletion."""
+        logger.info(f"GUI: Successfully deleted docset for '{package_name}'.")
+        wx.MessageBox(
+            f"The docset for '{package_name}' has been deleted.",
+            "Deletion Successful",
+            wx.OK | wx.ICON_INFORMATION,
+        )
+        self._update_grid_after_delete()
+
+
+    @staticmethod
+    def _handle_delete_failure(package_name: str, message: str) -> None:
+        """Handle UI updates after a failed docset deletion."""
+        logger.error(
+            f"GUI: Core failed to delete docset for '{package_name}'. Reason: {message}"
+        )
+        wx.MessageBox(
+            f"Could not delete the docset for '{package_name}'.\n\n"
+            f"Reason: {message}",
+            "Deletion Failed",
+            wx.OK | wx.ICON_ERROR,
+        )
+
+
     @staticmethod
     def matching_docset(pkg: str, grid_pkg: dict) -> bool:
         """Check if a package name is matching a package in grid."""
@@ -849,95 +913,44 @@ class DevilDexApp(wx.App):
         if sel_data and not self.is_log_panel_visible:
             self._set_log_panel_visibility(True)
         event.Skip()
-
     def on_delete_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle delete docset action by delegating to the core."""
-        selected_package_data = self.get_selected_row()
-        if not selected_package_data:
-            if event:
-                event.Skip()
-            return
+        try:
+            selected_package_data = self.get_selected_row()
+            if not selected_package_data:
+                return
 
-        package_name = selected_package_data.get("name", "N/D")
-        docset_path_str = selected_package_data.get("docset_path")
+            package_name = selected_package_data.get("name", "N/D")
+            docset_path_str = selected_package_data.get("docset_path")
 
-        if not docset_path_str:
-            wx.MessageBox(
-                f"No docset path found for '{package_name}'. Cannot delete.",
-                "Deletion Error",
-                wx.OK | wx.ICON_ERROR,
-            )
-            if event:
-                event.Skip()
-            return
-
-        # --- UI Logic: Confirmation ---
-        confirm_dialog = wx.MessageDialog(
-            self.main_frame,
-            f"Are you sure you want to delete the docset for '{package_name}'?\n"
-            f"Path: {docset_path_str}\n\n"
-            "This action cannot be undone.",
-            "Confirm Deletion",
-            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING,
-        )
-        user_choice = confirm_dialog.ShowModal()
-        confirm_dialog.Destroy()
-
-        if user_choice != wx.ID_YES:
-            if event:
-                event.Skip()
-            return
-
-        # --- Delegation to Core ---
-        if not self.core:
-            wx.MessageBox(
-                "Core system not available.", INTERNAL_ERROR_MSG, wx.OK | wx.ICON_ERROR
-            )
-            if event:
-                event.Skip()
-            return
-
-        success, message = self.core.delete_docset_build(docset_path_str)
-
-        # --- UI Logic: Update based on result ---
-        if success:
-            logger.info(f"GUI: Successfully deleted docset for '{package_name}'.")
-            wx.MessageBox(
-                f"The docset for '{package_name}' has been deleted.",
-                "Deletion Successful",
-                wx.OK | wx.ICON_INFORMATION,
-            )
-            # Update data source and grid view
-            if self.selected_row_index is not None:
-                self.current_grid_source_data[self.selected_row_index][
-                    "docset_status"
-                ] = NOT_AVAILABLE_BTN_LABEL
-                self.current_grid_source_data[self.selected_row_index].pop(
-                    "docset_path", None
+            if not docset_path_str:
+                wx.MessageBox(
+                    f"No docset path found for '{package_name}'. Cannot delete.",
+                    "Deletion Error",
+                    wx.OK | wx.ICON_ERROR,
                 )
-                if self.grid_panel and self.grid_panel.grid:
-                    self.grid_panel.grid.SetCellValue(
-                        self.selected_row_index,
-                        self.docset_status_col_grid_idx,
-                        NOT_AVAILABLE_BTN_LABEL,
-                    )
-                    self.grid_panel.grid.ForceRefresh()
-        else:
-            logger.error(
-                f"GUI: Core failed to delete docset for '{package_name}'. Reason:"
-                f" {message}"
-            )
-            wx.MessageBox(
-                f"Could not delete the docset for '{package_name}'.\n\n"
-                f"Reason: {message}",
-                "Deletion Failed",
-                wx.OK | wx.ICON_ERROR,
-            )
+                return
 
-        self._update_action_buttons_state()
+            if not self._confirm_deletion(package_name, docset_path_str):
+                return
 
-        if event:
-            event.Skip()
+            if not self.core:
+                wx.MessageBox(
+                    "Core system not available.", INTERNAL_ERROR_MSG, wx.OK | wx.ICON_ERROR
+                )
+                return
+
+            success, message = self.core.delete_docset_build(docset_path_str)
+
+            if success:
+                self._handle_delete_success(package_name)
+            else:
+                self._handle_delete_failure(package_name, message)
+
+            self._update_action_buttons_state()
+        finally:
+            if event:
+                event.Skip()
 
     def _update_action_buttons_state(self) -> None:
         """Update the state of the action buttons by delegating to the ActionsPanel."""
