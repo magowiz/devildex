@@ -1,4 +1,5 @@
 """Tests for the GenerationTaskManager."""
+from unittest.mock import MagicMock
 
 import pytest
 import wx
@@ -8,16 +9,16 @@ from devildex.task_manager import GenerationTaskManager
 
 
 @pytest.fixture
-def mock_core(mocker: MockerFixture):
-    """Provides a mock DevilDexCore."""
+def mock_core(mocker: MockerFixture) -> MagicMock:
+    """Provide a mock DevilDexCore."""
     core = mocker.MagicMock(name="DevilDexCore")
     core.generate_docset.return_value = (True, "/fake/path/to/docset")
     return core
 
 
 @pytest.fixture
-def mock_owner(mocker: MockerFixture):
-    """Provides a mock owner window for the timer."""
+def mock_owner(mocker: MockerFixture) -> MagicMock:
+    """Provide a mock owner window for the timer."""
     owner = mocker.MagicMock(spec=wx.Frame)
     owner.docset_status_col_grid_idx = 5
     return owner
@@ -25,7 +26,7 @@ def mock_owner(mocker: MockerFixture):
 
 @pytest.fixture
 def mock_callbacks(mocker: MockerFixture) -> dict:
-    """Provides a dictionary of mock callback functions."""
+    """Provide a dictionary of mock callback functions."""
     return {
         "update_grid": mocker.MagicMock(name="update_grid_cell_callback"),
         "on_complete": mocker.MagicMock(name="on_task_complete_callback"),
@@ -37,7 +38,7 @@ def mock_callbacks(mocker: MockerFixture) -> dict:
 def task_manager(
     mock_core, mock_owner, mock_callbacks, mocker: MockerFixture
 ) -> GenerationTaskManager:
-    """Provides an instance of GenerationTaskManager with mocked dependencies."""
+    """Provide an instance of GenerationTaskManager with mocked dependencies."""
     mock_timer_class = mocker.patch("wx.Timer")
     mock_timer_instance = mock_timer_class.return_value
     mock_timer_instance.IsRunning.return_value = False
@@ -60,7 +61,7 @@ def task_manager(
 
 def test_start_generation_task_success(
     task_manager: GenerationTaskManager, mocker: MockerFixture
-):
+) -> None:
     """Verify that a new generation task can be started successfully."""
     # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
@@ -77,21 +78,17 @@ def test_start_generation_task_success(
     assert "pkg-123" in task_manager.active_tasks
     task_manager.animation_timer.Start.assert_called_once_with(150)
 
-    # CORREZIONE: Verifichiamo il comportamento, non l'implementazione.
-    # 1. Il costruttore è stato chiamato con target e args.
     mock_thread_class.assert_called_once_with(
         target=task_manager._perform_generation_in_thread,
         args=(package_data, row_index),
     )
-    # 2. La proprietà 'daemon' è stata impostata a True sull'istanza.
     assert mock_thread_instance.daemon is True
-    # 3. Il metodo start() è stato chiamato.
     mock_thread_instance.start.assert_called_once()
 
 
 def test_start_generation_task_already_active(
     task_manager: GenerationTaskManager, mocker: MockerFixture
-):
+) -> None:
     """Verify that a task for the same package cannot be started if one is active."""
     # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
@@ -109,7 +106,7 @@ def test_start_generation_task_already_active(
 
 def test_on_animation_tick_updates_grid_for_active_tasks(
     task_manager: GenerationTaskManager, mock_callbacks: dict, mock_owner
-):
+) -> None:
     """Verify the timer callback updates the UI for all active tasks."""
     # Arrange
     task_manager.active_tasks = {"pkg-123": 1, "pkg-456": 3}
@@ -133,7 +130,7 @@ def test_on_animation_tick_updates_grid_for_active_tasks(
 
 def test_perform_generation_in_thread_handles_success(
     task_manager: GenerationTaskManager, mock_core, mocker: MockerFixture
-):
+) -> None:
     """Verify the thread worker calls the core and wx.CallAfter on success."""
     # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
@@ -158,7 +155,7 @@ def test_perform_generation_in_thread_handles_success(
 
 def test_perform_generation_in_thread_handles_failure(
     task_manager: GenerationTaskManager, mock_core, mocker: MockerFixture
-):
+) -> None:
     """Verify the thread worker calls the core and wx.CallAfter on failure."""
     # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
@@ -183,13 +180,12 @@ def test_perform_generation_in_thread_handles_failure(
 
 def test_handle_task_completion_cleans_up_and_notifies(
     task_manager: GenerationTaskManager, mock_callbacks: dict
-):
+) -> None:
     """Verify the completion handler cleans up state and calls final callbacks."""
     # Arrange
     task_manager.active_tasks = {"pkg-123": 1}
     on_complete_cb = mock_callbacks["on_complete"]
     update_buttons_cb = mock_callbacks["update_buttons"]
-    # CORREZIONE: Simuliamo che il timer sia in esecuzione prima del completamento.
     task_manager.animation_timer.IsRunning.return_value = True
 
     # Act
@@ -207,6 +203,4 @@ def test_handle_task_completion_cleans_up_and_notifies(
 
     on_complete_cb.assert_called_once_with(True, "/path", "test-package", "pkg-123", 1)
     update_buttons_cb.assert_called_once()
-
-    # Ora questo controllo passa perché IsRunning() restituisce True.
     task_manager.animation_timer.Stop.assert_called_once()

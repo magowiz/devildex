@@ -1,6 +1,4 @@
-"""
-Tests for the log panel visibility logic within the DevilDexApp class.
-"""
+"""Tests for the log panel visibility logic within the DevilDexApp class."""
 
 import pytest
 import wx
@@ -11,9 +9,7 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """
-    Provides a DevilDexApp instance for testing without a running event loop.
-    """
+    """Provide a DevilDexApp instance for testing without a running event loop."""
     # Prevent the real wx.App from initializing
     mocker.patch("wx.App.__init__", return_value=None)
 
@@ -34,7 +30,7 @@ def app(mocker: MockerFixture) -> DevilDexApp:
 
 def test_on_log_toggle_button_click_toggles_visibility(
     app: DevilDexApp, mocker: MockerFixture
-):
+) -> None:
     """Verify that clicking the toggle button calls the main visibility function."""
     # Arrange
     app.is_log_panel_visible = False
@@ -49,7 +45,8 @@ def test_on_log_toggle_button_click_toggles_visibility(
     mock_event.Skip.assert_called_once()
 
 
-def test_set_log_panel_visibility_to_visible(app: DevilDexApp, mocker: MockerFixture):
+def test_set_log_panel_visibility_to_visible(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the correct helper is called to show the log panel."""
     # Arrange
     mock_show_panel = mocker.patch.object(app, "_show_log_panel")
@@ -65,7 +62,8 @@ def test_set_log_panel_visibility_to_visible(app: DevilDexApp, mocker: MockerFix
     app.panel.Layout.assert_called_once()
 
 
-def test_set_log_panel_visibility_to_hidden(app: DevilDexApp, mocker: MockerFixture):
+def test_set_log_panel_visibility_to_hidden(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the correct helper is called to hide the log panel."""
     # Arrange
     app.is_log_panel_visible = True  # Start with it visible
@@ -82,7 +80,8 @@ def test_set_log_panel_visibility_to_hidden(app: DevilDexApp, mocker: MockerFixt
     app.panel.Layout.assert_called_once()
 
 
-def test_on_view_log_opens_panel_if_hidden(app: DevilDexApp, mocker: MockerFixture):
+def test_on_view_log_opens_panel_if_hidden(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify 'View Log' action opens the log panel if it's currently hidden."""
     # Arrange
     app.is_log_panel_visible = False
@@ -100,7 +99,7 @@ def test_on_view_log_opens_panel_if_hidden(app: DevilDexApp, mocker: MockerFixtu
 
 def test_on_view_log_does_nothing_if_already_visible(
     app: DevilDexApp, mocker: MockerFixture
-):
+) -> None:
     """Verify 'View Log' action does nothing if the panel is already visible."""
     # Arrange
     app.is_log_panel_visible = True

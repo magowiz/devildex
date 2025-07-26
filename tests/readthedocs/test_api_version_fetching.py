@@ -6,33 +6,34 @@ import requests
 from pytest_mock import MockerFixture
 
 from devildex.readthedocs.readthedocs_api import (
-    _fetch_available_versions,  # noqa: SLF001
+    _fetch_available_versions,
 )
 
 
 class MockResponse:
     """A mock class to simulate requests.Response for testing."""
 
-    def __init__(self, json_data=None, text_data="", status_code=200):
+    def __init__(
+            self, json_data=None, text_data: str = "", status_code:int =200) -> None:
         """Initialize the mock response."""
         self._json_data = json_data
         self._text_data = text_data
         self.status_code = status_code
 
-    def json(self):
-        """Mock the json() method."""
+    def json(self) -> dict | list:
+        """Mock the json method."""
         if self._json_data is not None:
             return self._json_data
         # Simulate the error caught in the source code
         raise json.JSONDecodeError("Expecting value", self._text_data, 0)
 
-    def raise_for_status(self):
-        """Mock the raise_for_status() method."""
+    def raise_for_status(self) -> None:
+        """Mock the raise_for_status method."""
         if self.status_code >= 400:
             raise requests.exceptions.HTTPError(f"Error {self.status_code}")
 
 
-def test_fetch_available_versions_single_page(mocker: MockerFixture):
+def test_fetch_available_versions_single_page(mocker: MockerFixture) -> None:
     """Verify it correctly fetches versions from a single API page."""
     # Arrange
     mock_api_response = {
@@ -58,7 +59,7 @@ def test_fetch_available_versions_single_page(mocker: MockerFixture):
     mock_get.assert_called_once()
 
 
-def test_fetch_available_versions_with_pagination(mocker: MockerFixture):
+def test_fetch_available_versions_with_pagination(mocker: MockerFixture) -> None:
     """Verify it correctly handles API pagination across multiple pages."""
     # Arrange
     page1_response = {
@@ -85,13 +86,14 @@ def test_fetch_available_versions_with_pagination(mocker: MockerFixture):
     assert mock_get.call_count == 2
 
 
-def test_fetch_available_versions_handles_network_error(mocker: MockerFixture):
+def test_fetch_available_versions_handles_network_error(mocker: MockerFixture) -> None:
     """Verify it returns None on a network error like a timeout or DNS failure."""
     mocker.patch("requests.get", side_effect=requests.exceptions.RequestException)
     assert _fetch_available_versions("my-project") is None
 
 
-def test_fetch_available_versions_handles_json_decode_error(mocker: MockerFixture):
+def test_fetch_available_versions_handles_json_decode_error(
+        mocker: MockerFixture) -> None:
     """Verify it returns None when the API response is not valid JSON."""
     mocker.patch("requests.get", return_value=MockResponse(text_data="invalid json"))
     assert _fetch_available_versions("my-project") is None

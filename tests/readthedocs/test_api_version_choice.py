@@ -20,14 +20,16 @@ def sample_versions() -> list[dict]:
     ]
 
 
-def test_choose_best_version_finds_first_preference(sample_versions: list[dict]):
+def test_choose_best_version_finds_first_preference(
+        sample_versions: list[dict]) -> None:
     """Verify it selects the first preferred version if available."""
     preferred = ["stable", "latest"]
     result = _choose_best_version(sample_versions, preferred)
     assert result == "stable"
 
 
-def test_choose_best_version_finds_second_preference(sample_versions: list[dict]):
+def test_choose_best_version_finds_second_preference(
+        sample_versions: list[dict]) -> None:
     """Verify it selects the second preferred version if the first is not ideal."""
     # Make 'stable' unavailable
     sample_versions[0]["active"] = False
@@ -38,7 +40,7 @@ def test_choose_best_version_finds_second_preference(sample_versions: list[dict]
 
 def test_choose_best_version_falls_back_to_first_available(
     sample_versions: list[dict],
-):
+) -> None:
     """Check it falls back to first active and built version if no preferences match."""
     preferred = ["nonexistent-v1", "nonexistent-v2"]
     result = _choose_best_version(sample_versions, preferred)
@@ -46,7 +48,7 @@ def test_choose_best_version_falls_back_to_first_available(
     assert result == "stable"
 
 
-def test_choose_best_version_handles_no_active_built_versions():
+def test_choose_best_version_handles_no_active_built_versions() -> None:
     """Verify it returns None if no versions are active and built."""
     versions = [
         {"slug": "stable", "active": False, "built": True},
@@ -57,7 +59,7 @@ def test_choose_best_version_handles_no_active_built_versions():
     assert result is None
 
 
-def test_choose_best_version_handles_empty_version_list():
+def test_choose_best_version_handles_empty_version_list() -> None:
     """Verify it returns None for an empty list of available versions."""
     preferred = ["stable", "latest"]
     result = _choose_best_version([], preferred)

@@ -20,7 +20,7 @@ def wx_app() -> wx.App:
 
 @pytest.fixture
 def mock_callback(mocker: MockerFixture) -> Callable[[int], None]:
-    """Provides a mock callback function for row selection."""
+    """Provide a mock callback function for row selection."""
     return mocker.MagicMock(name="on_cell_selected_callback")
 
 
@@ -28,7 +28,7 @@ def mock_callback(mocker: MockerFixture) -> Callable[[int], None]:
 def grid_panel(
     wx_app: wx.App, mock_callback: Callable[[int], None], mocker: MockerFixture
 ) -> DocsetGridPanel:
-    """Provides an instance of DocsetGridPanel for testing."""
+    """Provide an instance of DocsetGridPanel for testing."""
     # A dummy frame is needed as a parent for the panel
     frame = wx.Frame(None)
     panel = DocsetGridPanel(frame, mock_callback)
@@ -49,7 +49,8 @@ def grid_panel(
 # --- Test Cases ---
 
 
-def test_update_data_populates_grid(grid_panel: DocsetGridPanel, mocker: MockerFixture):
+def test_update_data_populates_grid(
+        grid_panel: DocsetGridPanel, mocker: MockerFixture) -> None:
     """Verify that update_data correctly populates the grid with new data."""
     # Arrange
     # Provide data for all columns to make the test robust
@@ -98,7 +99,7 @@ def test_on_grid_cell_click_handles_selection(
     grid_panel: DocsetGridPanel,
     mock_callback: Callable[[int], None],
     mocker: MockerFixture,  # FIX: Add missing mocker fixture
-):
+) -> None:
     """Verify that clicking a cell highlights the row and triggers the callback."""
     # Arrange
     grid = grid_panel.grid

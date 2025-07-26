@@ -1,5 +1,4 @@
-"""
-Tests for the regeneration logic within the DevilDexApp class.
+"""Tests for the regeneration logic within the DevilDexApp class.
 
 This file is separate to avoid breaking the main test file for UI logic.
 """
@@ -13,9 +12,7 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """
-    Provides a DevilDexApp instance for testing without a running event loop.
-    """
+    """Provide a DevilDexApp instance for testing without a running event loop."""
     # Prevent the real wx.App from initializing
     mocker.patch("wx.App.__init__", return_value=None)
 
@@ -37,7 +34,7 @@ def app(mocker: MockerFixture) -> DevilDexApp:
 # --- Tests for on_regenerate_docset ---
 
 
-def test_on_regenerate_docset_success(app: DevilDexApp, mocker: MockerFixture):
+def test_on_regenerate_docset_success(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it calls delete and then generate in order."""
     # Arrange
     app.selected_row_index = 0
@@ -64,7 +61,9 @@ def test_on_regenerate_docset_success(app: DevilDexApp, mocker: MockerFixture):
     manager.assert_has_calls(expected_calls)
 
 
-def test_on_regenerate_docset_no_selection(app: DevilDexApp, mocker: MockerFixture):
+def test_on_regenerate_docset_no_selection(
+    app: DevilDexApp, mocker: MockerFixture
+) -> None:
     """Verify it shows a message box if no package is selected."""
     # Arrange
     app.selected_row_index = None

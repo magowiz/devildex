@@ -1,5 +1,4 @@
-"""
-Tests for the business logic within the DevilDexApp class.
+"""Tests for the business logic within the DevilDexApp class.
 
 These tests focus on the application's logic, mocking UI components
 and core functionalities to ensure methods behave as expected without
@@ -12,14 +11,13 @@ import pytest
 import wx
 from pytest_mock import MockerFixture
 
-from devildex.main import DevilDexApp
 from devildex.constants import AVAILABLE_BTN_LABEL
+from devildex.main import DevilDexApp
 
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """
-    Provides a DevilDexApp instance for testing without a running event loop.
+    """Provide a DevilDexApp instance for testing without a running event loop.
 
     Mocks the wx.App.__init__ to prevent it from starting a real GUI.
     Also mocks the core and UI panel dependencies.
@@ -56,9 +54,9 @@ def test_update_action_buttons_state_delegates_correctly(
     package_data: dict | None,
     is_task_running: bool,
     case_id: str,
-):
-    """
-    Verify that _update_action_buttons_state correctly calls the
+) -> None:
+    """Verify that _update_action_buttons_state correctly calls the AP.
+
     ActionsPanel with the current state.
     """
     # Arrange
@@ -80,7 +78,7 @@ def test_update_action_buttons_state_delegates_correctly(
 # --- Tests for on_delete_docset ---
 
 
-def test_on_delete_docset_success(app: DevilDexApp, mocker: MockerFixture):
+def test_on_delete_docset_success(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the full success path for deleting a docset."""
     # Arrange
     selected_data = {"name": "test-package", "docset_path": "/fake/path/docset"}
@@ -100,7 +98,7 @@ def test_on_delete_docset_success(app: DevilDexApp, mocker: MockerFixture):
     mock_update_buttons.assert_called_once()
 
 
-def test_on_delete_docset_user_cancels(app: DevilDexApp, mocker: MockerFixture):
+def test_on_delete_docset_user_cancels(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify nothing happens if the user cancels the deletion."""
     # Arrange
     selected_data = {"name": "test-package", "docset_path": "/fake/path/docset"}
@@ -115,7 +113,7 @@ def test_on_delete_docset_user_cancels(app: DevilDexApp, mocker: MockerFixture):
     app.core.delete_docset_build.assert_not_called()
 
 
-def test_on_delete_docset_core_fails(app: DevilDexApp, mocker: MockerFixture):
+def test_on_delete_docset_core_fails(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the failure path is handled when the core cannot delete."""
     # Arrange
     selected_data = {"name": "test-package", "docset_path": "/fake/path/docset"}
@@ -135,7 +133,8 @@ def test_on_delete_docset_core_fails(app: DevilDexApp, mocker: MockerFixture):
     mock_update_buttons.assert_called_once()
 
 
-def test_on_delete_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixture):
+def test_on_delete_docset_no_path_in_data(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it shows a message box if the selected package has no path."""
     # Arrange
     selected_data = {"name": "test-package"}  # No 'docset_path'
@@ -153,7 +152,7 @@ def test_on_delete_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixtur
 # --- Tests for on_generate_docset ---
 
 
-def test_on_generate_docset_success(app: DevilDexApp, mocker: MockerFixture):
+def test_on_generate_docset_success(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the success path for starting a docset generation."""
     # Arrange
     selected_data = {"id": "pkg-123", "name": "test-package"}
@@ -177,7 +176,8 @@ def test_on_generate_docset_success(app: DevilDexApp, mocker: MockerFixture):
     )
 
 
-def test_on_generate_docset_no_selection(app: DevilDexApp, mocker: MockerFixture):
+def test_on_generate_docset_no_selection(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it shows a message box if no package is selected."""
     # Arrange
     app.selected_row_index = None  # Explicitly set no selection
@@ -193,7 +193,8 @@ def test_on_generate_docset_no_selection(app: DevilDexApp, mocker: MockerFixture
     mock_task_manager.start_generation_task.assert_not_called()
 
 
-def test_on_generate_docset_validation_fails(app: DevilDexApp, mocker: MockerFixture):
+def test_on_generate_docset_validation_fails(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify nothing happens if pre-generation validation fails."""
     # Arrange
     selected_data = {"id": "pkg-123", "name": "test-package"}
@@ -215,7 +216,7 @@ def test_on_generate_docset_validation_fails(app: DevilDexApp, mocker: MockerFix
 
 def test_on_generate_docset_task_manager_not_ready(
     app: DevilDexApp, mocker: MockerFixture
-):
+) -> None:
     """Verify it shows an error if the task manager is not initialized."""
     # Arrange
     selected_data = {"id": "pkg-123", "name": "test-package"}
@@ -235,7 +236,7 @@ def test_on_generate_docset_task_manager_not_ready(
 # --- Tests for on_open_docset ---
 
 
-def test_on_open_docset_success(app: DevilDexApp, mocker: MockerFixture):
+def test_on_open_docset_success(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the success path for opening a docset with an index.html."""
     # Arrange
     app.selected_row_index = 0
@@ -267,7 +268,7 @@ def test_on_open_docset_success(app: DevilDexApp, mocker: MockerFixture):
     )
 
 
-def test_on_open_docset_no_selection(app: DevilDexApp, mocker: MockerFixture):
+def test_on_open_docset_no_selection(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it shows a message box if no package is selected."""
     # Arrange
     app.selected_row_index = None
@@ -282,7 +283,8 @@ def test_on_open_docset_no_selection(app: DevilDexApp, mocker: MockerFixture):
     mock_show_doc.assert_not_called()
 
 
-def test_on_open_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixture):
+def test_on_open_docset_no_path_in_data(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it shows a message box if the selected package has no docset_path."""
     # Arrange
     app.selected_row_index = 0
@@ -299,7 +301,8 @@ def test_on_open_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixture)
     app.show_document.assert_not_called()
 
 
-def test_on_open_docset_fallback_to_other_html(app: DevilDexApp, mocker: MockerFixture):
+def test_on_open_docset_fallback_to_other_html(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it opens the first available HTML file if index.html is missing."""
     # Arrange
     app.selected_row_index = 0
@@ -331,7 +334,8 @@ def test_on_open_docset_fallback_to_other_html(app: DevilDexApp, mocker: MockerF
     )
 
 
-def test_on_open_docset_no_html_files_found(app: DevilDexApp, mocker: MockerFixture):
+def test_on_open_docset_no_html_files_found(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it shows an error if no HTML files are found in the docset dir."""
     # Arrange
     app.selected_row_index = 0
@@ -362,7 +366,7 @@ def test_on_open_docset_no_html_files_found(app: DevilDexApp, mocker: MockerFixt
 # --- Tests for on_view_mode_changed ---
 
 
-def test_on_view_mode_changed_success(app: DevilDexApp, mocker: MockerFixture):
+def test_on_view_mode_changed_success(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify the full success path for changing the view mode."""
     # Arrange
     mock_event = mocker.MagicMock(spec=wx.CommandEvent)
@@ -387,8 +391,8 @@ def test_on_view_mode_changed_success(app: DevilDexApp, mocker: MockerFixture):
     app.panel.Layout.assert_called_once()
     mock_event.Skip.assert_called_once()
 
-
-def test_on_view_mode_changed_cannot_process(app: DevilDexApp, mocker: MockerFixture):
+def test_on_view_mode_changed_cannot_process(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify it aborts early if _can_process_view_change is False."""
     # Arrange
     mock_event = mocker.MagicMock(spec=wx.CommandEvent)
@@ -405,7 +409,7 @@ def test_on_view_mode_changed_cannot_process(app: DevilDexApp, mocker: MockerFix
 
 def test_on_view_mode_changed_core_setting_fails(
     app: DevilDexApp, mocker: MockerFixture
-):
+) -> None:
     """Verify it aborts if setting the project in the core fails."""
     # Arrange
     mock_event = mocker.MagicMock(spec=wx.CommandEvent)
@@ -423,7 +427,6 @@ def test_on_view_mode_changed_core_setting_fails(
     mock_bootstrap.assert_not_called()
     mock_event.Skip.assert_called_once()
 
-# --- Tests for _validate_can_generate ---
 
 
 @pytest.mark.parametrize(
@@ -483,7 +486,7 @@ def test_validate_can_generate_scenarios(
     core_exists: bool,
     expected_result: bool,
     expected_msg_part: str | None,
-):
+) -> None:
     """Verify _validate_can_generate handles various scenarios correctly."""
     # Arrange
     if not core_exists:
@@ -508,63 +511,7 @@ def test_validate_can_generate_scenarios(
 # --- Tests for on_view_mode_changed ---
 
 
-def test_on_view_mode_changed_success(app: DevilDexApp, mocker: MockerFixture):
-    """Verify the full success path for changing the view mode."""
-    # Arrange
-    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
-    app.view_mode_selector = mocker.MagicMock()
-    app.view_mode_selector.GetValue.return_value = "Project: MyProject"
-
-    mocker.patch.object(app, "_can_process_view_change", return_value=True)
-    mock_handle_core = mocker.patch.object(
-        app, "_handle_core_project_setting", return_value=True
-    )
-    mock_bootstrap = app.core.bootstrap_database_and_load_data
-    mock_update_ui = mocker.patch.object(app, "_update_ui_after_data_load")
-    app.panel = mocker.MagicMock()
-
-    # Act
-    app.on_view_mode_changed(mock_event)
-
-    # Assert
-    mock_handle_core.assert_called_once_with("Project: MyProject")
-    mock_bootstrap.assert_called_once()
-    mock_update_ui.assert_called_once()
-    app.panel.Layout.assert_called_once()
-    mock_event.Skip.assert_called_once()
 
 
-def test_on_view_mode_changed_cannot_process(app: DevilDexApp, mocker: MockerFixture):
-    """Verify it aborts early if _can_process_view_change is False."""
-    # Arrange
-    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
-    mocker.patch.object(app, "_can_process_view_change", return_value=False)
-    mock_handle_core = mocker.patch.object(app, "_handle_core_project_setting")
-
-    # Act
-    app.on_view_mode_changed(mock_event)
-
-    # Assert
-    mock_handle_core.assert_not_called()
-    mock_event.Skip.assert_called_once()
 
 
-def test_on_view_mode_changed_core_setting_fails(
-    app: DevilDexApp, mocker: MockerFixture
-):
-    """Verify it aborts if setting the project in the core fails."""
-    # Arrange
-    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
-    app.view_mode_selector = mocker.MagicMock()
-    app.view_mode_selector.GetValue.return_value = "Project: BadProject"
-
-    mocker.patch.object(app, "_can_process_view_change", return_value=True)
-    mocker.patch.object(app, "_handle_core_project_setting", return_value=False)
-    mock_bootstrap = app.core.bootstrap_database_and_load_data
-
-    # Act
-    app.on_view_mode_changed(mock_event)
-
-    # Assert
-    mock_bootstrap.assert_not_called()
-    mock_event.Skip.assert_called_once()

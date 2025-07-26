@@ -15,7 +15,8 @@ from devildex.fetcher import PackageSourceFetcher
 
 @pytest.fixture
 def fetcher_instance(tmp_path: Path, mocker: MockerFixture) -> PackageSourceFetcher:
-    """Provides a PackageSourceFetcher instance with a temporary base path.
+    """Provide a PackageSourceFetcher instance with a temp base path.
+
     It also mocks the initial check for an existing directory, assuming it's empty
     by default, so we can test the fetching logic.
     """
@@ -31,7 +32,7 @@ def fetcher_instance(tmp_path: Path, mocker: MockerFixture) -> PackageSourceFetc
 
 def test_fetch_succeeds_if_already_exists(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify `fetch` succeeds immediately if the directory has content."""
     # Arrange
     # Override the mock from the fixture to simulate an existing, non-empty directory.
@@ -60,7 +61,7 @@ def test_fetch_succeeds_if_already_exists(
 
 def test_fetch_succeeds_with_pypi_sdist(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify `fetch` calls the PyPI method first and succeeds."""
     # Arrange
     mock_fetch_pypi = mocker.patch.object(
@@ -81,7 +82,7 @@ def test_fetch_succeeds_with_pypi_sdist(
 
 def test_fetch_falls_back_to_vcs_tag(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify `fetch` falls back to VCS tag clone if PyPI fails."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
@@ -108,7 +109,7 @@ def test_fetch_falls_back_to_vcs_tag(
 
 def test_fetch_falls_back_to_vcs_main(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify `fetch` falls back to VCS main branch if PyPI and tag fail."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
@@ -134,7 +135,7 @@ def test_fetch_falls_back_to_vcs_main(
 
 def test_fetch_fails_if_all_methods_fail(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify `fetch` fails gracefully if all fetch methods fail."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)

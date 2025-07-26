@@ -11,7 +11,7 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture, tmp_path: Path) -> DevilDexApp:
-    """Provides a DevilDexApp instance for testing without a running event loop."""
+    """Provide a DevilDexApp instance for testing without a running event loop."""
     # Prevent the real wx.App from initializing
     mocker.patch("wx.App.__init__", return_value=None)
 
@@ -27,8 +27,9 @@ def app(mocker: MockerFixture, tmp_path: Path) -> DevilDexApp:
 
 def test_perform_startup_docset_scan(
     app: DevilDexApp, mocker: MockerFixture, tmp_path: Path
-):
-    """Verify that _perform_startup_docset_scan correctly updates package data
+) -> None:
+    """Verify that _perform_startup_docset_scan correctly updates package data.
+
     based on the directories found on the filesystem.
     """
     # Arrange

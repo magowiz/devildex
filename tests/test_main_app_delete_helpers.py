@@ -1,6 +1,4 @@
-"""
-Tests for the deletion helper methods within the DevilDexApp class.
-"""
+"""Tests for the deletion helper methods within the DevilDexApp class."""
 
 import pytest
 import wx
@@ -12,9 +10,7 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """
-    Provides a DevilDexApp instance for testing without a running event loop.
-    """
+    """Provide a DevilDexApp instance for testing without a running event loop."""
     # Prevent the real wx.App from initializing
     mocker.patch("wx.App.__init__", return_value=None)
     # Ensure log handler calls AppendText directly instead of via wx.CallAfter
@@ -53,7 +49,7 @@ def app(mocker: MockerFixture) -> DevilDexApp:
     return app_instance
 
 
-def test_update_grid_after_delete(app: DevilDexApp):
+def test_update_grid_after_delete(app: DevilDexApp) -> None:
     """Verify that _update_grid_after_delete correctly updates data and UI."""
     # Act
     app._update_grid_after_delete()
@@ -71,8 +67,8 @@ def test_update_grid_after_delete(app: DevilDexApp):
     app.grid_panel.grid.ForceRefresh.assert_called_once()
 
 
-def test_handle_delete_success(app: DevilDexApp, mocker: MockerFixture):
-    """Verify that _handle_delete_success logs, shows a message, and updates the grid."""
+def test_handle_delete_success(app: DevilDexApp, mocker: MockerFixture) -> None:
+    """Verify that _handle_delete_success shows a message, and updates the grid."""
     # Arrange
     mock_update_grid = mocker.patch.object(app, "_update_grid_after_delete")
     package_name = "test-package"
@@ -93,7 +89,7 @@ def test_handle_delete_success(app: DevilDexApp, mocker: MockerFixture):
     mock_update_grid.assert_called_once()
 
 
-def test_handle_delete_failure(app: DevilDexApp):
+def test_handle_delete_failure(app: DevilDexApp) -> None:
     """Verify that _handle_delete_failure logs and shows an error message."""
     # Arrange
     package_name = "test-package"

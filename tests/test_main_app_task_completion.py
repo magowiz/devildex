@@ -10,7 +10,7 @@ from devildex.main import DevilDexApp
 
 @pytest.fixture
 def app(mocker: MockerFixture) -> DevilDexApp:
-    """Provides a DevilDexApp instance for testing without a running event loop."""
+    """Provide a DevilDexApp instance for testing without a running event loop."""
     # Prevent the real wx.App from initializing
     mocker.patch("wx.App.__init__", return_value=None)
 
@@ -37,7 +37,8 @@ def app(mocker: MockerFixture) -> DevilDexApp:
     return app_instance
 
 
-def test_on_generation_complete_success(app: DevilDexApp, mocker: MockerFixture):
+def test_on_generation_complete_success(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify UI updates correctly on a successful generation."""
     # Arrange
     row_to_update = 0
@@ -72,7 +73,8 @@ def test_on_generation_complete_success(app: DevilDexApp, mocker: MockerFixture)
     wx.MessageBox.assert_not_called()
 
 
-def test_on_generation_complete_failure(app: DevilDexApp, mocker: MockerFixture):
+def test_on_generation_complete_failure(
+        app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify UI updates correctly on a failed generation."""
     # Arrange
     row_to_update = 0

@@ -175,10 +175,7 @@ class PackageSourceFetcher:
 
         # An absolute path is unsafe if it's considered absolute by the
         # current operating system.
-        if pathlib.Path(member_name).is_absolute():
-            return False
-
-        return True
+        return not pathlib.Path(member_name).is_absolute()
 
     @staticmethod
     def _extract_zip_safely(

@@ -26,7 +26,7 @@ sanitize_test_cases = [
 
 
 @pytest.mark.parametrize("input_name, expected", sanitize_test_cases)
-def test_sanitize_path_component(input_name, expected):
+def test_sanitize_path_component(input_name: str, expected: str) -> None:
     """Verify path component sanitization for various inputs."""
     # This is a static method, so we can call it directly on the class
     # without needing an instance.
@@ -36,7 +36,7 @@ def test_sanitize_path_component(input_name, expected):
 
 @pytest.fixture
 def fetcher_instance(tmp_path: Path) -> PackageSourceFetcher:
-    """Provides a PackageSourceFetcher instance with a temporary base path."""
+    """Provide a PackageSourceFetcher instance with a temp base path."""
     package_info = {"name": "test-package", "version": "1.0.0"}
     return PackageSourceFetcher(
         base_save_path=str(tmp_path), package_info_dict=package_info
@@ -48,7 +48,7 @@ def fetcher_instance(tmp_path: Path) -> PackageSourceFetcher:
 
 def test_ensure_target_dir_exists_success(
     fetcher_instance: PackageSourceFetcher,
-):
+) -> None:
     """Verify it creates the directory and returns True on success."""
     # Arrange
     target_dir = fetcher_instance.download_target_path
@@ -66,7 +66,7 @@ def test_ensure_target_dir_exists_success(
 
 def test_ensure_target_dir_exists_os_error(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify it returns False when directory creation fails with an OSError."""
     # Arrange
     # We patch the class method to raise an OSError when called.
@@ -82,7 +82,8 @@ def test_ensure_target_dir_exists_os_error(
 # --- Tests for _cleanup_target_dir_content ---
 
 
-def test_cleanup_target_dir_content_success(fetcher_instance: PackageSourceFetcher):
+def test_cleanup_target_dir_content_success(
+        fetcher_instance: PackageSourceFetcher) -> None:
     """Verify it removes all files and subdirectories from the target directory."""
     # Arrange
     target_dir = fetcher_instance.download_target_path
@@ -108,7 +109,7 @@ def test_cleanup_target_dir_content_success(fetcher_instance: PackageSourceFetch
 
 def test_cleanup_target_dir_content_handles_os_error(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify it handles an OSError during cleanup without crashing."""
     # Arrange
     target_dir = fetcher_instance.download_target_path
@@ -145,7 +146,7 @@ vcs_url_test_cases = [
 
 
 @pytest.mark.parametrize("url, expected", vcs_url_test_cases)
-def test_is_valid_vcs_url(url, expected):
+def test_is_valid_vcs_url(url: str, expected: str) -> None:
     """Verify VCS URL validation for various inputs."""
     assert PackageSourceFetcher._is_valid_vcs_url(url) is expected
 
@@ -153,7 +154,7 @@ def test_is_valid_vcs_url(url, expected):
 # --- Security Tests for Archive Extraction ---
 
 
-def test_is_path_safe_allows_paths_within_base(tmp_path: Path):
+def test_is_path_safe_allows_paths_within_base(tmp_path: Path) -> None:
     """Verify _is_path_safe correctly identifies paths inside the base directory."""
     base_dir = tmp_path.resolve()
     safe_path1 = base_dir / "file.txt"
@@ -163,7 +164,7 @@ def test_is_path_safe_allows_paths_within_base(tmp_path: Path):
     assert PackageSourceFetcher._is_path_safe(base_dir, base_dir) is True
 
 
-def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path):
+def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path) -> None:
     """Verify _is_path_safe rejects paths that resolve outside the base directory."""
     base_dir = tmp_path.resolve()
     # Path traversal attempt
@@ -193,8 +194,8 @@ def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path):
         ("C:\\windows\\system32", sys.platform != "win32"),
     ],
 )
-def test_is_member_name_safe(member_name, expected):
-    """Verify _is_member_name_safe correctly identifies safe and unsafe archive member names."""
+def test_is_member_name_safe(member_name: str, expected: str) -> None:
+    """Verify _is_member_name_safe correctly identifies archive member names."""
     assert PackageSourceFetcher._is_member_name_safe(member_name) is expected
 
 
@@ -243,8 +244,8 @@ find_vcs_url_test_cases = [
     ids=[c[1] for c in find_vcs_url_test_cases],
 )
 def test_find_vcs_url_in_dict(
-    fetcher_instance: PackageSourceFetcher, urls_dict, case_id, expected_url
-):
+    fetcher_instance: PackageSourceFetcher, urls_dict: dict, case_id, expected_url: str
+) -> None:
     """Verify that _find_vcs_url_in_dict correctly identifies the best VCS URL."""
     # The 'source_description' argument is only for logging, so we use a dummy value.
     found_url = fetcher_instance._find_vcs_url_in_dict(urls_dict, "test_source")
@@ -256,7 +257,7 @@ def test_find_vcs_url_in_dict(
 
 def test_get_vcs_url_uses_local_url_first(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify _get_vcs_url returns a local URL without calling PyPI if one is valid."""
     # Arrange
     fetcher_instance.project_urls = {"Source Code": "https://github.com/local/repo.git"}
@@ -274,7 +275,7 @@ def test_get_vcs_url_uses_local_url_first(
 
 def test_get_vcs_url_falls_back_to_pypi(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify _get_vcs_url calls PyPI when no local URL is valid."""
     # Arrange
     fetcher_instance.project_urls = {"Homepage": "https://not-a-vcs.com"}
@@ -294,7 +295,7 @@ def test_get_vcs_url_falls_back_to_pypi(
 
 def test_get_vcs_url_returns_none_if_no_url_found(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify _get_vcs_url returns None if no valid URL is found anywhere."""
     # Arrange
     fetcher_instance.project_urls = {}  # No local URLs
@@ -312,7 +313,7 @@ def test_get_vcs_url_returns_none_if_no_url_found(
 
 def test_get_vcs_url_caches_result(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify that after the first call, the result is cached and not re-calculated."""
     # Arrange
     fetcher_instance.project_urls = {}
@@ -338,7 +339,7 @@ def test_get_vcs_url_caches_result(
 
 def test_fetch_from_pypi_success(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify it returns the correct dict on a successful API call."""
     # Arrange
     expected_urls = {"Homepage": "http://example.com"}
@@ -356,7 +357,7 @@ def test_fetch_from_pypi_success(
 
 def test_fetch_from_pypi_request_exception(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify it returns None when a network error occurs."""
     # Arrange
     mocker.patch("requests.get", side_effect=requests.RequestException("Network Error"))
@@ -370,7 +371,7 @@ def test_fetch_from_pypi_request_exception(
 
 def test_fetch_from_pypi_bad_json(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify it returns None when the API response is not valid JSON."""
     # Arrange
     mock_response = mocker.Mock()
@@ -387,7 +388,7 @@ def test_fetch_from_pypi_bad_json(
 
 def test_fetch_from_pypi_missing_keys(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
-):
+) -> None:
     """Verify it returns None if the JSON response is missing expected keys."""
     # Arrange
     mock_response = mocker.Mock()

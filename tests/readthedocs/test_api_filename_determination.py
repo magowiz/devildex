@@ -6,10 +6,7 @@ from devildex.readthedocs.readthedocs_api import (
     _determine_local_filename,
 )
 
-# Test cases as a list of tuples:
-# (project_slug, version_slug, download_url, download_format, expected_filename)
 test_cases = [
-    # Standard case: URL has a clear, reasonably sized filename
     (
         "requests",
         "v2.31.0",
@@ -17,7 +14,6 @@ test_cases = [
         "htmlzip",
         "requests.zip",
     ),
-    # Case: download_format is 'pdf'
     (
         "django",
         "4.2",
@@ -25,7 +21,6 @@ test_cases = [
         "pdf",
         "django.pdf",
     ),
-    # Case: URL does not have a file extension or is a generic endpoint
     (
         "my-project",
         "latest",
@@ -33,7 +28,6 @@ test_cases = [
         "htmlzip",
         "my-project-latest.zip",
     ),
-    # Case: Filename from URL is too long
     (
         "some-project",
         "feature-branch",
@@ -57,7 +51,6 @@ test_cases = [
         "htmlzip",
         "special-case-v1.zip",
     ),
-    # Case: download_format is 'epub'
     (
         "book-project",
         "final",
@@ -73,8 +66,11 @@ test_cases = [
     test_cases,
 )
 def test_determine_local_filename(
-    project_slug, version_slug, download_url, download_format, expected_filename
-):
+    project_slug: str, version_slug: str,
+    download_url: str,
+    download_format,
+    expected_filename: str
+) -> None:
     """Verify local filename is determined correctly across various scenarios."""
     result = _determine_local_filename(
         project_slug, version_slug, download_url, download_format
