@@ -48,8 +48,7 @@ def mock_app_paths(tmp_path: Path, mocker: MockerFixture) -> Path:
 
 
 def test_save_and_load_active_project(mock_app_paths: Path):
-    """Verify that project data can be saved to a JSON file and loaded back correctly.
-    """
+    """Verify that project data can be saved to a JSON file and loaded back correctly."""
     # Arrange: The fixture has already set up the temporary file path
 
     # Act: Save the data
@@ -71,8 +70,7 @@ def test_save_and_load_active_project(mock_app_paths: Path):
 
 
 def test_load_active_project_file_not_found(mock_app_paths: Path):
-    """Verify that loading returns None when the active project file does not exist.
-    """
+    """Verify that loading returns None when the active project file does not exist."""
     # Arrange: The file does not exist by default in the temp path
     assert not mock_app_paths.exists()
 
@@ -84,8 +82,7 @@ def test_load_active_project_file_not_found(mock_app_paths: Path):
 
 
 def test_load_active_project_invalid_json(mock_app_paths: Path, caplog):
-    """Verify that loading returns None and logs an error for a corrupt JSON file.
-    """
+    """Verify that loading returns None and logs an error for a corrupt JSON file."""
     # Arrange: Create a file with invalid (non-JSON) content
     mock_app_paths.write_text("this is not valid json {")
     assert mock_app_paths.is_file()
@@ -114,8 +111,7 @@ def test_load_active_project_missing_required_keys(mock_app_paths: Path, caplog)
 
 
 def test_clear_active_registered_project(mock_app_paths: Path):
-    """Verify that clearing the active project deletes the corresponding file.
-    """
+    """Verify that clearing the active project deletes the corresponding file."""
     # Arrange: Create the file first so we can test its deletion
     mock_app_paths.write_text(json.dumps(TEST_PROJECT_DATA))
     assert mock_app_paths.is_file()
@@ -128,8 +124,7 @@ def test_clear_active_registered_project(mock_app_paths: Path):
 
 
 def test_clear_active_registered_project_file_not_exist(mock_app_paths: Path):
-    """Verify that clearing does not raise an error if the file is already gone.
-    """
+    """Verify that clearing does not raise an error if the file is already gone."""
     # Arrange: The file does not exist
     assert not mock_app_paths.exists()
 
