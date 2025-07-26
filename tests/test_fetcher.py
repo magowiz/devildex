@@ -125,3 +125,23 @@ def test_cleanup_target_dir_content_handles_os_error(
         pytest.fail(
             "The _cleanup_target_dir_content method raised an unhandled OSError."
         )
+
+
+# --- Tests for _is_valid_vcs_url ---
+
+vcs_url_test_cases = [
+    ("https://github.com/user/repo.git", True),
+    ("http://gitlab.com/user/repo", True),
+    ("https://bitbucket.org/user/repo", True),
+    ("git@github.com:user/repo.git", True),
+    ("https://example.com/not-a-vcs", False),
+    ("just_a_string", False),
+    ("", False),
+    (None, False),
+]
+
+
+@pytest.mark.parametrize("url, expected", vcs_url_test_cases)
+def test_is_valid_vcs_url(url, expected):
+    """Verify VCS URL validation for various inputs."""
+    assert PackageSourceFetcher._is_valid_vcs_url(url) is expected
