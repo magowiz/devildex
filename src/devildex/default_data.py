@@ -59,15 +59,6 @@ PACKAGES_DATA: list[dict[str, Any]] = [
     },
 ]
 
-COLUMNS_ORDER: list[str] = [
-    "id",
-    "name",
-    "version",
-    "description",
-    "status",
-    "docset_status",
-]
-
 for item in PACKAGES_DATA:
     item["docset_status"] = "Not Available"  # Default docset status
 

@@ -3,28 +3,21 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, Optional
 
 import wx
 import wx.grid
 import wx.html2
 from wx import Size
 
-from devildex.constants import AVAILABLE_BTN_LABEL, ERROR_BTN_LABEL
+from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
-from devildex.default_data import COLUMNS_ORDER, PACKAGES_DATA_AS_DETAILS
+from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.models import PackageDetails
 from devildex.task_manager import GenerationTaskManager
-from devildex.ui import ActionsPanel
+from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 
 logger = logging.getLogger(__name__)
-COL_WIDTH_ID = 60
-COL_WIDTH_NAME = 160
-COL_WIDTH_VERSION = 80
-COL_WIDTH_DESC = 200
-COL_WIDTH_STATUS = 120
-COL_WIDTH_DOCSET_STATUS = 140
-
 
 NO_SELECTION_MSG = "No Selection"
 INTERNAL_ERROR_MSG = "Internal Error"
@@ -72,25 +65,18 @@ class DevilDexApp(wx.App):
         self, core: DevilDexCore | None = None, initial_url: str | None = None
     ) -> None:
         """Construct DevilDexApp class."""
+        self.document_view_panel = None
         self.gui_log_handler = None
         self.jokes_timer = None
         self.core = core
         self.home_url = "https://www.google.com"
         self.initial_url = initial_url
         self.main_frame: Optional[wx.Frame] = None
-        self.webview: Optional[wx.html2.WebView] = None
-        self.back_button: Optional[wx.Button] = None
-        self.forward_button: Optional[wx.Button] = None
-        self.home_button: Optional[wx.Button] = None
         self.panel: Optional[wx.Panel] = None
         self.main_panel_sizer: Optional[wx.BoxSizer] = None
-        self.data_grid: wx.grid.Grid | None = None
         self.current_grid_source_data: list[dict[str, Any]] = []
         self.actions_panel: ActionsPanel | None = None
         self.selected_row_index: int | None = None
-        self.custom_highlighted_row_index: Optional[int] = None
-        self.custom_row_highlight_attr: Optional[wx.grid.GridCellAttr] = None
-        self.indicator_col_idx = 0
         self.log_text_ctrl: Optional[wx.TextCtrl] = None
         self.is_log_panel_visible: bool = False
         self.log_toggle_button: Optional[wx.Button] = None
@@ -98,11 +84,10 @@ class DevilDexApp(wx.App):
         self.arrow_down_bmp: Optional[wx.Bitmap] = None
         self.is_task_running: bool = False
         self.docset_status_col_grid_idx: int = -1
-        self.package_display_label: Optional[wx.StaticText] = None
         self.arrow_up_bmp_scaled: Optional[wx.Bitmap] = None
         self.arrow_down_bmp_scaled: Optional[wx.Bitmap] = None
         self.view_mode_selector: Optional[wx.ComboBox] = None
-
+        self.grid_panel: DocsetGridPanel | None = None
         self.splitter: Optional[wx.SplitterWindow] = None
         self.top_splitter_panel: Optional[wx.Panel] = None
         self.bottom_splitter_panel: Optional[wx.Panel] = None
@@ -186,31 +171,24 @@ class DevilDexApp(wx.App):
         if event:
             event.Skip()
         self._clear_main_panel()
-        self.package_display_label = wx.StaticText(
-            self.panel, label="Loading document..."
-        )
-        font = self.package_display_label.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        self.package_display_label.SetFont(font)
-        self.main_panel_sizer.Add(
-            self.package_display_label, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-        )
 
-        button_sizer = self._setup_navigation_panel(self.panel)
-        self.main_panel_sizer.Add(
-            button_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5
-        )
-        self.webview = wx.html2.WebView.New(self.panel)
-        self.main_panel_sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 5)
-        self.update_navigation_buttons_state()
-        self.webview.Bind(wx.html2.EVT_WEBVIEW_NAVIGATED, self.on_webview_navigated)
+        if not self.panel or not self.main_panel_sizer:
+            logger.error("GUI: Main panel not ready for document view.")
+            return
+
+        self.document_view_panel = DocumentViewPanel(self.panel, self.go_home)
+        self.main_panel_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
+
         new_label_text = "Viewing documentation"
         if package_data_to_show:
             package_name = package_data_to_show.get("name", "Unknown Package")
             new_label_text = package_name
-        self.package_display_label.SetLabel(new_label_text)
+
+        self.document_view_panel.set_document_title(new_label_text)
+
         if self.initial_url:
-            self.load_url(self.initial_url)
+            self.document_view_panel.load_url(self.initial_url)
+
         self.panel.Layout()
 
     def _init_buttons(self) -> None:
@@ -280,9 +258,6 @@ class DevilDexApp(wx.App):
         self.panel.SetSizer(self.main_panel_sizer)
         self.main_frame.Centre()
         self.SetTopWindow(self.main_frame)
-        self.custom_row_highlight_attr = wx.grid.GridCellAttr()
-        self.custom_row_highlight_attr.SetBackgroundColour(wx.Colour(255, 165, 0))
-        self.custom_row_highlight_attr.SetTextColour(wx.BLACK)
 
         self._init_buttons()
 
@@ -326,35 +301,6 @@ class DevilDexApp(wx.App):
         if event:
             event.Skip()
         self._setup_initial_view()
-
-    COL_WIDTHS: ClassVar[dict[str, int]] = {
-        "id": COL_WIDTH_ID,
-        "name": COL_WIDTH_NAME,
-        "version": COL_WIDTH_VERSION,
-        "description": COL_WIDTH_DESC,
-        "status": COL_WIDTH_STATUS,
-        "docset_status": COL_WIDTH_DOCSET_STATUS,
-    }
-
-    def _configure_grid_columns(self) -> None:
-        """Configura le labels, sizes and attributes delle columns della grid."""
-        if not self.data_grid:
-            return
-
-        self.data_grid.SetColLabelValue(self.indicator_col_idx, "")
-        self.data_grid.SetColSize(self.indicator_col_idx, 30)
-        indicator_attr = wx.grid.GridCellAttr()
-        indicator_attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
-        indicator_attr.SetReadOnly(True)
-        self.data_grid.SetColAttr(self.indicator_col_idx, indicator_attr.Clone())
-        for c_idx, col_name in enumerate(COLUMNS_ORDER):
-            grid_col_idx = c_idx + 1
-            self.data_grid.SetColLabelValue(grid_col_idx, col_name)
-            if col_name in self.COL_WIDTHS:
-                self.data_grid.SetColSize(grid_col_idx, self.COL_WIDTHS[col_name])
-            col_attr = wx.grid.GridCellAttr()
-            col_attr.SetReadOnly(True)
-            self.data_grid.SetColAttr(grid_col_idx, col_attr.Clone())
 
     def _setup_view_mode_selector(self, parent: wx.Window) -> wx.Sizer:
         """Configura il ComboBox per la selection della mode di vista."""
@@ -486,7 +432,7 @@ class DevilDexApp(wx.App):
 
     def _update_ui_after_data_load(self) -> None:
         """Update UI components after data loading."""
-        self.update_grid()
+        self.update_grid_data()
         self._perform_startup_docset_scan()
         self._update_action_buttons_state()
 
@@ -546,7 +492,7 @@ class DevilDexApp(wx.App):
         bottom_bar_sizer = self._init_log_toggle_bar(self.panel)
         self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
 
-        self.update_grid()
+        self.update_grid_data()
 
         if self.gui_log_handler and self.log_text_ctrl:
             self.gui_log_handler.text_ctrl = self.log_text_ctrl
@@ -567,17 +513,10 @@ class DevilDexApp(wx.App):
         self.top_splitter_panel = wx.Panel(self.splitter)
         content_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.data_grid = wx.grid.Grid(self.top_splitter_panel)
-        self.data_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_grid_cell_click)
-
-        if self.data_grid:
-            num_data_cols = len(COLUMNS_ORDER)
-            total_grid_cols = num_data_cols + 1
-            self.data_grid.CreateGrid(0, total_grid_cols)
-            self.data_grid.SetSelectionMode(wx.grid.Grid.SelectRows)
-            self._configure_grid_columns()
-
-        content_sizer.Add(self.data_grid, 1, wx.EXPAND | wx.ALL, 5)
+        self.grid_panel = DocsetGridPanel(
+            self.top_splitter_panel, self.on_grid_row_selected
+        )
+        content_sizer.Add(self.grid_panel, 1, wx.EXPAND | wx.ALL, 5)
         self.actions_panel = ActionsPanel(self.top_splitter_panel, self)
         content_sizer.Add(self.actions_panel, 0, wx.EXPAND | wx.ALL, 5)
         self.top_splitter_panel.SetSizer(content_sizer)
@@ -730,9 +669,9 @@ class DevilDexApp(wx.App):
         }
 
         self.show_document(package_data_to_show=package_data_for_view)
-        if self.webview:
+        if self.document_view_panel:
             local_url = index_file_path.as_uri()
-            self.load_url(local_url)
+            self.document_view_panel.load_url(local_url)
         else:
             wx.MessageBox(
                 "WebView component is not available. Cannot open docset.",
@@ -798,15 +737,15 @@ class DevilDexApp(wx.App):
 
     def _update_grid_cell_from_manager(
         self, row_idx: int, col_idx: int, value: str
-    ) -> None:
+    ) -> None:  # sourcery skip: class-extract-method
         """Call GenerationTaskManager to update a grid cell."""
-        if not self.data_grid:
-            return
-        if (
-            0 <= row_idx < self.data_grid.GetNumberRows()
-            and 0 <= col_idx < self.data_grid.GetNumberCols()
-        ):
-            self.data_grid.SetCellValue(row_idx, col_idx, value)
+        if self.grid_panel and self.grid_panel.grid:
+            grid = self.grid_panel.grid
+            if (
+                0 <= row_idx < grid.GetNumberRows()
+                and 0 <= col_idx < grid.GetNumberCols()
+            ):
+                grid.SetCellValue(row_idx, col_idx, value)
             if 0 <= row_idx < len(self.current_grid_source_data) and (
                 col_idx == self.docset_status_col_grid_idx
             ):
@@ -840,11 +779,12 @@ class DevilDexApp(wx.App):
 
         final_status_text = AVAILABLE_BTN_LABEL if success else ERROR_BTN_LABEL
         if (
-            self.data_grid
+            self.grid_panel
+            and self.grid_panel.grid
             and self.docset_status_col_grid_idx != -1
-            and 0 <= row_idx_to_update < self.data_grid.GetNumberRows()
+            and 0 <= row_idx_to_update < self.grid_panel.grid.GetNumberRows()
         ):
-            self.data_grid.SetCellValue(
+            self.grid_panel.grid.SetCellValue(
                 row_idx_to_update,
                 self.docset_status_col_grid_idx,
                 final_status_text,
@@ -861,7 +801,7 @@ class DevilDexApp(wx.App):
                 elif "docset_path" in self.current_grid_source_data[row_idx_to_update]:
                     del self.current_grid_source_data[row_idx_to_update]["docset_path"]
 
-            self.data_grid.ForceRefresh()
+            self.grid_panel.grid.ForceRefresh()
 
     def on_regenerate_docset(self, event: wx.CommandEvent) -> None:
         """Handle regenerate docset action.
@@ -979,12 +919,12 @@ class DevilDexApp(wx.App):
                 self.current_grid_source_data[self.selected_row_index].pop(
                     "docset_path", None
                 )
-                self.data_grid.SetCellValue(
+                self.grid_panel.grid.SetCellValue(
                     self.selected_row_index,
                     self.docset_status_col_grid_idx,
                     NOT_AVAILABLE_BTN_LABEL,
                 )
-                self.data_grid.ForceRefresh()
+                self.grid_panel.grid.ForceRefresh()
                 wx.MessageBox(
                     f"The selected docset build for '{package_name}'"
                     f" has been processed.\n"
@@ -1027,85 +967,18 @@ class DevilDexApp(wx.App):
         self._set_log_panel_visibility(not self.is_log_panel_visible)
         event.Skip()
 
-    def on_grid_cell_click(self, event: wx.grid.GridEvent) -> None:
-        """Handle click on a grid cell."""
-        if not self.data_grid or not self.custom_row_highlight_attr:
-            if event:
-                event.Skip()
-            return
-        clicked_row = event.GetRow()
-        if (
-            self.custom_highlighted_row_index is not None
-            and self.custom_highlighted_row_index != clicked_row
-        ):
-            self.data_grid.SetRowAttr(
-                self.custom_highlighted_row_index, wx.grid.GridCellAttr()
-            )
-            if self.data_grid.GetNumberRows() > self.custom_highlighted_row_index:
-                self.data_grid.SetCellValue(
-                    self.custom_highlighted_row_index, self.indicator_col_idx, ""
-                )
-        if self.data_grid.GetNumberRows() > clicked_row >= 0:
-            self.data_grid.SetCellValue(clicked_row, self.indicator_col_idx, "►")
-            self.custom_row_highlight_attr.IncRef()
-            self.data_grid.SetRowAttr(clicked_row, self.custom_row_highlight_attr)
-            self.custom_highlighted_row_index = clicked_row
-            self.selected_row_index = clicked_row
-        self.data_grid.ForceRefresh()
-        grid_row_data = []
-        if self.data_grid:
-            num_columns = self.data_grid.GetNumberCols()
-            for col_idx in range(num_columns):
-                grid_row_data.append(self.data_grid.GetCellValue(clicked_row, col_idx))
-
+    def on_grid_row_selected(self, row_index: int) -> None:
+        """Handle when a row is selected in the DocsetGridPanel."""
+        self.selected_row_index = row_index
         self._update_action_buttons_state()
-        event.Skip()
 
-    def _setup_navigation_panel(self, panel: wx.Panel) -> wx.Sizer:
-        icon_size = wx.DefaultSize
-        back_icon = wx.ArtProvider.GetBitmap(wx.ART_GO_BACK, wx.ART_BUTTON, icon_size)
-        forward_icon = wx.ArtProvider.GetBitmap(
-            wx.ART_GO_FORWARD, wx.ART_BUTTON, icon_size
-        )
-        home_icon = wx.ArtProvider.GetBitmap(wx.ART_GO_HOME, wx.ART_BUTTON, icon_size)
-        self.back_button = wx.Button(panel)
-        back_bundle = wx.BitmapBundle(back_icon)
-        forward_bundle = wx.BitmapBundle(forward_icon)
-        home_bundle = wx.BitmapBundle(home_icon)
-        self.forward_button = wx.Button(panel)
-        self.home_button = wx.Button(panel)
-        if back_icon.IsOk():
-            self.back_button.SetBitmap(back_bundle, wx.LEFT)
-        if forward_icon.IsOk():
-            self.forward_button.SetBitmap(forward_bundle, wx.LEFT)
-        if home_icon.IsOk():
-            self.home_button.SetBitmap(home_bundle, wx.LEFT)
-        self.back_button.Bind(wx.EVT_BUTTON, self.on_back)
-        self.forward_button.Bind(wx.EVT_BUTTON, self.on_forward)
-        self.home_button.Bind(wx.EVT_BUTTON, self.go_home)
-        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_sizer.Add(self.back_button, 0, wx.ALL, 5)
-        button_sizer.Add(self.forward_button, 0, wx.ALL, 5)
-        button_sizer.Add(self.home_button, 0, wx.ALL, 5)
-        return button_sizer
 
-    def on_webview_navigated(self, event: wx.html2.WebViewEvent) -> None:
-        """Handle page change event to update their state."""
-        self.update_navigation_buttons_state()
-        event.Skip()
 
-    def update_navigation_buttons_state(self) -> None:
-        """Update navigation buttons state."""
-        if self.webview and self.back_button and self.forward_button:
-            self.back_button.Enable(self.webview.CanGoBack())
-            self.forward_button.Enable(self.webview.CanGoForward())
 
-    def on_back(self, event: wx.CommandEvent) -> None:
-        """Handle browser back button click."""
-        if event:
-            event.Skip()
-        if self.webview.CanGoBack():
-            self.webview.GoBack()
+
+
+
+
 
     def get_selected_row(self) -> dict | None:
         """Get selected row data."""
@@ -1135,53 +1008,22 @@ class DevilDexApp(wx.App):
         if isinstance(self.log_toggle_button, wx.BitmapButton):
             self.log_toggle_button.SetBitmap(target_bmp_bundle)
 
-    def update_grid(self) -> None:
+    def update_grid_data(self) -> None:
         """Populate self.data_grid con i dati."""
         self.selected_row_index = None
-        self.custom_highlighted_row_index = None
-        table_data = self.current_grid_source_data
+        if self.grid_panel:
+            self.grid_panel.update_data(self.current_grid_source_data)
 
-        num_rows = len(table_data)
-        current_grid_rows = self.data_grid.GetNumberRows()
-        if current_grid_rows < num_rows:
-            self.data_grid.AppendRows(num_rows - current_grid_rows)
-        elif current_grid_rows > num_rows:
-            self.data_grid.DeleteRows(num_rows, current_grid_rows - num_rows)
-
-        for r_idx, row_dict in enumerate(table_data):
-            for c_idx, col_name in enumerate(COLUMNS_ORDER):
-                cell_value = row_dict.get(col_name, "")
-                self.data_grid.SetCellValue(r_idx, c_idx + 1, str(cell_value))
-        self.data_grid.ForceRefresh()
-
-    def on_forward(self, event: wx.CommandEvent) -> None:
-        """Handle browser forward button click."""
-        if event:
-            event.Skip()
-        if self.webview.CanGoForward():
-            self.webview.GoForward()
-
-    def load_url(self, url_to_load: str) -> None:
-        """Load in webview given url."""
-        if self.webview:
-            self.webview.LoadURL(url_to_load)
 
     def _clear_main_panel(self) -> None:
         if self.main_panel_sizer and self.main_panel_sizer.GetItemCount() > 0:
             self.main_panel_sizer.Clear(True)
-        self.webview = None
-        self.back_button = None
-        self.forward_button = None
-        self.home_button = None
-        self.data_grid = None
-        self.view_mode_selector = None
-        self.selected_row_index = None
-        self.custom_highlighted_row_index = None
+        self.document_view_panel = None
+        self.grid_panel = None
         self.actions_panel = None
+        self.view_mode_selector = None
         self.log_text_ctrl = None
         self.log_toggle_button = None
-        self.package_display_label = None
-
         self.splitter = None
         self.top_splitter_panel = None
         self.bottom_splitter_panel = None
