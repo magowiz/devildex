@@ -44,18 +44,21 @@ def fetcher_instance(tmp_path: Path) -> PackageSourceFetcher:
 
 
 def test_ensure_target_dir_exists_success(
-    fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
+    fetcher_instance: PackageSourceFetcher,
 ):
     """Verify it creates the directory and returns True on success."""
     # Arrange
-    mock_mkdir = mocker.patch.object(fetcher_instance.download_target_path, "mkdir")
+    target_dir = fetcher_instance.download_target_path
+    # Pre-condition: The directory should not exist before the call
+    assert not target_dir.exists()
 
     # Act
     result = fetcher_instance._ensure_target_dir_exists()
 
     # Assert
+    # Post-condition: The method should return True and the directory should exist
     assert result is True
-    mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    assert target_dir.is_dir()
 
 
 def test_ensure_target_dir_exists_os_error(
@@ -63,11 +66,8 @@ def test_ensure_target_dir_exists_os_error(
 ):
     """Verify it returns False when directory creation fails with an OSError."""
     # Arrange
-    mocker.patch.object(
-        fetcher_instance.download_target_path,
-        "mkdir",
-        side_effect=OSError("Permission denied"),
-    )
+    # We patch the class method to raise an OSError when called.
+    mocker.patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied"))
 
     # Act
     result = fetcher_instance._ensure_target_dir_exists()
