@@ -142,3 +142,85 @@ def test_on_delete_docset_no_path_in_data(app: DevilDexApp, mocker: MockerFixtur
     wx.MessageBox.assert_called_once()
     assert "No docset path found" in wx.MessageBox.call_args[0][0]
     app.core.delete_docset_build.assert_not_called()
+
+
+# --- Tests for on_generate_docset ---
+
+
+def test_on_generate_docset_success(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the success path for starting a docset generation."""
+    # Arrange
+    selected_data = {"id": "pkg-123", "name": "test-package"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    mocker.patch.object(app, "_validate_can_generate", return_value=True)
+
+    # Mock the task manager and its dependencies
+    mock_task_manager = mocker.MagicMock()
+    app.generation_task_manager = mock_task_manager
+    app.selected_row_index = 5
+    app.docset_status_col_grid_idx = 6  # Example column index
+
+    # Act
+    app.on_generate_docset(event=None)
+
+    # Assert
+    mock_task_manager.start_generation_task.assert_called_once_with(
+        package_data=selected_data,
+        row_index=5,
+        docset_status_col_idx=6,
+    )
+
+
+def test_on_generate_docset_no_selection(app: DevilDexApp, mocker: MockerFixture):
+    """Verify it shows a message box if no package is selected."""
+    # Arrange
+    app.selected_row_index = None  # Explicitly set no selection
+    mock_task_manager = mocker.MagicMock()
+    app.generation_task_manager = mock_task_manager
+
+    # Act
+    app.on_generate_docset(event=None)
+
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert "Please select a package" in wx.MessageBox.call_args[0][0]
+    mock_task_manager.start_generation_task.assert_not_called()
+
+
+def test_on_generate_docset_validation_fails(app: DevilDexApp, mocker: MockerFixture):
+    """Verify nothing happens if pre-generation validation fails."""
+    # Arrange
+    selected_data = {"id": "pkg-123", "name": "test-package"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    # Simulate validation failure (the method itself is responsible for the message box)
+    mocker.patch.object(app, "_validate_can_generate", return_value=False)
+    mock_task_manager = mocker.MagicMock()
+    app.generation_task_manager = mock_task_manager
+    app.selected_row_index = 0  # FIX: Simulate a row is selected
+
+    # Act
+    app.on_generate_docset(event=None)
+
+    # Assert
+    # The validation method is called, but the task manager is not.
+    app._validate_can_generate.assert_called_once_with(selected_data)
+    mock_task_manager.start_generation_task.assert_not_called()
+
+
+def test_on_generate_docset_task_manager_not_ready(
+    app: DevilDexApp, mocker: MockerFixture
+):
+    """Verify it shows an error if the task manager is not initialized."""
+    # Arrange
+    selected_data = {"id": "pkg-123", "name": "test-package"}
+    mocker.patch.object(app, "get_selected_row", return_value=selected_data)
+    mocker.patch.object(app, "_validate_can_generate", return_value=True)
+    app.generation_task_manager = None  # Simulate it not being ready
+    app.selected_row_index = 0  # FIX: Simulate a row is selected
+
+    # Act
+    app.on_generate_docset(event=None)
+
+    # Assert
+    wx.MessageBox.assert_called_once()
+    assert "Generation system not ready" in wx.MessageBox.call_args[0][0]
