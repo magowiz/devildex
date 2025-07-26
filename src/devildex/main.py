@@ -972,14 +972,6 @@ class DevilDexApp(wx.App):
         self.selected_row_index = row_index
         self._update_action_buttons_state()
 
-
-
-
-
-
-
-
-
     def get_selected_row(self) -> dict | None:
         """Get selected row data."""
         if self.selected_row_index is not None and 0 <= self.selected_row_index < len(
@@ -1013,7 +1005,6 @@ class DevilDexApp(wx.App):
         self.selected_row_index = None
         if self.grid_panel:
             self.grid_panel.update_data(self.current_grid_source_data)
-
 
     def _clear_main_panel(self) -> None:
         if self.main_panel_sizer and self.main_panel_sizer.GetItemCount() > 0:
