@@ -194,3 +194,56 @@ def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path):
 def test_is_member_name_safe(member_name, expected):
     """Verify _is_member_name_safe correctly identifies safe and unsafe archive member names."""
     assert PackageSourceFetcher._is_member_name_safe(member_name) is expected
+
+
+# --- Tests for _find_vcs_url_in_dict ---
+
+find_vcs_url_test_cases = [
+    (None, "none", None),
+    ({}, "empty", None),
+    (
+        {"Source Code": "https://github.com/user/repo.git"},
+        "source_code",
+        "https://github.com/user/repo.git",
+    ),
+    (
+        {"Source": "https://gitlab.com/user/repo"},
+        "source",
+        "https://gitlab.com/user/repo",
+    ),
+    (
+        {"Repository": "https://bitbucket.org/user/repo"},
+        "repository",
+        "https://bitbucket.org/user/repo",
+    ),
+    (
+        {"Homepage": "https://github.com/user/homepage.git"},
+        "homepage",
+        "https://github.com/user/homepage.git",
+    ),
+    ({"Homepage": "https://example.com/docs"}, "non_vcs_homepage", None),
+    ({"Documentation": "https://docs.example.com"}, "docs_only", None),
+    (
+        {
+            "Homepage": "https://github.com/user/homepage.git",
+            "Source Code": "https://github.com/user/repo.git",
+        },
+        "priority",
+        "https://github.com/user/repo.git",
+    ),
+    ({"Source Code": "https://not-a-vcs.com/repo"}, "invalid_vcs_url", None),
+]
+
+
+@pytest.mark.parametrize(
+    "urls_dict, case_id, expected_url",
+    find_vcs_url_test_cases,
+    ids=[c[1] for c in find_vcs_url_test_cases],
+)
+def test_find_vcs_url_in_dict(
+    fetcher_instance: PackageSourceFetcher, urls_dict, case_id, expected_url
+):
+    """Verify that _find_vcs_url_in_dict correctly identifies the best VCS URL."""
+    # The 'source_description' argument is only for logging, so we use a dummy value.
+    found_url = fetcher_instance._find_vcs_url_in_dict(urls_dict, "test_source")
+    assert found_url == expected_url
