@@ -178,7 +178,8 @@ def _determine_local_filename(
 ) -> str:
     """Determine local file name which makes sense for download."""
     file_extension = download_format.replace("htmlzip", "zip")
-    filename_from_url = download_url.split("/")[-1]
+    basename_with_query = download_url.split("/")[-1]
+    filename_from_url = basename_with_query.split("?")[0]
 
     if "." in filename_from_url and len(filename_from_url) <= FILENAME_MAX_LENGTH:
         local_filename = filename_from_url

@@ -71,7 +71,7 @@ def test_download_file_handles_network_error(mocker: MockerFixture, tmp_path: Pa
     mocker.patch("requests.get", side_effect=requests.exceptions.RequestException)
 
     # Mock os.path.exists and os.remove to verify cleanup logic
-    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("os.path.exists", side_effect=[True, False])
     mock_remove = mocker.patch("os.remove")
 
     # Act
@@ -98,7 +98,7 @@ def test_download_file_handles_os_error_on_write(mocker: MockerFixture, tmp_path
     mocker.patch("builtins.open", side_effect=OSError("Disk full"))
 
     # Mock os.path.exists and os.remove to verify cleanup logic
-    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("os.path.exists", side_effect=[True, False])
     mock_remove = mocker.patch("os.remove")
 
     # Act
