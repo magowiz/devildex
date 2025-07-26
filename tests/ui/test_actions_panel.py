@@ -29,7 +29,8 @@ def mock_handler(mocker: MockerFixture) -> ActionHandler:
 def actions_panel(
     wx_app: wx.App, mock_handler: ActionHandler, mocker: MockerFixture
 ) -> ActionsPanel:
-    """Provides an instance of ActionsPanel for testing.
+    """
+    Provides an instance of ActionsPanel for testing.
 
     Mocks the Enable() method on each button to allow tracking calls.
     """
