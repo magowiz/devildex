@@ -1,0 +1,114 @@
+"""Tests for the log panel visibility logic within the DevilDexApp class.
+"""
+
+import pytest
+import wx
+from pytest_mock import MockerFixture
+
+from devildex.main import DevilDexApp
+
+
+@pytest.fixture
+def app(mocker: MockerFixture) -> DevilDexApp:
+    """Provides a DevilDexApp instance for testing without a running event loop.
+    """
+    # Prevent the real wx.App from initializing
+    mocker.patch("wx.App.__init__", return_value=None)
+
+    # Mock the core dependency
+    mock_core = mocker.MagicMock(name="DevilDexCore")
+
+    # Create the app instance with the mocked core
+    app_instance = DevilDexApp(core=mock_core)
+
+    # Attach mocks for UI collaborators
+    app_instance.panel = mocker.MagicMock(name="MainPanel")
+    app_instance.log_toggle_button = mocker.MagicMock(name="LogToggleButton")
+    app_instance.splitter = mocker.MagicMock(spec=wx.SplitterWindow)
+    mocker.patch("wx.MessageBox")
+
+    return app_instance
+
+
+def test_on_log_toggle_button_click_toggles_visibility(
+    app: DevilDexApp, mocker: MockerFixture
+):
+    """Verify that clicking the toggle button calls the main visibility function."""
+    # Arrange
+    app.is_log_panel_visible = False
+    mock_set_visibility = mocker.patch.object(app, "_set_log_panel_visibility")
+    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
+
+    # Act
+    app.on_log_toggle_button_click(mock_event)
+
+    # Assert
+    mock_set_visibility.assert_called_once_with(True)
+    mock_event.Skip.assert_called_once()
+
+
+def test_set_log_panel_visibility_to_visible(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the correct helper is called to show the log panel."""
+    # Arrange
+    mock_show_panel = mocker.patch.object(app, "_show_log_panel")
+    mock_hide_panel = mocker.patch.object(app, "_hide_log_panel")
+
+    # Act
+    app._set_log_panel_visibility(True)
+
+    # Assert
+    assert app.is_log_panel_visible is True
+    mock_show_panel.assert_called_once()
+    mock_hide_panel.assert_not_called()
+    app.panel.Layout.assert_called_once()
+
+
+def test_set_log_panel_visibility_to_hidden(app: DevilDexApp, mocker: MockerFixture):
+    """Verify the correct helper is called to hide the log panel."""
+    # Arrange
+    app.is_log_panel_visible = True  # Start with it visible
+    mock_show_panel = mocker.patch.object(app, "_show_log_panel")
+    mock_hide_panel = mocker.patch.object(app, "_hide_log_panel")
+
+    # Act
+    app._set_log_panel_visibility(False)
+
+    # Assert
+    assert app.is_log_panel_visible is False
+    mock_hide_panel.assert_called_once()
+    mock_show_panel.assert_not_called()
+    app.panel.Layout.assert_called_once()
+
+
+def test_on_view_log_opens_panel_if_hidden(app: DevilDexApp, mocker: MockerFixture):
+    """Verify 'View Log' action opens the log panel if it's currently hidden."""
+    # Arrange
+    app.is_log_panel_visible = False
+    mocker.patch.object(app, "get_selected_row", return_value={"name": "test"})
+    mock_set_visibility = mocker.patch.object(app, "_set_log_panel_visibility")
+    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
+
+    # Act
+    app.on_view_log(mock_event)
+
+    # Assert
+    mock_set_visibility.assert_called_once_with(True)
+    mock_event.Skip.assert_called_once()
+
+
+def test_on_view_log_does_nothing_if_already_visible(
+    app: DevilDexApp, mocker: MockerFixture
+):
+    """Verify 'View Log' action does nothing if the panel is already visible."""
+    # Arrange
+    app.is_log_panel_visible = True
+    mocker.patch.object(app, "get_selected_row", return_value={"name": "test"})
+    mock_set_visibility = mocker.patch.object(app, "_set_log_panel_visibility")
+    mock_event = mocker.MagicMock(spec=wx.CommandEvent)
+
+    # Act
+    app.on_view_log(mock_event)
+
+    # Assert
+    mock_set_visibility.assert_not_called()
+    mock_event.Skip.assert_called_once()
