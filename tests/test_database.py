@@ -14,9 +14,16 @@ def db_session() -> Session:
     """
     db_url = "sqlite:///:memory:"
     database.init_db(db_url)
-    with database.get_session() as session:
-        yield session
-    # The in-memory database is automatically discarded after the test.
+    try:
+        with database.get_session() as session:
+            yield session
+    finally:
+        # FIX: The DatabaseManager is a singleton-like class. Its state persists
+        # between test runs, causing test contamination. We must explicitly
+        # reset its engine and session factory after each test to ensure
+        # that the next test gets a completely fresh in-memory database.
+        database.DatabaseManager._engine = None
+        database.DatabaseManager._session_local = None
 
 
 def test_ensure_package_creates_new_records(db_session: Session) -> None:
@@ -37,7 +44,6 @@ def test_ensure_package_creates_new_records(db_session: Session) -> None:
 
     # Assert
     # Check PackageInfo
-    # FIX: The attribute is 'package_name', not 'name'.
     pkg_info = (
         db_session.query(PackageInfo).filter_by(package_name="requests").one_or_none()
     )
@@ -50,7 +56,6 @@ def test_ensure_package_creates_new_records(db_session: Session) -> None:
     assert docset is not None
     assert docset.package_version == "2.25.1"
     assert docset.status == "unknown"
-    # FIX: Check the relationship object directly, not a non-existent ID.
     assert docset.package_info == pkg_info
 
     # Check RegisteredProject
@@ -61,7 +66,6 @@ def test_ensure_package_creates_new_records(db_session: Session) -> None:
     )
     assert project is not None
     assert project.project_path == "/path/to/project"
-    # FIX: Check for the project in the 'associated_projects' relationship list.
     assert project in docset.associated_projects
 
 
@@ -87,16 +91,13 @@ def test_ensure_package_updates_existing_records(db_session: Session) -> None:
 
     # Assert
     # Ensure there is still only ONE PackageInfo record for pytest
-    # FIX: The attribute is 'package_name', not 'name'.
     pkg_infos = db_session.query(PackageInfo).filter_by(package_name="pytest").all()
     assert len(pkg_infos) == 1
     # And that its summary has been updated
     assert pkg_infos[0].summary == "A better summary."
     assert pkg_infos[0].project_urls["Homepage"] == "https://pytest.org"
 
-    # Ensure there is still only ONE Docset record for this package/version pair
-    # (The function creates a new one for a new version, this was a misunderstanding
-    # of the function's purpose in the original test. Let's test the new state.)
+    # The function creates a new one for a new version. Let's test the new state.
     old_docset = (
         db_session.query(Docset)
         .filter_by(package_name="pytest", package_version="6.2.0")
@@ -128,7 +129,6 @@ def test_ensure_package_handles_no_project_context(db_session: Session) -> None:
     # Assert
     docset = db_session.query(Docset).filter_by(package_name="numpy").one_or_none()
     assert docset is not None
-    # FIX: The docset should have an empty list of associated projects.
     assert not docset.associated_projects
 
     # Verify no project was created
