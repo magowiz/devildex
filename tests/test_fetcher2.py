@@ -14,7 +14,7 @@ from devildex.fetcher import MissingPackageInfoError, PackageSourceFetcher
 
 @pytest.fixture
 def fetcher_instance(tmp_path: Path) -> PackageSourceFetcher:
-    """Provides a standard PackageSourceFetcher instance for tests."""
+    """Provide a standard PackageSourceFetcher instance for tests."""
     package_info = {
         "name": "my-package",
         "version": "1.2.3",
@@ -25,7 +25,7 @@ def fetcher_instance(tmp_path: Path) -> PackageSourceFetcher:
     )
 
 
-def test_init_missing_info(tmp_path: Path):
+def test_init_missing_info(tmp_path: Path) -> None:
     """Verify that MissingPackageInfoError is raised if name or version are missing."""
     with pytest.raises(MissingPackageInfoError):
         PackageSourceFetcher(
@@ -37,7 +37,9 @@ def test_init_missing_info(tmp_path: Path):
         )
 
 
-def test_cleanup_target_dir_content_not_exists(fetcher_instance: PackageSourceFetcher):
+def test_cleanup_target_dir_content_not_exists(
+    fetcher_instance: PackageSourceFetcher,
+) -> None:
     """Verify cleanup does nothing if the target directory doesn't exist."""
     # This test covers the `if not self.download_target_path.exists(): return` line
     assert not fetcher_instance.download_target_path.exists()
@@ -48,7 +50,7 @@ def test_cleanup_target_dir_content_not_exists(fetcher_instance: PackageSourceFe
 @patch("devildex.fetcher.requests.get")
 def test_fetch_from_pypi_success(
     mock_get: MagicMock, fetcher_instance: PackageSourceFetcher, mocker: MagicMock
-):
+) -> None:
     """Verify successful fetch from PyPI."""
     # Arrange
     mock_response = MagicMock()
@@ -73,7 +75,7 @@ def test_fetch_from_pypi_success(
 @patch("devildex.fetcher.requests.get")
 def test_fetch_from_pypi_no_sdist(
     mock_get: MagicMock, fetcher_instance: PackageSourceFetcher
-):
+) -> None:
     """Verify fetch from PyPI fails if no sdist URL is found."""
     # Arrange
     mock_response = MagicMock()
@@ -93,7 +95,7 @@ def test_fetch_from_pypi_no_sdist(
 )
 def test_fetch_from_pypi_network_error(
     mock_get: MagicMock, fetcher_instance: PackageSourceFetcher
-):
+) -> None:
     """Verify fetch from PyPI fails gracefully on a network error."""
     # Act
     result = fetcher_instance._fetch_from_pypi()
@@ -101,8 +103,8 @@ def test_fetch_from_pypi_network_error(
     assert result is False
 
 
-def create_test_zip(path: Path, content_dir_name: str, file_name: str):
-    """Helper to create a test zip file."""
+def create_test_zip(path: Path, content_dir_name: str, file_name: str) -> Path:
+    """Create a test zip file."""
     zip_path = path / "test.zip"
     content_path = path / content_dir_name / file_name
     content_path.parent.mkdir()
@@ -114,7 +116,7 @@ def create_test_zip(path: Path, content_dir_name: str, file_name: str):
 
 def test_download_and_extract_zip_archive(
     fetcher_instance: PackageSourceFetcher, tmp_path: Path, mocker: MagicMock
-):
+) -> None:
     """Verify the full download and extract process for a zip file."""
     # Arrange
     # 1. Create a fake zip file to "download"
@@ -151,7 +153,7 @@ def test_try_fetch_tag_shallow_clone_success(
     mock_which: MagicMock,
     fetcher_instance: PackageSourceFetcher,
     mocker: MagicMock,
-):
+) -> None:
     """Verify a successful shallow clone of a tag."""
     # Arrange
     mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
@@ -190,7 +192,7 @@ def test_try_fetch_tag_shallow_clone_success(
 @patch("devildex.fetcher.shutil.which", return_value=None)
 def test_run_git_command_git_not_found(
     mock_which: MagicMock, fetcher_instance: PackageSourceFetcher
-):
+) -> None:
     """Verify that git command fails if git executable is not found."""
     result = fetcher_instance._run_git_command(["git", "status"])
     assert result is None
@@ -198,7 +200,7 @@ def test_run_git_command_git_not_found(
 
 def test_fetch_main_flow_pypi_first(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
-):
+) -> None:
     """Test the main fetch() orchestration, succeeding with PyPI."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=True)
@@ -217,7 +219,7 @@ def test_fetch_main_flow_pypi_first(
 
 def test_fetch_main_flow_fallback_to_vcs_tag(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
-):
+) -> None:
     """Test the main fetch() orchestration, falling back to VCS tag."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
@@ -246,7 +248,7 @@ def test_fetch_main_flow_fallback_to_vcs_tag(
 
 def test_fetch_main_flow_fallback_to_vcs_main(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
-):
+) -> None:
     """Test the main fetch() orchestration, falling back to VCS main branch."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
@@ -270,7 +272,7 @@ def test_fetch_main_flow_fallback_to_vcs_main(
 
 def test_fetch_main_flow_all_fail(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
-):
+) -> None:
     """Test the main fetch() orchestration where all methods fail."""
     # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
