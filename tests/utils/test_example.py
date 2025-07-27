@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 from devildex.utils import example
 
 
-def test_example_script_logs_correctly(mocker: MagicMock, caplog):
+def test_example_script_logs_correctly(mocker: MagicMock, caplog) -> None:
     """Verify that the example script runs and logs the expected messages.
 
     This test mocks the IsolatedVenvManager to avoid actual filesystem

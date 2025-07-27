@@ -15,7 +15,7 @@ from devildex.utils import companion
 
 @pytest.fixture
 def mock_app_paths(tmp_path: Path, mocker: MagicMock) -> Path:
-    """Mocks AppPaths to use a temporary directory for user data."""
+    """Mock AppPaths to use a temporary directory for user data."""
     user_data_dir = tmp_path / "devildex_user_data"
     # Mock the user_data_dir property on the AppPaths class
     mocker.patch(
@@ -27,7 +27,7 @@ def mock_app_paths(tmp_path: Path, mocker: MagicMock) -> Path:
 
 def test_register_project_success(
     tmp_path: Path, mock_app_paths: Path, mocker: MagicMock, caplog
-):
+) -> None:
     """Verify a successful project registration creates the correct JSON file."""
     # Arrange
     project_dir = tmp_path / "my-cool-project"
@@ -69,7 +69,7 @@ def test_register_project_success(
     assert f"Registration File: {registration_file}" in caplog.text
 
 
-def test_register_project_no_venv(caplog):
+def test_register_project_no_venv(caplog) -> None:
     """Verify registration fails gracefully when VIRTUAL_ENV is not set."""
     # Arrange
     with patch.dict("os.environ", {}, clear=True):
@@ -82,7 +82,7 @@ def test_register_project_no_venv(caplog):
 
 def test_register_project_no_python_executable(
     tmp_path: Path, mocker: MagicMock, caplog
-):
+) -> None:
     """Verify registration fails if the python executable is not found in the venv."""
     # Arrange
     venv_dir = tmp_path / "bad-venv"
@@ -99,7 +99,7 @@ def test_register_project_no_python_executable(
 
 def test_register_project_invalid_project_path(
     tmp_path: Path, mocker: MagicMock, caplog
-):
+) -> None:
     """Verify registration fails if the provided project path is not a directory."""
     # Arrange: Make the venv part succeed
     venv_dir = tmp_path / "my-cool-venv"
@@ -117,13 +117,15 @@ def test_register_project_invalid_project_path(
 
     # Assert
     assert (
-        f"The specified project path is not a valid directory: {invalid_project_path.resolve()}"
+        f"The specified project path is not a valid directory: "
+        f"{invalid_project_path.resolve()}"
         in caplog.text
     )
 
 
 @patch("devildex.utils.companion.register_project")
-def test_main_with_path_argument(mock_register_project: MagicMock, mocker: MagicMock):
+def test_main_with_path_argument(
+        mock_register_project: MagicMock, mocker: MagicMock) -> None:
     """Verify main() calls register_project with the provided path."""
     # Arrange
     fake_path = "/my/awesome/project"
@@ -137,7 +139,8 @@ def test_main_with_path_argument(mock_register_project: MagicMock, mocker: Magic
 
 
 @patch("devildex.utils.companion.register_project")
-def test_main_with_no_arguments(mock_register_project: MagicMock, mocker: MagicMock):
+def test_main_with_no_arguments(
+        mock_register_project: MagicMock, mocker: MagicMock) -> None:
     """Verify main() calls register_project with None when no path is given."""
     # Arrange
     mocker.patch("sys.argv", ["devildex-register-project"])

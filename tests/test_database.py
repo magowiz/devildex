@@ -10,6 +10,7 @@ from devildex.database import Docset, PackageInfo, RegisteredProject
 @pytest.fixture
 def db_session() -> Session:
     """Fixture to set up an in-memory SQLite database for testing.
+
     Yields a session to interact with the database.
     """
     db_url = "sqlite:///:memory:"
@@ -70,7 +71,7 @@ def test_ensure_package_creates_new_records(db_session: Session) -> None:
 
 
 def test_ensure_package_updates_existing_records(db_session: Session) -> None:
-    """Verify that existing records are updated correctly without creating duplicates."""
+    """Verify that existing records are updated correctly without duplicates."""
     # Arrange: First, create the initial records.
     initial_data = {
         "package_name": "pytest",
