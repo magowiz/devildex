@@ -179,6 +179,7 @@ pipeline {
             environment {
                 SONAR_SCANNER_OPTS = '--add-opens java.base/sun.nio.ch=ALL-UNNAMED \
                                       --add-opens java.base/java.io=ALL-UNNAMED'
+                SONAR_TOKEN = credentials('SONAR_TOKEN')
             }
             agent {
                 docker {
