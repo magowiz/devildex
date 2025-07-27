@@ -176,9 +176,6 @@ def test_delete_docset_build_os_error(
 """Tests for the DevilDexCore class."""
 
 
-
-
-
 def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> None:
     """Verify successful docset generation path."""
     # Arrange

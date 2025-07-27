@@ -116,15 +116,13 @@ def test_handles_malformed_pyproject_toml(tmp_path: Path, caplog) -> None:
     assert "Invalid TOML in" in caplog.text
 
 
-def test_handles_empty_requirements_txt(
-        tmp_path: Path) -> None:
+def test_handles_empty_requirements_txt(tmp_path: Path) -> None:
     """Verify it handles an empty requirements.txt file."""
     # Arrange
     (tmp_path / "requirements.txt").touch()
 
     # Act
-    deps = get_explicit_dependencies_from_project_config(
-        str(tmp_path))
+    deps = get_explicit_dependencies_from_project_config(str(tmp_path))
 
     # Assert
     assert deps == set()
