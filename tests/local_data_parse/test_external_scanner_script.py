@@ -73,7 +73,8 @@ def test_main_success(mock_distributions, mock_write_json, mock_exit) -> None:
 @patch("devildex.local_data_parse._external_scanner_script.logger.exception")
 @patch("importlib.metadata.distributions")
 def test_main_discovery_exception(
-        mock_distributions, mock_log_exception, mock_exit) -> None:
+    mock_distributions, mock_log_exception, mock_exit
+) -> None:
     """Verify that the script exits with 1 on a discovery error."""
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):
         mock_distributions.side_effect = Exception("Discovery failed")

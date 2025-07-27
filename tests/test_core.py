@@ -18,6 +18,7 @@ def mock_installed_packages() -> list[PackageDetails]:
         PackageDetails(name="numpy", version="1.20.1", project_urls={}),
     ]
 
+
 @pytest.fixture
 def core(tmp_path: Path, mocker: MockerFixture) -> DevilDexCore:
     """Provide a DevilDexCore instance with its paths mocked with a temp directory."""
@@ -28,6 +29,7 @@ def core(tmp_path: Path, mocker: MockerFixture) -> DevilDexCore:
     mocker.patch.dict("os.environ", {"DEVILDEX_DEV_MODE": "0"})
     instance = DevilDexCore()
     return instance
+
 
 def test_bootstrap_database_and_load_data(
     core: DevilDexCore,

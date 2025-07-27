@@ -96,7 +96,9 @@ def test_load_active_project_invalid_json(mock_app_paths: Path, caplog) -> None:
     assert str(mock_app_paths) in caplog.text
 
 
-def test_load_active_project_missing_required_keys(mock_app_paths: Path, caplog) -> None:
+def test_load_active_project_missing_required_keys(
+    mock_app_paths: Path, caplog
+) -> None:
     """Verify loading fails if the JSON is valid but missing required keys."""
     # Arrange: Data is missing the 'python_executable' key
     corrupt_data = {"project_name": "Incomplete", "project_path": "/path"}

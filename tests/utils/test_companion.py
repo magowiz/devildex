@@ -118,14 +118,14 @@ def test_register_project_invalid_project_path(
     # Assert
     assert (
         f"The specified project path is not a valid directory: "
-        f"{invalid_project_path.resolve()}"
-        in caplog.text
+        f"{invalid_project_path.resolve()}" in caplog.text
     )
 
 
 @patch("devildex.utils.companion.register_project")
 def test_main_with_path_argument(
-        mock_register_project: MagicMock, mocker: MagicMock) -> None:
+    mock_register_project: MagicMock, mocker: MagicMock
+) -> None:
     """Verify main() calls register_project with the provided path."""
     # Arrange
     fake_path = "/my/awesome/project"
@@ -140,7 +140,8 @@ def test_main_with_path_argument(
 
 @patch("devildex.utils.companion.register_project")
 def test_main_with_no_arguments(
-        mock_register_project: MagicMock, mocker: MagicMock) -> None:
+    mock_register_project: MagicMock, mocker: MagicMock
+) -> None:
     """Verify main() calls register_project with None when no path is given."""
     # Arrange
     mocker.patch("sys.argv", ["devildex-register-project"])
