@@ -175,13 +175,8 @@ def test_delete_docset_build_os_error(
 
 """Tests for the DevilDexCore class."""
 
-from pathlib import Path
 
-import pytest
-from pytest_mock import MockerFixture
 
-from devildex.core import DevilDexCore
-from devildex.models import PackageDetails
 
 
 def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> None:

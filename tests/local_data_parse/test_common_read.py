@@ -71,8 +71,6 @@ My_Package
     deps = get_explicit_dependencies_from_project_config(str(tmp_path))
 
     # Assert
-    # FIX: The original code does not normalize package names (My_Package -> my-package).
-    # The test must assert the name as it is returned by the code.
     assert deps == {"requests", "numpy", "My_Package"}
 
 
@@ -118,13 +116,15 @@ def test_handles_malformed_pyproject_toml(tmp_path: Path, caplog) -> None:
     assert "Invalid TOML in" in caplog.text
 
 
-def test_handles_empty_requirements_txt(tmp_path: Path) -> None:
+def test_handles_empty_requirements_txt(
+        tmp_path: Path) -> None:
     """Verify it handles an empty requirements.txt file."""
     # Arrange
     (tmp_path / "requirements.txt").touch()
 
     # Act
-    deps = get_explicit_dependencies_from_project_config(str(tmp_path))
+    deps = get_explicit_dependencies_from_project_config(
+        str(tmp_path))
 
     # Assert
     assert deps == set()

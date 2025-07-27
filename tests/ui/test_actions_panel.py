@@ -21,7 +21,7 @@ def wx_app() -> wx.App:
 
 @pytest.fixture
 def mock_handler(mocker: MockerFixture) -> ActionHandler:
-    """Provides a mock handler for the ActionsPanel."""
+    """Provide a mock handler for the ActionsPanel."""
     return mocker.MagicMock(spec=ActionHandler)
 
 
@@ -29,8 +29,7 @@ def mock_handler(mocker: MockerFixture) -> ActionHandler:
 def actions_panel(
     wx_app: wx.App, mock_handler: ActionHandler, mocker: MockerFixture
 ) -> ActionsPanel:
-    """
-    Provides an instance of ActionsPanel for testing.
+    """Provide an instance of ActionsPanel for testing.
 
     Mocks the Enable() method on each button to allow tracking calls.
     """
@@ -136,8 +135,8 @@ def test_update_button_states(
     is_task_running: bool,
     expected_states: dict[str, bool],
     test_id: str,  # FIX: Add the missing parameter
-):
-    """Verify that button states are updated correctly based on package and task status."""
+) -> None:
+    """Verify that button states are updated correctly based on package status."""
     # The 'test_id' parameter is intentionally unused in the function body.
     # It's only here to match the parametrize signature.
     _ = test_id
