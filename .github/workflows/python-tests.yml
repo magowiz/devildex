@@ -1,0 +1,88 @@
+# .github/workflows/python-tests.yml
+name: Python Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Non eseguire questo job se il messaggio di commit contiene [lint]
+    # Questo replica la condizione 'when' del tuo Jenkinsfile.
+    if: "!contains(github.event.head_commit.message, '[lint]')"
+
+    runs-on: ubuntu-latest
+
+    # Il Jenkinsfile usa un container Docker. Qui usiamo un runner standard
+    # e installiamo le dipendenze. È più semplice e veloce per iniziare.
+    # Se il tuo Dockerfile ha dipendenze di sistema complesse, puoi aggiungere
+    # un blocco 'container:' qui per usare un'immagine specifica.
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        # Aggiungiamo il caching delle dipendenze di poetry per velocizzare i run futuri
+        cache: 'poetry'
+
+    - name: Install Poetry
+      run: pipx install poetry
+
+    - name: Install dependencies
+      # Installa le dipendenze del progetto e quelle di test
+      run: poetry install --with test
+
+    - name: Setup Bazaar and Launchpad credentials
+      env:
+        # Crea un segreto nel tuo repository GitHub chiamato LAUNCHPAD_ID_CONF_FILE
+        # con il contenuto del tuo file di configurazione.
+        LAUNCHPAD_CONFIG_FILE_CONTENT: ${{ secrets.LAUNCHPAD_ID_CONF_FILE }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y bzr
+        mkdir -p ~/.bazaar/
+        echo "${LAUNCHPAD_CONFIG_FILE_CONTENT}" > ~/.bazaar/launchpad.conf
+        echo "Launchpad config file created."
+
+    - name: Run tests with Xvfb
+      # Il Jenkinsfile usa una funzione custom 'pyTestXvfb'.
+      # Questo è l'equivalente standard su Linux.
+      # I runner di GitHub hanno Xvfb preinstallato.
+      # I flag --html e --cov generano i report che poi carichiamo come artefatti.
+      run: |
+        xvfb-run poetry run pytest \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=html:coverage_report \
+          --html=test_report/index.html
+
+    - name: Upload Test Report
+      # Esegui sempre questo step, anche se i test falliscono, per poter vedere il report.
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-report
+        path: test_report/
+
+    - name: Upload Coverage Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage_report/
+
+    - name: Upload Screenshots on failure
+      if: failure() # Esegui solo se i test falliscono
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-screenshots
+        path: screenshots/
+        if-no-files-found: ignore # Non fallire se non ci sono screenshot
