@@ -32,27 +32,24 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
-        # Aggiungiamo il caching delle dipendenze di poetry per velocizzare i run futuri
-        cache: 'poetry'
 
-    - name: Install and configure Poetry
-      # Usa un'action dedicata che gestisce l'installazione e il PATH
-      uses: snok/install-poetry@v1
+    - name: Install Poetry
+      run: pip install poetry
 
-    - name: Install system dependencies for wxPython and Xvfb
-      # Questo step è FONDAMENTALE. Installa le librerie di sistema
-      # che il tuo Dockerfile 'pytest_x11' conteneva, necessarie per wxPython.
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           libgtk-3-dev \
-          libwebkit2gtk-4.0-dev \
+          libwebkit2gtk-4.1-dev \
           libxtst-dev \
-          xvfb
+          xvfb \
+          bzr
 
-    - name: Install dependencies
-      # Installa le dipendenze del progetto e quelle di test
-      run: poetry install --with test
+    - name: Configure Poetry and install dependencies
+      run: |
+        poetry config virtualenvs.in-project true
+        poetry install --with test
 
     - name: Setup Bazaar and Launchpad credentials
       env:
@@ -60,7 +57,6 @@ jobs:
         # con il contenuto del tuo file di configurazione.
         LAUNCHPAD_CONFIG_FILE_CONTENT: ${{ secrets.LAUNCHPAD_ID_CONF_FILE }}
       run: |
-        sudo apt-get update && sudo apt-get install -y bzr
         mkdir -p ~/.bazaar/
         echo "${LAUNCHPAD_CONFIG_FILE_CONTENT}" > ~/.bazaar/launchpad.conf
         echo "Launchpad config file created."
