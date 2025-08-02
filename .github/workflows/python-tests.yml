@@ -27,8 +27,10 @@ jobs:
       with:
         python-version: '3.13'
 
-    - name: Install Poetry
-      run: pip install poetry
+    - name: Install Poetry and Export Plugin
+      run: |
+        pip install poetry
+        poetry self add poetry-plugin-export
 
     - name: Install system dependencies
       run: |
@@ -40,14 +42,18 @@ jobs:
           xvfb \
           bzr
 
-    - name: Configure Poetry and install dependencies
+    - name: Install dependencies and project
       env:
         # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
         # and avoid a lengthy compilation. This requires the ubuntu-24.04 runner.
         PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
       run: |
-        poetry config virtualenvs.in-project true
-        poetry install --with test
+        # Export dependencies (including test group) from poetry.lock to use pip.
+        # This is more reliable for wxPython than `poetry install`.
+        poetry export --with test -f requirements.txt --output requirements.txt --without-hashes
+        pip install -r requirements.txt
+        # Install the project itself in editable mode, without re-checking dependencies.
+        pip install --no-deps -e .
 
     - name: Setup Bazaar and Launchpad credentials
       env:
@@ -63,8 +69,8 @@ jobs:
       # The Jenkinsfile uses a custom function 'pyTestXvfb'. This is the standard
       # equivalent on Linux, as GitHub runners have Xvfb pre-installed.
       # The --html and --cov flags generate reports that we then upload as artifacts.
-      run: |
-        xvfb-run poetry run pytest --verbose \
+      run: | # We don't need `poetry run` as dependencies are in the global site-packages.
+        xvfb-run pytest --verbose \
           --cov=src \
           --cov-report=xml \
           --cov-report=html:coverage_report \

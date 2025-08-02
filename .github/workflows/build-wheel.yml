@@ -22,8 +22,10 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install Poetry
-        run: pip install poetry
+      - name: Install Poetry and Export Plugin
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
 
       - name: Install system dependencies for wxPython
         # These are required for wxPython, which is a build dependency.
@@ -31,15 +33,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev
 
-      - name: Configure Poetry and install dependencies
+      - name: Install dependencies with pip
         env:
           # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
           # and avoid a lengthy compilation. This requires the ubuntu-24.04 runner.
           PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
         run: |
-          poetry config virtualenvs.in-project true
-          # Install only the dependencies, not the project itself, which is correct for a build.
-          poetry install --no-root
+          # Export dependencies from poetry.lock to use pip for installation.
+          # This is more reliable for wxPython than `poetry install`.
+          poetry export -f requirements.txt --output requirements.txt --without-hashes
+          pip install -r requirements.txt
 
       - name: Build wheel
         run: poetry build --format wheel
