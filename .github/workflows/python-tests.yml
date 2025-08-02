@@ -12,17 +12,11 @@ permissions:
 
 jobs:
   test:
-    # Non eseguire questo job se il messaggio di commit contiene [lint]
-    # La condizione 'if' è stata rimossa perché causava problemi con
-    # gli eventi 'pull_request'. La reintrodurremo in modo più robusto
-    # una volta che il workflow base funziona.
+    # NOTE: Conditional execution based on commit message (e.g., skip if [lint])
+    # is handled by the megalinter workflow itself or can be added back later
+    # using more robust path filtering if needed.
+    runs-on: ubuntu-24.04 # Use Ubuntu 24.04 to match Jenkins environment for wxPython
 
-    runs-on: ubuntu-latest
-
-    # Il Jenkinsfile usa un container Docker. Qui usiamo un runner standard
-    # e installiamo le dipendenze. È più semplice e veloce per iniziare.
-    # Se il tuo Dockerfile ha dipendenze di sistema complesse, puoi aggiungere
-    # un blocco 'container:' qui per usare un'immagine specifica.
 
     steps:
     - name: Checkout code
@@ -47,14 +41,18 @@ jobs:
           bzr
 
     - name: Configure Poetry and install dependencies
+      env:
+        # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
+        # and avoid a lengthy compilation. This requires the ubuntu-24.04 runner.
+        PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
       run: |
         poetry config virtualenvs.in-project true
         poetry install --with test
 
     - name: Setup Bazaar and Launchpad credentials
       env:
-        # Crea un segreto nel tuo repository GitHub chiamato LAUNCHPAD_ID_CONF_FILE
-        # con il contenuto del tuo file di configurazione.
+        # Create a repository secret named LAUNCHPAD_ID_CONF_FILE
+        # with the content of your configuration file.
         LAUNCHPAD_CONFIG_FILE_CONTENT: ${{ secrets.LAUNCHPAD_ID_CONF_FILE }}
       run: |
         mkdir -p ~/.bazaar/
@@ -62,10 +60,9 @@ jobs:
         echo "Launchpad config file created."
 
     - name: Run tests with Xvfb
-      # Il Jenkinsfile usa una funzione custom 'pyTestXvfb'.
-      # Questo è l'equivalente standard su Linux.
-      # I runner di GitHub hanno Xvfb preinstallato.
-      # I flag --html e --cov generano i report che poi carichiamo come artefatti.
+      # The Jenkinsfile uses a custom function 'pyTestXvfb'. This is the standard
+      # equivalent on Linux, as GitHub runners have Xvfb pre-installed.
+      # The --html and --cov flags generate reports that we then upload as artifacts.
       run: |
         xvfb-run poetry run pytest --verbose \
           --cov=src \
@@ -75,7 +72,7 @@ jobs:
           --junitxml=test-results.xml
 
     - name: Upload Test Report (HTML)
-      # Esegui sempre questo step, anche se i test falliscono, per poter vedere il report.
+      # Always run this step, even if tests fail, to see the report.
       if: always()
       uses: actions/upload-artifact@v4
       with:
@@ -90,12 +87,12 @@ jobs:
         path: coverage_report/
 
     - name: Upload Screenshots on failure
-      if: failure() # Esegui solo se i test falliscono
+      if: failure() # Only run if tests fail
       uses: actions/upload-artifact@v4
       with:
         name: test-screenshots
         path: screenshots/
-        if-no-files-found: ignore # Non fallire se non ci sono screenshot
+        if-no-files-found: ignore # Don't fail if there are no screenshots
 
     - name: Upload Coverage Report (XML for SonarQube)
       if: always()

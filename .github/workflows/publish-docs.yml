@@ -6,13 +6,13 @@ on:
     branches:
       - master
 
-# Permessi necessari per il deploy su GitHub Pages
+# Permissions needed to deploy to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Assicura che solo un deploy alla volta sia in esecuzione
+# Ensures that only one deployment is running at a time
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -23,7 +23,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    # Use Ubuntu 24.04 to match the Jenkins environment and ensure wxPython wheel compatibility.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,21 +38,24 @@ jobs:
         run: pip install poetry
 
       - name: Install system dependencies for wxPython
-        # Questo step è FONDAMENTALE. wxPython richiede le librerie di sistema
-        # GTK+ per essere compilato e installato correttamente.
+        # This step is CRUCIAL. wxPython requires GTK+ system libraries
+        # to be compiled or installed correctly.
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev
 
       - name: Configure Poetry and install dependencies
+        env:
+          # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
+          # and avoid a lengthy compilation. This requires the ubuntu-24.04 runner.
+          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
         run: |
           poetry config virtualenvs.in-project true
           poetry install --with doc --no-root
 
       - name: Build documentation with Sphinx
-        # NOTA: Questo comando assume che la sorgente della tua documentazione
-        # sia in 'docs/source'. Se la tua cartella è diversa (es. 'docs/'),
-        # modifica il percorso qui sotto.
+        # NOTE: This command assumes your documentation source is in 'docs/source'.
+        # If your folder is different (e.g., 'docs/'), modify the path below.
         run: poetry run sphinx-build -b html docs/source build/html
 
       - name: Upload artifact for GitHub Pages

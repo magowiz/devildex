@@ -5,13 +5,14 @@ on:
   push:
     branches:
       - master
-  # Permette di avviare questo workflow manualmente dalla tab "Actions" di GitHub
+  # Allows running this workflow manually from the GitHub Actions tab
   workflow_dispatch:
 
 jobs:
   build:
     name: Build Wheel
-    runs-on: ubuntu-latest
+    # Use Ubuntu 24.04 to match the Jenkins environment and ensure wxPython wheel compatibility.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,22 +26,26 @@ jobs:
         run: pip install poetry
 
       - name: Install system dependencies for wxPython
-        # Queste sono necessarie per wxPython, che è una dipendenza di build
+        # These are required for wxPython, which is a build dependency.
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev
 
       - name: Configure Poetry and install dependencies
+        env:
+          # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
+          # and avoid a lengthy compilation. This requires the ubuntu-24.04 runner.
+          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
         run: |
           poetry config virtualenvs.in-project true
-          # Installa solo le dipendenze, non il progetto stesso, che è corretto per una build
+          # Install only the dependencies, not the project itself, which is correct for a build.
           poetry install --no-root
 
       - name: Build wheel
         run: poetry build --format wheel
 
       - name: Upload wheel artifact
-        # Il file .whl sarà disponibile nella sezione "Artifacts" del workflow run
+        # The .whl file will be available in the "Artifacts" section of the workflow run.
         uses: actions/upload-artifact@v4
         with:
           name: python-wheel
