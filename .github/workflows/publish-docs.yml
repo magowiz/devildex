@@ -6,23 +6,18 @@ on:
     branches:
       - master
 
-# Permissions needed to deploy to GitHub Pages
+# Permissions for the workflow
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # Ensures that only one deployment is running at a time
 concurrency:
-  group: "pages"
+  group: "docs"
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Build and Deploy Docs
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-docs:
+    name: Build Documentation
     # Use Ubuntu 24.04 to match the Jenkins environment and ensure wxPython wheel compatibility.
     runs-on: ubuntu-24.04
     steps:
@@ -46,28 +41,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev
 
-      - name: Install dependencies with pip
+      - name: Install dependencies and project
         env:
           # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
           # and avoid a lengthy compilation. This requires the ubuntu-24.04 runner.
           PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
         run: |
           # Export dependencies (including doc group) from poetry.lock to use pip.
-          # This is more reliable for wxPython than `poetry install`.
           poetry export --with doc -f requirements.txt --output requirements.txt --without-hashes
           pip install -r requirements.txt
+          # Install the project itself so Sphinx can find and document it.
+          pip install -e .
 
       - name: Build documentation with user script
         run: |
           chmod +x generate_sphinx_doc.sh
           ./generate_sphinx_doc.sh
 
-      - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
         with:
-          # The script generates output in 'build/html' from the project root.
+          name: documentation-html
           path: 'build/html'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
