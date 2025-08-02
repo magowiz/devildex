@@ -2,12 +2,11 @@
 name: Build Python Wheel
 
 on:
+  push:
+    branches:
+      - master
   # Permette di avviare questo workflow manualmente dalla tab "Actions" di GitHub
   workflow_dispatch:
-  # Si attiva anche quando crei un nuovo tag che inizia con 'v' (es. v0.1.0)
-  push:
-    tags:
-      - 'v*'
 
 jobs:
   build:
@@ -21,22 +20,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-          cache: 'poetry'
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pip install poetry
 
-      - name: Install system dependencies
+      - name: Install system dependencies for wxPython
         # Queste sono necessarie per wxPython, che è una dipendenza di build
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.0-dev \
-            libxtst-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev
 
-      - name: Install dependencies
-        run: poetry install
+      - name: Configure Poetry and install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          # Installa solo le dipendenze, non il progetto stesso, che è corretto per una build
+          poetry install --no-root
 
       - name: Build wheel
         run: poetry build --format wheel
