@@ -1,0 +1,56 @@
+# .github/workflows/publish-docs.yml
+name: Publish Documentation
+
+on:
+  push:
+    branches:
+      - master
+
+# Permessi necessari per il deploy su GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Assicura che solo un deploy alla volta sia in esecuzione
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and Deploy Docs
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies for documentation
+        run: poetry install --with doc
+
+      - name: Build documentation with Sphinx
+        # NOTA: Questo comando assume che la sorgente della tua documentazione
+        # sia in 'docs/source'. Se la tua cartella è diversa (es. 'docs/'),
+        # modifica il percorso qui sotto.
+        run: poetry run sphinx-build -b html docs/source build/html
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'build/html'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

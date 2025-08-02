@@ -35,8 +35,9 @@ jobs:
         # Aggiungiamo il caching delle dipendenze di poetry per velocizzare i run futuri
         cache: 'poetry'
 
-    - name: Install Poetry
-      run: pipx install poetry
+    - name: Install and configure Poetry
+      # Usa un'action dedicata che gestisce l'installazione e il PATH
+      uses: snok/install-poetry@v1
 
     - name: Install system dependencies for wxPython and Xvfb
       # Questo step è FONDAMENTALE. Installa le librerie di sistema

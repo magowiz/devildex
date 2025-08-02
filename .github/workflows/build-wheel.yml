@@ -1,0 +1,49 @@
+# .github/workflows/build-wheel.yml
+name: Build Python Wheel
+
+on:
+  # Permette di avviare questo workflow manualmente dalla tab "Actions" di GitHub
+  workflow_dispatch:
+  # Si attiva anche quando crei un nuovo tag che inizia con 'v' (es. v0.1.0)
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build Wheel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install system dependencies
+        # Queste sono necessarie per wxPython, che è una dipendenza di build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            libxtst-dev
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Build wheel
+        run: poetry build --format wheel
+
+      - name: Upload wheel artifact
+        # Il file .whl sarà disponibile nella sezione "Artifacts" del workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-wheel
+          path: dist/*.whl
