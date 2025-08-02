@@ -33,12 +33,13 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          # L'action si occupa di installare le dipendenze e di metterle in cache.
-          # Con questo argomento, installiamo anche quelle del gruppo 'doc'.
-          installation-arguments: --with doc
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Configure Poetry and install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --with doc --no-root
 
       - name: Build documentation with Sphinx
         # NOTA: Questo comando assume che la sorgente della tua documentazione
