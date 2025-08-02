@@ -58,25 +58,26 @@ jobs:
       # I runner di GitHub hanno Xvfb preinstallato.
       # I flag --html e --cov generano i report che poi carichiamo come artefatti.
       run: |
-        xvfb-run poetry run pytest \
+        xvfb-run poetry run pytest --verbose \
           --cov=src \
           --cov-report=xml \
           --cov-report=html:coverage_report \
-          --html=test_report/index.html
+          --html=test_report/index.html \
+          --junitxml=test-results.xml
 
-    - name: Upload Test Report
+    - name: Upload Test Report (HTML)
       # Esegui sempre questo step, anche se i test falliscono, per poter vedere il report.
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report
+        name: test-report-html
         path: test_report/
 
-    - name: Upload Coverage Report
+    - name: Upload Coverage Report (HTML)
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
+        name: coverage-report-html
         path: coverage_report/
 
     - name: Upload Screenshots on failure
@@ -86,3 +87,19 @@ jobs:
         name: test-screenshots
         path: screenshots/
         if-no-files-found: ignore # Non fallire se non ci sono screenshot
+
+    - name: Upload Coverage Report (XML for SonarQube)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-xml
+        path: coverage.xml
+        if-no-files-found: ignore
+
+    - name: Upload Test Results (XML for SonarQube)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-xml
+        path: test-results.xml
+        if-no-files-found: ignore
