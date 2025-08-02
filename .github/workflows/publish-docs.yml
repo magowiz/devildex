@@ -38,7 +38,7 @@ jobs:
         with:
           # L'action si occupa di installare le dipendenze e di metterle in cache.
           # Con questo argomento, installiamo anche quelle del gruppo 'doc'.
-          install-args: --with doc
+          installation-arguments: --with doc
 
       - name: Build documentation with Sphinx
         # NOTA: Questo comando assume che la sorgente della tua documentazione
