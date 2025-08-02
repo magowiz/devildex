@@ -60,7 +60,8 @@ jobs:
       - name: Build documentation with Sphinx
         # NOTE: This command assumes your documentation source is in 'docs/source'.
         # If your folder is different (e.g., 'docs/'), modify the path below.
-        run: poetry run sphinx-build -b html docs/source build/html
+        # The source directory is 'docs', not 'docs/source', as indicated by the error.
+        run: poetry run sphinx-build -b html docs build/html
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
