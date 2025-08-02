@@ -36,6 +36,13 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
+      - name: Install system dependencies for wxPython
+        # Questo step è FONDAMENTALE. wxPython richiede le librerie di sistema
+        # GTK+ per essere compilato e installato correttamente.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libxtst-dev
+
       - name: Configure Poetry and install dependencies
         run: |
           poetry config virtualenvs.in-project true
