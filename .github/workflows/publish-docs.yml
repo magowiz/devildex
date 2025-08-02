@@ -34,8 +34,9 @@ jobs:
           python-version: '3.13'
           cache: 'poetry'
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Install and configure Poetry
+        # Usa un'action dedicata che gestisce l'installazione e il PATH
+        uses: snok/install-poetry@v1
 
       - name: Install dependencies for documentation
         run: poetry install --with doc
