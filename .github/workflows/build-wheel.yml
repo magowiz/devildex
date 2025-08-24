@@ -2,9 +2,8 @@
 name: Build Python Wheel
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [published] # Trigger on new GitHub Releases being published
   # Allows running this workflow manually from the GitHub Actions tab
   workflow_dispatch:
 
@@ -47,9 +46,9 @@ jobs:
       - name: Build wheel
         run: poetry build --format wheel
 
-      - name: Upload wheel artifact
-        # The .whl file will be available in the "Artifacts" section of the workflow run.
-        uses: actions/upload-artifact@v4
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') # Only run if triggered by a tag push
         with:
-          name: python-wheel
-          path: dist/*.whl
+          files: dist/*.whl # Upload all .whl files from the dist directory
+          token: ${{ secrets.GITHUB_TOKEN }} # GitHub token for authentication
