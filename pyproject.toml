@@ -38,7 +38,7 @@ pytest-rerunfailures = "^15.1"
 pytest-html = "^4.1.1"
 pytest-xdist = "^3.6.1"
 pytest-anyio = "^0.0.0"
-typeguard = "^4.4.2"
+typeguard = "^4.4.4"
 requests = "^2.32.5"
 pytest-mock = "^3.14.1"
 
