@@ -89,12 +89,13 @@ DevilDex can be installed directly from a Python wheel package (`.whl`) if avail
 
 **Option A: Install from a Wheel Package (Recommended for Users)**
 
-If you have a `.whl` package for DevilDex (e.g., `devildex-0.1.0-py3-none-any.whl`), you can install it using pip:
+Wheel packages (`.whl`) are built and available as artifacts from successful GitHub Actions workflow runs. You can download the latest wheel from the [Build Python Wheel workflow](https://github.com/magowiz/devildex/actions/workflows/build-wheel.yml).
+
+Once downloaded, you can install it using pip:
 
 ```bash
-pip install devildex-0.1.0-py3-none-any.whl
+pip install path/to/your/downloaded/devildex-*.whl
 ```
-(Replace `devildex-0.1.0-py3-none-any.whl` with the actual filename of your wheel package.)
 
 **Option B: Install from Source (For Developers)**
 
