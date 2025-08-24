@@ -1,5 +1,6 @@
 import unittest
 import wx
+import wx.grid
 
 # It's crucial to have a wx.App instance for any UI testing.
 # We'll create one for the whole test suite if it doesn't exist.
@@ -54,6 +55,44 @@ class TestMainAppUI(unittest.TestCase):
 
         expected_value = "Show all Docsets (Global)"
         self.assertEqual(view_selector.GetValue(), expected_value, "View mode selector has incorrect initial value")
+
+    def test_grid_selection_enables_buttons(self):
+        """Test that selecting a row in the grid enables the appropriate action buttons."""
+        actions_panel = self.app.actions_panel
+        self.assertIsNotNone(actions_panel, "Actions panel should exist")
+
+        # 1. Initial state: Assert buttons are disabled
+        self.assertFalse(actions_panel.generate_action_button.IsEnabled(), "Generate button should be disabled initially")
+        self.assertFalse(actions_panel.open_action_button.IsEnabled(), "Open button should be disabled initially")
+        self.assertFalse(actions_panel.regenerate_action_button.IsEnabled(), "Regenerate button should be disabled initially")
+        self.assertFalse(actions_panel.delete_action_button.IsEnabled(), "Delete button should be disabled initially")
+
+        # 2. Action: Simulate selecting the first row (package 'black', which is not downloaded yet)
+        grid_panel = self.app.grid_panel
+        self.assertIsNotNone(grid_panel, "Grid panel should exist")
+        
+        # We simulate the event by calling the handler directly. This is more robust than simulating a UI click.
+        # We need to create a mock event object that has a GetRow() method.
+        class MockGridEvent(wx.grid.GridEvent):
+            def __init__(self, row):
+                super().__init__()
+                self.m_row = row
+            def GetRow(self):
+                return self.m_row
+
+        mock_event = MockGridEvent(row=0)
+        grid_panel._on_grid_cell_click(mock_event)
+
+        # Process the event queue for the UI to update
+        wx.Yield()
+
+        # 3. Final state: Assert buttons have updated correctly
+        # For the default data, 'black' is NOT_AVAILABLE_BTN_LABEL.
+        # So, 'Generate' should be enabled, but 'Open', 'Regenerate', and 'Delete' should not.
+        self.assertTrue(actions_panel.generate_action_button.IsEnabled(), "Generate button should be enabled after selection")
+        self.assertFalse(actions_panel.open_action_button.IsEnabled(), "Open button should remain disabled for unavailable docset")
+        self.assertFalse(actions_panel.regenerate_action_button.IsEnabled(), "Regenerate button should be disabled for unavailable docset")
+        self.assertFalse(actions_panel.delete_action_button.IsEnabled(), "Delete button should be disabled for unavailable docset")
 
 if __name__ == '__main__':
     unittest.main()
