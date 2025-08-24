@@ -79,6 +79,13 @@ jobs:
           --html=test_report/index.html \
           --junitxml=test-results.xml
 
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # Required for private repos or if you want to use a specific token
+        directory: ./ # Directory where coverage.xml is located
+        fail_ci_if_error: true # Optional: Don't fail CI if Codecov upload fails
+
     - name: Upload Test Report (HTML)
       # Always run this step, even if tests fail, to see the report.
       if: always()

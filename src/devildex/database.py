@@ -316,7 +316,8 @@ class DatabaseManager:
         if not database_url:
             db_path = cls.get_db_path()
             database_url = f"sqlite:///{db_path.resolve()}"
-            logger.info(f"Initializing database at: {database_url}")
+
+        logger.info(f"Initializing database at: {database_url}")
 
         cls._engine = create_engine(
             database_url,

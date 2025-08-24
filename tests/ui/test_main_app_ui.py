@@ -2,6 +2,7 @@ import unittest
 import wx
 import wx.grid
 from unittest.mock import patch, MagicMock
+import pytest
 
 # It's crucial to have a wx.App instance for any UI testing.
 # We'll create one for the whole test suite if it doesn't exist.

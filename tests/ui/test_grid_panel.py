@@ -49,6 +49,7 @@ def grid_panel(
 # --- Test Cases ---
 
 
+@pytest.mark.ui
 def test_update_data_populates_grid(
     grid_panel: DocsetGridPanel, mocker: MockerFixture
 ) -> None:
@@ -96,6 +97,7 @@ def test_update_data_populates_grid(
     grid.ForceRefresh.assert_called_once()
 
 
+@pytest.mark.ui
 def test_on_grid_cell_click_handles_selection(
     grid_panel: DocsetGridPanel,
     mock_callback: Callable[[int], None],
