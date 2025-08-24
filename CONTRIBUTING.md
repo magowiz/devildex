@@ -1,73 +1,73 @@
-# Guida per i Contributori
+# Contributing Guide
 
-Siamo entusiasti che tu voglia contribuire a DevilDex! Questa guida ti aiuterà a iniziare.
+We're excited you're interested in contributing to DevilDex! This guide will help you get started.
 
-## Codice di Condotta
+## Code of Conduct
 
-Partecipando a questo progetto, accetti di rispettare il nostro [Codice di Condotta](CODE_OF_CONDUCT.md) (se ne creeremo uno).
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Come Contribuire
+## How to Contribute
 
-Il processo di contributo generale è il seguente:
+The general contribution process is as follows:
 
-1.  **Fork** il repository.
-2.  **Clona** il tuo fork localmente.
-3.  **Crea un branch** per le tue modifiche (`git checkout -b feature/nome-funzionalita` o `bugfix/descrizione-bug`).
-4.  **Implementa** le tue modifiche, assicurandoti di seguire le linee guida di stile e di includere test appropriati.
-5.  **Esegui i test** per assicurarti che tutto funzioni come previsto.
-6.  **Effettua il commit** delle tue modifiche con un messaggio di commit chiaro e descrittivo.
-7.  **Esegui il push** del tuo branch al tuo fork.
-8.  **Apri una Pull Request** (PR) al repository principale.
+1.  **Fork** the repository.
+2.  **Clone** your fork locally.
+3.  **Create a branch** for your changes (`git checkout -b feature/your-feature-name` or `bugfix/bug-description`).
+4.  **Implement** your changes, ensuring you follow style guidelines and include appropriate tests.
+5.  **Run tests** to ensure everything works as expected.
+6.  **Commit** your changes with a clear and descriptive commit message.
+7.  **Push** your branch to your fork.
+8.  **Open a Pull Request** (PR) to the main repository.
 
-## Configurazione dell'Ambiente di Sviluppo
+## Setting Up the Development Environment
 
-Per iniziare a sviluppare su DevilDex:
+To start developing on DevilDex:
 
-1.  **Prerequisiti**: Assicurati di avere Python (versione 3.13 raccomandata) e [Poetry](https://python-poetry.org/) installati.
-2.  **Clona il repository**:
+1.  **Prerequisites**: Make sure you have Python (version 3.13 recommended) and [Poetry](https://python-poetry.org/) installed.
+2.  **Clone the repository**:
     ```bash
     git clone https://github.com/magowiz/devildex.git
     cd devildex
     ```
-3.  **Installa le dipendenze**:
+3.  **Install dependencies**:
     ```bash
     poetry install
     ```
-4.  **Esegui l'applicazione**:
+4.  **Run the application**:
     ```bash
     poetry run devildex
     ```
 
-## Esecuzione dei Test
+## Running Tests
 
-È fondamentale che tutte le modifiche passino i test esistenti e che vengano aggiunti nuovi test per le nuove funzionalità o le correzioni di bug.
+It is crucial that all changes pass existing tests and that new tests are added for new features or bug fixes.
 
-*   **Eseguire tutti i test**:
+*   **Run all tests**:
     ```bash
     poetry run pytest
     ```
-*   **Eseguire i test UI in modalità headless (richiede Xvfb su Linux)**:
+*   **Run UI tests headlessly (requires Xvfb on Linux)**:
     ```bash
     xvfb-run poetry run pytest
     ```
-    *Nota*: I test che coinvolgono la logica del core dell'applicazione dovrebbero istanziare `DevilDexCore` con un database SQLite in memoria per l'isolamento: `core = DevilDexCore(database_url='sqlite:///:memory:')`.
+    *Note*: Tests involving the core application logic should instantiate `DevilDexCore` with an in-memory SQLite database for isolation: `core = DevilDexCore(database_url='sqlite:///:memory:')`.
 
-## Stile del Codice e Linee Guida
+## Code Style and Guidelines
 
-*   Segui lo stile di codice esistente nel progetto.
-*   Utilizziamo `ruff` per il linting e la formattazione. Assicurati che il tuo codice sia conforme.
-*   Aggiungi commenti solo quando necessario per spiegare il *perché* di una scelta complessa, non il *cosa*.
+*   Follow the existing code style in the project.
+*   We use `ruff` for linting and formatting. Ensure your code is compliant.
+*   Add comments only when necessary to explain the *why* of a complex choice, not the *what*.
 
-## Invio delle Modifiche (Pull Request)
+## Submitting Changes (Pull Request)
 
-Quando apri una Pull Request:
+When opening a Pull Request:
 
-*   Fornisci una descrizione chiara e concisa delle modifiche.
-*   Fai riferimento a qualsiasi issue correlata (es. `Fixes #123`, `Closes #456`).
-*   Assicurati che i test passino e che il codice sia formattato correttamente.
+*   Provide a clear and concise description of the changes.
+*   Reference any related issues (e.g., `Fixes #123`, `Closes #456`).
+*   Ensure tests pass and the code is properly formatted.
 
-## Segnalazione di Bug e Suggerimento di Funzionalità
+## Reporting Bugs and Suggesting Features
 
-Se trovi un bug o hai un'idea per una nuova funzionalità, per favore apri un'issue sul nostro [tracker di issue](https://github.com/magowiz/devildex/issues).
+If you find a bug or have an idea for a new feature, please open an issue on our [issue tracker](https://github.com/magowiz/devildex/issues).
 
-Grazie per il tuo contributo!
+Thank you for your contribution!
