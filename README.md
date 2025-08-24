@@ -12,6 +12,10 @@
 
 It's designed for developers who want quick, offline access to the documentation of the libraries they use every day.
 
+The name 'DevilDex' stems from a conceptual fusion reflecting its core mission: to be the **Developer Index**.
+
+And have you seen the friendly little devil in the logo? Isn't it cute?
+
 ## Key Features
 
 -   **Project Scanning**: Automatically scans your Python projects (`pyproject.toml`, `requirements.txt`) to find all their dependencies.
