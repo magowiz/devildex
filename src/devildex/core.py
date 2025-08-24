@@ -27,9 +27,10 @@ logger = logging.getLogger(__name__)
 class DevilDexCore:
     """DevilDex Core."""
 
-    def __init__(self) -> None:
+    def __init__(self, database_url: Optional[str] = None) -> None:
         """Initialize a new DevilDexCore instance."""
         self.app_paths = AppPaths()
+        self.database_url = database_url
         if os.getenv("DEVILDEX_DEV_MODE") == "1":
             self.docset_base_output_path = Path("devildex_docsets")
             self.database_file_path = Path("devildex_dev.db")
@@ -234,7 +235,10 @@ class DevilDexCore:
         and loads data for the grid.
         """
         logger.info("Core: Initializing database...")
-        db_url = f"sqlite:///{self.database_file_path}"
+        if self.database_url:
+            db_url = self.database_url
+        else:
+            db_url = f"sqlite:///{self.database_file_path}"
         database.init_db(database_url=db_url)
         logger.info("Core: Database initialized.")
 
