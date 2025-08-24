@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "pip" # For Python dependencies
+    directory: "/" # Location of package manifests (pyproject.toml)
+    schedule:
+      interval: "weekly" # Check for updates weekly
