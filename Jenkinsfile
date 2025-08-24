@@ -8,11 +8,11 @@ pipeline {
     }
     environment {
         VERSION = '0.1'
-        PIP_INDEX_URL = 'http://hephaestus.local:5000/index/'
-        PIP_TRUSTED_HOST = 'hephaestus.local'
+        PIP_INDEX_URL = credentials('INTERNAL_PIP_INDEX_URL')
+        PIP_TRUSTED_HOST = credentials('HEPHAESTUS_LOCAL_ADDRESS')
         PROJECT_NAME = 'devildex'
-        IP_TRUSTED_HOST = '192.168.2.11'
-        IP_INDEX_URL = 'http://192.168.2.11:5000/index/'
+        IP_TRUSTED_HOST = credentials('HEPHAESTUS_IP')
+        IP_INDEX_URL = credentials('INTERNAL_PIP_INDEX_URL_IP')
         LINT_TAG_REGEX = '.*\\[lint\\].*'
     }
     stages {
