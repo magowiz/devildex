@@ -1795,15 +1795,15 @@ files = [
 
 [[package]]
 name = "requests"
-version = "2.32.4"
+version = "2.32.5"
 description = "Python HTTP for Humans."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main", "doc", "test"]
 markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
-    {file = "requests-2.32.4-py3-none-any.whl", hash = "sha256:27babd3cda2a6d50b30443204ee89830707d396671944c998b5975b031ac2b2c"},
-    {file = "requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422"},
+    {file = "requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6"},
+    {file = "requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf"},
 ]
 
 [package.dependencies]
@@ -2516,4 +2516,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "80ecaf6e2918c4baa2641cc9f6b8335255883b23415d56de6285438e330bf2f4"
+content-hash = "ad0e5af2480cb65f61aa3fe97ec0e591e453688c208b87e966ce15c9dfd1696f"
