@@ -9,6 +9,7 @@ It's designed for developers who want quick, offline access to the documentation
 
 -   **Project Scanning**: Automatically scans your Python projects (`pyproject.toml`, `requirements.txt`) to find all their dependencies.
 -   **Docset Generation**: Uses tools like Sphinx, pdoc, and pydoctor to generate HTML documentation for your packages.
+-   **Uniform Theming**: Applies a consistent and professional DevilDex theme across different documentation generators (Sphinx, pdoc3, pydoctor, MkDocs) for a unified viewing experience.
 -   **Integrated Viewer**: A built-in browser view to read and navigate the generated docsets without leaving the application.
 -   **Database Management**: Uses SQLAlchemy to keep track of your packages, projects, and available docsets.
 -   **Cross-Platform GUI**: Built with the wxPython framework to run on multiple operating systems.
