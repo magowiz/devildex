@@ -55,6 +55,36 @@ Once everything is installed, you can run the application with:
 poetry run devildex
 ```
 
+## Registering a Project with DevilDex
+
+DevilDex needs to know about your projects and their associated Python virtual environments to scan them for documentation. This is done using the `devildex-register-project` companion script.
+
+**Important:** You must run this script from within the **activated virtual environment** of the project you wish to register.
+
+1.  **Activate your project's virtual environment:**
+    ```bash
+    # Example for a Poetry project
+    poetry shell
+    # Or for a standard venv
+    source .venv/bin/activate
+    ```
+
+2.  **Navigate to your project's root directory:**
+    ```bash
+    cd /path/to/your/project
+    ```
+
+3.  **Run the registration script:**
+    ```bash
+    devildex-register-project
+    ```
+    If your project's root directory is different from your current working directory, you can specify it:
+    ```bash
+    devildex-register-project --project-path /path/to/your/project
+    ```
+
+After successful registration, DevilDex will be able to identify and manage documentation for the packages installed in that project's virtual environment.
+
 ## Contributing
 
 Contributions are welcome! If you want to contribute to DevilDex, here’s how you can run the test suite.
