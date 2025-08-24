@@ -76,7 +76,7 @@ jobs:
       # equivalent on Linux, as GitHub runners have Xvfb pre-installed.
       # The --html and --cov flags generate reports that we then upload as artifacts.
       run: | # We don't need `poetry run` as dependencies are in the global site-packages.
-        xvfb-run pytest --verbose tests/test_database.py::test_ensure_registered_project_and_association_value_error \
+        xvfb-run pytest --verbose \
           --cov=src \
           --cov-report=xml \
           --cov-report=html:coverage_report \
