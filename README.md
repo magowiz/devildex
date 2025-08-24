@@ -5,6 +5,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
 [![Poetry](https://img.shields.io/badge/poetry-enabled-blue.svg)](https://python-poetry.org/)
+[![codecov](https://codecov.io/gh/magowiz/devildex/graph/badge.svg?token=N18RTYWN7T)](https://codecov.io/gh/magowiz/devildex)
 
 
 **DevilDex is a desktop application for discovering, generating, and viewing Python package documentation (docsets).** It scans your projects for dependencies, builds their documentation, and provides a unified interface to browse it all locally.
