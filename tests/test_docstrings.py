@@ -139,3 +139,72 @@ def test_documentation_generation_for_package(
             entry_point_file.is_file()
         ), f"The expected HTML entry point Path is not a file:{entry_point_file}"
         logger.error(f"Found entry point html expected:{entry_point_file}")
+
+def test_build_pdoc_command_no_modules(tmp_path: Path, caplog) -> None:
+    """Verify _build_pdoc_command handles no modules to document."""
+    doc_generator = DocStringsSrc(output_dir=str(tmp_path))
+    
+    with caplog.at_level(logging.ERROR):
+        command = doc_generator._build_pdoc_command(
+            python_executable="/usr/bin/python",
+            modules_to_document=[], # Empty list
+            output_directory=tmp_path / "output"
+        )
+    
+    assert command == []
+    assert "DocstringsSrc: No module specified for PDOC." in caplog.text
+
+def test_generate_docs_from_folder_non_existent_input_folder(tmp_path: Path, caplog) -> None:
+    """Verify generate_docs_from_folder handles non-existent input folder."""
+    doc_generator = DocStringsSrc(output_dir=str(tmp_path))
+    
+    non_existent_folder = tmp_path / "non_existent_project"
+    
+    with caplog.at_level(logging.ERROR):
+        result = doc_generator.generate_docs_from_folder(
+            project_name="test_project",
+            input_folder=str(non_existent_folder),
+            output_folder=str(tmp_path / "output")
+        )
+    
+    assert result is False
+    assert "DocstringsSrc: The Specified Source Project Folder does not exist" in caplog.text
+
+def test_build_pdoc_command_with_template_dir(tmp_path: Path, caplog) -> None:
+    """Verify _build_pdoc_command includes template_dir when provided."""
+    template_dir = tmp_path / "my_template"
+    template_dir.mkdir()
+    doc_generator = DocStringsSrc(template_dir=template_dir, output_dir=str(tmp_path))
+    
+    with caplog.at_level(logging.INFO):
+        command = doc_generator._build_pdoc_command(
+            python_executable="/usr/bin/python",
+            modules_to_document=["my_module"],
+            output_directory=tmp_path / "output"
+        )
+    
+    assert "--template-dir" in command
+    assert str(template_dir.resolve()) in command
+    assert "Using customized template directory" in caplog.text
+
+def test_handle_successful_doc_move_existing_destination(tmp_path: Path, mocker) -> None:
+    """Verify _handle_successful_doc_move cleans up existing destination."""
+    doc_generator = DocStringsSrc(output_dir=str(tmp_path))
+    
+    generated_content_path = tmp_path / "generated_content"
+    generated_content_path.mkdir()
+    (generated_content_path / "file.html").touch()
+
+    final_docs_destination = tmp_path / "final_docs"
+    final_docs_destination.mkdir()
+    (final_docs_destination / "old_file.html").touch() # Existing content
+
+    mock_cleanup_folder = mocker.patch.object(doc_generator, "cleanup_folder")
+    mock_shutil_move = mocker.patch("shutil.move")
+
+    doc_generator._handle_successful_doc_move(
+        str(generated_content_path), final_docs_destination
+    )
+
+    mock_cleanup_folder.assert_called_once_with(final_docs_destination)
+    mock_shutil_move.assert_called_once()
