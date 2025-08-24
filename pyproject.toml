@@ -27,7 +27,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.packaging.dependencies]
 cx-freeze = "^8.2.0"
-nuitka = "^2.6.9"
+nuitka = "^2.7.12"
 pyoxidizer = "^0.24.0"
 
 
