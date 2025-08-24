@@ -19,16 +19,26 @@ It's designed for developers who want quick, offline access to the documentation
 ### 1. System Dependencies
 DevilDex, being a desktop application built with `wxPython`, relies on certain system-level libraries, especially for its webview component (`wx.html2.WebView`). While `pip install wxPython` handles most Python-level dependencies, you might need to install additional system packages depending on your operating system.
 
-#### Windows
+<details>
+  <summary>Windows</summary>
+
 Typically, no additional system dependencies are required beyond a standard Python installation, as `wxPython` wheels for Windows are usually self-contained.
+</details>
 
-#### macOS
+<details>
+  <summary>macOS</summary>
+
 Similar to Windows, `pip install wxPython` should handle most dependencies. If you encounter issues, ensure you have Xcode Command Line Tools installed (`xcode-select --install`).
+</details>
 
-#### Linux
+<details>
+  <summary>Linux</summary>
+
 For Linux distributions, you'll generally need GTK3 development libraries and WebKit2GTK. The specific package names vary by distribution.
 
-**Debian/Ubuntu-based systems:**
+<details>
+  <summary>Debian/Ubuntu-based systems</summary>
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y \
@@ -41,22 +51,31 @@ sudo apt-get install -y \
     python3-wxgtk4.0 \
     python3-wxgtk-webview4.0
 ```
+</details>
 
-**Fedora-based systems:**
+<details>
+  <summary>Fedora-based systems</summary>
+
 ```bash
 sudo dnf install -y \
     python3-wxpython4 \
     gtk3-devel \
     webkit2gtk4.1-devel
 ```
+</details>
 
-**Arch Linux-based systems:**
+<details>
+  <summary>Arch Linux-based systems</summary>
+
 ```bash
 sudo pacman -Syu \
     python-wxpython \
     wxwidgets-gtk3 \
     webkit2gtk
 ```
+</details>
+
+</details>
 
 ### 2. Application Installation
 Once the system dependencies are in place, you can install the Python packages using [Poetry](https://python-poetry.org/).
