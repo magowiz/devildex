@@ -23,7 +23,7 @@ The general contribution process is as follows:
 
 To start developing on DevilDex:
 
-1.  **Prerequisites**: Make sure you have Python (version 3.13 recommended) and [Poetry](https://python-poetry.org/) installed.
+1.  **Prerequisites**: Make sure you have Python (version 3.11+ recommended) and [Poetry](https://python-poetry.org/) installed.
 2.  **Clone the repository**:
     ```bash
     git clone https://github.com/magowiz/devildex.git
@@ -33,6 +33,7 @@ To start developing on DevilDex:
     ```bash
     poetry install
     ```
+    *Note for Linux Developers*: For `wxPython` to function correctly, especially its `WebView` component, ensure you have installed the necessary system dependencies as outlined in the "System Dependencies" section of the `README.md`.
 4.  **Run the application**:
     ```bash
     poetry run devildex
