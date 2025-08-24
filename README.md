@@ -1,8 +1,8 @@
 # DevilDex
 ![DevilDex Logo](src/devildex/imgs/logo-final.png)
 
-[![Python Tests](https://github.com/<YOUR_USERNAME>/devildex/actions/workflows/python-tests.yml/badge.svg)](https://github.com/<YOUR_USERNAME>/devildex/actions/workflows/python-tests.yml)
-[![Code Coverage](https://codecov.io/gh/<YOUR_USERNAME>/devildex/branch/master/graph/badge.svg)](https://codecov.io/gh/<YOUR_USERNAME>/devildex)
+[![Python Tests](https://github.com/magowiz/devildex/actions/workflows/python-tests.yml/badge.svg)](https://github.com/magowiz/devildex/actions/workflows/python-tests.yml)
+[![Code Coverage](https://codecov.io/gh/magowiz/devildex/branch/master/graph/badge.svg)](https://codecov.io/gh/magowiz/devildex)
 [![Python Version](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
 [![Poetry](https://img.shields.io/badge/poetry-enabled-blue.svg)](https://python-poetry.org/)
 [![License](https://img.shields.io/badge/license-INSERT_LICENSE_NAME_HERE-blue.svg)](LICENSE)
