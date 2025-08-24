@@ -42,7 +42,11 @@ jobs:
           libwebkit2gtk-4.1-dev \
           libxtst-dev \
           xvfb \
-          bzr
+          bzr \
+          python3-gi \
+          python3-gi-cairo \
+          python3-wxgtk4.0 \
+          python3-wxgtk-webview4.0
 
     - name: Install dependencies and project
       env:
