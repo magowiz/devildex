@@ -15,7 +15,25 @@ It's designed for developers who want quick, offline access to the documentation
 
 ## Installation
 
-To get started with DevilDex, you'll need [Poetry](https://python-poetry.org/) for dependency management.
+### 1. System Dependencies
+Before installing the application, you need to install several system packages required for `wxPython` and its dependencies.
+
+**On Debian/Ubuntu-based systems:**
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    libgirepository1.0-dev \
+    gobject-introspection \
+    gir1.2-gtk-3.0 \
+    gir1.2-webkit2-4.1 \
+    python3-gi \
+    python3-gi-cairo \
+    python3-wxgtk4.0 \
+    python3-wxgtk-webview4.0
+```
+
+### 2. Application Installation
+Once the system dependencies are in place, you can install the Python packages using [Poetry](https://python-poetry.org/).
 
 1.  **Clone the repository:**
     ```bash
@@ -23,14 +41,14 @@ To get started with DevilDex, you'll need [Poetry](https://python-poetry.org/) f
     cd devildex
     ```
 
-2.  **Install dependencies:**
+2.  **Install Python packages:**
     ```bash
     poetry install
     ```
 
 ## How to Run
 
-Once the dependencies are installed, you can run the application with:
+Once everything is installed, you can run the application with:
 
 ```bash
 poetry run devildex
