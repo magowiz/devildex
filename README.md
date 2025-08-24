@@ -17,9 +17,18 @@ It's designed for developers who want quick, offline access to the documentation
 ## Installation
 
 ### 1. System Dependencies
-Before installing the application, you need to install several system packages required for `wxPython` and its dependencies.
+DevilDex, being a desktop application built with `wxPython`, relies on certain system-level libraries, especially for its webview component (`wx.html2.WebView`). While `pip install wxPython` handles most Python-level dependencies, you might need to install additional system packages depending on your operating system.
 
-**On Debian/Ubuntu-based systems:**
+#### Windows
+Typically, no additional system dependencies are required beyond a standard Python installation, as `wxPython` wheels for Windows are usually self-contained.
+
+#### macOS
+Similar to Windows, `pip install wxPython` should handle most dependencies. If you encounter issues, ensure you have Xcode Command Line Tools installed (`xcode-select --install`).
+
+#### Linux
+For Linux distributions, you'll generally need GTK3 development libraries and WebKit2GTK. The specific package names vary by distribution.
+
+**Debian/Ubuntu-based systems:**
 ```bash
 sudo apt-get update
 sudo apt-get install -y \
@@ -31,6 +40,22 @@ sudo apt-get install -y \
     python3-gi-cairo \
     python3-wxgtk4.0 \
     python3-wxgtk-webview4.0
+```
+
+**Fedora-based systems:**
+```bash
+sudo dnf install -y \
+    python3-wxpython4 \
+    gtk3-devel \
+    webkit2gtk4.1-devel
+```
+
+**Arch Linux-based systems:**
+```bash
+sudo pacman -Syu \
+    python-wxpython \
+    wxwidgets-gtk3 \
+    webkit2gtk
 ```
 
 ### 2. Application Installation
