@@ -1,6 +1,7 @@
 import unittest
 import wx
 import wx.grid
+from unittest.mock import patch, MagicMock
 
 # It's crucial to have a wx.App instance for any UI testing.
 # We'll create one for the whole test suite if it doesn't exist.
@@ -16,6 +17,10 @@ class TestMainAppUI(unittest.TestCase):
 
     def setUp(self):
         """Set up the test environment."""
+        self.patcher = patch('devildex.main.GenerationTaskManager')
+        self.mock_gen_task_manager_cls = self.patcher.start()
+        self.mock_gen_task_manager_instance = self.mock_gen_task_manager_cls.return_value
+
         # We need a running DevilDexCore for the app to initialize correctly
         self.core = DevilDexCore(database_url='sqlite:///:memory:')
         # Initialize the application. The OnInit method will be called, creating the frame.
@@ -29,6 +34,7 @@ class TestMainAppUI(unittest.TestCase):
 
     def tearDown(self):
         """Tear down the test environment."""
+        self.patcher.stop()
         # We need to be careful with the event loop and destroying frames.
         # wx.CallAfter ensures that the frame is destroyed after the current event handler has completed.
         if self.frame:
@@ -93,6 +99,49 @@ class TestMainAppUI(unittest.TestCase):
         self.assertFalse(actions_panel.open_action_button.IsEnabled(), "Open button should remain disabled for unavailable docset")
         self.assertFalse(actions_panel.regenerate_action_button.IsEnabled(), "Regenerate button should be disabled for unavailable docset")
         self.assertFalse(actions_panel.delete_action_button.IsEnabled(), "Delete button should be disabled for unavailable docset")
+
+    def test_generate_docset_button_starts_task(self):
+        """Test that clicking the Generate Docset button starts a generation task."""
+        actions_panel = self.app.actions_panel
+        grid_panel = self.app.grid_panel
+
+        # 1. Select a row to enable the generate button
+        class MockGridEvent(wx.grid.GridEvent):
+            def __init__(self, row):
+                super().__init__()
+                self.m_row = row
+            def GetRow(self):
+                return self.m_row
+
+        mock_event = MockGridEvent(row=0) # Select the first package (e.g., 'black')
+        grid_panel._on_grid_cell_click(mock_event)
+        wx.Yield()
+
+        # Ensure the button is enabled before clicking
+        self.assertTrue(actions_panel.generate_action_button.IsEnabled(), "Generate button should be enabled after selection")
+
+        # Configure the mock to return False for is_task_active_for_package
+        self.mock_gen_task_manager_instance.is_task_active_for_package.return_value = False
+
+        # 2. Simulate click on the Generate Docset button
+        generate_button = actions_panel.generate_action_button
+        self.assertIsNotNone(generate_button, "Generate button should exist")
+
+        # Simulate a click by calling the handler directly
+        generate_button.GetEventHandler().ProcessEvent(wx.CommandEvent(wx.EVT_BUTTON.typeId, generate_button.GetId()))
+        wx.Yield()
+
+        # 3. Assert that start_generation_task was called on the mock
+        self.mock_gen_task_manager_instance.start_generation_task.assert_called_once()
+
+        # Optionally, check arguments passed to start_generation_task
+        # The default data for the first package is {'id': 1, 'name': 'black', 'version': '24.4.2', 'description': 'N/A', 'docset_status': 'Not Available'}
+        # The row_index is 0, and docset_status_col_idx is 5 (from main.py COLUMNS_ORDER.index("docset_status") + 1)
+        call_args, call_kwargs = self.mock_gen_task_manager_instance.start_generation_task.call_args
+        self.assertIn('package_data', call_kwargs)
+        self.assertEqual(call_kwargs['row_index'], 0)
+        self.assertEqual(call_kwargs['docset_status_col_idx'], 6) # Based on COLUMNS_ORDER in constants.py
+        self.assertEqual(call_kwargs['package_data']['name'], 'black')
 
 if __name__ == '__main__':
     unittest.main()
