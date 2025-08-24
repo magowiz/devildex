@@ -84,7 +84,21 @@ sudo pacman -Syu \
 </details>
 
 ### 2. Application Installation
-Once the system dependencies are in place, you can install the Python packages using [Poetry](https://python-poetry.org/).
+
+DevilDex can be installed directly from a Python wheel package (`.whl`) if available, or from source for development purposes.
+
+**Option A: Install from a Wheel Package (Recommended for Users)**
+
+If you have a `.whl` package for DevilDex (e.g., `devildex-0.1.0-py3-none-any.whl`), you can install it using pip:
+
+```bash
+pip install devildex-0.1.0-py3-none-any.whl
+```
+(Replace `devildex-0.1.0-py3-none-any.whl` with the actual filename of your wheel package.)
+
+**Option B: Install from Source (For Developers)**
+
+For development or if you prefer to install from source, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
@@ -92,7 +106,7 @@ Once the system dependencies are in place, you can install the Python packages u
     cd devildex
     ```
 
-2.  **Install Python packages:**
+2.  **Install Python packages using Poetry:**
     ```bash
     poetry install
     ```
