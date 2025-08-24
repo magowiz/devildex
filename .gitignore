@@ -8,3 +8,13 @@ megalinter-reports/
 __pycache__
 out
 GEMINI.md
+
+# Test artifacts
+*.coverage
+coverage.xml
+coverage_full_run.xml
+test-results.xml
+test_report/
+
+# IDE files
+.idea/
