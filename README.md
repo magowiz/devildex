@@ -18,6 +18,7 @@ It's designed for developers who want quick, offline access to the documentation
 -   **Uniform Theming**: Applies a consistent and professional DevilDex theme across different documentation generators (Sphinx, pdoc3, pydoctor, MkDocs) for a unified viewing experience.
 -   **Integrated Viewer**: A built-in browser view to read and navigate the generated docsets without leaving the application. ![Docset View](imgs/docset.png)
 -   **Database Management**: Uses SQLAlchemy to keep track of your packages, projects, and available docsets.
+
 -   **Cross-Platform GUI**: Built with the wxPython framework to run on multiple operating systems.
 
 ![Main Application View](imgs/main.png)
@@ -42,7 +43,7 @@ Similar to Windows, `pip install wxPython` should handle most dependencies. If y
 <details>
   <summary>Linux</summary>
 
-For Linux distributions, you'll generally need GTK3 development libraries and WebKit2GTK. The specific package names vary by distribution.
+For Linux distributions, you\'ll generally need GTK3 development libraries and WebKit2GTK. The specific package names vary by distribution.
 
 <details>
   <summary>Debian/Ubuntu-based systems</summary>
@@ -101,7 +102,7 @@ pip install path/to/your/downloaded/devildex-*.whl
 
 <details>
   <summary>Note for Linux Users regarding wxPython</summary>
-  On Linux, it is highly recommended to install `wxPython` and its dependencies (like `python3-wxgtk-webview4.0`) via your system's package manager (as described in the "System Dependencies" section) *before* installing the DevilDex wheel. When you run `pip install`, it will detect the system-wide `wxPython` installation and use it, preventing potential `NotImplementedError` issues with the WebView component.
+  On Linux, it is highly recommended to install `wxPython` and its dependencies (like `python3-wxgtk-webview4.0`) via your system\'s package manager (as described in the "System Dependencies" section) *before* installing the DevilDex wheel. When you run `pip install`, it will detect the system-wide `wxPython` installation and use it, preventing potential `NotImplementedError` issues with the WebView component.
 </details>
 
 **Option B: Install from Source (For Developers)**
@@ -133,7 +134,7 @@ DevilDex needs to know about your projects and their associated Python virtual e
 
 **Important:** You must run this script from within the **activated virtual environment** of the project you wish to register.
 
-1.  **Activate your project's virtual environment:**
+1.  **Activate your project\'s virtual environment:**
     ```bash
     # Example for a Poetry project
     poetry shell
@@ -141,21 +142,21 @@ DevilDex needs to know about your projects and their associated Python virtual e
     source .venv/bin/activate
     ```
 
-2.  **Navigate to your project's root directory:**
+2.  **Navigate to your project\'s root directory:**
     ```bash
     cd /path/to/your/project
     ```
 
 3.  **Run the registration script:**
     ```bash
-    devildex-register-project
+devildex-register-project
     ```
-    If your project's root directory is different from your current working directory, you can specify it:
+    If your project\'s root directory is different from your current working directory, you can specify it:
     ```bash
-    devildex-register-project --project-path /path/to/your/project
+devildex-register-project --project-path /path/to/your/project
     ```
 
-After successful registration, DevilDex will be able to identify and manage documentation for the packages installed in that project's virtual environment.
+After successful registration, DevilDex will be able to identify and manage documentation for the packages installed in that project\'s virtual environment.
 
 ## Contributing
 
@@ -180,3 +181,4 @@ xvfb-run poetry run pytest
 ## License
 
 This project is licensed under the [GPL-3.0] License. See the `LICENSE` file for more details.
+<!-- Trigger workflow for Codecov setup -->
