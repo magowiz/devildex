@@ -1,4 +1,4 @@
-# DevilDex
+# DevilDex ✨
 ![DevilDex Logo](src/devildex/imgs/logo-final.png)
 
 [![Python Tests](https://github.com/magowiz/devildex/actions/workflows/python-tests.yml/badge.svg)](https://github.com/magowiz/devildex/actions/workflows/python-tests.yml)
