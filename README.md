@@ -154,11 +154,11 @@ DevilDex needs to know about your projects and their associated Python virtual e
 
 3.  **Run the registration script:**
     ```bash
-devildex-register-project
+    devildex-register-project
     ```
     If your project\'s root directory is different from your current working directory, you can specify it:
     ```bash
-devildex-register-project --project-path /path/to/your/project
+    devildex-register-project --project-path /path/to/your/project
     ```
 
 After successful registration, DevilDex will be able to identify and manage documentation for the packages installed in that project\'s virtual environment.
