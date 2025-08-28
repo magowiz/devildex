@@ -145,7 +145,7 @@ DevilDex needs to know about your projects and their associated Python virtual e
     poetry shell
     # Or for a standard venv
     source .venv/bin/activate
-    ```
+    ```son
 
 2.  **Navigate to your project\'s root directory:**
     ```bash
