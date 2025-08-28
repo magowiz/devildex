@@ -28,7 +28,7 @@ And have you seen the friendly little devil in the logo? Isn't it cute?
 
 ![Main Application View](imgs/main.png)
 
-## Installation
+## Installation 🛠️
 
 ### 1. System Dependencies
 DevilDex, being a desktop application built with `wxPython`, relies on certain system-level libraries, especially for its webview component (`wx.html2.WebView`). While `pip install wxPython` handles most Python-level dependencies, you might need to install additional system packages depending on your operating system.
