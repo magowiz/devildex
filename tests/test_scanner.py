@@ -1,6 +1,9 @@
 """Tests for the scanner module."""
 
 from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
 
 from devildex.scanner.scanner import (
     has_docstrings,
@@ -84,6 +87,28 @@ def test_is_sphinx_project_returns_false_for_irrelevant_conf(tmp_path: Path) -> 
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is False
 
+def test_is_sphinx_project_read_file_fails(mocker: MagicMock, tmp_path: Path) -> None:
+    """Verify is_sphinx_project handles read_file_content_robustly returning None."""
+    # Arrange
+    (tmp_path / "conf.py").touch()
+    mocker.patch("devildex.scanner.scanner.read_file_content_robustly", return_value=None)
+
+    # Act & Assert
+    assert is_sphinx_project(str(tmp_path)) is False
+
+def test_is_sphinx_project_score_too_low(tmp_path: Path) -> None:
+    """Verify is_sphinx_project returns False if the score is below the threshold."""
+    # Arrange
+    conf_content = """
+project = 'My Project'
+copyright = '2024, Me'
+# Only 2 common variables
+"""
+    (tmp_path / "conf.py").write_text(conf_content)
+
+    # Act & Assert
+    assert is_sphinx_project(str(tmp_path)) is False
+
 
 # --- Tests for is_mkdocs_project ---
 
@@ -161,7 +186,6 @@ def test_has_docstrings_returns_false_for_no_docstrings(tmp_path: Path) -> None:
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is False
 
-
 def test_has_docstrings_handles_syntax_error_gracefully(tmp_path: Path) -> None:
     """Verify that a file with a SyntaxError does not crash the scanner."""
     # Arrange: Create a file with a syntax error
@@ -171,4 +195,13 @@ def test_has_docstrings_handles_syntax_error_gracefully(tmp_path: Path) -> None:
 
     # Act & Assert: The scanner should not raise an exception and should
     # return False because it finds no docstrings in any valid files.
+    assert has_docstrings(str(tmp_path)) is False
+
+def test_has_docstrings_os_error(mocker: MagicMock, tmp_path: Path) -> None:
+    """Verify that an OSError during file reading is handled gracefully."""
+    # Arrange
+    (tmp_path / "file.py").touch()
+    mocker.patch("builtins.open", side_effect=OSError("Disk full"))
+
+    # Act & Assert
     assert has_docstrings(str(tmp_path)) is False

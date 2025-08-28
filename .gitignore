@@ -15,6 +15,7 @@ coverage.xml
 coverage_full_run.xml
 test-results.xml
 test_report/
+coverage.json
 
 # IDE files
 .idea/
