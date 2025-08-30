@@ -191,28 +191,31 @@ class Orchestrator:
         }
 
     @staticmethod
-    def _interpret_tuple_res(value: tuple[str, bool] | str) -> str | None:
+    def _interpret_tuple_res(value: tuple[str, bool] | str) -> str | bool | None:
         if isinstance(value, tuple):
-            return value[0] and value[1]
+            return value[0] if value[1] else False
         return value
 
     def grab_build_doc(self) -> str | bool:
         """Grab and build documentation."""
         if self.detected_doc_type and self.detected_doc_type != "unknown":
-            try:
-                grabber_config = self._grabbers.get(self.detected_doc_type)
-                method = grabber_config["function"]
-                args = grabber_config["args"]
-                res = method(**args)
-                logger.info(f" DETECTED DOC TYPE: {self.detected_doc_type}")
-                logger.info(f" RESULT FROM GRABBER: {res}")
-                int_res = self._interpret_tuple_res(res)
-                self.last_operation_result = int_res
-
-            except KeyError:
-                self.last_operation_result = False
+            grabber_config = self._grabbers.get(self.detected_doc_type)
+            if grabber_config:
+                try:
+                    method = grabber_config["function"]
+                    args = grabber_config["args"]
+                    res = method(**args)
+                    logger.info(f" DETECTED DOC TYPE: {self.detected_doc_type}")
+                    logger.info(f" RESULT FROM GRABBER: {res}")
+                    int_res = self._interpret_tuple_res(res)
+                    self.last_operation_result = int_res
+                except Exception:
+                    self.last_operation_result = False
+                else:
+                    return int_res
             else:
-                return int_res
+                self.last_operation_result = False
+                logger.error(f"Orchestrator: No grabber configuration found for type: {self.detected_doc_type}")
         elif not self.detected_doc_type:
             self.last_operation_result = False
             logger.error("no scan result, please call start_scan first")
