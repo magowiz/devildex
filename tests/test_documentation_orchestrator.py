@@ -36,10 +36,14 @@ def test_orchestrator_init(mock_package_details, tmp_path):
     assert orchestrator.last_operation_result is None
     assert orchestrator._effective_source_path is None
 
-    # Test with default base_output_dir
-    orchestrator_default = Orchestrator(package_details=mock_package_details)
-    assert orchestrator_default.base_output_dir == (PROJECT_ROOT / "docset").resolve()
-    assert (PROJECT_ROOT / "docset").exists()
+    # Test with a temporary base_output_dir
+    default_output_dir = tmp_path / "default_orchestrator_output"
+    orchestrator_default = Orchestrator(
+        package_details=mock_package_details,
+        base_output_dir=default_output_dir
+    )
+    assert orchestrator_default.base_output_dir == default_output_dir.resolve()
+    assert default_output_dir.exists()
 
 def test_fetch_repo_initial_path_exists(mock_package_details, mock_orchestrator, tmp_path, mocker):
     # Create a real directory for initial_source_path

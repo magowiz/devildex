@@ -48,6 +48,7 @@ KNOWN_PLUGIN_PACKAGES: dict[str, str | None] = {
     "pymdownx.tasklist": "pymdown-extensions",
     "pymdownx.tilde": "pymdown-extensions",
     "pymdownx.snippets": "pymdown-extensions",
+    "mdx_gh_links": "mdx-gh-links",
     "mkdocs-section-index": "mkdocs-section-index",
     "codehilite": "Pygments",
     "search": BUILT_IN_MARKER,
@@ -524,7 +525,7 @@ def _extract_names_from_config_list_or_dict(
                 names_to_check.append(item)
             elif isinstance(item, dict) and item:
                 name_candidate = next(iter(item.keys()))
-                if "." in name_candidate and name_candidate.startswith("pymdownx"):
+                if "." in name_candidate:
                     names_to_check.append(name_candidate)
                 else:
                     names_to_check.append(name_candidate.split(".")[0])
@@ -571,8 +572,9 @@ def _get_plugin_packages_to_install(
         ):
             continue
         if not package:
-            package = KNOWN_PLUGIN_PACKAGES.get(base_name_for_lookup, name)
-        if package:
+            package = KNOWN_PLUGIN_PACKAGES.get(base_name_for_lookup)
+
+        if package and package != BUILT_IN_MARKER:
             if package not in plugin_packages:
                 plugin_packages.append(package)
                 logger.debug(
