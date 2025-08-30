@@ -70,6 +70,7 @@ def main() -> None:
                             label, url_value = parts
                             current_project_urls[label] = url_value
                     except AttributeError:
+                        logger.debug("DEBUG_HELPER: AttributeError during Project-URL parsing.")
                         pass
 
             package_list.append(
