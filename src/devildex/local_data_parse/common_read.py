@@ -289,7 +289,7 @@ def get_explicit_dependencies_from_project_config(start_path: str = ".") -> set[
     return set()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(
         level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s"
     )
@@ -355,3 +355,4 @@ pylint = "^2.10"
         sys.exit(0)
     else:
         sys.exit(1)
+
