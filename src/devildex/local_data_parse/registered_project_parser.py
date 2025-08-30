@@ -47,7 +47,7 @@ def _parse_registration_content(file_path: Path) -> RegisteredProjectData | None
                 try:
                     _ = Path(data[path_key]).resolve()
                     data[path_key] = str(Path(data[path_key]))
-                except (TypeError, OSError, RuntimeError):
+                except (TypeError, OSError, RuntimeError, ValueError):
                     logger.warning(
                         f"Invalid path for '{path_key}' in "
                         f"{file_path}: {data[path_key]}"

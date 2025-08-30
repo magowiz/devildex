@@ -1,6 +1,7 @@
 """Tests for the registered_project_parser module."""
 
 import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -155,3 +156,132 @@ def test_save_active_project_missing_required_keys(caplog) -> None:
     # Assert
     assert result is False
     assert "required key 'project_path' missing or None" in caplog.text
+
+
+def test_load_active_project_invalid_path_in_json(mock_app_paths: Path, caplog) -> None:
+    """Verify that loading handles an invalid path in the JSON file."""
+    # Arrange: Create a file with an invalid path (e.g., contains null byte)
+    invalid_path_data = {
+        "project_name": "InvalidPathProject",
+        "project_path": "/fake/path/to/project",
+        "python_executable": "/fake/venv/bin/python\0",  # Invalid path
+    }
+    mock_app_paths.write_text(json.dumps(invalid_path_data))
+
+    # Act
+    loaded_data = registered_project_parser.load_active_registered_project()
+
+    # Assert
+    assert loaded_data is not None
+    assert "Invalid path for 'python_executable'" in caplog.text
+
+
+def test_load_active_project_os_error_on_open(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+    """Verify that loading handles an OSError when opening the file."""
+    # Arrange
+    mock_app_paths.write_text(json.dumps(TEST_PROJECT_DATA))
+    mocker.patch.object(Path, "open", side_effect=OSError("Test OSError"))
+
+    # Act
+    loaded_data = registered_project_parser.load_active_registered_project()
+
+    # Assert
+    assert loaded_data is None
+    assert "Unexpected error while parsing file" in caplog.text
+
+
+def test_save_active_project_mkdir_os_error(mocker: MockerFixture, caplog) -> None:
+    """Verify that saving handles an OSError during directory creation."""
+    # Arrange
+    mocker.patch.object(Path, "mkdir", side_effect=OSError("Test mkdir OSError"))
+
+    # Act
+    result = registered_project_parser.save_active_registered_project(TEST_PROJECT_DATA)
+
+    # Assert
+    assert result is False
+    assert "Error determining or creating the path" in caplog.text
+
+
+def test_save_active_project_open_os_error(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+    """Verify that saving handles an OSError when opening the file for writing."""
+    # Arrange
+    mocker.patch.object(Path, "open", side_effect=OSError("Test open OSError"))
+
+    # Act
+    result = registered_project_parser.save_active_registered_project(TEST_PROJECT_DATA)
+
+    # Assert
+    assert result is False
+    assert "I/O error while saving the active project" in caplog.text
+
+
+def test_save_active_project_json_type_error(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+    """Verify that saving handles a TypeError during JSON serialization."""
+    # Arrange
+    mocker.patch("json.dump", side_effect=TypeError("Test TypeError"))
+
+    # Act
+    result = registered_project_parser.save_active_registered_project(TEST_PROJECT_DATA)
+
+    # Assert
+    assert result is False
+    assert "Type error during JSON serialization" in caplog.text
+
+
+def test_clear_active_project_app_paths_os_error(mocker: MockerFixture, caplog) -> None:
+    """Verify that clearing handles an OSError when initializing AppPaths."""
+    # Arrange
+    mocker.patch("devildex.local_data_parse.registered_project_parser.AppPaths", side_effect=OSError("Test AppPaths OSError"))
+
+    # Act
+    registered_project_parser.clear_active_registered_project()
+
+    # Assert
+    assert "Error determining the path of the registration file" in caplog.text
+
+
+def test_clear_active_project_unlink_os_error(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+    """Verify that clearing handles an OSError during file deletion."""
+    # Arrange
+    mock_app_paths.write_text(json.dumps(TEST_PROJECT_DATA))
+    mocker.patch.object(Path, "unlink", side_effect=OSError("Test unlink OSError"))
+
+    # Act
+    registered_project_parser.clear_active_registered_project()
+
+    # Assert
+    assert "Error while removing the active project file" in caplog.text
+
+
+def test_load_active_project_app_paths_os_error(mocker: MockerFixture, caplog) -> None:
+    """Verify that loading handles an OSError when initializing AppPaths."""
+    # Arrange
+    mocker.patch("devildex.local_data_parse.registered_project_parser.AppPaths", side_effect=OSError("Test AppPaths OSError"))
+
+    # Act
+    loaded_data = registered_project_parser.load_active_registered_project()
+
+    # Assert
+    assert loaded_data is None
+    assert "Error determining the path of the registration file" in caplog.text
+
+
+def test_load_active_project_no_registry_dir(tmp_path: Path, mocker: MockerFixture, caplog) -> None:
+    """Verify that loading handles the case where the registry directory doesn't exist."""
+    # Arrange
+    # Mock AppPaths to point to our temporary directory
+    mock_app_paths_class = mocker.patch("devildex.local_data_parse.registered_project_parser.AppPaths")
+    mock_app_paths_instance = mock_app_paths_class.return_value
+    mock_app_paths_instance.user_data_dir = tmp_path
+
+    # The registry subdir does NOT exist yet inside tmp_path
+
+    # Act
+    with caplog.at_level(logging.DEBUG):
+        loaded_data = registered_project_parser.load_active_registered_project()
+
+    # Assert
+    assert loaded_data is None
+    assert "The base directory for registration" in caplog.text
+    assert "does not exist" in caplog.text

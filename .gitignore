@@ -18,4 +18,4 @@ test_report/
 coverage.json
 
 # IDE files
-.idea/
+.idea/coverage_reports/
