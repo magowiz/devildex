@@ -244,6 +244,7 @@ def download_readthedocs_prebuilt_robust(
 
     project_slug = project_name
     if not project_slug:
+        logger.error("Error: project_slug is empty. Cannot proceed with download.")
         return None
 
     available_versions = _fetch_available_versions(project_slug)
@@ -276,7 +277,7 @@ def download_readthedocs_prebuilt_robust(
     return final_downloaded_path
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     logger.info("--- Executing Script: Download Prebuilt Docs (Robust) ---")
 
     logger.info("\nTrying with: Black (https://black.readthedocs.io/)")
@@ -306,3 +307,4 @@ if __name__ == "__main__":
     else:
         logger.error("  FAILURE: Download failed for Sphinx.")
     logger.info("-" * 30)
+
