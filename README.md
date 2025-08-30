@@ -165,7 +165,7 @@ DevilDex needs to know about your projects and their associated Python virtual e
 
 After successful registration, DevilDex will be able to identify and manage documentation for the packages installed in that project\'s virtual environment.
 
-## Contributing
+## Contributing 🤝
 
 Contributions are welcome! If you want to contribute to DevilDex, here’s how you can run the test suite.
 
@@ -185,6 +185,7 @@ The UI tests are designed to run in a headless environment (like in a CI pipelin
 xvfb-run poetry run pytest
 ```
 
-## License
+## License 📄
 
 This project is licensed under the GPL-3.0 License. See the `LICENSE` file for more details.
+.
