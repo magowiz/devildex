@@ -89,6 +89,7 @@ class AppPaths:
     def active_project_registry_dir(self) -> Path:
         """Directory where the active project registration file is stored."""
         path = self.user_data_dir / ACTIVE_PROJECT_REGISTRY_SUBDIR
+        path.mkdir(parents=True, exist_ok=True)
         return path
 
     @property

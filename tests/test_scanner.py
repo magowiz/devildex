@@ -44,7 +44,6 @@ def test_is_sphinx_project_in_doc_subdir(tmp_path: Path) -> None:
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is True
 
-
 def test_is_sphinx_project_by_score(tmp_path: Path) -> None:
     """Verify recognition based on the score of common variables."""
     # Arrange
@@ -59,7 +58,6 @@ author = 'The Author'
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is True
 
-
 def test_is_sphinx_project_with_sys_path_pattern(tmp_path: Path) -> None:
     """Verify recognition via the common sys.path modification pattern."""
     # Arrange
@@ -69,7 +67,6 @@ def test_is_sphinx_project_with_sys_path_pattern(tmp_path: Path) -> None:
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is True
 
-
 def test_is_sphinx_project_returns_false_for_non_sphinx(tmp_path: Path) -> None:
     """Verify that a folder without conf.py is not recognized as a Sphinx project."""
     # Arrange
@@ -78,7 +75,6 @@ def test_is_sphinx_project_returns_false_for_non_sphinx(tmp_path: Path) -> None:
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is False
 
-
 def test_is_sphinx_project_returns_false_for_irrelevant_conf(tmp_path: Path) -> None:
     """Verify that a non-relevant conf.py is not recognized as a Sphinx project."""
     # Arrange
@@ -86,7 +82,6 @@ def test_is_sphinx_project_returns_false_for_irrelevant_conf(tmp_path: Path) -> 
 
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is False
-
 def test_is_sphinx_project_read_file_fails(mocker: MagicMock, tmp_path: Path) -> None:
     """Verify is_sphinx_project handles read_file_content_robustly returning None."""
     # Arrange
@@ -95,7 +90,6 @@ def test_is_sphinx_project_read_file_fails(mocker: MagicMock, tmp_path: Path) ->
 
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is False
-
 def test_is_sphinx_project_score_too_low(tmp_path: Path) -> None:
     """Verify is_sphinx_project returns False if the score is below the threshold."""
     # Arrange
@@ -121,7 +115,6 @@ def test_is_mkdocs_project_identifies_correctly(tmp_path: Path) -> None:
     # Act & Assert
     assert is_mkdocs_project(tmp_path) is True
 
-
 def test_is_mkdocs_project_returns_false_when_missing(tmp_path: Path) -> None:
     """Verify that a folder without mkdocs.yml is not recognized."""
     # Arrange
@@ -143,7 +136,6 @@ def test_has_docstrings_finds_module_docstring(tmp_path: Path) -> None:
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is True
 
-
 def test_has_docstrings_finds_function_docstring(tmp_path: Path) -> None:
     """Verify detection of a docstring in a function."""
     # Arrange
@@ -155,7 +147,6 @@ def test_has_docstrings_finds_function_docstring(tmp_path: Path) -> None:
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is True
 
-
 def test_has_docstrings_finds_class_docstring(tmp_path: Path) -> None:
     """Verify detection of a docstring in a class."""
     # Arrange
@@ -164,7 +155,6 @@ def test_has_docstrings_finds_class_docstring(tmp_path: Path) -> None:
 
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is True
-
 
 def test_has_docstrings_in_subdirectory(tmp_path: Path) -> None:
     """Verify detection of docstrings in a file within a subdirectory."""
@@ -176,7 +166,6 @@ def test_has_docstrings_in_subdirectory(tmp_path: Path) -> None:
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is True
 
-
 def test_has_docstrings_returns_false_for_no_docstrings(tmp_path: Path) -> None:
     """Verify that has_docstrings returns False if no docstrings are found."""
     # Arrange
@@ -185,7 +174,6 @@ def test_has_docstrings_returns_false_for_no_docstrings(tmp_path: Path) -> None:
 
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is False
-
 def test_has_docstrings_handles_syntax_error_gracefully(tmp_path: Path) -> None:
     """Verify that a file with a SyntaxError does not crash the scanner."""
     # Arrange: Create a file with a syntax error
@@ -196,12 +184,63 @@ def test_has_docstrings_handles_syntax_error_gracefully(tmp_path: Path) -> None:
     # Act & Assert: The scanner should not raise an exception and should
     # return False because it finds no docstrings in any valid files.
     assert has_docstrings(str(tmp_path)) is False
-
 def test_has_docstrings_os_error(mocker: MagicMock, tmp_path: Path) -> None:
     """Verify that an OSError during file reading is handled gracefully."""
     # Arrange
     (tmp_path / "file.py").touch()
     mocker.patch("builtins.open", side_effect=OSError("Disk full"))
 
+    # Act & Assert
+    assert has_docstrings(str(tmp_path)) is False
+
+# New test for is_sphinx_project (no conf.py)
+def test_is_sphinx_project_no_conf_file(tmp_path: Path) -> None:
+    """Verify that is_sphinx_project returns False when no conf.py is found."""
+    # Arrange: Create an empty directory
+    # Act & Assert
+    assert is_sphinx_project(str(tmp_path)) is False
+
+# New test for is_sphinx_project (read_file_content_robustly returns None)
+def test_is_sphinx_project_read_file_content_robustly_returns_none(mocker: MagicMock, tmp_path: Path) -> None:
+    """Verify is_sphinx_project handles read_file_content_robustly returning None."""
+    # Arrange
+    (tmp_path / "conf.py").touch()
+    mocker.patch("devildex.scanner.scanner.read_file_content_robustly", return_value=None)
+    # Act & Assert
+    assert is_sphinx_project(str(tmp_path)) is False
+
+# New test for is_sphinx_project (conf.py with no strong indicators)
+def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
+    """Verify that is_sphinx_project returns False for a conf.py with no strong Sphinx indicators."""
+    # Arrange
+    conf_content = "MY_APP_NAME = 'My Custom App'\nDEBUG_MODE = True"
+    (tmp_path / "conf.py").write_text(conf_content)
+    # Act & Assert
+    assert is_sphinx_project(str(tmp_path)) is False
+
+# Explicit test for is_mkdocs_project (to ensure it's covered)
+def test_is_mkdocs_project_explicit_call(tmp_path: Path) -> None:
+    """Explicitly call is_mkdocs_project to ensure coverage."""
+    # Arrange
+    (tmp_path / "mkdocs.yml").touch()
+    # Act & Assert
+    assert is_mkdocs_project(tmp_path) is True
+
+# New test for SyntaxError in _check_file_for_docstrings
+def test_has_docstrings_handles_syntax_error_in_file(tmp_path: Path) -> None:
+    """Verify that has_docstrings handles SyntaxError in a Python file gracefully."""
+    # Arrange
+    py_file = tmp_path / "broken.py"
+    py_file.write_text("def func(:\n    pass") # Invalid syntax
+    # Act & Assert
+    assert has_docstrings(str(tmp_path)) is False
+
+# New test for OSError in _check_file_for_docstrings
+def test_has_docstrings_handles_os_error_in_file(mocker: MagicMock, tmp_path: Path) -> None:
+    """Verify that has_docstrings handles OSError during file reading gracefully."""
+    # Arrange
+    py_file = tmp_path / "unreadable.py"
+    py_file.touch()
+    mocker.patch("builtins.open", side_effect=OSError("Permission denied"))
     # Act & Assert
     assert has_docstrings(str(tmp_path)) is False
