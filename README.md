@@ -107,7 +107,9 @@ pip install path/to/your/downloaded/devildex-*.whl
 
 <details>
   <summary>Note for Linux Users regarding wxPython</summary>
-  On Linux, it is highly recommended to install `wxPython` and its dependencies (like `python3-wxgtk-webview4.0`) via your system\'s package manager (as described in the "System Dependencies" section) *before* installing the DevilDex wheel. When you run `pip install`, it will detect the system-wide `wxPython` installation and use it, preventing potential `NotImplementedError` issues with the WebView component.
+
+  On Linux, it is highly recommended to install `wxPython` and its dependencies (like `python3-wxgtk-webview4.0`) via your system's package manager (as described in the "System Dependencies" section) *before* installing the DevilDex wheel. When you run `pip install`, it will detect the system-wide `wxPython` installation and use it, preventing potential `NotImplementedError` issues with the WebView component.
+
 </details>
 
 **Option B: Install from Source (For Developers)**
