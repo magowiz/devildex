@@ -349,12 +349,7 @@ def test_get_plugin_packages_to_install_none_configs():
 def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path):
     """Integration test: Should successfully execute mkdocs build within a venv without mocking core components."""
     # Use a fixed output directory for easier debugging
-    fixed_output_dir = Path("/home/magowiz/MEGA/projects/devildex/tmp/mkdocs_test_output")
-    
-    # Clean up the fixed output directory before each run
-    if fixed_output_dir.exists():
-        import shutil
-        shutil.rmtree(fixed_output_dir)
+    fixed_output_dir = tmp_path / "mkdocs_test_output"
     fixed_output_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Setup dummy mkdocs project
