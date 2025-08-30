@@ -16,7 +16,7 @@ The name 'DevilDex' stems from a conceptual fusion reflecting its core mission: 
 
 And have you seen the friendly little devil in the logo? Isn't it cute?
 
-## Key Features
+## Key Features 🔑
 
 -   **Project Scanning**: Automatically scans your Python projects (`pyproject.toml`, `requirements.txt`) to find all their dependencies.
 -   **Docset Generation**: Uses tools like Sphinx, pdoc, and pydoctor to generate HTML documentation for your packages. ![Docset Generation Log](imgs/running_log.png)
@@ -127,7 +127,7 @@ For development or if you prefer to install from source, follow these steps:
     poetry install
     ```
 
-## How to Run
+## How to Run ▶️
 
 Once everything is installed, you can run the application with:
 
@@ -135,7 +135,7 @@ Once everything is installed, you can run the application with:
 poetry run devildex
 ```
 
-## Registering a Project with DevilDex
+## Registering a Project with DevilDex 📝
 
 DevilDex needs to know about your projects and their associated Python virtual environments to scan them for documentation. This is done using the `devildex-register-project` companion script.
 
