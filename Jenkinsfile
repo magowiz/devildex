@@ -104,6 +104,7 @@ pipeline {
                     sh 'pip freeze >> pytest_collect_only.log 2>&1'
                     sh 'echo "\n--- Pytest.ini Content ---" >> pytest_collect_only.log'
                     sh 'cat pytest.ini >> pytest_collect_only.log 2>&1 || echo "pytest.ini not found" >> pytest_collect_only.log'
+                    }
                 }
             }
             post {
