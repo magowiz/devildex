@@ -255,3 +255,126 @@ def test_generate_docset_missing_input_data(core: DevilDexCore) -> None:
     # Assert
     assert success is False
     assert "missing package name or version" in msg
+
+
+def test_scan_project_with_explicit_dependencies(
+    core: DevilDexCore, mock_installed_packages: list[PackageDetails], mocker: MockerFixture
+) -> None:
+    """Verify that scan_project filters packages based on explicit dependencies."""
+    # Arrange
+    core.registered_project_name = "TestProject"
+    core.registered_project_python_executable = "/path/to/python"
+    mocker.patch(
+        "devildex.core.get_explicit_dependencies_from_project_config",
+        return_value={"requests", "numpy"},
+    )
+    mock_scanner = mocker.patch("devildex.core.ExternalVenvScanner").return_value
+    mock_scanner.scan_packages.return_value = mock_installed_packages
+
+    # Act
+    result = core.scan_project()
+
+    # Assert
+    assert result is not None
+    assert len(result) == 2
+    package_names = {pkg.name for pkg in result}
+    assert package_names == {"requests", "numpy"}
+
+
+def test_scan_project_no_explicit_dependencies(
+    core: DevilDexCore, mock_installed_packages: list[PackageDetails], mocker: MockerFixture
+) -> None:
+    """Verify that scan_project returns all packages when no explicit dependencies are found."""
+    # Arrange
+    core.registered_project_name = "TestProject"
+    core.registered_project_python_executable = "/path/to/python"
+    mocker.patch(
+        "devildex.core.get_explicit_dependencies_from_project_config",
+        return_value=set(),
+    )
+    mock_scanner = mocker.patch("devildex.core.ExternalVenvScanner").return_value
+    mock_scanner.scan_packages.return_value = mock_installed_packages
+
+    # Act
+    result = core.scan_project()
+
+    # Assert
+    assert result is not None
+    assert len(result) == 3
+
+
+def test_scan_project_no_project_active(core: DevilDexCore) -> None:
+    """Verify that scan_project returns None when no project is active."""
+    # Arrange
+    core.registered_project_name = None
+
+    # Act
+    result = core.scan_project()
+
+    # Assert
+    assert result is None
+
+def test_bootstrap_database_and_load_data_fallback(
+    core: DevilDexCore, mock_installed_packages: list[PackageDetails], mocker: MockerFixture
+) -> None:
+    """Verify that bootstrap_database_and_load_data handles fallback data correctly."""
+    # Arrange
+    mocker.patch(
+        "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
+    )
+    mock_ensure_pkg = mocker.patch("devildex.database.ensure_package_entities_exist")
+
+    # Act
+    core.bootstrap_database_and_load_data(
+        initial_package_source=mock_installed_packages, is_fallback_data=True
+    )
+
+    # Assert
+    requests_call_args = mock_ensure_pkg.call_args_list[0].kwargs
+    assert "project_name" not in requests_call_args
+
+def test_bootstrap_database_and_load_data_missing_pkg_data(
+    core: DevilDexCore, mocker: MockerFixture
+) -> None:
+    """Verify that packages with missing name or version are skipped."""
+    # Arrange
+    mocker.patch(
+        "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
+    )
+    mock_ensure_pkg = mocker.patch("devildex.database.ensure_package_entities_exist")
+    packages = [PackageDetails(name="requests", version=None, project_urls={})]
+
+    # Act
+    core.bootstrap_database_and_load_data(
+        initial_package_source=packages, is_fallback_data=False
+    )
+
+    # Assert
+    mock_ensure_pkg.assert_not_called()
+
+def test_list_package_dirs_no_base_dir(core: DevilDexCore, tmp_path: Path) -> None:
+    """Verify that list_package_dirs returns an empty list if the base directory doesn't exist."""
+    # Arrange
+    core.docset_base_output_path = tmp_path / "non_existent_dir"
+
+    # Act
+    result = core.list_package_dirs()
+
+    # Assert
+    assert result == []
+
+def test_dev_mode_paths(mocker: MockerFixture, tmp_path: Path) -> None:
+    """Verify that DEV_MODE uses the correct paths."""
+    # Arrange
+    mocker.patch.dict("os.environ", {"DEVILDEX_DEV_MODE": "1"})
+    mock_app_paths_class = mocker.patch("devildex.core.AppPaths")
+    mock_app_paths_instance = mock_app_paths_class.return_value
+    mock_app_paths_instance.docsets_base_dir = tmp_path / "docsets"
+    mock_app_paths_instance.database_path = tmp_path / "devildex_test.db"
+
+    # Act
+    core = DevilDexCore()
+
+    # Assert
+    assert core.docset_base_output_path == Path("devildex_docsets")
+    assert core.database_file_path == Path("devildex_dev.db")
