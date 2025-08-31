@@ -90,9 +90,8 @@ pipeline {
                     sh 'cp pip.conf /root/.config/pip/pip.conf'
                     sh 'python -m pip install -e . --timeout 10000'
 
-                    sh 'poetry install'
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
-                    sh 'poetry run pytest --collect-only -q >> pytest_collect_only.log 2>&1'
+                    sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
 
 
                     sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
