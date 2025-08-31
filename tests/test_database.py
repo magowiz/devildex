@@ -1,7 +1,8 @@
 """Tests for the database module."""
 
-import pytest
 import logging
+
+import pytest
 from sqlalchemy.orm import Session
 
 from devildex import database
@@ -9,7 +10,7 @@ from devildex.database import Docset, PackageInfo, RegisteredProject
 
 
 @pytest.fixture
-def db_session() -> Session:
+def db_session() -> Session | None:
     """Fixture to set up an in-memory SQLite database for testing.
 
     Yields a session to interact with the database.
@@ -135,7 +136,7 @@ def test_database_manager_init_db_called_twice(caplog, mocker) -> None:
     database.logger.info.assert_any_call("Database tables checked/created.")
 
     # Act 2: Second call to init_db
-    database.logger.info.reset_mock() # Reset mock calls for the second check
+    database.logger.info.reset_mock()  # Reset mock calls for the second check
     mocker.patch("devildex.database.logger.debug")
     database.init_db("sqlite:///:memory:")
     database.logger.debug.assert_any_call("Database engine already initialized.")
@@ -234,7 +235,10 @@ def test_get_session_raises_database_not_initialized_error(mocker, caplog) -> No
     with pytest.raises(database.DatabaseNotInitializedError) as excinfo:
         with database.DatabaseManager.get_session():
             pass
-    assert "Failed to initialize SessionLocal even after attempting default init." in str(excinfo.value)
+    assert (
+        "Failed to initialize SessionLocal even after attempting default init."
+        in str(excinfo.value)
+    )
 
 
 def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
@@ -260,11 +264,15 @@ def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
     )
 
 
-def test_ensure_registered_project_and_association_value_error(db_session: Session, caplog) -> None:
+def test_ensure_registered_project_and_association_value_error(
+    db_session: Session, caplog
+) -> None:
     """Verify _ensure_registered_project_and_association raises ValueError for missing project details."""
     # Arrange
     pkg_info = database.PackageInfo(package_name="test_pkg")
-    docset = database.Docset(package_name="test_pkg", package_version="1.0", status="unknown")
+    docset = database.Docset(
+        package_name="test_pkg", package_version="1.0", status="unknown"
+    )
     db_session.add_all([pkg_info, docset])
     db_session.commit()
 
@@ -278,7 +286,10 @@ def test_ensure_registered_project_and_association_value_error(db_session: Sessi
             docset=docset,
         )
     assert "project_path and python_executable must be provided." in str(excinfo.value)
-    assert "To create a new RegisteredProject 'NewProject', project_path and python_executable must be provided." in caplog.text
+    assert (
+        "To create a new RegisteredProject 'NewProject', project_path and python_executable must be provided."
+        in caplog.text
+    )
 
 
 def test_ensure_package_entities_exist_commit_exception(mocker, caplog) -> None:
@@ -299,7 +310,9 @@ def test_ensure_package_entities_exist_commit_exception(mocker, caplog) -> None:
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
     mock_session.commit.side_effect = database.SQLAlchemyError("Commit failed")
     mock_session.query.return_value.filter_by.return_value.first.return_value = None
-    mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = None
+    mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
+        None
+    )
 
     mock_context_manager.__enter__.return_value = mock_session
     mocker.patch("devildex.database.get_session", return_value=mock_context_manager)
@@ -312,7 +325,6 @@ def test_ensure_package_entities_exist_commit_exception(mocker, caplog) -> None:
     assert "Commit failed" in str(excinfo.value)
     assert "Error during final commit while ensuring package entities." in caplog.text
     mock_session.rollback.assert_called_once()
-
 
 
 def test_ensure_package_handles_no_project_context(db_session: Session) -> None:
@@ -393,8 +405,7 @@ def test_docset_repr(db_session: Session) -> None:
 
     # Assert
     assert (
-        repr_string
-        == f"<Docset(id={docset.id}, name='test_package', version='1.0.0')>"
+        repr_string == f"<Docset(id={docset.id}, name='test_package', version='1.0.0')>"
     )
 
 
@@ -417,7 +428,9 @@ def test_database_not_initialized_error_custom_message() -> None:
     assert str(error) == custom_message
 
 
-def test_package_info_project_urls_json_decode_error(db_session: Session, caplog) -> None:
+def test_package_info_project_urls_json_decode_error(
+    db_session: Session, caplog
+) -> None:
     """Verify that a JSONDecodeError is handled when accessing project_urls."""
     # Arrange
     invalid_json = '{"key": "value"'  # Intentionally invalid JSON
@@ -466,15 +479,23 @@ def test_get_docsets_for_project_view_with_filter(db_session: Session) -> None:
     # Arrange
     # Project 1 with docset A
     proj1_data = {
-        "package_name": "PackageA", "package_version": "1.0", "project_name": "Project1",
-        "project_path": "/path/1", "python_executable": "/py/1", "summary": "Summary A"
+        "package_name": "PackageA",
+        "package_version": "1.0",
+        "project_name": "Project1",
+        "project_path": "/path/1",
+        "python_executable": "/py/1",
+        "summary": "Summary A",
     }
     database.ensure_package_entities_exist(**proj1_data)
 
     # Project 2 with docset B
     proj2_data = {
-        "package_name": "PackageB", "package_version": "1.0", "project_name": "Project2",
-        "project_path": "/path/2", "python_executable": "/py/2", "summary": "Summary B"
+        "package_name": "PackageB",
+        "package_version": "1.0",
+        "project_name": "Project2",
+        "project_path": "/path/2",
+        "python_executable": "/py/2",
+        "summary": "Summary B",
     }
     database.ensure_package_entities_exist(**proj2_data)
 
@@ -491,13 +512,19 @@ def test_get_docsets_for_project_view_no_filter(db_session: Session) -> None:
     """Verify get_docsets_for_project_view returns all docsets when no filter is applied."""
     # Arrange
     proj1_data = {
-        "package_name": "PackageA", "package_version": "1.0", "project_name": "Project1",
-        "project_path": "/path/1", "python_executable": "/py/1"
+        "package_name": "PackageA",
+        "package_version": "1.0",
+        "project_name": "Project1",
+        "project_path": "/path/1",
+        "python_executable": "/py/1",
     }
     database.ensure_package_entities_exist(**proj1_data)
     proj2_data = {
-        "package_name": "PackageB", "package_version": "1.0", "project_name": "Project2",
-        "project_path": "/path/2", "python_executable": "/py/2"
+        "package_name": "PackageB",
+        "package_version": "1.0",
+        "project_name": "Project2",
+        "project_path": "/path/2",
+        "python_executable": "/py/2",
     }
     database.ensure_package_entities_exist(**proj2_data)
 
@@ -515,7 +542,9 @@ def test_get_docsets_for_project_view_no_summary_or_urls(db_session: Session) ->
     # Arrange
     # Create a PackageInfo without summary or project_urls
     pkg_info = PackageInfo(package_name="minimal_pkg")
-    docset = Docset(package_name="minimal_pkg", package_version="1.0", package_info=pkg_info)
+    docset = Docset(
+        package_name="minimal_pkg", package_version="1.0", package_info=pkg_info
+    )
     db_session.add_all([pkg_info, docset])
     db_session.commit()
 
@@ -529,6 +558,7 @@ def test_get_docsets_for_project_view_no_summary_or_urls(db_session: Session) ->
     assert "project_urls" not in view_data[0]
     assert view_data[0]["project_name"] is None
 
+
 def test_get_db_path(mocker):
     """Verify that the get_db_path method returns the correct path."""
     # Arrange
@@ -540,6 +570,7 @@ def test_get_db_path(mocker):
 
     # Assert
     assert db_path == "/fake/path/devildex.db"
+
 
 def test_ensure_docset_creates_new(db_session: Session):
     """Verify that _ensure_docset creates a new docset if it doesn't exist."""
@@ -565,7 +596,10 @@ def test_ensure_docset_creates_new(db_session: Session):
     assert docset.index_file_name == "overview.html"
     assert docset.package_info == pkg_info
 
-def test_ensure_registered_project_and_association_associates_existing_project(db_session: Session):
+
+def test_ensure_registered_project_and_association_associates_existing_project(
+    db_session: Session,
+):
     """Verify that an existing project is correctly associated with a docset."""
     # Arrange
     project = RegisteredProject(
@@ -574,7 +608,9 @@ def test_ensure_registered_project_and_association_associates_existing_project(d
         python_executable="/py/exist",
     )
     pkg_info = PackageInfo(package_name="any-pkg")
-    docset = Docset(package_name="any-pkg", package_version="1.0", package_info=pkg_info)
+    docset = Docset(
+        package_name="any-pkg", package_version="1.0", package_info=pkg_info
+    )
     db_session.add_all([project, pkg_info, docset])
     db_session.commit()
 
@@ -583,7 +619,7 @@ def test_ensure_registered_project_and_association_associates_existing_project(d
         session=db_session,
         project_name="ExistingProject",
         project_path=None,  # Not needed for existing project
-        python_executable=None, # Not needed for existing project
+        python_executable=None,  # Not needed for existing project
         docset=docset,
     )
     db_session.commit()
@@ -592,6 +628,7 @@ def test_ensure_registered_project_and_association_associates_existing_project(d
     db_session.refresh(project)
     db_session.refresh(docset)
     assert docset in project.docsets
+
 
 def test_ensure_package_entities_exist_no_project_name(db_session: Session):
     """Verify that no RegisteredProject is created when project_name is None."""

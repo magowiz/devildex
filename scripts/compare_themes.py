@@ -421,7 +421,6 @@ def build_sphinx_devil(ctx: BuildContext, doc_source_relative_path: str) -> Path
         ctx.cloned_repo_path / doc_source_relative_path
     ).resolve()
     original_conf_py = original_doc_source_path / "conf.py"
-    build_result: Path | None = None
     if not original_conf_py.exists():
         logger.error(f"Original conf.py not found at {original_conf_py}")
         return None

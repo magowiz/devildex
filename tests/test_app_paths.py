@@ -37,9 +37,7 @@ class TestAppPaths:  # Changed from unittest.TestCase
     def test_init(self):
         # Re-initialize AppPaths to test the __init__ arguments
         # Assert on the MockPlatformDirs from setUp
-        app_paths_inner = AppPaths(
-            app_name="TestApp", app_author="TestAuthor", version="1.0"
-        )
+        _ = AppPaths(app_name="TestApp", app_author="TestAuthor", version="1.0")
         self.MockPlatformDirs.assert_called_once_with(
             appname="TestApp", appauthor="TestAuthor", version="1.0"
         )

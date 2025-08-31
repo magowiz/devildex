@@ -10,7 +10,7 @@ class PackageDetails:
     """Contains details of a  software package."""
 
     name: str
-    version: str
+    version: str | None
     project_urls: dict[str, str] = field(default_factory=dict)
     initial_source_path: Path | str | None = None
     vcs_url: str | None = None

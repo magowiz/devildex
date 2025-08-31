@@ -26,6 +26,7 @@ class MockStreamResponse:
 
     def iter_content(self, chunk_size: int = 8192) -> collections.abc:
         """Mock iter_content to return our fake content."""
+        _ = chunk_size
         return self._content_iterator
 
     def __enter__(self) -> "MockStreamResponse":
