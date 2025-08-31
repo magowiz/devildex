@@ -23,8 +23,8 @@ RUN apt-get update && \
 
 # Install Poetry and Export Plugin
 RUN apt-get update && \
-    apt-get install -y python3-pip && \
-    pip install poetry && \
+    apt-get install -y python3-pip pipx && \
+    pipx install poetry && \
     poetry self add poetry-plugin-export && \
     rm -rf /var/lib/apt/lists/*
 
