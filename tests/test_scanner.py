@@ -194,6 +194,7 @@ def test_has_docstrings_os_error(mocker: MagicMock, tmp_path: Path) -> None:
     assert has_docstrings(str(tmp_path)) is False
 
 # New test for is_sphinx_project (no conf.py)
+
 def test_is_sphinx_project_no_conf_file(tmp_path: Path) -> None:
     """Verify that is_sphinx_project returns False when no conf.py is found."""
     # Arrange: Create an empty directory
@@ -201,6 +202,7 @@ def test_is_sphinx_project_no_conf_file(tmp_path: Path) -> None:
     assert is_sphinx_project(str(tmp_path)) is False
 
 # New test for is_sphinx_project (read_file_content_robustly returns None)
+
 def test_is_sphinx_project_read_file_content_robustly_returns_none(mocker: MagicMock, tmp_path: Path) -> None:
     """Verify is_sphinx_project handles read_file_content_robustly returning None."""
     # Arrange
@@ -210,6 +212,7 @@ def test_is_sphinx_project_read_file_content_robustly_returns_none(mocker: Magic
     assert is_sphinx_project(str(tmp_path)) is False
 
 # New test for is_sphinx_project (conf.py with no strong indicators)
+
 def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
     """Verify that is_sphinx_project returns False for a conf.py with no strong Sphinx indicators."""
     # Arrange
@@ -219,6 +222,7 @@ def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
     assert is_sphinx_project(str(tmp_path)) is False
 
 # Explicit test for is_mkdocs_project (to ensure it's covered)
+
 def test_is_mkdocs_project_explicit_call(tmp_path: Path) -> None:
     """Explicitly call is_mkdocs_project to ensure coverage."""
     # Arrange
@@ -227,6 +231,7 @@ def test_is_mkdocs_project_explicit_call(tmp_path: Path) -> None:
     assert is_mkdocs_project(tmp_path) is True
 
 # New test for SyntaxError in _check_file_for_docstrings
+
 def test_has_docstrings_handles_syntax_error_in_file(tmp_path: Path) -> None:
     """Verify that has_docstrings handles SyntaxError in a Python file gracefully."""
     # Arrange
@@ -236,6 +241,7 @@ def test_has_docstrings_handles_syntax_error_in_file(tmp_path: Path) -> None:
     assert has_docstrings(str(tmp_path)) is False
 
 # New test for OSError in _check_file_for_docstrings
+
 def test_has_docstrings_handles_os_error_in_file(mocker: MagicMock, tmp_path: Path) -> None:
     """Verify that has_docstrings handles OSError during file reading gracefully."""
     # Arrange

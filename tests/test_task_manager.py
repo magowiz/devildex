@@ -37,7 +37,10 @@ def mock_callbacks(mocker: MockerFixture) -> dict:
 
 @pytest.fixture
 def task_manager(
-    mock_core, mock_owner, mock_callbacks, mocker: MockerFixture
+    mock_core,
+    mock_owner,
+    mock_callbacks,
+    mocker: MockerFixture,
 ) -> GenerationTaskManager:
     """Provide an instance of GenerationTaskManager with mocked dependencies."""
     mock_timer_class = mocker.patch("wx.Timer")
@@ -205,3 +208,86 @@ def test_handle_task_completion_cleans_up_and_notifies(
     on_complete_cb.assert_called_once_with(True, "/path", "test-package", "pkg-123", 1)
     update_buttons_cb.assert_called_once()
     task_manager.animation_timer.Stop.assert_called_once()
+
+
+def test_start_generation_task_missing_package_id(task_manager: GenerationTaskManager) -> None:
+    """Verify that a task is not started if package_id is missing."""
+    # Arrange
+    package_data = {"name": "test-package"}  # Missing 'id'
+
+    # Act
+    result = task_manager.start_generation_task(package_data, 1, 5)
+
+    # Assert
+    assert result is False
+
+
+def test_perform_generation_in_thread_missing_package_id(
+    task_manager: GenerationTaskManager, mocker: MockerFixture
+) -> None:
+    """Verify the thread worker handles missing package_id gracefully."""
+    # Arrange
+    package_data = {"name": "test-package"}  # Missing 'id'
+    mock_call_after = mocker.patch("wx.CallAfter")
+
+    # Act
+    task_manager._perform_generation_in_thread(package_data, 1)
+
+    # Assert
+    mock_call_after.assert_not_called()
+
+
+def test_perform_generation_in_thread_exception_handling(
+    task_manager: GenerationTaskManager, mock_core, mocker: MockerFixture
+) -> None:
+    """Verify that exceptions during generation are caught and handled."""
+    # Arrange
+    package_data = {"id": "pkg-123", "name": "test-package"}
+    mock_call_after = mocker.patch("wx.CallAfter")
+    mock_core.generate_docset.side_effect = Exception("Core exploded")
+
+    # Act
+    task_manager._perform_generation_in_thread(package_data, 1)
+
+    # Assert
+    mock_call_after.assert_called_once()
+    args, _ = mock_call_after.call_args
+    assert args[1] is False  # success
+    assert "Core exploded" in args[2]  # message
+
+
+def test_handle_task_completion_missing_package_id(task_manager: GenerationTaskManager) -> None:
+    """Verify that the completion handler works correctly with a missing package_id."""
+    # Arrange
+    task_manager.active_tasks = {"pkg-123": 1}
+
+    # Act
+    task_manager._handle_task_completion(True, "/path", "test-package", None, 1)
+
+    # Assert
+    assert len(task_manager.active_tasks) == 1  # No task should be removed
+
+
+def test_cleanup(task_manager: GenerationTaskManager) -> None:
+    """Verify that the cleanup method stops the timer."""
+    # Arrange
+    task_manager.animation_timer.IsRunning.return_value = True
+
+    # Act
+    task_manager.cleanup()
+
+    # Assert
+    task_manager.animation_timer.Stop.assert_called_once()
+
+
+def test_on_animation_tick_no_col_idx(task_manager: GenerationTaskManager, mock_callbacks: dict) -> None:
+    """Verify that the animation tick does not update grid if col_idx is -1."""
+    # Arrange
+    task_manager.active_tasks = {"pkg-123": 1}
+    task_manager.owner_for_timer.docset_status_col_grid_idx = -1
+
+    # Act
+    task_manager._on_animation_tick(None)
+
+    # Assert
+    mock_callbacks["update_grid"].assert_not_called()
