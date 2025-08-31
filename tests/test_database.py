@@ -342,3 +342,275 @@ def test_ensure_package_handles_no_project_context(db_session: Session) -> None:
     # Verify no project was created
     project_count = db_session.query(RegisteredProject).count()
     assert project_count == 0
+
+
+def test_package_info_repr(db_session: Session) -> None:
+    """Verify the __repr__ method of the PackageInfo model."""
+    # Arrange
+    pkg_info = database.PackageInfo(package_name="test_package")
+    db_session.add(pkg_info)
+    db_session.commit()
+
+    # Act
+    repr_string = repr(pkg_info)
+
+    # Assert
+    assert repr_string == "<PackageInfo(name='test_package')>"
+
+
+def test_registered_project_repr(db_session: Session) -> None:
+    """Verify the __repr__ method of the RegisteredProject model."""
+    # Arrange
+    project = database.RegisteredProject(
+        project_name="TestProject",
+        project_path="/path/to/project",
+        python_executable="/usr/bin/python",
+    )
+    db_session.add(project)
+    db_session.commit()
+
+    # Act
+    repr_string = repr(project)
+
+    # Assert
+    assert (
+        repr_string
+        == f"<RegisteredProject(id={project.id}, name='TestProject', python_exec='/usr/bin/python')>"
+    )
+
+
+def test_docset_repr(db_session: Session) -> None:
+    """Verify the __repr__ method of the Docset model."""
+    # Arrange
+    # A Docset needs a PackageInfo, so we create one first.
+    pkg_info = database.PackageInfo(package_name="test_package")
+    db_session.add(pkg_info)
+    db_session.commit()
+
+    docset = database.Docset(
+        package_name="test_package", package_version="1.0.0", package_info=pkg_info
+    )
+    db_session.add(docset)
+    db_session.commit()
+
+    # Act
+    repr_string = repr(docset)
+
+    # Assert
+    assert (
+        repr_string
+        == f"<Docset(id={docset.id}, name='test_package', version='1.0.0')>"
+    )
+
+
+def test_database_not_initialized_error_default_message() -> None:
+    """Verify the default message of the DatabaseNotInitializedError."""
+    # Arrange & Act
+    error = database.DatabaseNotInitializedError()
+
+    # Assert
+    assert str(error) == "Database not initialized. Call init_db() first."
+
+
+def test_database_not_initialized_error_custom_message() -> None:
+    """Verify the custom message of the DatabaseNotInitializedError."""
+    # Arrange & Act
+    custom_message = "The database is offline."
+    error = database.DatabaseNotInitializedError(message=custom_message)
+
+    # Assert
+    assert str(error) == custom_message
+
+
+def test_package_info_project_urls_json_decode_error(db_session: Session, caplog) -> None:
+    """Verify that a JSONDecodeError is handled when accessing project_urls."""
+    # Arrange
+    invalid_json = '{"key": "value"'  # Intentionally invalid JSON
+    pkg_info = database.PackageInfo(
+        package_name="invalid_json_pkg", _project_urls_json=invalid_json
+    )
+    db_session.add(pkg_info)
+    db_session.commit()
+
+    # Act
+    with caplog.at_level(logging.ERROR):
+        urls = pkg_info.project_urls
+
+    # Assert
+    assert urls == {}
+    assert "Error nel decoding project_urls JSON" in caplog.text
+    assert "invalid_json_pkg" in caplog.text
+    assert invalid_json in caplog.text
+
+
+def test_get_all_project_names(db_session: Session) -> None:
+    """Verify that get_all_project_names returns a sorted list of project names."""
+    # Arrange
+    project1 = RegisteredProject(
+        project_name="ProjectB",
+        project_path="/path/b",
+        python_executable="/py/b",
+    )
+    project2 = RegisteredProject(
+        project_name="ProjectA",
+        project_path="/path/a",
+        python_executable="/py/a",
+    )
+    db_session.add_all([project1, project2])
+    db_session.commit()
+
+    # Act
+    project_names = database.DatabaseManager.get_all_project_names()
+
+    # Assert
+    assert project_names == ["ProjectA", "ProjectB"]
+
+
+def test_get_docsets_for_project_view_with_filter(db_session: Session) -> None:
+    """Verify get_docsets_for_project_view filters correctly by project name."""
+    # Arrange
+    # Project 1 with docset A
+    proj1_data = {
+        "package_name": "PackageA", "package_version": "1.0", "project_name": "Project1",
+        "project_path": "/path/1", "python_executable": "/py/1", "summary": "Summary A"
+    }
+    database.ensure_package_entities_exist(**proj1_data)
+
+    # Project 2 with docset B
+    proj2_data = {
+        "package_name": "PackageB", "package_version": "1.0", "project_name": "Project2",
+        "project_path": "/path/2", "python_executable": "/py/2", "summary": "Summary B"
+    }
+    database.ensure_package_entities_exist(**proj2_data)
+
+    # Act
+    view_data = database.DatabaseManager.get_docsets_for_project_view("Project1")
+
+    # Assert
+    assert len(view_data) == 1
+    assert view_data[0]["name"] == "PackageA"
+    assert view_data[0]["project_name"] == "Project1"
+
+
+def test_get_docsets_for_project_view_no_filter(db_session: Session) -> None:
+    """Verify get_docsets_for_project_view returns all docsets when no filter is applied."""
+    # Arrange
+    proj1_data = {
+        "package_name": "PackageA", "package_version": "1.0", "project_name": "Project1",
+        "project_path": "/path/1", "python_executable": "/py/1"
+    }
+    database.ensure_package_entities_exist(**proj1_data)
+    proj2_data = {
+        "package_name": "PackageB", "package_version": "1.0", "project_name": "Project2",
+        "project_path": "/path/2", "python_executable": "/py/2"
+    }
+    database.ensure_package_entities_exist(**proj2_data)
+
+    # Act
+    view_data = database.DatabaseManager.get_docsets_for_project_view(None)
+
+    # Assert
+    assert len(view_data) == 2
+    package_names = sorted([d["name"] for d in view_data])
+    assert package_names == ["PackageA", "PackageB"]
+
+
+def test_get_docsets_for_project_view_no_summary_or_urls(db_session: Session) -> None:
+    """Verify the view handles docsets with no summary or project URLs gracefully."""
+    # Arrange
+    # Create a PackageInfo without summary or project_urls
+    pkg_info = PackageInfo(package_name="minimal_pkg")
+    docset = Docset(package_name="minimal_pkg", package_version="1.0", package_info=pkg_info)
+    db_session.add_all([pkg_info, docset])
+    db_session.commit()
+
+    # Act
+    view_data = database.DatabaseManager.get_docsets_for_project_view(None)
+
+    # Assert
+    assert len(view_data) == 1
+    assert view_data[0]["name"] == "minimal_pkg"
+    assert view_data[0]["description"] == "N/A"
+    assert "project_urls" not in view_data[0]
+    assert view_data[0]["project_name"] is None
+
+def test_get_db_path(mocker):
+    """Verify that the get_db_path method returns the correct path."""
+    # Arrange
+    mock_app_paths = mocker.patch("devildex.database.AppPaths").return_value
+    mock_app_paths.database_path = "/fake/path/devildex.db"
+
+    # Act
+    db_path = database.DatabaseManager.get_db_path()
+
+    # Assert
+    assert db_path == "/fake/path/devildex.db"
+
+def test_ensure_docset_creates_new(db_session: Session):
+    """Verify that _ensure_docset creates a new docset if it doesn't exist."""
+    # Arrange
+    pkg_info = PackageInfo(package_name="test-pkg")
+    db_session.add(pkg_info)
+    db_session.commit()
+
+    # Act
+    docset = database._ensure_docset(
+        session=db_session,
+        pkg_info=pkg_info,
+        package_version="1.0.0",
+        initial_docset_status="pending",
+        index_file_name="overview.html",
+    )
+    db_session.commit()
+
+    # Assert
+    assert docset.package_name == "test-pkg"
+    assert docset.package_version == "1.0.0"
+    assert docset.status == "pending"
+    assert docset.index_file_name == "overview.html"
+    assert docset.package_info == pkg_info
+
+def test_ensure_registered_project_and_association_associates_existing_project(db_session: Session):
+    """Verify that an existing project is correctly associated with a docset."""
+    # Arrange
+    project = RegisteredProject(
+        project_name="ExistingProject",
+        project_path="/path/exist",
+        python_executable="/py/exist",
+    )
+    pkg_info = PackageInfo(package_name="any-pkg")
+    docset = Docset(package_name="any-pkg", package_version="1.0", package_info=pkg_info)
+    db_session.add_all([project, pkg_info, docset])
+    db_session.commit()
+
+    # Act
+    database._ensure_registered_project_and_association(
+        session=db_session,
+        project_name="ExistingProject",
+        project_path=None,  # Not needed for existing project
+        python_executable=None, # Not needed for existing project
+        docset=docset,
+    )
+    db_session.commit()
+
+    # Assert
+    db_session.refresh(project)
+    db_session.refresh(docset)
+    assert docset in project.docsets
+
+def test_ensure_package_entities_exist_no_project_name(db_session: Session):
+    """Verify that no RegisteredProject is created when project_name is None."""
+    # Arrange
+    package_data = {
+        "package_name": "no-project-pkg",
+        "package_version": "1.0",
+        "project_name": None,  # Explicitly None
+    }
+
+    # Act
+    _, _, registered_project = database.ensure_package_entities_exist(**package_data)
+
+    # Assert
+    assert registered_project is None
+    project_count = db_session.query(RegisteredProject).count()
+    assert project_count == 0
