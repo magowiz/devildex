@@ -828,6 +828,7 @@ pipeline {
             post { // Correctly indented
                 always {
                     archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
+                    }
                 }
             }
         } // Closes stage
