@@ -60,7 +60,7 @@ pipeline {
 
                     // Run tests with Xvfb
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
-                    sh 'xvfb-run pytest --collect-only -q >> pytest_collect_only.log 2>&1'
+                    sh 'xvfb-run pytest --collect-only >> pytest_collect_only.log 2>&1'
 
                     // Diagnostic outputs
                     sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
