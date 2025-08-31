@@ -91,6 +91,7 @@ pipeline {
                         sh 'mkdir -p /root/.config/pip/'
                     sh 'cp pip.conf /root/.config/pip/pip.conf'
                     sh 'sed -i /^wx/d requirements.txt'
+                    sh 'sed -i /^packaging/d requirements.txt'
                     sh 'python -m pip install -r requirements.txt --timeout 10000'
                     sh 'sed -i /^packaging/d requirements-test.txt'
                     sh 'python -m pip install -r requirements-test.txt --timeout 10000'
