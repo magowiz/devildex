@@ -25,7 +25,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y python3-pip pipx && \
     pipx install poetry && \
-    poetry self add poetry-plugin-export && \
+    /root/.local/bin/poetry self add poetry-plugin-export && \
     rm -rf /var/lib/apt/lists/*
 
 # Set up PATH for poetry
