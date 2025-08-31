@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import shutil
 from unittest.mock import MagicMock
 
 import requests
@@ -15,6 +16,10 @@ from devildex.readthedocs.readthedocs_src import (
     _get_vcs_executable,
     build_sphinx_docs,
     find_doc_source_in_clone,
+    run_clone,
+    _attempt_clone_and_process_result,
+    RtdCloningConfig,
+    _handle_repository_cloning,
 )
 
 
@@ -362,3 +367,332 @@ def test_extract_repo_url_branch_request_exception(mocker, caplog) -> None:
     assert branch == "main"
     assert url is None
     assert "Error durante la richiesta API" in caplog.text
+
+
+def test_run_clone_success(mocker, tmp_path: Path) -> None:
+    """Verify run_clone successfully clones a repository."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
+        return_value=["main"],
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_vcs_executable",
+        return_value="/usr/bin/git",
+    )
+    mock_attempt_single_branch_clone = mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_single_branch_clone",
+        return_value=CloneAttemptStatus.SUCCESS,
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+
+    result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
+
+    assert result == "main"
+    mock_attempt_single_branch_clone.assert_called_once_with(
+        repo_url, "main", clone_dir, bzr, "/usr/bin/git"
+    )
+
+
+def test_run_clone_no_valid_branches(mocker, tmp_path: Path, caplog) -> None:
+    """Verify run_clone handles no valid branches to attempt."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
+        return_value=[],
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_vcs_executable",
+        return_value="/usr/bin/git",
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_single_branch_clone",
+        return_value=CloneAttemptStatus.SUCCESS,
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+
+    with caplog.at_level(logging.ERROR):
+        result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
+
+    assert result is None
+    assert "No valid branches to attempt for cloning" in caplog.text
+
+
+def test_run_clone_vcs_not_found(mocker, tmp_path: Path, caplog) -> None:
+    """Verify run_clone handles VCS executable not found."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
+        return_value=["main"],
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_vcs_executable",
+        return_value=None,
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_single_branch_clone",
+        return_value=CloneAttemptStatus.SUCCESS,
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+
+    with caplog.at_level(logging.ERROR):  # _get_vcs_executable logs error
+        result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
+
+    assert result is None
+    # Error message from _get_vcs_executable should be logged, but not directly asserted here
+    # as it's covered by _get_vcs_executable's own tests.
+
+
+def test_run_clone_failed_critical_prepare_dir(mocker, tmp_path: Path, caplog) -> None:
+    """Verify run_clone handles critical failure during directory preparation."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
+        return_value=["main"],
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_vcs_executable",
+        return_value="/usr/bin/git",
+    )
+    mock_attempt_single_branch_clone = mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_single_branch_clone",
+        return_value=CloneAttemptStatus.FAILED_CRITICAL_PREPARE_DIR,
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+
+    with caplog.at_level(logging.ERROR):
+        result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
+
+    assert result is None
+    assert "Critical error preparing clone directory." in caplog.text
+    mock_attempt_single_branch_clone.assert_called_once()
+
+
+def test_run_clone_failed_critical_vcs_not_found_exec(
+    mocker, tmp_path: Path, caplog
+) -> None:
+    """Verify run_clone handles critical failure when VCS executable not found during execution."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
+        return_value=["main"],
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_vcs_executable",
+        return_value="/usr/bin/git",
+    )
+    mock_attempt_single_branch_clone = mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_single_branch_clone",
+        return_value=CloneAttemptStatus.FAILED_CRITICAL_VCS_NOT_FOUND_EXEC,
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+
+    with caplog.at_level(logging.ERROR):
+        result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
+
+    assert result is None
+    assert "Critical error: VCS command not found during execution." in caplog.text
+    mock_attempt_single_branch_clone.assert_called_once()
+
+
+def test_run_clone_all_attempts_fail(mocker, tmp_path: Path, caplog) -> None:
+    """Verify run_clone returns None when all branch attempts fail."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
+        return_value=["branch1", "branch2"],
+    )
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._get_vcs_executable",
+        return_value="/usr/bin/git",
+    )
+    mock_attempt_single_branch_clone = mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_single_branch_clone",
+        return_value=CloneAttemptStatus.FAILED_RETRYABLE,
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+
+    with caplog.at_level(logging.ERROR):
+        result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
+
+    assert result is None
+    assert "Failed to clone any of the attempted branches" in caplog.text
+    assert mock_attempt_single_branch_clone.call_count == 2
+
+
+def test_attempt_clone_and_process_result_success(mocker, tmp_path: Path) -> None:
+    """Verify _attempt_clone_and_process_result handles successful clone."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src.run_clone", return_value="main"
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+    project_slug = "test_project"
+
+    success, branch = _attempt_clone_and_process_result(
+        repo_url, initial_default_branch, clone_dir, bzr, project_slug
+    )
+
+    assert success is True
+    assert branch == "main"
+
+
+def test_attempt_clone_and_process_result_failure(mocker, tmp_path: Path, caplog) -> None:
+    """Verify _attempt_clone_and_process_result handles failed clone."""
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src.run_clone", return_value=None
+    )
+
+    repo_url = "http://example.com/repo.git"
+    initial_default_branch = "main"
+    clone_dir = tmp_path / "cloned_repo"
+    bzr = False
+    project_slug = "test_project"
+
+    with caplog.at_level(logging.ERROR):
+        success, branch = _attempt_clone_and_process_result(
+            repo_url, initial_default_branch, clone_dir, bzr, project_slug
+        )
+
+    assert success is False
+    assert branch == "main"  # Should still return initial_default_branch on failure
+    assert "Cloning failed for 'test_project'" in caplog.text
+
+
+def test_handle_repository_cloning_no_repo_url(mocker, tmp_path: Path, caplog) -> None:
+    """Verify _handle_repository_cloning handles no repository URL."""
+    
+    cloning_config = RtdCloningConfig(
+        repo_url=None,
+        initial_default_branch="main",
+        base_dir=tmp_path,
+        project_slug="test_project",
+        bzr=False,
+    )
+    
+
+    with caplog.at_level(logging.WARNING):
+        clone_path, effective_branch = _handle_repository_cloning(cloning_config)
+
+    assert clone_path is None
+    assert effective_branch == "main"
+    assert "No repository URL provided for 'test_project'." in caplog.text
+    assert "No repository URL and no existing clone for 'test_project'." in caplog.text
+
+
+def test_handle_repository_cloning_existing_clone(mocker, tmp_path: Path, caplog) -> None:
+    """Verify _handle_repository_cloning uses existing clone if available."""
+    
+    clone_dir = tmp_path / "test_project_repo_main"
+    clone_dir.mkdir()  # Simulate existing clone
+
+    cloning_config = RtdCloningConfig(
+        repo_url="http://example.com/repo.git",
+        initial_default_branch="main",
+        base_dir=tmp_path,
+        project_slug="test_project",
+        bzr=False,
+    )
+
+    with caplog.at_level(logging.INFO):
+        clone_path, effective_branch = _handle_repository_cloning(cloning_config)
+
+    assert clone_path == clone_dir
+    assert effective_branch == "main"
+    assert "Repository for 'test_project' already exists" in caplog.text
+    # Ensure _attempt_clone_and_process_result was NOT called
+    mocker.patch("devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result")
+    assert not mocker.patch("devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result").called
+
+
+def test_handle_repository_cloning_new_clone_success(mocker, tmp_path: Path, caplog) -> None:
+    """Verify _handle_repository_cloning successfully clones a new repository."""
+    
+    clone_dir_path_for_test = tmp_path / "test_project_repo_main"
+    # Ensure it does not exist before the test
+    if clone_dir_path_for_test.exists():
+        shutil.rmtree(clone_dir_path_for_test)
+
+    # Mock _attempt_clone_and_process_result to create the directory
+    def mock_clone_and_process_success(*args, **kwargs):
+        # args: repo_url, branch_to_try, clone_dir_path, bzr, project_slug
+        mock_clone_dir_path = args[2]
+        mock_clone_dir_path.mkdir(parents=True) # Create the directory
+        return True, "dev"
+
+    mock_attempt_clone_and_process_result = mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result",
+        side_effect=mock_clone_and_process_success,
+    )
+
+    cloning_config = RtdCloningConfig(
+        repo_url="http://example.com/repo.git",
+        initial_default_branch="main",
+        base_dir=tmp_path,
+        project_slug="test_project",
+        bzr=False,
+    )
+
+    with caplog.at_level(logging.INFO):
+        clone_path, effective_branch = _handle_repository_cloning(cloning_config)
+
+    assert clone_path == clone_dir_path_for_test
+    assert effective_branch == "dev"
+    assert "Repository for 'test_project' not found locally" in caplog.text
+    assert "Using repository for 'test_project'" in caplog.text
+    mock_attempt_clone_and_process_result.assert_called_once()
+
+
+def test_handle_repository_cloning_new_clone_failure(mocker, tmp_path: Path, caplog) -> None:
+    """Verify _handle_repository_cloning handles failed new clone."""
+    
+    clone_dir_path_for_test = tmp_path / "test_project_repo_main"
+    # Ensure it does not exist before the test
+    if clone_dir_path_for_test.exists():
+        shutil.rmtree(clone_dir_path_for_test)
+
+    # Mock _attempt_clone_and_process_result to not create the directory
+    def mock_clone_and_process_failure(*args, **kwargs):
+        return False, "main"
+
+    mock_attempt_clone_and_process_result = mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result",
+        side_effect=mock_clone_and_process_failure,
+    )
+
+    cloning_config = RtdCloningConfig(
+        repo_url="http://example.com/repo.git",
+        initial_default_branch="main",
+        base_dir=tmp_path,
+        project_slug="test_project",
+        bzr=False,
+    )
+
+    with caplog.at_level(logging.ERROR):
+        clone_path, effective_branch = _handle_repository_cloning(cloning_config)
+
+    mock_attempt_clone_and_process_result.assert_called_once()
+    assert clone_path is None
+    assert effective_branch == "main"
+    assert "Repository directory for 'test_project' not found" in caplog.text
