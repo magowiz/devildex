@@ -150,6 +150,7 @@ def test_parse_requirement_line_invalid_requirement(mock_logger_warning) -> None
     mock_logger_warning.assert_called_once()
     assert "Invalid requirement line" in mock_logger_warning.call_args[0][0]
 
+
 def test_get_explicit_package_names_from_requirements_none_filepath() -> None:
     """Verify get_explicit_package_names_from_requirements handles None filepath."""
     result = get_explicit_package_names_from_requirements(None)
@@ -167,7 +168,10 @@ def test_get_explicit_package_names_from_requirements_os_error(
     result = get_explicit_package_names_from_requirements("/fake/reqs.txt")
     assert result == set()
     mock_logger_exception.assert_called_once()
-    assert "Error reading or decoding requirements file" in mock_logger_exception.call_args[0][0]
+    assert (
+        "Error reading or decoding requirements file"
+        in mock_logger_exception.call_args[0][0]
+    )
 
 
 @patch("devildex.local_data_parse.common_read.logger.exception")
@@ -181,7 +185,10 @@ def test_get_explicit_package_names_from_requirements_unicode_error(
     result = get_explicit_package_names_from_requirements("/fake/reqs.txt")
     assert result == set()
     mock_logger_exception.assert_called_once()
-    assert "Error reading or decoding requirements file" in mock_logger_exception.call_args[0][0]
+    assert (
+        "Error reading or decoding requirements file"
+        in mock_logger_exception.call_args[0][0]
+    )
 
 
 def test_parse_poetry_dependencies_sections_non_dict_poetry_data() -> None:
