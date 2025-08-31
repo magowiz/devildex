@@ -735,7 +735,7 @@ pipeline {
                 }
             }
         }
-                stage('Aggregate Smoke Test Reports') {
+                /*stage('Aggregate Smoke Test Reports') {
             agent any
             steps {
                 script {
@@ -776,6 +776,6 @@ pipeline {
                     }
                 }
             }
-        } // Closes stage
+        } // Closes stage */
     } // Closes stages
 } // Closes pipeline
