@@ -51,37 +51,23 @@ pipeline {
             }
             steps {
                 script {
-                    // Create and activate an isolated virtual environment
-                    sh 'python3.13 -m venv --clear venv_isolated'
-                    sh 'source venv_isolated/bin/activate'
-                    sh 'venv_isolated/bin/pip install --upgrade pip'
-
-                    // Set PATH to prioritize venv\'s binaries for subsequent commands
-                    sh 'export PATH="venv_isolated/bin:$PATH"'
-
-                    sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                    sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
-                    sh 'mkdir -p /root/.config/pip/'
+                    withPythonEnv('python3.13') {
+                        sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                        sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
+                        sh 'mkdir -p /usr/local/bin/'
+                        sh 'ln -s $(which python3.13) /usr/local/bin/python3.13'
+                        sh 'mkdir -p /root/.config/pip/'
                     sh 'cp pip.conf /root/.config/pip/pip.conf'
-
-                    // Keep sed commands for now to see if they are still needed or if packaging/wx are pulled in.
                     sh 'sed -i /^wx/d requirements.txt'
                     sh 'sed -i /^packaging/d requirements.txt'
                     sh 'python -m pip install -r requirements.txt --timeout 10000'
                     sh 'sed -i /^packaging/d requirements-test.txt'
                     sh 'python -m pip install -r requirements-test.txt --timeout 10000'
-                    // The uninstall packaging might become unnecessary and should be removed if packaging is not installed by pip.
                     sh 'python -m pip uninstall -y packaging || true'
-
-                    // Install devildex itself in editable mode into the venv
-                    sh 'pip install -e .'
-                    sh 'pip uninstall -y wxpython || true'
-                    sh 'echo "--- libjpeg.so.8 check ---" >> pytest_collect_only.log'
-                    sh 'find /lib /usr/lib /usr/local/lib /lib64 /usr/lib64 /usr/local/lib64 -name "libjpeg.so*" 2>/dev/null >> pytest_collect_only.log || true'
-                    sh 'echo "--- dnf list installed libjpeg ---" >> pytest_collect_only.log'
-
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
                     sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
+
+
                     sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
                     sh 'python --version >> pytest_collect_only.log 2>&1'
                     sh 'echo "\n--- Pip Version ---" >> pytest_collect_only.log'
@@ -92,6 +78,7 @@ pipeline {
                     sh 'pip freeze >> pytest_collect_only.log 2>&1'
                     sh 'echo "\n--- Pytest.ini Content ---" >> pytest_collect_only.log'
                     sh 'cat pytest.ini >> pytest_collect_only.log 2>&1 || echo "pytest.ini not found" >> pytest_collect_only.log'
+                    }
                 }
             }
             post {
