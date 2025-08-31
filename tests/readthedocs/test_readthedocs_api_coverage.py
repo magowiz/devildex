@@ -1,3 +1,5 @@
+"""test readthedocs api."""
+
 from unittest.mock import patch
 
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust

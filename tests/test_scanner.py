@@ -191,13 +191,8 @@ def test_has_docstrings_returns_false_for_no_docstrings(tmp_path: Path) -> None:
 
 def test_has_docstrings_handles_syntax_error_gracefully(tmp_path: Path) -> None:
     """Verify that a file with a SyntaxError does not crash the scanner."""
-    # Arrange: Create a file with a syntax error
     (tmp_path / "broken_file.py").write_text("def my_func(:\n    pass")
-    # Arrange: Create another valid file without a docstring to ensure the result is False
     (tmp_path / "valid_file.py").write_text("a = 1")
-
-    # Act & Assert: The scanner should not raise an exception and should
-    # return False because it finds no docstrings in any valid files.
     assert has_docstrings(str(tmp_path)) is False
 
 
@@ -247,9 +242,6 @@ def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
     (tmp_path / "conf.py").write_text(conf_content)
     # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is False
-
-
-# Explicit test for is_mkdocs_project (to ensure it's covered)
 
 
 def test_is_mkdocs_project_explicit_call(tmp_path: Path) -> None:

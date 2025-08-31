@@ -124,7 +124,7 @@ def test_package_info_project_urls_setter_none_or_empty(db_session: Session) -> 
 
 
 def test_database_manager_init_db_called_twice(caplog, mocker) -> None:
-    """Verify that calling init_db twice logs a debug message and doesn't re-initialize."""
+    """Verify calling init_db twice logs a debug message and doesn't re-initialize."""
     # Arrange
     database.DatabaseManager._engine = None  # Ensure clean state
     database.DatabaseManager._session_local = None
@@ -185,7 +185,7 @@ def test_get_all_registered_projects_details_sqlalchemy_error(mocker, caplog) ->
 
 
 def test_get_project_details_by_name_not_found(db_session: Session, caplog) -> None:
-    """Verify get_project_details_by_name returns None and logs warning for non-existent project."""
+    """Verify get_project_details_by_name returns None, logs warning for no proj."""
     # Arrange
     non_existent_project = "NonExistentProject"
 
@@ -267,7 +267,7 @@ def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
 def test_ensure_registered_project_and_association_value_error(
     db_session: Session, caplog
 ) -> None:
-    """Verify _ensure_registered_project_and_association raises ValueError for missing project details."""
+    """Check _ensure_registered_project_and_association raises ValueError for no proj details."""
     # Arrange
     pkg_info = database.PackageInfo(package_name="test_pkg")
     docset = database.Docset(
@@ -287,8 +287,8 @@ def test_ensure_registered_project_and_association_value_error(
         )
     assert "project_path and python_executable must be provided." in str(excinfo.value)
     assert (
-        "To create a new RegisteredProject 'NewProject', project_path and python_executable must be provided."
-        in caplog.text
+        "To create a new RegisteredProject 'NewProject', project_path and "
+        "python_executable must be provided." in caplog.text
     )
 
 
@@ -381,8 +381,8 @@ def test_registered_project_repr(db_session: Session) -> None:
 
     # Assert
     assert (
-        repr_string
-        == f"<RegisteredProject(id={project.id}, name='TestProject', python_exec='/usr/bin/python')>"
+        repr_string == f"<RegisteredProject(id={project.id}, "
+        "name='TestProject', python_exec='/usr/bin/python')>"
     )
 
 
@@ -509,8 +509,7 @@ def test_get_docsets_for_project_view_with_filter(db_session: Session) -> None:
 
 
 def test_get_docsets_for_project_view_no_filter(db_session: Session) -> None:
-    """Verify get_docsets_for_project_view returns all docsets when no filter is applied."""
-    # Arrange
+    """Verify get_docsets_for_project_view returns all docsets if no filter applied."""
     proj1_data = {
         "package_name": "PackageA",
         "package_version": "1.0",

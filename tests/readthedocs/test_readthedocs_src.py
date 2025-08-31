@@ -1,12 +1,16 @@
+"""test readthedocs_src."""
+
 import logging
-from pathlib import Path
 import shutil
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import requests
 
 from devildex.readthedocs.readthedocs_src import (
     CloneAttemptStatus,
+    RtdCloningConfig,
+    _attempt_clone_and_process_result,
     _attempt_single_branch_clone,
     _cleanup,
     _extract_repo_url_branch,
@@ -14,12 +18,10 @@ from devildex.readthedocs.readthedocs_src import (
     _find_sphinx_doc_requirements_file,
     _get_unique_branches_to_attempt,
     _get_vcs_executable,
+    _handle_repository_cloning,
     build_sphinx_docs,
     find_doc_source_in_clone,
     run_clone,
-    _attempt_clone_and_process_result,
-    RtdCloningConfig,
-    _handle_repository_cloning,
 )
 
 
@@ -121,7 +123,7 @@ def test_attempt_single_branch_clone_failed_critical_prepare_dir(
 def test_attempt_single_branch_clone_failed_critical_vcs_not_found_exec(
     mocker, tmp_path: Path, caplog
 ) -> None:
-    """Verify failed clone attempt due to VCS executable not found during subprocess.run."""
+    """Verify failed clone attempt due to VCS executable not found."""
     mocker.patch("subprocess.run", side_effect=FileNotFoundError("git not found"))
     clone_dir = tmp_path / "repo"
 
@@ -448,8 +450,6 @@ def test_run_clone_vcs_not_found(mocker, tmp_path: Path, caplog) -> None:
         result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
 
     assert result is None
-    # Error message from _get_vcs_executable should be logged, but not directly asserted here
-    # as it's covered by _get_vcs_executable's own tests.
 
 
 def test_run_clone_failed_critical_prepare_dir(mocker, tmp_path: Path, caplog) -> None:
@@ -540,9 +540,7 @@ def test_run_clone_all_attempts_fail(mocker, tmp_path: Path, caplog) -> None:
 
 def test_attempt_clone_and_process_result_success(mocker, tmp_path: Path) -> None:
     """Verify _attempt_clone_and_process_result handles successful clone."""
-    mocker.patch(
-        "devildex.readthedocs.readthedocs_src.run_clone", return_value="main"
-    )
+    mocker.patch("devildex.readthedocs.readthedocs_src.run_clone", return_value="main")
 
     repo_url = "http://example.com/repo.git"
     initial_default_branch = "main"
@@ -558,11 +556,11 @@ def test_attempt_clone_and_process_result_success(mocker, tmp_path: Path) -> Non
     assert branch == "main"
 
 
-def test_attempt_clone_and_process_result_failure(mocker, tmp_path: Path, caplog) -> None:
+def test_attempt_clone_and_process_result_failure(
+    mocker, tmp_path: Path, caplog
+) -> None:
     """Verify _attempt_clone_and_process_result handles failed clone."""
-    mocker.patch(
-        "devildex.readthedocs.readthedocs_src.run_clone", return_value=None
-    )
+    mocker.patch("devildex.readthedocs.readthedocs_src.run_clone", return_value=None)
 
     repo_url = "http://example.com/repo.git"
     initial_default_branch = "main"
@@ -582,7 +580,6 @@ def test_attempt_clone_and_process_result_failure(mocker, tmp_path: Path, caplog
 
 def test_handle_repository_cloning_no_repo_url(mocker, tmp_path: Path, caplog) -> None:
     """Verify _handle_repository_cloning handles no repository URL."""
-    
     cloning_config = RtdCloningConfig(
         repo_url=None,
         initial_default_branch="main",
@@ -590,7 +587,6 @@ def test_handle_repository_cloning_no_repo_url(mocker, tmp_path: Path, caplog) -
         project_slug="test_project",
         bzr=False,
     )
-    
 
     with caplog.at_level(logging.WARNING):
         clone_path, effective_branch = _handle_repository_cloning(cloning_config)
@@ -601,11 +597,12 @@ def test_handle_repository_cloning_no_repo_url(mocker, tmp_path: Path, caplog) -
     assert "No repository URL and no existing clone for 'test_project'." in caplog.text
 
 
-def test_handle_repository_cloning_existing_clone(mocker, tmp_path: Path, caplog) -> None:
+def test_handle_repository_cloning_existing_clone(
+    mocker, tmp_path: Path, caplog
+) -> None:
     """Verify _handle_repository_cloning uses existing clone if available."""
-    
     clone_dir = tmp_path / "test_project_repo_main"
-    clone_dir.mkdir()  # Simulate existing clone
+    clone_dir.mkdir()
 
     cloning_config = RtdCloningConfig(
         repo_url="http://example.com/repo.git",
@@ -622,23 +619,26 @@ def test_handle_repository_cloning_existing_clone(mocker, tmp_path: Path, caplog
     assert effective_branch == "main"
     assert "Repository for 'test_project' already exists" in caplog.text
     # Ensure _attempt_clone_and_process_result was NOT called
-    mocker.patch("devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result")
-    assert not mocker.patch("devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result").called
+    mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result"
+    )
+    assert not mocker.patch(
+        "devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result"
+    ).called
 
 
-def test_handle_repository_cloning_new_clone_success(mocker, tmp_path: Path, caplog) -> None:
+def test_handle_repository_cloning_new_clone_success(
+    mocker, tmp_path: Path, caplog
+) -> None:
     """Verify _handle_repository_cloning successfully clones a new repository."""
-    
     clone_dir_path_for_test = tmp_path / "test_project_repo_main"
-    # Ensure it does not exist before the test
     if clone_dir_path_for_test.exists():
         shutil.rmtree(clone_dir_path_for_test)
 
-    # Mock _attempt_clone_and_process_result to create the directory
     def mock_clone_and_process_success(*args, **kwargs):
         # args: repo_url, branch_to_try, clone_dir_path, bzr, project_slug
         mock_clone_dir_path = args[2]
-        mock_clone_dir_path.mkdir(parents=True) # Create the directory
+        mock_clone_dir_path.mkdir(parents=True)  # Create the directory
         return True, "dev"
 
     mock_attempt_clone_and_process_result = mocker.patch(
@@ -664,15 +664,15 @@ def test_handle_repository_cloning_new_clone_success(mocker, tmp_path: Path, cap
     mock_attempt_clone_and_process_result.assert_called_once()
 
 
-def test_handle_repository_cloning_new_clone_failure(mocker, tmp_path: Path, caplog) -> None:
+def test_handle_repository_cloning_new_clone_failure(
+    mocker, tmp_path: Path, caplog
+) -> None:
     """Verify _handle_repository_cloning handles failed new clone."""
-    
     clone_dir_path_for_test = tmp_path / "test_project_repo_main"
     # Ensure it does not exist before the test
     if clone_dir_path_for_test.exists():
         shutil.rmtree(clone_dir_path_for_test)
 
-    # Mock _attempt_clone_and_process_result to not create the directory
     def mock_clone_and_process_failure(*args, **kwargs):
         return False, "main"
 

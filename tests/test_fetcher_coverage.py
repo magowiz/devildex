@@ -1,4 +1,6 @@
-import json  # Added json import
+"""test fetcher module."""
+
+import json
 import pathlib
 import subprocess
 import tarfile
@@ -23,7 +25,6 @@ class TestPackageSourceFetcherCoverage:
     def setup_and_teardown_test_env(self, tmp_path):
         self.BASE_SAVE_PATH = tmp_path / "devildex_test_output"
         self.BASE_SAVE_PATH.mkdir(parents=True, exist_ok=True)
-        # tmp_path fixture handles cleanup automatically, so no need for shutil.rmtree here
 
     # Test cases for _is_path_safe (line 161)
     @patch("src.devildex.fetcher.Path.resolve")

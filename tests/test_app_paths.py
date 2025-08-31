@@ -1,3 +1,5 @@
+"""test app path."""
+
 from unittest.mock import patch
 
 import pytest

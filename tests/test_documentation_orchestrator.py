@@ -1,3 +1,5 @@
+"""test documentation_orchestrator."""
+
 from unittest.mock import patch
 
 import pytest
@@ -64,7 +66,6 @@ def test_fetch_repo_initial_path_does_not_exist(
     # Set initial_source_path to a non-existent path
     mock_package_details.initial_source_path = str(tmp_path / "non_existent_path")
 
-    # Create the actual fetched directory
     actual_fetched_path = tmp_path / "fetched_source"
     actual_fetched_path.mkdir()
 

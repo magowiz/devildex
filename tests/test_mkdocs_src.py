@@ -406,7 +406,7 @@ def test_get_plugin_packages_to_install_none_configs():
 
 
 def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path):
-    """Integration test: Should successfully execute mkdocs build within a venv without mocking core components."""
+    """Should successfully execute mkdocs build within a venv."""
     # Use a fixed output directory for easier debugging
     fixed_output_dir = tmp_path / "mkdocs_test_output"
     fixed_output_dir.mkdir(parents=True, exist_ok=True)
@@ -454,7 +454,7 @@ def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path):
 
 
 def test_process_mkdocs_source_and_build_integration_success(tmp_path: Path):
-    """Integration test: Should successfully process and build a dummy mkdocs project."""
+    """Should successfully process and build a dummy mkdocs project."""
     source_project_path = tmp_path / "source_project"
     source_project_path.mkdir()
     docs_dir = source_project_path / "docs"

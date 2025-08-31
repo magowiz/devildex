@@ -25,9 +25,7 @@ class TestMainAppUI(unittest.TestCase):
             self.mock_gen_task_manager_cls.return_value
         )
 
-        # We need a running DevilDexCore for the app to initialize correctly
         self.core = DevilDexCore(database_url="sqlite:///:memory:")
-        # Initialize the application. The OnInit method will be called, creating the frame.
         self.app = DevilDexApp(core=self.core)
 
         # Process pending events to ensure the UI is fully constructed
@@ -74,7 +72,6 @@ class TestMainAppUI(unittest.TestCase):
         actions_panel = self.app.actions_panel
         self.assertIsNotNone(actions_panel, "Actions panel should exist")
 
-        # 1. Initial state: Assert buttons are disabled
         self.assertFalse(
             actions_panel.generate_action_button.IsEnabled(),
             "Generate button should be disabled initially",
@@ -92,12 +89,9 @@ class TestMainAppUI(unittest.TestCase):
             "Delete button should be disabled initially",
         )
 
-        # 2. Action: Simulate selecting the first row (package 'black', which is not downloaded yet)
         grid_panel = self.app.grid_panel
         self.assertIsNotNone(grid_panel, "Grid panel should exist")
 
-        # We simulate the event by calling the handler directly. This is more robust than simulating a UI click.
-        # We need to create a mock event object that has a GetRow() method.
         class MockGridEvent(wx.grid.GridEvent):
             def __init__(self, row):
                 super().__init__()
@@ -109,12 +103,8 @@ class TestMainAppUI(unittest.TestCase):
         mock_event = MockGridEvent(row=0)
         grid_panel._on_grid_cell_click(mock_event)
 
-        # Process the event queue for the UI to update
         wx.Yield()
 
-        # 3. Final state: Assert buttons have updated correctly
-        # For the default data, 'black' is NOT_AVAILABLE_BTN_LABEL.
-        # So, 'Generate' should be enabled, but 'Open', 'Regenerate', and 'Delete' should not.
         self.assertTrue(
             actions_panel.generate_action_button.IsEnabled(),
             "Generate button should be enabled after selection",
