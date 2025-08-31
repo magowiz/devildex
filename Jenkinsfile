@@ -68,6 +68,7 @@ pipeline {
         stage('Diagnose Test Collection') {
             agent {
                 dockerfile {
+                    label 'amd64'
                     reuseNode true
                     args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
                     filename 'Dockerfile'
@@ -157,6 +158,7 @@ pipeline {
                             args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
                             filename 'Dockerfile'
                             dir 'ci_dockerfiles/pytest_x11'
+                            label 'amd64'
                         }
                     }
                     environment {
