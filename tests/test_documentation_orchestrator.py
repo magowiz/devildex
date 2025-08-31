@@ -1,11 +1,10 @@
-import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from devildex.orchestrator.documentation_orchestrator import Orchestrator
+import pytest
+
 from devildex.models import PackageDetails
-from devildex.info import PROJECT_ROOT
-from devildex.fetcher import PackageSourceFetcher
+from devildex.orchestrator.documentation_orchestrator import Orchestrator
+
 
 @pytest.fixture
 def mock_package_details():
@@ -120,7 +119,7 @@ def test_fetch_repo_no_initial_path_fetch_fails(mock_package_details, mock_orche
 
 def test_fetch_repo_fetch_raises_os_error(mock_package_details, mock_orchestrator, mocker):
     mock_package_details.initial_source_path = None
-    
+
     # Mock PackageSourceFetcher.fetch to raise OSError
     mock_fetcher_instance = mocker.patch('devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher')
     mock_fetcher_instance.return_value.fetch.side_effect = OSError("Disk full")
@@ -132,7 +131,7 @@ def test_fetch_repo_fetch_raises_os_error(mock_package_details, mock_orchestrato
 
 def test_fetch_repo_fetch_raises_runtime_error(mock_package_details, mock_orchestrator, mocker):
     mock_package_details.initial_source_path = None
-    
+
     # Mock PackageSourceFetcher.fetch to raise RuntimeError
     mock_fetcher_instance = mocker.patch('devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher')
     mock_fetcher_instance.return_value.fetch.side_effect = RuntimeError("Network error")
@@ -147,7 +146,7 @@ def test_fetch_repo_fetch_raises_runtime_error(mock_package_details, mock_orches
 def test_internal_fetch_repo_fetch_success(mock_fetcher_class, mock_orchestrator, tmp_path):
     mock_fetcher_instance = mock_fetcher_class.return_value
     mock_fetcher_instance.fetch.return_value = (True, False, str(tmp_path / "fetched_source"))
-    
+
     fetcher_storage_base = tmp_path / "_fetched_project_sources"
     package_info_for_fetcher = {"name": "test_package", "version": "1.0.0", "project_urls": {}}
 

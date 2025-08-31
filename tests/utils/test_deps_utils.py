@@ -1,12 +1,15 @@
 """Tests for the deps_utils module."""
 
-from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
 import logging
-import os
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from devildex.utils.deps_utils import filter_requirements_lines, _process_requirements_obj
 from pip_requirements_parser import RequirementsFile
+
+from devildex.utils.deps_utils import (
+    _process_requirements_obj,
+    filter_requirements_lines,
+)
 
 
 @patch("devildex.utils.deps_utils.RequirementsFile", None)
@@ -82,7 +85,7 @@ def test_filter_requirements_lines_success(mock_exists, mock_from_file, mock_log
 
     assert result == ["requests"]
     mock_from_file.assert_called_once_with("/fake/path/reqs.txt")
-    
+
     # Assert both debug calls
     assert mock_logger_debug.call_count == 2
     mock_logger_debug.assert_any_call("Attempt to parse and filter: %s", Path("/fake/path/reqs.txt"))

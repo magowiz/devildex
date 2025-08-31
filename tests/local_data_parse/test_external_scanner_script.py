@@ -1,9 +1,7 @@
 """Tests for the _external_scanner_script module."""
 
 import json
-from unittest.mock import MagicMock, patch, mock_open
-import sys
-import os
+from unittest.mock import MagicMock, mock_open, patch
 
 # The script starts with an underscore, so we import it this way
 from devildex.local_data_parse import _external_scanner_script as scanner_script
@@ -158,7 +156,7 @@ def test_main_project_url_attribute_error(mock_distributions, mock_write_json, m
         mock_dist.version = "1.0.0"
         mock_dist.metadata = MagicMock()
         mock_dist.metadata.get.return_value = ""
-        
+
         # Simulate an AttributeError during iteration of Project-URL entries
         mock_project_urls = MagicMock()
         mock_project_urls.__iter__.side_effect = AttributeError("Mocked AttributeError")

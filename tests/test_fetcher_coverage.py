@@ -1,13 +1,14 @@
-import pytest
+import json  # Added json import
 import pathlib
-import zipfile
-import tarfile
-import shutil
-import requests
 import subprocess
-import json # Added json import
-from unittest.mock import patch, MagicMock
-from src.devildex.fetcher import PackageSourceFetcher, MissingPackageInfoError
+import tarfile
+import zipfile
+from unittest.mock import MagicMock, patch
+
+import pytest
+import requests
+
+from src.devildex.fetcher import PackageSourceFetcher
 
 # Dummy paths for testing
 DUMMY_PACKAGE_INFO = {"name": "test_package", "version": "1.0.0"}
@@ -21,7 +22,6 @@ class TestPackageSourceFetcherCoverage:
     def setup_and_teardown_test_env(self, tmp_path):
         self.BASE_SAVE_PATH = tmp_path / "devildex_test_output"
         self.BASE_SAVE_PATH.mkdir(parents=True, exist_ok=True)
-        yield
         # tmp_path fixture handles cleanup automatically, so no need for shutil.rmtree here
 
     # Test cases for _is_path_safe (line 161)
@@ -400,7 +400,7 @@ class TestPackageSourceFetcherCoverage:
     # Test for _pprint_ (line 680) - this is a helper, not part of the class
     @patch('src.devildex.fetcher.logger')
     def test_pprint_function_logs_json(self, mock_logger):
-        from src.devildex.fetcher import _pprint_ # Import directly for testing
+        from src.devildex.fetcher import _pprint_  # Import directly for testing
         data = {"key": "value", "num": 123}
         _pprint_(data)
         mock_logger.info.assert_called_once()

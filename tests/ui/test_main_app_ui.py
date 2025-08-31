@@ -1,8 +1,8 @@
 import unittest
+from unittest.mock import patch
+
 import wx
 import wx.grid
-from unittest.mock import patch, MagicMock
-import pytest
 
 # It's crucial to have a wx.App instance for any UI testing.
 # We'll create one for the whole test suite if it doesn't exist.
@@ -12,6 +12,7 @@ if app is None:
 
 from devildex.core import DevilDexCore
 from devildex.main import DevilDexApp
+
 
 class TestMainAppUI(unittest.TestCase):
     """Test the main application UI using UIActionSimulator."""
@@ -40,7 +41,7 @@ class TestMainAppUI(unittest.TestCase):
         # wx.CallAfter ensures that the frame is destroyed after the current event handler has completed.
         if self.frame:
             wx.CallAfter(self.frame.Destroy)
-        
+
         # Process events to ensure cleanup is done
         wx.Yield()
 
@@ -77,7 +78,7 @@ class TestMainAppUI(unittest.TestCase):
         # 2. Action: Simulate selecting the first row (package 'black', which is not downloaded yet)
         grid_panel = self.app.grid_panel
         self.assertIsNotNone(grid_panel, "Grid panel should exist")
-        
+
         # We simulate the event by calling the handler directly. This is more robust than simulating a UI click.
         # We need to create a mock event object that has a GetRow() method.
         class MockGridEvent(wx.grid.GridEvent):

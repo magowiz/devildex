@@ -1,27 +1,24 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 import yaml
-import shutil # Added for cleanup in integration test
 
 from devildex.mkdocs.mkdocs_src import (
-    _find_mkdocs_config_file,
-    _parse_mkdocs_config,
-    _preprocess_mkdocs_config,
-    _extract_callouts_from_markdown_extensions,
-    _is_plugin_callouts,
-    _add_callouts_to_plugins_if_missing,
-    _get_theme_packages_to_install,
-    _prepare_mkdocs_output_directory,
-    _extract_names_from_config_list_or_dict,
-    _get_plugin_packages_to_install,
-    _gather_mkdocs_required_packages,
-    _execute_mkdocs_build_in_venv,
-    process_mkdocs_source_and_build, # Added for the new test
     MkDocsBuildContext,
+    _add_callouts_to_plugins_if_missing,
+    _execute_mkdocs_build_in_venv,
+    _extract_callouts_from_markdown_extensions,
+    _extract_names_from_config_list_or_dict,
+    _find_mkdocs_config_file,
+    _get_plugin_packages_to_install,
+    _get_theme_packages_to_install,
+    _is_plugin_callouts,
+    _parse_mkdocs_config,
+    _prepare_mkdocs_output_directory,
+    _preprocess_mkdocs_config,
+    process_mkdocs_source_and_build,  # Added for the new test
 )
-from devildex.utils import venv_cm # Import the module for patching
+
 
 # Helper function to create a dummy mkdocs.yml
 def create_mkdocs_yml(path: Path, content: dict = None):

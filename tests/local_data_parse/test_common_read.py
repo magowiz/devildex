@@ -1,18 +1,15 @@
 """Tests for the common_read module."""
 
 from pathlib import Path
-from unittest.mock import patch, mock_open
-import logging
-import os
+from unittest.mock import mock_open, patch
 
 from devildex.local_data_parse.common_read import (
-    get_explicit_dependencies_from_project_config,
     _parse_pep621_dependencies,
-    _parse_requirement_line,
-    get_explicit_package_names_from_requirements,
     _parse_poetry_dependencies_sections,
+    _parse_requirement_line,
+    get_explicit_dependencies_from_project_config,
+    get_explicit_package_names_from_requirements,
 )
-from packaging.requirements import InvalidRequirement
 
 
 def test_reads_from_pep621_dependencies(tmp_path: Path) -> None:
