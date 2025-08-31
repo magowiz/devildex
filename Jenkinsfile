@@ -8,12 +8,8 @@ pipeline {
     }
     environment {
         VERSION = '0.1'
-        PIP_INDEX_URL = credentials('INTERNAL_PIP_INDEX_URL')
-        PIP_TRUSTED_HOST = credentials('HEPHAESTUS_LOCAL_ADDRESS')
         PROJECT_NAME = 'devildex'
-        IP_TRUSTED_HOST = credentials('HEPHAESTUS_IP')
-        IP_INDEX_URL = credentials('INTERNAL_PIP_INDEX_URL_IP')
-        LINT_TAG_REGEX = '.*\\[lint\\].*'
+        LINT_TAG_REGEX = '.*\[lint\].*'
     }
     stages {
         stage('Checkout') {
@@ -35,34 +31,34 @@ pipeline {
         stage('generate documentation') {
             when {
                 not {
-                            changelog "$LINT_TAG_REGEX"
+                    changelog "$LINT_TAG_REGEX"
                 }
             }
             environment {
-                        JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
-                        JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
-                        JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
+                JENKINS_USER_NAME = sh(script: 'id -un', returnStdout: true)
+                JENKINS_USER_ID = sh(script: 'id -u', returnStdout: true)
+                JENKINS_GROUP_ID = sh(script: 'id -g', returnStdout: true)
             }
             agent {
-                    dockerfile {
-                            label 'general'
-                            reuseNode true
-                            args '-u root -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group \
-                                  -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket'
-                            filename 'Dockerfile'
-                            dir 'ci_dockerfiles/generate_doc'
-                    }
+                dockerfile {
+                    label 'general'
+                    reuseNode true
+                    args '-u root -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group \
+                          -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket'
+                    filename 'Dockerfile'
+                    dir 'ci_dockerfiles/generate_doc'
+                }
             }
             steps {
-                        pythonGenerateDocsSphinx(packager: 'poetry')
+                pythonGenerateDocsSphinx(packager: 'poetry')
             }
             post {
-                        always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'build/html', reportFiles: 'index.html',
-                                         reportName: 'Documentation', reportTitles: '',
-                                         useWrapperFileDirectly: true])
-                        }
+                always {
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false,
+                                 reportDir: 'build/html', reportFiles: 'index.html',
+                                 reportName: 'Documentation', reportTitles: '',
+                                 useWrapperFileDirectly: true])
+                }
             }
         }
         stage('megalinter') {
@@ -76,13 +72,11 @@ pipeline {
                 }
             }
             environment {
-                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                 DISABLE_ERRORS = true
             }
             steps {
-                    sh 'rm -fr megalinter-reports'
-                    sh '/entrypoint.sh'
+                sh 'rm -fr megalinter-reports'
+                sh '/entrypoint.sh'
             }
             post {
                 always {
@@ -97,76 +91,76 @@ pipeline {
             }
         }
         stage('test code') {
-                    when {
-                        not {
-                            changelog "$LINT_TAG_REGEX"
-                        }
-                    }
-                    agent {
-                        dockerfile {
-                            reuseNode true
-                            args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
-                            filename 'Dockerfile'
-                            dir 'ci_dockerfiles/pytest_ubuntu_x11'
-                            label 'amd64'
-                        }
-                    }
-                    environment {
-                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                        LP_USER_ID = credentials('launchpad_id_conf_file')
-                        PATH = "/root/.local/bin:${env.PATH}"
-                        PIP_FIND_LINKS = 'https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/'
-                    }
-                    options {
-                        throttle(['pytest_telenium'])
-                        retry(2)
-                    }
-                    steps {
-                        sh 'echo "Variable SHELL: $SHELL"'
-                        sh 'mkdir -p ~/.bazaar/'
-                        withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
-                        {
-                            sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
-                        }
-                        sh 'echo $PATH'
-                        // Install dependencies and project (matching Diagnose Test Collection stage)
+            when {
+                not {
+                    changelog "$LINT_TAG_REGEX"
+                }
+            }
+            agent {
+                dockerfile {
+                    reuseNode true
+                    args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
+                    filename 'Dockerfile'
+                    dir 'ci_dockerfiles/pytest_ubuntu_x11'
+                    label 'amd64'
+                }
+            }
+            environment {
+                LP_USER_ID = credentials('launchpad_id_conf_file')
+                PATH = "/root/.local/bin:${env.PATH}"
+                PIP_FIND_LINKS = 'https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/'
+            }
+            options {
+                throttle(['pytest_telenium'])
+                retry(2)
+            }
+            steps {
+                sh 'echo "Variable SHELL: $SHELL"'
+                sh 'mkdir -p ~/.bazaar/'
+                withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')]) {
+                    sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
+                }
+                sh 'echo $PATH'
+                withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                 string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                    withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
                         sh 'poetry export --with test -f requirements.txt --output requirements.txt --without-hashes'
                         sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
-                        sh 'pip install -r requirements.txt'
-                        sh 'pip install --no-deps -e .'
+                        sh 'pip install -r requirements.txt --index-url $IP_INDEX_URL --trusted-host $IP_TRUSTED_HOST'
+                        sh 'pip install --no-deps -e . --index-url $IP_INDEX_URL --trusted-host $IP_TRUSTED_HOST'
+                    }
+                }
 
-                        // Call pyTestXvfb
-                        pyTestXvfb(buildType: 'pip', pythonInterpreter: 'python', skipMarkers: '')
-                        script {
-                            def exists = fileExists 'core'
-                            if (exists) {
-                                echo 'core found'
-                                sh 'pip install pystack'
-                                sh 'pystack core core python'
-                                sh 'mv core oldcore'
-                                sh 'pip list | grep pytest'
-                            }
-                            stash includes: 'coverage_report_xml/coverage.xml',
-                                  name: 'coverageReportXML', allowEmpty: true
-                        }
+                pyTestXvfb(buildType: 'pip', pythonInterpreter: 'python', skipMarkers: '')
+                script {
+                    def exists = fileExists 'core'
+                    if (exists) {
+                        echo 'core found'
+                        sh 'pip install pystack'
+                        sh 'pystack core core python'
+                        sh 'mv core oldcore'
+                        sh 'pip list | grep pytest'
                     }
-                    post {
-                        always {
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'test_report', reportFiles: 'index.html',
-                                         reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'coverage_report', reportFiles: 'index.html',
-                                         reportName: 'Coverage Report', reportTitles: '',
-                                         useWrapperFileDirectly: true])
-                            archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
-                            cleanWs()
-                        }
-                    }
+                    stash includes: 'coverage_report_xml/coverage.xml',
+                          name: 'coverageReportXML', allowEmpty: true
+                }
+            }
+            post {
+                always {
+                    publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                 reportDir: 'test_report', reportFiles: 'index.html',
+                                 reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
+                    publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                 reportDir: 'coverage_report', reportFiles: 'index.html',
+                                 reportName: 'Coverage Report', reportTitles: '',
+                                 useWrapperFileDirectly: true])
+                    archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
+                    cleanWs()
+                }
+            }
         }
         stage('SonarQube analysis') {
             environment {
@@ -183,7 +177,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'rm  *.html || true'
+                sh 'rm *.html || true'
                 script {
                     unstash 'coverageReportXML'
                     withSonarQubeEnv('sonarqube') {
@@ -192,7 +186,7 @@ pipeline {
                 }
             }
         }
-                stage('Build Python Wheel') {
+        stage('Build Python Wheel') {
             agent {
                 dockerfile {
                     filename 'Dockerfile'
@@ -201,15 +195,16 @@ pipeline {
                     reuseNode true
                 }
             }
-            environment {
-                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-            }
             steps {
                 script {
                     echo '--- Starting Python Wheel Build ---'
                     withPythonEnv('python3.13') {
-                        sh 'poetry build --format wheel'
+                        withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                         string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                            withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
+                                sh 'poetry build --format wheel --config virtualenvs.create=false --no-interaction --no-ansi --verbose --index-url $IP_INDEX_URL --trusted-host $IP_TRUSTED_HOST'
+                            }
+                        }
                     }
                     echo '--- Python Wheel Build Finished ---'
                 }
@@ -224,7 +219,7 @@ pipeline {
                     cleanWs()
                 }
             }
-                }
+        }
         stage('Build Packages Multi-Arch') {
             when {
                 expression { false }
@@ -254,61 +249,57 @@ pipeline {
                         }
                         environment {
                             ARCH = "${ARCHITECTURE}"
-                            PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                            PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                             DISABLE_ERRORS = true
                         }
                         steps {
-                            script {
-                                echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
+                            withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                             string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                                withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
+                                    script {
+                                        echo "--- Start Build cx_Freeze for ${env.ARCH} ---"
+                                        def venvPath = "/tmp/devildex_cx_freeze_venv_${env.ARCH}"
 
-                                def venvPath = "/tmp/devildex_cx_freeze_venv_${env.ARCH}"
-                                sh """
-                                    echo "[INFO] Initializing Conda and activating environment (conda_env)..."
-                                    rm -rf "${venvPath}"
+                                        sh """
+                                            echo "[INFO] Initializing Conda and activating environment (conda_env)..."
+                                            rm -rf "${venvPath}"
+                                            echo "[INFO] Creating venv with system-site-packages at ${venvPath}"
+                                            python -m venv --system-site-packages "${venvPath}"
+                                            echo "[INFO] Activating Python venv (${venvPath})..."
+                                            . "${venvPath}/bin/activate"
 
-                                    echo "[INFO] Creating venv with system-site-packages at ${venvPath}"
+                                            echo "[INFO] Exporting requirements.txt using globally installed poetry..."
+                                            poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                        """
 
-                                    python -m venv --system-site-packages "${venvPath}"
-                                    echo "[INFO] Activating Python venv (${venvPath})..."
-                                    . "${venvPath}/bin/activate"
-                                """
-                                sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for requirements export..."
-                                    . "${venvPath}/bin/activate"
+                                        sh """
+                                            if [ "${env.ARCH}" = "arm64" ]; then
+                                                sed -i '/wxpython/d' requirements.txt
+                                            fi
+                                        """
 
-                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
-                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                        sh """
+                                            echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
+                                            . "${venvPath}/bin/activate"
 
-                                """
-                                sh """
-                                    if [ "${env.ARCH}" = "arm64" ]; then
-                                        sed -i '/wxpython/d' requirements.txt
-                                    fi
-                                """
-                                sh """
-                                echo "[INFO] Activating Python venv (${venvPath}) for installing dependencies..."
-                                . "${venvPath}/bin/activate"
+                                            echo "[INFO] Installing requirements.txt using venv pip..."
+                                            pip install -r requirements.txt --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
 
-                                echo "[INFO] Installing requirements.txt using venv pip..."
-                                pip install -r requirements.txt
+                                            echo "[INFO] Installing cx_Freeze using venv pip..."
+                                            pip install cx_Freeze --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                        """
 
-                                echo "[INFO] Installing cx_Freeze using venv pip..."
-                                pip install cx_Freeze
-                            """
-                                sh """
-                                echo '[INFO] Activating Python venv (${venvPath}) for cx_Freeze build...'
-                                . "${venvPath}/bin/activate"
-
-                                mkdir -p dist/${env.ARCH}/cxfreeze
-
-                                echo '[INFO] Running cx_Freeze build using venv python...'
-                                python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
-
-                                echo '[INFO] Moving built artifact...'
-                                mv ./dist/${env.ARCH}/cxfreeze/main \\
-                                   "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
-                            """
+                                        sh """
+                                            echo '[INFO] Activating Python venv (${venvPath}) for cx_Freeze build...'
+                                            . "${venvPath}/bin/activate"
+                                            mkdir -p dist/${env.ARCH}/cxfreeze
+                                            echo '[INFO] Running cx_Freeze build using venv python...'
+                                            python setup_cxfreeze.py build_exe --build-exe dist/${env.ARCH}/cxfreeze
+                                            echo '[INFO] Moving built artifact...'
+                                            mv ./dist/${env.ARCH}/cxfreeze/main \\
+                                               "${PROJECT_NAME}_${VERSION}-${env.ARCH}-cx.bin"
+                                        """
+                                    }
+                                }
                             }
                         }
                         post {
@@ -340,64 +331,47 @@ pipeline {
                         }
                         environment {
                             ARCH = "${ARCHITECTURE}"
-                            PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                            PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                             DISABLE_ERRORS = true
                         }
                         steps {
-                            script {
-                                echo "--- Starting Build Nuitka for ${env.ARCH} ---"
-                                def venvPath = "/tmp/devildex_nuitka_venv_${env.ARCH}"
-                                sh """
-                                    echo "[INFO] Preparing Python virtual environment (venv) for Nuitka..."
-                                    rm -rf "${venvPath}"
+                             withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                             string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                                withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
+                                    script {
+                                        echo "--- Starting Build Nuitka for ${env.ARCH} ---"
+                                        def venvPath = "/tmp/devildex_nuitka_venv_${env.ARCH}"
 
-                                    echo "[INFO] Creating venv with system-site-packages at ${venvPath}."
-                                    python -m venv --system-site-packages "${venvPath}"
+                                        sh """
+                                            echo "[INFO] Preparing Python virtual environment (venv) for Nuitka..."
+                                            rm -rf "${venvPath}"
+                                            python -m venv --system-site-packages "${venvPath}"
+                                            . "${venvPath}/bin/activate"
+                                            python -m pip install --upgrade pip
+                                        """
 
-                                    echo "[INFO] Activating Python venv (${venvPath})..."
-                                    . "${venvPath}/bin/activate"
+                                        sh """
+                                            . "${venvPath}/bin/activate"
+                                            poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                            if [ "${env.ARCH}" = "arm64" ]; then
+                                                    sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
+                                            fi
+                                        """
 
-                                    echo "[DEBUG] Verifying Python and Pip from venv:"
-                                    which python
-                                    python --version
-                                    which pip
-                                    pip --version
+                                        sh """
+                                            . "${venvPath}/bin/activate"
+                                            echo "[INFO] Installing requirements.txt for Nuitka using venv pip..."
+                                            python -m pip install -r requirements.txt --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                            echo "[INFO] Installing Nuitka using venv pip..."
+                                            python -m pip install nuitka --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                        """
 
-                                    echo "[INFO] Upgrading pip in venv..."
-                                    python -m pip install --upgrade pip
-                                """
-
-                                sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for Nuitka requirements."
-                                    . "${venvPath}/bin/activate"
-
-                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
-                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
-
-                                    if [ "${env.ARCH}" = "arm64" ]; then
-                                            sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
-                                    fi
-                                """
-
-                                sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for Nuitka build..."
-                                    . "${venvPath}/bin/activate"
-
-                                    echo "[INFO] Installing requirements.txt for Nuitka using venv pip..."
-                                    python -m pip install -r requirements.txt
-
-                                    echo "[INFO] Installing Nuitka using venv pip..."
-                                    python -m pip install nuitka
-
-                                    mkdir -p dist/${env.ARCH}/linux/nuitka
-                                    echo "Starting Nuitka build for Linux on host ${env.ARCH} using venv python..."
-                                    python -m nuitka src/devildex/main.py --standalone --onefile \
-                                        --output-dir=dist/${env.ARCH}/linux/nuitka
-                                """
-                                sh "mv dist/${env.ARCH}/linux/nuitka/main.bin \
-                                        ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin"
-                                echo "--- Build Nuitka finished for ${env.ARCH} ---"
+                                        sh """
+                                            mv dist/${env.ARCH}/linux/nuitka/main.bin \\
+                                                ${PROJECT_NAME}_${VERSION}-host_${env.ARCH}-lin-nui.bin
+                                        """
+                                        echo "--- Build Nuitka finished for ${env.ARCH} ---"
+                                    }
+                                }
                             }
                         }
                         post {
@@ -429,73 +403,51 @@ pipeline {
                         }
                         environment {
                             ARCH = "${ARCHITECTURE}"
-                            PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                            PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                             DISABLE_ERRORS = true
                         }
                         steps {
-                            script {
-                                echo "--- Start Build PyOxidizer for ${env.ARCH} ---"
-                                def venvPath = "/tmp/devildex_pyoxidizer_venv_${env.ARCH}"
+                            withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                             string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                                withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
+                                    script {
+                                        echo "--- Start Build PyOxidizer for ${env.ARCH} ---"
+                                        def venvPath = "/tmp/devildex_pyoxidizer_venv_${env.ARCH}"
 
-                                sh """
-                                    echo "[INFO] Preparing Python virtual environment (venv) for PyOxidizer..."
-                                    rm -rf "${venvPath}"
+                                        sh """
+                                            rm -rf "${venvPath}"
+                                            python -m venv --system-site-packages "${venvPath}"
+                                            . "${venvPath}/bin/activate"
+                                            python -m pip install --upgrade pip
+                                        """
 
-                                    echo "[INFO] Creating venv with system-site-packages at ${venvPath}."
-                                    python -m venv --system-site-packages "${venvPath}"
+                                        sh """
+                                            . "${venvPath}/bin/activate"
+                                            poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                            if [ "${env.ARCH}" = "arm64" ]; then
+                                                    sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
+                                            fi
+                                        """
 
-                                    echo "[INFO] Activating Python venv (${venvPath})..."
-                                    . "${venvPath}/bin/activate"
+                                        sh """
+                                            . "${venvPath}/bin/activate"
+                                            python -m pip install -r requirements.txt --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                            python -m pip install pyoxidizer --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                        """
 
-                                    echo "[DEBUG] Verifying Python and Pip from venv:"
-                                    which python
-                                    python --version
-                                    which pip
-                                    pip --version
-
-                                    echo "[INFO] Upgrading pip in venv..."
-                                    python -m pip install --upgrade pip
-                                """
-
-                                sh """
-                                    echo "[INFO] Activating venv (${venvPath}) for PyOxidizer requirements."
-                                    . "${venvPath}/bin/activate"
-
-                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
-                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
-
-                                    if [ "${env.ARCH}" = "arm64" ]; then
-                                            sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
-                                    fi
-                                """
-
-                                sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for PyOxidizer build..."
-                                    . "${venvPath}/bin/activate"
-
-                                    echo "[INFO] Installing requirements.txt for PyOxidizer using venv pip..."
-                                    python -m pip install -r requirements.txt
-
-                                    echo "[INFO] Installing PyOxidizer using venv pip..."
-                                    python -m pip install pyoxidizer
-
-                                    echo "[INFO] Running PyOxidizer build using venv..."
-                                    pyoxidizer build
-                                """
-
-                                def sourceFolder = '-unknown-linux-gnu/debug/install/'
-                                def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
-                                if (env.ARCH == 'arm64') {
-                                    sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
-                                } else if (env.ARCH != 'amd64') {
-                                    error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
+                                        def sourceFolder = '-unknown-linux-gnu/debug/install/'
+                                        def sourceBuildPath = "build/x86_64${sourceFolder}${PROJECT_NAME}_app"
+                                        if (env.ARCH == 'arm64') {
+                                            sourceBuildPath = "build/aarch64${sourceFolder}${PROJECT_NAME}_app"
+                                        } else if (env.ARCH != 'amd64') {
+                                            error("Architecture ${env.ARCH} not supported for determining PyOxidizer path")
+                                        }
+                                        echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
+                                        def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
+                                        sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
+                                        sh "chmod +r '${finalArtifactName}'"
+                                        echo "--- End Build PyOxidizer for ${env.ARCH} ---"
+                                    }
                                 }
-                                echo "Searching for PyOxidizer artifact in: ${sourceBuildPath}"
-                                def finalArtifactName = "${PROJECT_NAME}_${VERSION}-${env.ARCH}-oxi.bin"
-                                sh "cp '${sourceBuildPath}' '${finalArtifactName}'"
-                                sh "chmod +r '${finalArtifactName}'"
-                                echo "--- End Build PyOxidizer for ${env.ARCH} ---"
                             }
                         }
                         post {
@@ -527,69 +479,48 @@ pipeline {
                         }
                         environment {
                             ARCH = "${ARCHITECTURE}"
-                            PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                            PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
                             DISABLE_ERRORS = true
                         }
                         steps {
-                            script {
-                                echo "--- Start Build PyInstaller for ${env.ARCH} ---"
-                                def venvPath = "/tmp/devildex_pyinstaller_venv_${env.ARCH}"
+                            withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                             string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                                withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
+                                    script {
+                                        echo "--- Start Build PyInstaller for ${env.ARCH} ---"
+                                        def venvPath = "/tmp/devildex_pyinstaller_venv_${env.ARCH}"
 
-                                sh """
-                                    echo "[INFO] Preparing Python virtual environment (venv) for PyInstaller..."
-                                    rm -rf "${venvPath}"
+                                        sh """
+                                            rm -rf "${venvPath}"
+                                            python -m venv --system-site-packages "${venvPath}"
+                                            . "${venvPath}/bin/activate"
+                                            python -m pip install --upgrade pip
+                                        """
 
-                                    echo "[INFO] Creating Python venv with system-site-packages at ${venvPath}."
-                                    python -m venv --system-site-packages "${venvPath}"
+                                        sh """
+                                            . "${venvPath}/bin/activate"
+                                            poetry export -f requirements.txt --output requirements.txt --without-hashes
+                                            if [ "${env.ARCH}" = "arm64" ]; then
+                                                    sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
+                                            fi
+                                        """
 
-                                    echo "[INFO] Activating Python venv (${venvPath})..."
-                                    . "${venvPath}/bin/activate"
+                                        sh """
+                                            . "${venvPath}/bin/activate"
+                                            python -m pip install -r requirements.txt --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                            python -m pip install pyinstaller --index-url \$IP_INDEX_URL --trusted-host \$IP_TRUSTED_HOST
+                                            mkdir -p dist/${env.ARCH}/pyinstaller
+                                            pyinstaller --noconfirm --onefile --console src/devildex/main.py \\
+                                                --distpath dist/${env.ARCH}/pyinstaller \\
+                                                --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}
+                                        """
 
-                                    echo "[DEBUG] Verifying Python and Pip from venv:"
-                                    which python
-                                    python --version
-                                    which pip
-                                    pip --version
-
-                                    echo "[INFO] Upgrading pip in venv..."
-                                    python -m pip install --upgrade pip
-                                """
-
-                                sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller requirements."
-                                    . "${venvPath}/bin/activate"
-
-                                    echo "[INFO] Exporting requirements.txt using globally installed poetry..."
-                                    poetry export -f requirements.txt --output requirements.txt --without-hashes
-
-                                    if [ "${env.ARCH}" = "arm64" ]; then
-                                            sed -i '/^[wW][xX][pP][yY][tT][hH][oO][nN]/d' requirements.txt
-                                    fi
-                                """
-
-                                sh """
-                                    echo "[INFO] Activating Python venv (${venvPath}) for PyInstaller build..."
-                                    . "${venvPath}/bin/activate"
-
-                                    echo "[INFO] Installing requirements.txt for PyInstaller using venv pip..."
-                                    python -m pip install -r requirements.txt
-
-                                    echo "[INFO] Installing PyInstaller using venv pip..."
-                                    python -m pip install pyinstaller
-
-                                    echo "[INFO] Running PyInstaller build using venv..."
-                                    mkdir -p dist/${env.ARCH}/pyinstaller
-                                    pyinstaller --noconfirm --onefile --console src/devildex/main.py \
-                                        --distpath dist/${env.ARCH}/pyinstaller \
-                                        --workpath build/pyinstaller_work_${env.ARCH} --name ${PROJECT_NAME}
-                                """
-                                sh """
-                                    echo "[INFO] Moving PyInstaller artifact..."
-                                    mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \
-                                        ${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin
-                                """
-                                echo "--- End Build PyInstaller for ${env.ARCH} ---"
+                                        sh """
+                                            mv dist/${env.ARCH}/pyinstaller/${PROJECT_NAME} \\
+                                                ${PROJECT_NAME}_${VERSION}-${env.ARCH}-pyi.bin
+                                        """
+                                        echo "--- End Build PyInstaller for ${env.ARCH} ---"
+                                    }
+                                }
                             }
                         }
                         post {
@@ -609,7 +540,6 @@ pipeline {
                 }
             }
         }
-
         stage('Smoke Test and Archive Executables') {
             when {
                 expression { false }
@@ -644,20 +574,20 @@ pipeline {
                             script {
                                 def artifactFileName
                                 switch (BUILD_TOOL) {
-                            case 'cx_Freeze':
+                                    case 'cx_Freeze':
                                         artifactFileName = "${PROJECT_NAME}_${VERSION}-${ARCH}-cx.bin"
                                         break
-                            case 'Nuitka':
+                                    case 'Nuitka':
                                         artifactFileName = "${PROJECT_NAME}_${VERSION}-host_${ARCH}-lin-nui.bin"
                                         break
-                            case 'PyOxidizer':
+                                    case 'PyOxidizer':
                                         artifactFileName = "${PROJECT_NAME}_${VERSION}-${ARCH}-oxi.bin"
                                         break
-                            case 'PyInstaller':
+                                    case 'PyInstaller':
                                         artifactFileName = "${PROJECT_NAME}_${VERSION}-${ARCH}-pyi.bin"
                                         break
-                            default:
-                                error("Unknown build tool for smoke test: ${BUILD_TOOL}")
+                                    default:
+                                        error("Unknown build tool for smoke test: ${BUILD_TOOL}")
                                         return
                                 }
 
@@ -692,13 +622,13 @@ pipeline {
                                         if (smokeTestStatus.startsWith('PASS')) {
                                             smokeTestPassed = true
                                         }
-                            } else {
+                                    } else {
                                         echo "Smoke test FAILED for ${artifactFileName}. Archiving to 'failed/' directory."
                                         sh 'mkdir -p failed'
                                         sh "mv '${artifactFileName}' failed/"
                                         archiveArtifacts artifacts: "failed/${artifactFileName}", allowEmptyArchive: true
                                     }
-                        } catch (Exception e) {
+                                } catch (Exception e) {
                                     echo "Smoke test Jenkins script execution failed for ${artifactFileName}: ${e}"
                                     testLogContent += "\\nJenkins-level Exception: ${e}"
                                     smokeTestStatus = 'JENKINS_ERROR'
@@ -714,7 +644,7 @@ pipeline {
                                 if (smokeTestPassed) {
                                     echo "Smoke test PASSED for ${artifactFileName}. Archiving to standard location (root of artifacts)."
                                     archiveArtifacts artifacts: artifactFileName, allowEmptyArchive: true
-                        } else {
+                                } else {
                                     echo "Smoke test FAILED for ${artifactFileName}. Archiving to 'failed/' directory."
                                     sh 'mkdir -p failed'
                                     sh "mv '${artifactFileName}' failed/"
@@ -735,47 +665,5 @@ pipeline {
                 }
             }
         }
-                /*stage('Aggregate Smoke Test Reports') {
-            agent any
-            steps {
-                script {
-                    def finalReportContent = new StringBuilder()
-                    def tools = ['cx_Freeze', 'Nuitka', 'PyOxidizer', 'PyInstaller']
-                    def architectures = ['amd64', 'arm64']
-
-                    tools.each { tool ->
-                        architectures.each { arch ->
-                            def stashName = "smoke_report_fragment_${tool}_${arch}"
-                            def fragmentFileName = "report_fragment_${tool}_${arch}.txt"
-                            try {
-                                echo "Attempting to unstash ${stashName}"
-                                unstash name: stashName
-                                if (fileExists(fragmentFileName)) {
-                                    finalReportContent.append(readFile(fragmentFileName))
-                                    sh "rm -f ${fragmentFileName}"
-                                } else {
-                                    echo "Warning: Unstashed fragment file ${fragmentFileName} not found for ${stashName}."
-                                    finalReportContent.append("Tool: ${tool}, Arch: ${arch}, Artifact: N/A, Status: FRAGMENT_NOT_FOUND\n")
-                                }
-                            } catch (Exception e) {
-                                echo "Warning: Could not unstash or process report fragment for ${tool} on ${arch}. Stash: ${stashName}. Error: ${e.getMessage()}"
-                                finalReportContent.append("Tool: ${tool}, Arch: ${arch}, Artifact: N/A, Status: ERROR_RETRIEVING_FRAGMENT\n")
-                            }
-                        }
-                    }
-
-                    if (finalReportContent.length() > 0) {
-                        writeFile file: 'overall_smoke_test_report.txt', text: finalReportContent.toString()
-                    } else {
-                        writeFile file: 'overall_smoke_test_report.txt', text: 'No smoke test report fragments were found or successfully processed.'
-                    }
-                } // Closes steps
-            post { // Correctly indented
-                always {
-                    archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
-                    }
-                }
-            }
-        } // Closes stage */
-    } // Closes stages
-} // Closes pipeline
+    }
+}
