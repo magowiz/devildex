@@ -84,12 +84,14 @@ pipeline {
             steps {
                 script {
                     withPythonEnv('python3.13') {
+                        sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
+                        sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
                         sh 'mkdir -p /usr/local/bin/'
                         sh 'ln -s $(which python3.13) /usr/local/bin/python3.13'
                         sh 'mkdir -p /root/.config/pip/'
                     sh 'cp pip.conf /root/.config/pip/pip.conf'
                     sh 'python -m pip install -e . --timeout 10000'
-
+                    sh 'python -m pip install -r requirements-test.txt --timeout 10000'
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
                     sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
 
