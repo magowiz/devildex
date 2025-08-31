@@ -7,6 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
+# Define virtual environment path early
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -39,10 +43,6 @@ USER appuser
 
 # Set up PATH for poetry
 ENV PATH="/root/.local/bin:${PATH}"
-
-# Define virtual environment path early
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="/opt/venv/bin:${PATH}"
 
 # Create a virtual environment and install dependencies into it
 RUN python3 -m venv ${VIRTUAL_ENV} && \
