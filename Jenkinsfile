@@ -24,61 +24,83 @@ pipeline {
                 }
             }
         }
+        stage('test code') {
+                    when {
+                        not {
+                            changelog "$LINT_TAG_REGEX"
+                        }
+                    }
+                    agent {
+                        dockerfile {
+                            reuseNode true
+                            args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
+                            filename 'Dockerfile'
+                            dir 'ci_dockerfiles/pytest_ubuntu_x11'
+                            label 'amd64'
+                        }
+                    }
+                    environment {
+                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
+                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
+                        LP_USER_ID = credentials('launchpad_id_conf_file')
+                        PATH = "/root/.local/bin:${env.PATH}"
+                        PIP_FIND_LINKS = 'https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/'
+                    }
+                    options {
+                        throttle(['pytest_telenium'])
+                        retry(2)
+                    }
+                    steps {
+                        sh 'echo "Variable SHELL: $SHELL"'
+                        sh 'mkdir -p ~/.bazaar/'
+                        withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
+                        {
+                            sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
+                        }
+                        sh 'echo $PATH'
+                        // Install dependencies and project (matching Diagnose Test Collection stage)
+                        sh 'poetry export --with test -f requirements.txt --output requirements.txt --without-hashes'
+                        sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
+                        sh 'pip install -r requirements.txt'
+                        sh 'pip install --no-deps -e .'
+
+                        // Call pyTestXvfb
+                        pyTestXvfb(buildType: 'pip', pythonInterpreter: 'python', skipMarkers: '')
+                        script {
+                            def exists = fileExists 'core'
+                            if (exists) {
+                                echo 'core found'
+                                sh 'pip install pystack'
+                                sh 'pystack core core python'
+                                sh 'mv core oldcore'
+                                sh 'pip list | grep pytest'
+                            }
+                            stash includes: 'coverage_report_xml/coverage.xml',
+                                  name: 'coverageReportXML', allowEmpty: true
+                        }
+                    }
+                    post {
+                        always {
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'test_report', reportFiles: 'index.html',
+                                         reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
+                                         reportDir: 'coverage_report', reportFiles: 'index.html',
+                                         reportName: 'Coverage Report', reportTitles: '',
+                                         useWrapperFileDirectly: true])
+                            archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
+                            cleanWs()
+                        }
+                    }
+        }
         stage('Build Docker Image') {
             agent any
             steps {
                 script {
                     sh 'docker build -t devil-dex-build:latest .'
-                }
-            }
-        }
-
-        stage('Diagnose Test Collection') {
-            agent {
-                dockerfile {
-                    label 'amd64'
-                    reuseNode true
-                    args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
-                    filename 'Dockerfile'
-                    dir 'ci_dockerfiles/pytest_ubuntu_x11'
-                }
-            }
-            environment {
-                PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                PATH = "/root/.local/bin:${env.PATH}"
-                PIP_FIND_LINKS = 'https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/'
-            }
-            steps {
-                script {
-                    // Install dependencies and project (matching GitHub Actions workflow)
-                    // Note: wxPython and its webview dependencies are installed via apt-get in the Dockerfile.
-                    // This ensures pip does not try to manage them.
-                    sh 'poetry export --with test -f requirements.txt --output requirements.txt --without-hashes'
-                    sh 'pip install -r requirements.txt'
-                    sh 'pip install --no-deps -e .'
-
-                    // Run tests with Xvfb
-                    sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
-                    sh 'xvfb-run pytest --collect-only >> pytest_collect_only.log 2>&1'
-
-                    // Diagnostic outputs
-                    sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
-                    sh 'python --version >> pytest_collect_only.log 2>&1'
-                    sh 'echo "\n--- Pip Version ---" >> pytest_collect_only.log'
-                    sh 'pip --version >> pytest_collect_only.log 2>&1'
-                    sh 'echo "\n--- Pytest Version ---" >> pytest_collect_only.log'
-                    sh 'poetry run pytest --version >> pytest_collect_only.log 2>&1'
-                    sh 'echo "\n--- Installed Python Packages (pip freeze) ---" >> pytest_collect_only.log'
-                    sh 'pip freeze >> pytest_collect_only.log 2>&1'
-                    sh 'echo "\n--- Pytest.ini Content ---" >> pytest_collect_only.log'
-                    sh 'cat pytest.ini >> pytest_collect_only.log 2>&1 || echo "pytest.ini not found" >> pytest_collect_only.log'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'pytest_collect_only.log', allowEmptyArchive: true
-                    cleanWs()
                 }
             }
         }
@@ -146,77 +168,7 @@ pipeline {
                 }
             }
         }
-        stage('test code') {
-                    when {
-                        not {
-                            changelog "$LINT_TAG_REGEX"
-                        }
-                    }
-                    agent {
-                        dockerfile {
-                            reuseNode true
-                            args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
-                            filename 'Dockerfile'
-                            dir 'ci_dockerfiles/pytest_ubuntu_x11'
-                            label 'amd64'
-                        }
-                    }
-                    environment {
-                        PIP_INDEX_URL = "${env.IP_INDEX_URL}"
-                        PIP_TRUSTED_HOST = "${env.IP_TRUSTED_HOST}"
-                        LP_USER_ID = credentials('launchpad_id_conf_file')
-                        PATH = "/root/.local/bin:${env.PATH}"
-                        PIP_FIND_LINKS = 'https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/'
-                    }
-                    options {
-                        throttle(['pytest_telenium'])
-                        retry(2)
-                    }
-                    steps {
-                        sh 'echo "Variable SHELL: $SHELL"'
-                        sh 'mkdir -p ~/.bazaar/'
-                        withCredentials([file(credentialsId: 'launchpad_id_conf_file', variable: 'LAUNCHPAD_CONFIG_FILE_PATH')])
-                        {
-                            sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
-                        }
-                        sh 'echo $PATH'
-                        // Install dependencies and project (matching Diagnose Test Collection stage)
-                        sh 'poetry export --with test -f requirements.txt --output requirements.txt --without-hashes'
-                        sh 'pip install -r requirements.txt'
-                        sh 'pip install --no-deps -e .'
 
-                        // Call pyTestXvfb
-                        pyTestXvfb(buildType: 'pip', pythonInterpreter: 'python', skipMarkers: '')
-                        script {
-                            def exists = fileExists 'core'
-                            if (exists) {
-                                echo 'core found'
-                                sh 'pip install pystack'
-                                sh 'pystack core core python'
-                                sh 'mv core oldcore'
-                                sh 'pip list | grep pytest'
-                            }
-                            stash includes: 'coverage_report_xml/coverage.xml',
-                                  name: 'coverageReportXML', allowEmpty: true
-                        }
-                    }
-                    post {
-                        always {
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'test_report', reportFiles: 'index.html',
-                                         reportName: 'Test Report', reportTitles: '', useWrapperFileDirectly: true])
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false,
-                                         reportDir: 'coverage_report', reportFiles: 'index.html',
-                                         reportName: 'Coverage Report', reportTitles: '',
-                                         useWrapperFileDirectly: true])
-                            archiveArtifacts artifacts: 'errorxvfb.log', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'screenshots/*.png', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'pwd.log', fingerprint: true, allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'app.log', fingerprint: true, allowEmptyArchive: true
-                            cleanWs()
-                        }
-                    }
-        }
 
         stage('SonarQube analysis') {
             environment {
