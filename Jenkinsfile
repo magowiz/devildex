@@ -76,6 +76,12 @@ pipeline {
                     // Install devildex itself in editable mode into the venv
                     sh 'pip install -e .'
 
+                    sh 'echo "--- libjpeg.so.8 check ---" >> pytest_collect_only.log'
+                    sh 'find / -name "libjpeg.so*" 2>/dev/null >> pytest_collect_only.log'
+                    sh 'ldd /usr/local/lib64/python3.13/site-packages/wx/core.cpython-313-x86_64-linux-gnu.so 2>/dev/null >> pytest_collect_only.log'
+                    sh 'echo "--- dnf list installed libjpeg ---" >> pytest_collect_only.log'
+                    sh 'dnf list installed | grep libjpeg >> pytest_collect_only.log'
+
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
                     sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
                     sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
