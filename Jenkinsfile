@@ -82,6 +82,10 @@ pipeline {
                     sh 'echo "--- dnf list installed libjpeg ---" >> pytest_collect_only.log'
                     sh 'dnf list installed | grep libjpeg >> pytest_collect_only.log'
 
+                    sh 'echo "--- Creating libjpeg.so.8 symlink ---" >> pytest_collect_only.log'
+                    sh 'ln -s /usr/lib64/libjpeg.so.62 /usr/lib64/libjpeg.so.8 2>&1 >> pytest_collect_only.log || true'
+                    sh 'echo "--- Symlink created (if successful) ---" >> pytest_collect_only.log'
+
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
                     sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
                     sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
