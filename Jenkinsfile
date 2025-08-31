@@ -65,7 +65,7 @@ pipeline {
                     sh 'python -m pip install -r requirements-test.txt --timeout 10000'
                     sh 'python -m pip uninstall -y packaging || true'
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
-                    sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
+                    sh 'xvfb-run pytest --collect-only -q >> pytest_collect_only.log 2>&1'
 
 
                     sh 'echo "\n--- Python Version ---" >> pytest_collect_only.log'
