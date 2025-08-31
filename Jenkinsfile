@@ -157,7 +157,7 @@ pipeline {
                             reuseNode true
                             args '-u root --privileged -v tmp-volume:/tmp -p 9901:9901'
                             filename 'Dockerfile'
-                            dir 'ci_dockerfiles/pytest_x11'
+                            dir 'ci_dockerfiles/pytest_ubuntu_x11'
                             label 'amd64'
                         }
                     }
@@ -180,33 +180,24 @@ pipeline {
                             sh 'cp "${LAUNCHPAD_CONFIG_FILE_PATH}" ~/.bazaar/launchpad.conf'
                         }
                         sh 'echo $PATH'
-                        withPythonEnv('python3.13') {
-                            sh 'mkdir -p /usr/local/bin/'
-                            sh 'ln -s $(which python3.13) /usr/local/bin/python3.13'
-                            sh 'mkdir -p /root/.config/pip/'
-                            sh 'cp pip.conf /root/.config/pip/pip.conf'
-                            sh 'python -m pip install -e . --timeout 10000'
-                            sh 'touch app.log'
-                            sh 'echo $PWD > pwd.log'
-                            sh 'poetry export -f requirements.txt --output requirements.txt --without-hashes'
-                            sh 'poetry export --without-hashes --format=requirements.txt --only test > requirements-test.txt'
-                            sh 'sed -i /^packaging/d requirements.txt'
-                            sh 'sed -i /^packaging/d requirements-test.txt'
-                            sh 'sed -i /^typing_extensions/d requirements.txt'
-                            pyTestXvfb(buildType: 'pip', pythonInterpreter: '/usr/local/bin/python3.13',
-                                   skipMarkers: '')
-                            script {
-                                def exists = fileExists 'core'
-                                if (exists) {
-                            echo 'core found'
-                            sh 'pip install pystack'
-                            sh 'pystack core core /usr/local/bin/python'
-                            sh 'mv core oldcore'
-                            sh 'pip list | grep pytest'
-                                }
-                                stash includes: 'coverage_report_xml/coverage.xml',
-                                      name: 'coverageReportXML', allowEmpty: true
+                        // Install dependencies and project (matching Diagnose Test Collection stage)
+                        sh 'poetry export --with test -f requirements.txt --output requirements.txt --without-hashes'
+                        sh 'pip install -r requirements.txt'
+                        sh 'pip install --no-deps -e .'
+
+                        // Call pyTestXvfb
+                        pyTestXvfb(buildType: 'pip', pythonInterpreter: 'python', skipMarkers: '')
+                        script {
+                            def exists = fileExists 'core'
+                            if (exists) {
+                                echo 'core found'
+                                sh 'pip install pystack'
+                                sh 'pystack core core python'
+                                sh 'mv core oldcore'
+                                sh 'pip list | grep pytest'
                             }
+                            stash includes: 'coverage_report_xml/coverage.xml',
+                                  name: 'coverageReportXML', allowEmpty: true
                         }
                     }
                     post {
