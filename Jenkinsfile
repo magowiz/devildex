@@ -64,6 +64,7 @@ pipeline {
                     sh 'sed -i /^packaging/d requirements-test.txt'
                     sh 'python -m pip install -r requirements-test.txt --timeout 10000'
                     sh 'python -m pip uninstall -y packaging || true'
+                    sh 'pip install -e .'
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
                     sh 'xvfb-run pytest --collect-only -q >> pytest_collect_only.log 2>&1'
 
