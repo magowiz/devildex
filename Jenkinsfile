@@ -91,6 +91,7 @@ pipeline {
                         sh 'mkdir -p /root/.config/pip/'
                     sh 'cp pip.conf /root/.config/pip/pip.conf'
                     sh 'python -m pip install -e . --timeout 10000'
+                    sh 'sed -i /^packaging/d requirements-test.txt'
                     sh 'python -m pip install -r requirements-test.txt --timeout 10000'
                     sh 'echo "--- Pytest Collect Only Output ---" > pytest_collect_only.log'
                     sh 'pytest --collect-only -q >> pytest_collect_only.log 2>&1'
