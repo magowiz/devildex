@@ -77,7 +77,7 @@ pipeline {
                     sh 'pip install -e .'
                     sh 'pip uninstall -y wxpython || true'
                     sh 'echo "--- libjpeg.so.8 check ---" >> pytest_collect_only.log'
-                    sh 'find / -name "libjpeg.so*" 2>/dev/null >> pytest_collect_only.log'
+                    sh 'find /lib /usr/lib /usr/local/lib /lib64 /usr/lib64 /usr/local/lib64 -name "libjpeg.so*" 2>/dev/null >> pytest_collect_only.log || true'
                     sh 'ldd /usr/local/lib64/python3.13/site-packages/wx/core.cpython-313-x86_64-linux-gnu.so 2>/dev/null >> pytest_collect_only.log'
                     sh 'echo "--- dnf list installed libjpeg ---" >> pytest_collect_only.log'
                     sh 'dnf list installed | grep libjpeg >> pytest_collect_only.log'
