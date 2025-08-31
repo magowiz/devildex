@@ -29,4 +29,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Set up PATH for poetry
-ENV PATH="/root/.local/bin:/usr/local/bin:${PATH}"
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Create a virtual environment and install dependencies into it
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+RUN python3 -m venv ${VIRTUAL_ENV} && \
+    ${VIRTUAL_ENV}/bin/pip install --upgrade pip
