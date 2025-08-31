@@ -34,13 +34,17 @@ RUN apt-get update && \
 
 # Create appuser
 RUN useradd -ms /bin/bash appuser
+RUN mkdir -p ${VIRTUAL_ENV} && chown -R appuser:appuser ${VIRTUAL_ENV}
 USER appuser
 
 # Set up PATH for poetry
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Create a virtual environment and install dependencies into it
+# Define virtual environment path early
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
+
+# Create a virtual environment and install dependencies into it
 RUN python3 -m venv ${VIRTUAL_ENV} && \
     ${VIRTUAL_ENV}/bin/pip install --upgrade pip
+
