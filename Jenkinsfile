@@ -75,7 +75,7 @@ pipeline {
 
                     // Install devildex itself in editable mode into the venv
                     sh 'pip install -e .'
-
+                    sh 'pip uninstall -y wxpython || true'
                     sh 'echo "--- libjpeg.so.8 check ---" >> pytest_collect_only.log'
                     sh 'find / -name "libjpeg.so*" 2>/dev/null >> pytest_collect_only.log'
                     sh 'ldd /usr/local/lib64/python3.13/site-packages/wx/core.cpython-313-x86_64-linux-gnu.so 2>/dev/null >> pytest_collect_only.log'
