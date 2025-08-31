@@ -9,7 +9,7 @@ pipeline {
     environment {
         VERSION = '0.1'
         PROJECT_NAME = 'devildex'
-        LINT_TAG_REGEX = '.*\[lint\].*'
+        LINT_TAG_REGEX = '.*\\[lint\\].*'
     }
     stages {
         stage('Checkout') {
