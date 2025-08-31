@@ -824,13 +824,12 @@ pipeline {
                     } else {
                         writeFile file: 'overall_smoke_test_report.txt', text: 'No smoke test report fragments were found or successfully processed.'
                     }
-                }
-            }
-            post {
+                } // Closes steps
+            post { // Correctly indented
                 always {
                     archiveArtifacts artifacts: 'overall_smoke_test_report.txt', allowEmptyArchive: true
                 }
             }
-                }
-    }
-}
+        } // Closes stage
+    } // Closes stages
+} // Closes pipeline
