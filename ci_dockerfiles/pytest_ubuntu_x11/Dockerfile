@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+HEALTHCHECK CMD exit 0
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     LANG=C.UTF-8 \
@@ -7,7 +9,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
+
     libnotify-dev \
     libgtk-3-dev \
     libsdl2-dev \
@@ -23,10 +26,15 @@ RUN apt-get update && \
 
 # Install Poetry and Export Plugin
 RUN apt-get update && \
-    apt-get install -y python3-pip pipx && \
+    apt-get install -y --no-install-recommends python3-pip pipx && \
+
     pipx install poetry && \
     /root/.local/bin/poetry self add poetry-plugin-export && \
     rm -rf /var/lib/apt/lists/*
+
+# Create appuser
+RUN useradd -ms /bin/bash appuser
+USER appuser
 
 # Set up PATH for poetry
 ENV PATH="/root/.local/bin:${PATH}"
