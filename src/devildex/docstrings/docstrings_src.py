@@ -716,13 +716,12 @@ class DocStringsSrc:
         """Check if the imported object is a pdoc dummy module."""
         if not module_candidate:
             return True
+        # A pdoc dummy module typically lacks __file__ and __path__
+        # and might have a __name__ that doesn't match the expected one
+        # or is just a placeholder.
         return (
             not hasattr(module_candidate, "__file__")
             and not hasattr(module_candidate, "__path__")
-            and (
-                not hasattr(module_candidate, "__name__")
-                or module_candidate.__name__ != expected_name
-            )
         )
 
     @staticmethod

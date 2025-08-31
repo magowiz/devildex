@@ -74,12 +74,13 @@ def _get_unique_branches_to_attempt(initial_default_branch: str) -> list[str]:
 def _get_vcs_executable(bzr: bool) -> str | None:
     """Determine the VCS executable path and logs if not found."""
     if not bzr:
-        if not GIT_FULL_PATH:
+        git_exe = shutil.which("git")
+        if not git_exe:
             logger.error(
                 "Error: 'git' command not found. Ensure Git is installed and in PATH."
             )
             return None
-        return GIT_FULL_PATH
+        return git_exe
     else:  # bzr
         bzr_exe = shutil.which("bzr")
         if not bzr_exe:
