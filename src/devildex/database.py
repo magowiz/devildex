@@ -363,6 +363,15 @@ class DatabaseManager:
             return None
 
     @classmethod
+    def close_db(cls) -> None:
+        """Close the database engine."""
+        if cls._engine:
+            cls._engine.dispose()
+            cls._engine = None
+            cls._session_local = None
+            logger.info("Database engine disposed.")
+
+    @classmethod
     @contextmanager
     def get_session(cls) -> Generator[SQLAlchemySession, None, None]:
         """Return una new session del database.

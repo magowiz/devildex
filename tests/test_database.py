@@ -20,12 +20,7 @@ def db_session() -> Session:
         with database.get_session() as session:
             yield session
     finally:
-        # FIX: The DatabaseManager is a singleton-like class. Its state persists
-        # between test runs, causing test contamination. We must explicitly
-        # reset its engine and session factory after each test to ensure
-        # that the next test gets a completely fresh in-memory database.
-        database.DatabaseManager._engine = None
-        database.DatabaseManager._session_local = None
+        database.DatabaseManager.close_db()
 
 
 def test_ensure_package_creates_new_records(db_session: Session) -> None:
