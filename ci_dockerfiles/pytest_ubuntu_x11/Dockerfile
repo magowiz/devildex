@@ -22,6 +22,7 @@ RUN apt-get update && \
     libxtst-dev \
     xvfb \
     bzr \
+    git \
     python3-gi \
     python3-gi-cairo \
     python3-wxgtk4.0 \
