@@ -117,11 +117,18 @@ def test_main_write_json_os_error(mock_open, mock_logger_debug, mock_exit) -> No
 @patch("devildex.local_data_parse._external_scanner_script.logger.debug")
 @patch("json.dump", side_effect=TypeError("Object not serializable"))
 @patch("builtins.open", new_callable=mock_open)
-def test_main_write_json_json_error(mock_open, mock_json_dump, mock_logger_debug, mock_exit) -> None:
+def test_main_write_json_json_error(
+    mock_open, mock_json_dump, mock_logger_debug, mock_exit
+) -> None:
     """Verify _main_write_json handles JSON serialization errors."""
-    scanner_script._main_write_json("/fake/output.json", [object()]) # object() is not JSON serializable
+    scanner_script._main_write_json(
+        "/fake/output.json", [object()]
+    )  # object() is not JSON serializable
     mock_logger_debug.assert_called_once()
-    assert "Exception during final JSON dump/file write" in mock_logger_debug.call_args[0][0]
+    assert (
+        "Exception during final JSON dump/file write"
+        in mock_logger_debug.call_args[0][0]
+    )
     mock_exit.assert_called_once_with(1)
 
 
@@ -129,7 +136,9 @@ def test_main_write_json_json_error(mock_open, mock_json_dump, mock_logger_debug
 @patch("devildex.local_data_parse._external_scanner_script.logger.debug")
 @patch("builtins.open", new_callable=mock_open)
 @patch("json.dump")
-def test_main_write_json_success(mock_json_dump, mock_open, mock_logger_debug, mock_exit) -> None:
+def test_main_write_json_success(
+    mock_json_dump, mock_open, mock_logger_debug, mock_exit
+) -> None:
     """Verify _main_write_json successfully writes JSON and exits."""
     output_file_path = "/fake/output.json"
     package_list = [{"name": "test", "version": "1.0"}]
@@ -145,10 +154,14 @@ def test_main_write_json_success(mock_json_dump, mock_open, mock_logger_debug, m
 
 
 @patch("devildex.local_data_parse._external_scanner_script.sys.exit")
-@patch("devildex.local_data_parse._external_scanner_script.logger.exception") # Patch logger.exception
+@patch(
+    "devildex.local_data_parse._external_scanner_script.logger.exception"
+)  # Patch logger.exception
 @patch("devildex.local_data_parse._external_scanner_script._main_write_json")
 @patch("importlib.metadata.distributions")
-def test_main_project_url_attribute_error(mock_distributions, mock_write_json, mock_log_exception, mock_exit) -> None:
+def test_main_project_url_attribute_error(
+    mock_distributions, mock_write_json, mock_log_exception, mock_exit
+) -> None:
     """Verify main handles AttributeError in project_urls parsing."""
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):
         mock_dist = MagicMock()
