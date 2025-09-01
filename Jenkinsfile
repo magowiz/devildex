@@ -202,7 +202,7 @@ pipeline {
                         withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
                                          string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
                             withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
-                                sh 'poetry build --format wheel --config virtualenvs.create=false --no-interaction --no-ansi --verbose --index-url $IP_INDEX_URL --trusted-host $IP_TRUSTED_HOST'
+                                sh 'poetry build --format wheel --no-interaction --no-ansi --verbose'
                             }
                         }
                     }
