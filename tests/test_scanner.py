@@ -240,7 +240,6 @@ def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
     # Arrange
     conf_content = "MY_APP_NAME = 'My Custom App'\nDEBUG_MODE = True"
     (tmp_path / "conf.py").write_text(conf_content)
-    # Act & Assert
     assert is_sphinx_project(str(tmp_path)) is False
 
 

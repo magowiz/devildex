@@ -446,7 +446,7 @@ def test_start_scan_effective_source_path_none(
     mock_fetch_repo,
     mock_orchestrator,
 ):
-    mock_orchestrator._effective_source_path = None  # Simulate fetch_repo returning True but _effective_source_path somehow being None
+    mock_orchestrator._effective_source_path = None
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "unknown"
     mock_is_sphinx_project.assert_not_called()

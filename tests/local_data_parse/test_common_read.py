@@ -180,7 +180,7 @@ def test_get_explicit_package_names_from_requirements_os_error(
 def test_get_explicit_package_names_from_requirements_unicode_error(
     mock_exists, mock_open, mock_logger_exception
 ) -> None:
-    """Verify get_explicit_package_names_from_requirements handles UnicodeDecodeError."""
+    """Verify get_explicit_package_names_from_requirements handle UnicodeDecodeError."""
     mock_open.side_effect = UnicodeDecodeError("utf-8", b"\x80", 0, 1, "invalid byte")
     result = get_explicit_package_names_from_requirements("/fake/reqs.txt")
     assert result == set()

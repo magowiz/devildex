@@ -14,7 +14,6 @@ ENV PATH="/opt/venv/bin:${PATH}"
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-
     libnotify-dev \
     libgtk-3-dev \
     libsdl2-dev \
@@ -32,7 +31,6 @@ RUN apt-get update && \
 # Install Poetry and Export Plugin
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3-pip pipx && \
-
     pipx install poetry && \
     /root/.local/bin/poetry self add poetry-plugin-export && \
     rm -rf /var/lib/apt/lists/*

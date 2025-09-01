@@ -22,7 +22,7 @@ class TestPackageSourceFetcherCoverage:
     BASE_SAVE_PATH = pathlib.Path("/tmp/dummy_path_for_class_level_evaluation")
 
     @pytest.fixture(autouse=True)
-    def setup_and_teardown_test_env(self, tmp_path):
+    def setup_and_teardown_test_env(self, tmp_path: pathlib.Path):
         self.BASE_SAVE_PATH = tmp_path / "devildex_test_output"
         self.BASE_SAVE_PATH.mkdir(parents=True, exist_ok=True)
 

@@ -21,7 +21,7 @@ from devildex.mkdocs.mkdocs_src import (
 
 
 # Helper function to create a dummy mkdocs.yml
-def create_mkdocs_yml(path: Path, content: dict = None):
+def create_mkdocs_yml(path: Path, content: dict | None = None):
     if content is None:
         content = {"site_name": "Test Site"}
     path.mkdir(parents=True, exist_ok=True)

@@ -1,3 +1,4 @@
+"""test main app ui module."""
 import unittest
 from unittest.mock import patch
 
@@ -37,8 +38,6 @@ class TestMainAppUI(unittest.TestCase):
     def tearDown(self):
         """Tear down the test environment."""
         self.patcher.stop()
-        # We need to be careful with the event loop and destroying frames.
-        # wx.CallAfter ensures that the frame is destroyed after the current event handler has completed.
         if self.frame:
             wx.CallAfter(self.frame.Destroy)
 
@@ -68,7 +67,7 @@ class TestMainAppUI(unittest.TestCase):
         )
 
     def test_grid_selection_enables_buttons(self):
-        """Test that selecting a row in the grid enables the appropriate action buttons."""
+        """Test that selecting a row in the grid enables the proper action buttons."""
         actions_panel = self.app.actions_panel
         self.assertIsNotNone(actions_panel, "Actions panel should exist")
 
@@ -161,12 +160,7 @@ class TestMainAppUI(unittest.TestCase):
         )
         wx.Yield()
 
-        # 3. Assert that start_generation_task was called on the mock
         self.mock_gen_task_manager_instance.start_generation_task.assert_called_once()
-
-        # Optionally, check arguments passed to start_generation_task
-        # The default data for the first package is {'id': 1, 'name': 'black', 'version': '24.4.2', 'description': 'N/A', 'docset_status': 'Not Available'}
-        # The row_index is 0, and docset_status_col_idx is 5 (from main.py COLUMNS_ORDER.index("docset_status") + 1)
         call_args, call_kwargs = (
             self.mock_gen_task_manager_instance.start_generation_task.call_args
         )
