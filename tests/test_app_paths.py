@@ -11,7 +11,8 @@ from devildex.app_paths import (
 )
 
 
-class TestAppPaths:  # Changed from unittest.TestCase
+class TestAppPaths:
+    """Test the AppPaths class."""
 
     @pytest.fixture(autouse=True)
     def setup_mocks(self, tmp_path):
@@ -37,8 +38,7 @@ class TestAppPaths:  # Changed from unittest.TestCase
         self.mock_platform_dirs_patch.stop()
 
     def test_init(self):
-        # Re-initialize AppPaths to test the __init__ arguments
-        # Assert on the MockPlatformDirs from setUp
+        """Test the initialization of AppPaths."""
         _ = AppPaths(app_name="TestApp", app_author="TestAuthor", version="1.0")
         self.MockPlatformDirs.assert_called_once_with(
             appname="TestApp", appauthor="TestAuthor", version="1.0"
@@ -85,12 +85,14 @@ class TestAppPaths:  # Changed from unittest.TestCase
         assert returned_path == expected_path
 
     def test_active_project_registry_dir(self):
+        """Test the active_project_registry_dir property."""
         returned_path = self.app_paths.active_project_registry_dir
         expected_path = self.tmp_path / "user_data" / ACTIVE_PROJECT_REGISTRY_SUBDIR
         assert returned_path == expected_path
         assert returned_path.is_dir()
 
-    def test_active_project_file(self):
+    def test_active_project_file(self) -> None:
+        """Test the active_project_file property."""
         returned_path = self.app_paths.active_project_file
         expected_path = (
             self.tmp_path

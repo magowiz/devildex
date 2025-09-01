@@ -635,7 +635,7 @@ def test_handle_repository_cloning_new_clone_success(
     if clone_dir_path_for_test.exists():
         shutil.rmtree(clone_dir_path_for_test)
 
-    def mock_clone_and_process_success(*args, **kwargs):
+    def mock_clone_and_process_success(*args, **kwargs) -> tuple[bool, str]:
         # args: repo_url, branch_to_try, clone_dir_path, bzr, project_slug
         mock_clone_dir_path = args[2]
         mock_clone_dir_path.mkdir(parents=True)  # Create the directory

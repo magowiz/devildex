@@ -6,14 +6,12 @@ from unittest.mock import patch
 import wx
 import wx.grid
 
-# It's crucial to have a wx.App instance for any UI testing.
-# We'll create one for the whole test suite if it doesn't exist.
+from devildex.core import DevilDexCore
+from devildex.main import DevilDexApp
+
 app = wx.GetApp()
 if app is None:
     app = wx.App(redirect=False)
-
-from devildex.core import DevilDexCore
-from devildex.main import DevilDexApp
 
 
 class TestMainAppUI(unittest.TestCase):
@@ -45,7 +43,7 @@ class TestMainAppUI(unittest.TestCase):
         # Process events to ensure cleanup is done
         wx.Yield()
 
-    def test_initial_state_and_title(self):
+    def test_initial_state_and_title(self) -> None:
         """Test the initial state of the main window."""
         self.assertIsNotNone(self.frame, "Main frame should be created")
         self.assertTrue(self.frame.IsShown(), "Main frame should be visible")

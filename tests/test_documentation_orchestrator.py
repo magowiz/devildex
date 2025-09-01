@@ -10,6 +10,7 @@ from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 @pytest.fixture
 def mock_package_details():
+    """Mock PackageDetails for testing."""
     return PackageDetails(
         name="test_package",
         version="1.0.0",

@@ -1,3 +1,4 @@
+"""test mkdocs src module."""
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -20,7 +21,6 @@ from devildex.mkdocs.mkdocs_src import (
 )
 
 
-# Helper function to create a dummy mkdocs.yml
 def create_mkdocs_yml(path: Path, content: dict | None = None):
     if content is None:
         content = {"site_name": "Test Site"}
@@ -28,7 +28,6 @@ def create_mkdocs_yml(path: Path, content: dict | None = None):
     (path / "mkdocs.yml").write_text(yaml.dump(content))
 
 
-# --- Tests for _find_mkdocs_config_file ---
 
 
 def test_find_mkdocs_config_file_at_root(tmp_path: Path):
@@ -321,7 +320,7 @@ def test_extract_names_from_config_list_of_strings():
     assert _extract_names_from_config_list_or_dict(config) == ["plugin1", "plugin2"]
 
 
-def test_extract_names_from_config_list_of_dicts():
+def test_extract_names_from_config_list_of_dicts() -> None:
     """Should extract names from a list of dictionaries."""
     config = [{"plugin1": {"opt": "val"}}, {"plugin2": {}}]
     assert _extract_names_from_config_list_or_dict(config) == ["plugin1", "plugin2"]
@@ -453,7 +452,7 @@ def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path):
     )  # Check for any JS file in the js directory
 
 
-def test_process_mkdocs_source_and_build_integration_success(tmp_path: Path):
+def test_process_mkdocs_source_and_build_integration_success(tmp_path: Path) -> None:
     """Should successfully process and build a dummy mkdocs project."""
     source_project_path = tmp_path / "source_project"
     source_project_path.mkdir()

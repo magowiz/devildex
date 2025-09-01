@@ -17,8 +17,8 @@ DUMMY_PACKAGE_INFO = {"name": "test_package", "version": "1.0.0"}
 
 
 class TestPackageSourceFetcherCoverage:
-    # Define BASE_SAVE_PATH as a class variable, initialized to a dummy value
-    # It will be updated by the fixture
+    """Class that test PackageSourceFetcher coverage."""
+
     BASE_SAVE_PATH = pathlib.Path("/tmp/dummy_path_for_class_level_evaluation")
 
     @pytest.fixture(autouse=True)
@@ -304,7 +304,6 @@ class TestPackageSourceFetcherCoverage:
     ):
         result = PackageSourceFetcher._run_git_command(["git", "clone", "url"])
         assert result is None
-        # No warning logged because check_errors is True by default, and exception is caught
         mock_logger.warning.assert_not_called()
 
     @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
@@ -345,7 +344,6 @@ class TestPackageSourceFetcherCoverage:
         git_file.touch()  # Create as a file
         assert not PackageSourceFetcher._cleanup_git_dir_from_path(self.BASE_SAVE_PATH)
 
-    # Test for _fetch_from_pypi (lines 411, 420, 422)
     @patch("requests.get")
     def test_fetch_from_pypi_no_sdist_url(self, mock_requests_get):
         mock_response = MagicMock()
@@ -361,6 +359,7 @@ class TestPackageSourceFetcherCoverage:
 
     @patch("requests.get")
     def test_fetch_from_pypi_json_decode_error(self, mock_requests_get):
+        """Test fetch from pypi when JSON decoding fails."""
         mock_response = MagicMock()
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_requests_get.return_value = mock_response
