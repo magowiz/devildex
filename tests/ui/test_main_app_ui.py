@@ -1,4 +1,5 @@
 """test main app ui module."""
+
 import unittest
 from unittest.mock import patch
 
