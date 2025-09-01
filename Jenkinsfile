@@ -20,40 +20,7 @@ pipeline {
                 }
             }
         }
-        stage('Build Python Wheel') {
-            agent {
-                dockerfile {
-                    filename 'Dockerfile'
-                    args '-u root'
-                    label 'amd64'
-                    reuseNode true
-                }
-            }
-            steps {
-                script {
-                    echo '--- Starting Python Wheel Build ---'
-                    withPythonEnv('python3.13') {
-                        withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
-                                         string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
-                            withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
-                                sh 'poetry build --format wheel --no-interaction --no-ansi --verbose'
-                            }
-                        }
-                    }
-                    echo '--- Python Wheel Build Finished ---'
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'dist/*.whl', followSymlinks: false, allowEmptyArchive: false
-                    cleanWs()
-                }
-                failure {
-                    echo 'Python Wheel Build Failed'
-                    cleanWs()
-                }
-            }
-        }
+
         stage('Build Docker Image') {
             agent any
             steps {
@@ -220,7 +187,40 @@ pipeline {
                 }
             }
         }
-
+        stage('Build Python Wheel') {
+            agent {
+                dockerfile {
+                    filename 'Dockerfile'
+                    args '-u root'
+                    label 'amd64'
+                    reuseNode true
+                }
+            }
+            steps {
+                script {
+                    echo '--- Starting Python Wheel Build ---'
+                    withPythonEnv('python3.13') {
+                        withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                                         string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
+                            withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
+                                sh 'poetry build --format wheel --no-interaction --no-ansi --verbose'
+                            }
+                        }
+                    }
+                    echo '--- Python Wheel Build Finished ---'
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'dist/*.whl', followSymlinks: false, allowEmptyArchive: false
+                    cleanWs()
+                }
+                failure {
+                    echo 'Python Wheel Build Failed'
+                    cleanWs()
+                }
+            }
+        }
         stage('Build Packages Multi-Arch') {
             when {
                 expression { false }
