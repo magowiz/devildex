@@ -151,7 +151,7 @@ class TestPackageSourceFetcherCoverage:
 
     # Test for _move_extracted_content (line 286)
     @patch("src.devildex.fetcher.shutil.move")
-    def test_move_extracted_content_os_error(self, mock_shutil_move) ->None:
+    def test_move_extracted_content_os_error(self, mock_shutil_move) -> None:
         """Test move extracted content raises exception."""
         mock_shutil_move.side_effect = OSError("Permission denied")
         source_dir = self.BASE_SAVE_PATH / "source"

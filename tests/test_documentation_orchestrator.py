@@ -1,4 +1,5 @@
 """test documentation_orchestrator."""
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -21,7 +22,9 @@ def mock_package_details() -> PackageDetails:
 
 
 @pytest.fixture
-def mock_orchestrator(mock_package_details: PackageDetails, tmp_path: Path) -> Orchestrator:
+def mock_orchestrator(
+    mock_package_details: PackageDetails, tmp_path: Path
+) -> Orchestrator:
     """Mock Orchestrator for testing."""
     return Orchestrator(
         package_details=mock_package_details, base_output_dir=tmp_path / "docset_output"
