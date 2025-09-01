@@ -267,7 +267,7 @@ def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
 def test_ensure_registered_project_and_association_value_error(
     db_session: Session, caplog
 ) -> None:
-    """Check _ensure_registered_project_and_association raise ValueError for no proj details."""
+    """Check _ensure_registered_project_and_association raise ValueError if no proj details."""
     # Arrange
     pkg_info = database.PackageInfo(package_name="test_pkg")
     docset = database.Docset(

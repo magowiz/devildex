@@ -1,5 +1,5 @@
 """test app path."""
-
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -15,7 +15,8 @@ class TestAppPaths:
     """Test the AppPaths class."""
 
     @pytest.fixture(autouse=True)
-    def setup_mocks(self, tmp_path):
+    def setup_mocks(self, tmp_path: Path) -> None:
+        """Setup mocks for AppPaths."""
         self.tmp_path = tmp_path
         # Patch platformdirs.PlatformDirs
         self.mock_platform_dirs_patch = patch("platformdirs.PlatformDirs")
@@ -44,7 +45,8 @@ class TestAppPaths:
             appname="TestApp", appauthor="TestAuthor", version="1.0"
         )
 
-    def test_user_data_dir(self):
+    def test_user_data_dir(self) -> None:
+        """Test the user_data_dir property."""
         returned_path = self.app_paths.user_data_dir
         expected_path = self.tmp_path / "user_data"
         assert returned_path == expected_path
@@ -74,12 +76,14 @@ class TestAppPaths:
         assert returned_path == expected_path
         assert returned_path.is_dir()
 
-    def test_database_path(self):
+    def test_database_path(self) -> None:
+        """Test the database_path property."""
         returned_path = self.app_paths.database_path
         expected_path = self.tmp_path / "user_data" / "devildex.db"
         assert returned_path == expected_path
 
-    def test_settings_file_path(self):
+    def test_settings_file_path(self) -> None:
+        """Test the settings_file_path property."""
         returned_path = self.app_paths.settings_file_path
         expected_path = self.tmp_path / "user_config" / "settings.toml"
         assert returned_path == expected_path

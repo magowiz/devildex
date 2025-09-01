@@ -29,19 +29,17 @@ class TestPackageSourceFetcherCoverage:
     # Test cases for _is_path_safe (line 161)
     @patch("src.devildex.fetcher.Path.resolve")
     def test_is_path_safe_raises_exception(self, mock_resolve):
+        """Test is path safe raises exception."""
         mock_resolve.side_effect = OSError("Permission denied")
         base_path = pathlib.Path("/safe")
         target_path = pathlib.Path("/unsafe")
         assert PackageSourceFetcher._is_path_safe(base_path, target_path) is False
 
     # Test cases for _extract_zip_safely (lines 190, 202)
-    def test_extract_zip_safely_unsafe_member_name(self):
-        # Create a dummy zip file with an unsafe member name
+    def test_extract_zip_safely_unsafe_member_name(self) -> None:
+        """Test extract zip safely."""
         zip_path = self.BASE_SAVE_PATH / "unsafe.zip"
         with zipfile.ZipFile(zip_path, "w") as zf:
-            # Simulate an unsafe member name (e.g., path traversal)
-            # zipfile.ZipFile.writestr does not allow '..' in name directly,
-            # so we simulate the check failing by mocking _is_member_name_safe
             zf.writestr("safe_file.txt", "content")
 
         with patch(
@@ -153,7 +151,8 @@ class TestPackageSourceFetcherCoverage:
 
     # Test for _move_extracted_content (line 286)
     @patch("src.devildex.fetcher.shutil.move")
-    def test_move_extracted_content_os_error(self, mock_shutil_move):
+    def test_move_extracted_content_os_error(self, mock_shutil_move) ->None:
+        """Test move extracted content raises exception."""
         mock_shutil_move.side_effect = OSError("Permission denied")
         source_dir = self.BASE_SAVE_PATH / "source"
         source_dir.mkdir()
@@ -217,6 +216,7 @@ class TestPackageSourceFetcherCoverage:
     def test_download_and_extract_archive_determine_content_fails(
         self, mock_determine_content_source_dir, mock_extract_archive
     ):
+        """Test download and extract archive determine content fails."""
         fetcher = PackageSourceFetcher(self.BASE_SAVE_PATH, DUMMY_PACKAGE_INFO)
         assert not fetcher._download_and_extract_archive(
             "http://example.com/archive.zip",
@@ -256,7 +256,8 @@ class TestPackageSourceFetcherCoverage:
 
     # Test for _run_git_command (lines 355, 359, 369, 374, 378, 382, 385)
     @patch("src.devildex.fetcher.shutil.which", return_value=None)
-    def test_run_git_command_git_not_found(self, mock_which):
+    def test_run_git_command_git_not_found(self, mock_which) -> None:
+        """Test run git command when git is not found."""
         assert PackageSourceFetcher._run_git_command(["git", "clone", "url"]) is None
 
     @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
@@ -324,7 +325,8 @@ class TestPackageSourceFetcherCoverage:
     @patch("src.devildex.fetcher.logger")
     def test_run_git_command_stderr_info_logged(
         self, mock_logger, mock_subprocess_run, mock_which
-    ):
+    ) -> None:
+        """Test run git command stderr info logged."""
         mock_process = MagicMock(stdout="some info", stderr="some info", returncode=0)
         mock_subprocess_run.return_value = mock_process
         PackageSourceFetcher._run_git_command(["git", "status"])
@@ -339,9 +341,10 @@ class TestPackageSourceFetcherCoverage:
         git_dir.mkdir()
         assert not PackageSourceFetcher._cleanup_git_dir_from_path(self.BASE_SAVE_PATH)
 
-    def test_cleanup_git_dir_from_path_git_is_file(self):
+    def test_cleanup_git_dir_from_path_git_is_file(self) -> None:
+        """Test cleanup git dir from path when .git is a file."""
         git_file = self.BASE_SAVE_PATH / ".git"
-        git_file.touch()  # Create as a file
+        git_file.touch()
         assert not PackageSourceFetcher._cleanup_git_dir_from_path(self.BASE_SAVE_PATH)
 
     @patch("requests.get")
@@ -559,6 +562,7 @@ class TestPackageSourceFetcherCoverage:
     def test_fetch_all_methods_fail_cleanup_called(
         self, mock_cleanup_target_dir_content, mock_get_vcs_url, mock_fetch_from_pypi
     ):
+        """Test fetch all methods fail and cleanup called."""
         fetcher = PackageSourceFetcher(self.BASE_SAVE_PATH, DUMMY_PACKAGE_INFO)
         success, is_master, path_str = fetcher.fetch()
         assert not success
@@ -566,7 +570,6 @@ class TestPackageSourceFetcherCoverage:
         assert path_str is None
         mock_cleanup_target_dir_content.assert_called_once()
 
-    # Test for _pprint_ (line 680) - this is a helper, not part of the class
     @patch("src.devildex.fetcher.logger")
     def test_pprint_function_logs_json(self, mock_logger):
         from src.devildex.fetcher import _pprint_  # Import directly for testing

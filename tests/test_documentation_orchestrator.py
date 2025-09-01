@@ -1,5 +1,5 @@
 """test documentation_orchestrator."""
-
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -9,7 +9,8 @@ from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 
 @pytest.fixture
-def mock_package_details():
+def mock_package_details() -> PackageDetails:
+    """Mock PackageDetails for testing."""
     """Mock PackageDetails for testing."""
     return PackageDetails(
         name="test_package",
@@ -20,7 +21,8 @@ def mock_package_details():
 
 
 @pytest.fixture
-def mock_orchestrator(mock_package_details, tmp_path):
+def mock_orchestrator(mock_package_details: PackageDetails, tmp_path: Path) -> Orchestrator:
+    """Mock Orchestrator for testing."""
     return Orchestrator(
         package_details=mock_package_details, base_output_dir=tmp_path / "docset_output"
     )
@@ -50,7 +52,7 @@ def test_orchestrator_init(mock_package_details, tmp_path):
 def test_fetch_repo_initial_path_exists(
     mock_package_details, mock_orchestrator, tmp_path, mocker
 ):
-    # Create a real directory for initial_source_path
+    """Test fetch repo initial path exists."""
     initial_source_path = tmp_path / "initial_source"
     initial_source_path.mkdir()
     mock_package_details.initial_source_path = str(initial_source_path)
@@ -88,8 +90,8 @@ def test_fetch_repo_initial_path_does_not_exist(
 
 def test_fetch_repo_initial_path_not_a_directory(
     mock_package_details, mock_orchestrator, tmp_path, mocker
-):
-    # Create a real file for initial_source_path (not a directory)
+) -> None:
+    """Test fetch repo initial path is not a directory."""
     initial_source_path = tmp_path / "not_a_dir.txt"
     initial_source_path.touch()
     mock_package_details.initial_source_path = str(initial_source_path)
@@ -116,10 +118,10 @@ def test_fetch_repo_initial_path_not_a_directory(
 
 def test_fetch_repo_no_initial_path_fetch_succeeds(
     mock_package_details, mock_orchestrator, tmp_path, mocker
-):
+) -> None:
+    """Test fetch repo no initial path fetch succeeds."""
     mock_package_details.initial_source_path = None
 
-    # Create the actual fetched directory
     actual_fetched_path = tmp_path / "fetched_source"
     actual_fetched_path.mkdir()
 
@@ -173,7 +175,8 @@ def test_fetch_repo_fetch_raises_os_error(
 
 def test_fetch_repo_fetch_raises_runtime_error(
     mock_package_details, mock_orchestrator, mocker
-):
+) -> None:
+    """Test fetch repo fetch raises RuntimeError."""
     mock_package_details.initial_source_path = None
 
     # Mock PackageSourceFetcher.fetch to raise RuntimeError
@@ -192,7 +195,8 @@ def test_fetch_repo_fetch_raises_runtime_error(
 @patch("devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher")
 def test_internal_fetch_repo_fetch_success(
     mock_fetcher_class, mock_orchestrator, tmp_path
-):
+) -> None:
+    """Test internal fetch repo fetch success."""
     mock_fetcher_instance = mock_fetcher_class.return_value
     mock_fetcher_instance.fetch.return_value = (
         True,
@@ -245,7 +249,8 @@ def test_internal_fetch_repo_fetch_failure(
 @patch("devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher")
 def test_internal_fetch_repo_fetch_raises_os_error(
     mock_fetcher_class, mock_orchestrator, tmp_path
-):
+) -> None:
+    """Test internal fetch repo fetch raises OSError."""
     mock_fetcher_instance = mock_fetcher_class.return_value
     mock_fetcher_instance.fetch.side_effect = OSError("Disk full")
 
@@ -384,6 +389,7 @@ def test_start_scan_detects_docstrings(
     mock_orchestrator,
     tmp_path,
 ):
+    """Test start_scan detects docstrings."""
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "docstrings"
@@ -447,6 +453,7 @@ def test_start_scan_effective_source_path_none(
     mock_fetch_repo,
     mock_orchestrator,
 ):
+    """Test start_scan with no effective source path."""
     mock_orchestrator._effective_source_path = None
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "unknown"
@@ -573,7 +580,8 @@ def test_interpret_tuple_res_string():
     assert result == "some_string"
 
 
-def test_interpret_tuple_res_tuple_true():
+def test_interpret_tuple_res_tuple_true() -> None:
+    """Test interpret tuple res tuple true."""
     result = Orchestrator._interpret_tuple_res(("path/to/doc", True))
     assert result == "path/to/doc"
 

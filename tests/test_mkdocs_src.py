@@ -167,7 +167,7 @@ def test_add_callouts_to_plugins_if_missing_already_present_str():
     assert added is False
 
 
-def test_add_callouts_to_plugins_if_missing_already_present_dict():
+def test_add_callouts_to_plugins_if_missing_already_present_dict() -> None:
     """Should not add if callouts (dict) is already present."""
     plugins = ["search", {"callouts": {}}]
     updated, added = _add_callouts_to_plugins_if_missing(plugins, {"callouts": {}})
@@ -403,7 +403,7 @@ def test_get_plugin_packages_to_install_none_configs():
     assert _get_plugin_packages_to_install(None, None) == []
 
 
-def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path):
+def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path) -> None:
     """Should successfully execute mkdocs build within a venv."""
     # Use a fixed output directory for easier debugging
     fixed_output_dir = tmp_path / "mkdocs_test_output"

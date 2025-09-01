@@ -12,8 +12,6 @@ from devildex.local_data_parse import _external_scanner_script as scanner_script
 @patch("importlib.metadata.distributions")
 def test_main_success(mock_distributions, mock_write_json, mock_exit) -> None:
     """Verify that the main function generates correct JSON and exits cleanly."""
-    # Arrange
-    # Mock sys.argv to simulate command-line arguments
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):
 
         # Mock for 'requests'
