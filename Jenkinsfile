@@ -20,7 +20,16 @@ pipeline {
                 }
             }
         }
-        steps {
+        stage('Build Python Wheel') {
+            agent {
+                dockerfile {
+                    filename 'Dockerfile'
+                    args '-u root'
+                    label 'amd64'
+                    reuseNode true
+                }
+            }
+            steps {
                 script {
                     echo '--- Starting Python Wheel Build ---'
                     withPythonEnv('python3.13') {
@@ -211,15 +220,6 @@ pipeline {
                 }
             }
         }
-        stage('Build Python Wheel') {
-            agent {
-                dockerfile {
-                    filename 'Dockerfile'
-                    args '-u root'
-                    label 'amd64'
-                    reuseNode true
-                }
-            }
 
         stage('Build Packages Multi-Arch') {
             when {
