@@ -483,7 +483,7 @@ def test_run_clone_failed_critical_prepare_dir(mocker, tmp_path: Path, caplog) -
 def test_run_clone_failed_critical_vcs_not_found_exec(
     mocker, tmp_path: Path, caplog
 ) -> None:
-    """Verify run_clone handles critical failure when VCS executable not found during execution."""
+    """Verify run_clone handles crit failure when VCS exe not found during execution."""
     mocker.patch(
         "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
         return_value=["main"],

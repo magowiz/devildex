@@ -1,4 +1,5 @@
 """test mkdocs src module."""
+
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -17,7 +18,7 @@ from devildex.mkdocs.mkdocs_src import (
     _parse_mkdocs_config,
     _prepare_mkdocs_output_directory,
     _preprocess_mkdocs_config,
-    process_mkdocs_source_and_build,  # Added for the new test
+    process_mkdocs_source_and_build,
 )
 
 
@@ -26,8 +27,6 @@ def create_mkdocs_yml(path: Path, content: dict | None = None):
         content = {"site_name": "Test Site"}
     path.mkdir(parents=True, exist_ok=True)
     (path / "mkdocs.yml").write_text(yaml.dump(content))
-
-
 
 
 def test_find_mkdocs_config_file_at_root(tmp_path: Path):
