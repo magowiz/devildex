@@ -15,21 +15,15 @@ dependencies = [
     "platformdirs (>=3.0.0,<5.0.0)",
     "poetry-core (>=2.0.0,<3.0.0)",
     "sqlalchemy (>=2.0.41,<3.0.0)",
-    "wxpython (>=4.2.3,<5.0.0)",
     "pyyaml (>=6.0.2,<7.0.0)",
     "pydoctor (>=25.4.0,<26.0.0)",
+    "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
 ]
-
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.packaging.dependencies]
 cx-freeze = "^8.4.0"
 nuitka = "^2.7.12"
 pyoxidizer = "^0.24.0"
-
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.4.1"
@@ -42,13 +36,11 @@ typeguard = "^4.4.4"
 requests = "^2.32.5"
 pytest-mock = "^3.14.1"
 
-
 [tool.poetry.group.doc.dependencies]
 sphinx = "^8.2.3"
 myst-parser = "^4.0.1"
 sphinxcontrib-programoutput = "^0.18"
 sphinx-copybutton = "^0.5.2"
-
 
 [tool.poetry.group.lint.dependencies]
 ruff = "^0.12.10"
@@ -58,3 +50,6 @@ black = "^25.1.0"
 devildex = "devildex.main:main"
 devildex-register-project = "devildex.utils.companion:main"
 
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
