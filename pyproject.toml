@@ -18,7 +18,7 @@ dependencies = [
     "pyyaml (>=6.0.2,<7.0.0)",
     "pydoctor (>=25.4.0,<26.0.0)",
     "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl",
-    "fastmcp (>=2.12.2,<3.0.0)"
+    "fastmcp (>=2.12.2,<3.0.0)",
 ]
 
 [tool.poetry.group.packaging.dependencies]
@@ -36,6 +36,7 @@ pytest-anyio = "^0.0.0"
 typeguard = "^4.4.4"
 requests = "^2.32.5"
 pytest-mock = "^3.14.1"
+pytest-asyncio = "^1.1.0"
 
 [tool.poetry.group.doc.dependencies]
 sphinx = "^8.2.3"
