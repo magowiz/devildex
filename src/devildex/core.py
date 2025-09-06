@@ -354,6 +354,23 @@ class DevilDexCore:
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
 
+    def get_all_docsets_info(self) -> list[dict[str, Any]]:
+        """Retrieve information for all docsets from the database."""
+        with database.get_session() as session:
+            docsets = session.scalars(select(database.Docset)).all()
+            return [{"name": d.package_name, "version": d.package_version, "status": d.status} for d in docsets]
+
+    def get_docsets_info_for_project(self, project_name: str) -> list[dict[str, Any]]:
+        """Retrieve information for docsets associated with a specific project."""
+        with database.get_session() as session:
+            # Query Docset objects associated with the given project_name
+            docsets = session.scalars(
+                select(database.Docset)
+                .join(database.Docset.associated_projects)
+                .where(database.RegisteredProject.project_name == project_name)
+            ).all()
+            return [{"name": d.package_name, "version": d.package_version, "status": d.status} for d in docsets]
+
     def generate_docset(self, package_data: dict) -> tuple[bool, str]:
         """Generate a docset using Orchestrator.
 
