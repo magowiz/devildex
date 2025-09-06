@@ -20,3 +20,4 @@ coverage_reports/
 
 # IDE files
 .idea/coverage_reports/
+gemini/
