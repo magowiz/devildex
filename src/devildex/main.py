@@ -1,4 +1,4 @@
-"main application."
+"""main application."""
 
 import logging
 from pathlib import Path
@@ -160,7 +160,7 @@ class DevilDexApp(wx.App):
     def _display_mcp_warning_in_gui(self) -> None:
         """Display a warning message box for the MCP server in GUI mode."""
         wx.MessageBox(
-            "The MCP server is currently experimental in all modes (GUI and headless).\n\n" 
+            "The MCP server is currently experimental in all modes (GUI and headless).\n\n"
             "It has limited functionality and is primarily for development and testing.",
             "MCP Server: Experimental",
             wx.OK | wx.ICON_INFORMATION,
@@ -173,12 +173,11 @@ class DevilDexApp(wx.App):
             f"GUI: Core failed to delete docset for '{package_name}'. Reason: {message}"
         )
         wx.MessageBox(
-            f"Could not delete the docset for '{package_name}'.\n\n" 
+            f"Could not delete the docset for '{package_name}'.\n\n"
             f"Reason: {message}",
             "Deletion Failed",
             wx.OK | wx.ICON_ERROR,
         )
-
 
     @staticmethod
     def matching_docset(pkg: str, grid_pkg: dict) -> bool:
@@ -331,16 +330,15 @@ class DevilDexApp(wx.App):
 
         # --- Start of refactored view setup ---
         # Create all main view components once
-        # view_mode_sizer = self._setup_view_mode_selector(self.panel) # Moved to _initialize_data_and_managers
-        # self.main_panel_sizer.Add(
-        #     view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-        # )
+        view_mode_sizer = self._setup_view_mode_selector(self.panel)
+        self.main_panel_sizer.Add(
+            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        )
 
         self._init_splitter_components(self.panel)  # This creates self.splitter
         if self.splitter:
             self.main_panel_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
 
-        # Create the document view panel once and hide it
         self.document_view_panel = DocumentViewPanel(self.panel, self.go_home)
         self.main_panel_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
         self.document_view_panel.Hide()
@@ -908,6 +906,7 @@ class DevilDexApp(wx.App):
         if sel_data and not self.is_log_panel_visible:
             self._set_log_panel_visibility(True)
         event.Skip()
+
     def on_delete_docset(self, event: wx.CommandEvent | None) -> None:
         """Handle delete docset action by delegating to the core."""
         try:
@@ -931,7 +930,9 @@ class DevilDexApp(wx.App):
 
             if not self.core:
                 wx.MessageBox(
-                    "Core system not available.", INTERNAL_ERROR_MSG, wx.OK | wx.ICON_ERROR
+                    "Core system not available.",
+                    INTERNAL_ERROR_MSG,
+                    wx.OK | wx.ICON_ERROR,
                 )
                 return
 
@@ -1022,17 +1023,11 @@ class DevilDexApp(wx.App):
             on_task_complete_callback=self._on_generation_complete_from_manager,
             update_action_buttons_callback=self._update_action_buttons_state,
         )
-        self.update_grid_data() # Call update_grid_data here after data is loaded
+        self.update_grid_data()  # Call update_grid_data here after data is loaded
 
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
-
-        # Add the view mode selector setup here
-        view_mode_sizer = self._setup_view_mode_selector(self.panel)
-        self.main_panel_sizer.Add(
-            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-        )
 
     def _clear_main_panel(self) -> None:
         pass
@@ -1085,7 +1080,9 @@ class DevilDexApp(wx.App):
 
 
 import time
+
 from devildex.config_manager import ConfigManager
+
 
 def main() -> None:
     """Launch whole application."""
@@ -1104,18 +1101,20 @@ def main() -> None:
             core.shutdown()
             print("Server shut down.")
     else:
-        app = DevilDexApp() # Create app instance first
-        
+        app = DevilDexApp()  # Create app instance first
+
         # Determine if GUI warning callback should be passed
         warning_callback = None
-        if mcp_enabled and not hide_gui: # Only pass if MCP is enabled AND GUI is not hidden
+        if (
+            mcp_enabled and not hide_gui
+        ):  # Only pass if MCP is enabled AND GUI is not hidden
             warning_callback = app._display_mcp_warning_in_gui
 
         # Create core instance, passing the callback if applicable
         core = DevilDexCore(gui_warning_callback=warning_callback)
 
-        app.core = core # Set app.core before MainLoop()
-        app._initialize_data_and_managers() # Call the new initialization method
+        app.core = core  # Set app.core before MainLoop()
+        app._initialize_data_and_managers()  # Call the new initialization method
         app.MainLoop()
 
 
