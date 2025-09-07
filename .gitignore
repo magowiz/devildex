@@ -21,3 +21,6 @@ coverage_reports/
 # IDE files
 .idea/coverage_reports/
 gemini/
+tools/
+.env
+git_push_all.sh
