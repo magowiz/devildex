@@ -29,12 +29,13 @@ class DevilDexMcp:
             cls._instance = super(DevilDexMcp, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, enabled: bool = False, core_instance: Any = None) -> None:
+    def __init__(self, enabled: bool = False, core_instance: Any = None, port: int = 8001) -> None:
         """Implement MCP server."""
         # Only initialize if it's the first time
         if not hasattr(self, "_initialized"):
             self.enabled = enabled
             self.core = core_instance  # Store the DevilDexCore instance
+            self.port = port # Store the port
             self._initialized = True  # Mark as initialized
 
     def _fetch_all_projects_docset(self) -> list[str]:
@@ -70,7 +71,7 @@ class DevilDexMcp:
     def run(self) -> None:
         """Start server if enabled."""
         if self.enabled:
-            mcp.run(transport="http", host="0.0.0.0", port=8001, path="/mcp")
+            mcp.run(transport="http", host="0.0.0.0", port=self.port, path="/mcp")
 
 
 
@@ -94,8 +95,12 @@ if __name__ == "__main__":
     import os # Add import for os
     from devildex import database # Add import for database
 
+    from devildex.config_manager import ConfigManager # Import ConfigManager
+    config = ConfigManager() # Get config instance
+    mcp_port = config.get_mcp_server_port() # Get port from config
+
     db_url = os.getenv("DEVILDEX_MCP_DB_URL", None) # Get DB URL from environment variable
     standalone_core = DevilDexCore(database_url=db_url) # Pass DB URL to DevilDexCore
     database.init_db(database_url=db_url) # Explicitly initialize the database for the server
-    dd_mcp_instance = DevilDexMcp(enabled=True, core_instance=standalone_core)
+    dd_mcp_instance = DevilDexMcp(enabled=True, core_instance=standalone_core, port=mcp_port) # Pass port
     dd_mcp_instance.run()
