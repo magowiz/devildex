@@ -39,7 +39,7 @@ class TestAppPaths:
 
         self.mock_platform_dirs_patch.stop()
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test the initialization of AppPaths."""
         _ = AppPaths(app_name="TestApp", app_author="TestAuthor", version="1.0")
         self.MockPlatformDirs.assert_called_once_with(
@@ -53,25 +53,25 @@ class TestAppPaths:
         assert returned_path == expected_path
         assert returned_path.is_dir()  # Check if directory was created
 
-    def test_user_config_dir(self):
+    def test_user_config_dir(self) -> None:
         returned_path = self.app_paths.user_config_dir
         expected_path = self.tmp_path / "user_config"
         assert returned_path == expected_path
         assert returned_path.is_dir()
 
-    def test_user_cache_dir(self):
+    def test_user_cache_dir(self) -> None:
         returned_path = self.app_paths.user_cache_dir
         expected_path = self.tmp_path / "user_cache"
         assert returned_path == expected_path
         assert returned_path.is_dir()
 
-    def test_user_log_dir(self):
+    def test_user_log_dir(self) -> None:
         returned_path = self.app_paths.user_log_dir
         expected_path = self.tmp_path / "user_log"
         assert returned_path == expected_path
         assert returned_path.is_dir()
 
-    def test_docsets_base_dir(self):
+    def test_docsets_base_dir(self) -> None:
         returned_path = self.app_paths.docsets_base_dir
         expected_path = self.tmp_path / "user_data" / "docsets"
         assert returned_path == expected_path
@@ -89,7 +89,7 @@ class TestAppPaths:
         expected_path = self.tmp_path / "user_config" / "settings.toml"
         assert returned_path == expected_path
 
-    def test_active_project_registry_dir(self):
+    def test_active_project_registry_dir(self) -> None:
         """Test the active_project_registry_dir property."""
         returned_path = self.app_paths.active_project_registry_dir
         expected_path = self.tmp_path / "user_data" / ACTIVE_PROJECT_REGISTRY_SUBDIR

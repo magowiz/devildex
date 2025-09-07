@@ -1,24 +1,24 @@
+import os  # Import os
+import subprocess  # Import subprocess
+import tempfile  # Import tempfile
+import time  # Import time
+from pathlib import Path  # Import Path
+
 import pytest
-import pytest_asyncio
 from fastmcp import Client
+
 from devildex import database
 from devildex.core import DevilDexCore
-from devildex.database import Docset, PackageInfo, RegisteredProject # Import necessary models
-from sqlalchemy.orm import Session # Import Session
-import subprocess # Import subprocess
-import time # Import time
-import os # Import os
-import tempfile # Import tempfile
-from pathlib import Path # Import Path
+from devildex.database import (  # Import necessary models
+    Docset,
+    PackageInfo,
+    RegisteredProject,
+)
 
-# We will assume the server is running on http://127.0.0.1:8001
-# You need to start the server (src/devildex/mcp_server/server.py)
-# in a separate terminal before running these tests.
 
 @pytest.fixture(scope="module")
 def mcp_server_with_populated_db():
-    """
-    Fixture to set up an in-memory SQLite database, populate it,
+    """Fixture to set up an in-memory SQLite database, populate it,
     and yield a DevilDexCore instance initialized with it.
     """
     # Use a temporary file for the SQLite database
@@ -26,8 +26,8 @@ def mcp_server_with_populated_db():
     temp_db_file.close() # Close the file handle, but keep the file
     db_url = f"sqlite:///{temp_db_file.name}"
 
-    database.init_db(db_url) # Initialize the database
-    core_instance = DevilDexCore(database_url=db_url) # Initialize DevilDexCore with in-memory DB
+    database.init_db(db_url)
+    core_instance = DevilDexCore(database_url=db_url)
 
     # Populate the database with known data
     with database.get_session() as session:
@@ -40,7 +40,6 @@ def mcp_server_with_populated_db():
         session.add(project1)
         session.commit()
 
-        # Add PackageInfo and Docset for "requests"
         pkg_info_requests = PackageInfo(package_name="requests", summary="HTTP for Humans.")
         docset_requests = Docset(
             package_name="requests", package_version="2.25.1", status="available", package_info=pkg_info_requests
@@ -132,8 +131,7 @@ def mcp_server_with_populated_db():
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_all_projects(mcp_server_with_populated_db: DevilDexCore) -> None:
-    """
-    Tests the 'get_docsets_list' tool with all_projects=True.
+    """Tests the 'get_docsets_list' tool with all_projects=True.
     """
     # The server under test (src/devildex/mcp_server/server.py) will use the
     # DevilDexCore instance provided by this fixture.
@@ -165,8 +163,7 @@ async def test_get_docsets_list_all_projects(mcp_server_with_populated_db: Devil
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_by_project(mcp_server_with_populated_db: DevilDexCore) -> None:
-    """
-    Tests the 'get_docsets_list' tool with a specific project.
+    """Tests the 'get_docsets_list' tool with a specific project.
     """
     config = {
         "mcpServers": {
@@ -187,8 +184,7 @@ async def test_get_docsets_list_by_project(mcp_server_with_populated_db: DevilDe
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_invalid_params(mcp_server_with_populated_db: DevilDexCore) -> None:
-    """
-    Tests the 'get_docsets_list' tool with invalid parameters (neither project nor all_projects).
+    """Tests the 'get_docsets_list' tool with invalid parameters (neither project nor all_projects).
     """
     config = {
         "mcpServers": {

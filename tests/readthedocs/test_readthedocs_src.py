@@ -673,7 +673,7 @@ def test_handle_repository_cloning_new_clone_failure(
     if clone_dir_path_for_test.exists():
         shutil.rmtree(clone_dir_path_for_test)
 
-    def mock_clone_and_process_failure(*args, **kwargs):
+    def mock_clone_and_process_failure(*args, **kwargs) -> tuple[bool, str]:
         return False, "main"
 
     mock_attempt_clone_and_process_result = mocker.patch(

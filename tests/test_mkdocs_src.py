@@ -22,27 +22,27 @@ from devildex.mkdocs.mkdocs_src import (
 )
 
 
-def create_mkdocs_yml(path: Path, content: dict | None = None):
+def create_mkdocs_yml(path: Path, content: dict | None = None) -> None:
     if content is None:
         content = {"site_name": "Test Site"}
     path.mkdir(parents=True, exist_ok=True)
     (path / "mkdocs.yml").write_text(yaml.dump(content))
 
 
-def test_find_mkdocs_config_file_at_root(tmp_path: Path):
+def test_find_mkdocs_config_file_at_root(tmp_path: Path) -> None:
     """Should find mkdocs.yml at the project root."""
     create_mkdocs_yml(tmp_path)
     assert _find_mkdocs_config_file(tmp_path) == tmp_path / "mkdocs.yml"
 
 
-def test_find_mkdocs_config_file_in_docs_subdir(tmp_path: Path):
+def test_find_mkdocs_config_file_in_docs_subdir(tmp_path: Path) -> None:
     """Should find mkdocs.yml in a 'docs' subdirectory."""
     docs_path = tmp_path / "docs"
     create_mkdocs_yml(docs_path)
     assert _find_mkdocs_config_file(tmp_path) == docs_path / "mkdocs.yml"
 
 
-def test_find_mkdocs_config_file_not_found(tmp_path: Path):
+def test_find_mkdocs_config_file_not_found(tmp_path: Path) -> None:
     """Should return None if mkdocs.yml is not found."""
     assert _find_mkdocs_config_file(tmp_path) is None
 
@@ -50,7 +50,7 @@ def test_find_mkdocs_config_file_not_found(tmp_path: Path):
 # --- Tests for _parse_mkdocs_config ---
 
 
-def test_parse_mkdocs_config_valid_yaml(tmp_path: Path):
+def test_parse_mkdocs_config_valid_yaml(tmp_path: Path) -> None:
     """Should parse a valid mkdocs.yml file."""
     config_content = {"site_name": "My Test Site", "nav": ["index.md"]}
     create_mkdocs_yml(tmp_path, config_content)
@@ -58,14 +58,14 @@ def test_parse_mkdocs_config_valid_yaml(tmp_path: Path):
     assert _parse_mkdocs_config(config_path) == config_content
 
 
-def test_parse_mkdocs_config_invalid_yaml(tmp_path: Path):
+def test_parse_mkdocs_config_invalid_yaml(tmp_path: Path) -> None:
     """Should return None for an invalid mkdocs.yml file."""
     config_path = tmp_path / "mkdocs.yml"
     config_path.write_text("site_name: [invalid yaml")  # Malformed YAML
     assert _parse_mkdocs_config(config_path) is None
 
 
-def test_parse_mkdocs_config_file_not_found(tmp_path: Path):
+def test_parse_mkdocs_config_file_not_found(tmp_path: Path) -> None:
     """Should return None if the config file does not exist."""
     config_path = tmp_path / "non_existent_mkdocs.yml"
     assert _parse_mkdocs_config(config_path) is None
@@ -74,7 +74,7 @@ def test_parse_mkdocs_config_file_not_found(tmp_path: Path):
 # --- Tests for _extract_callouts_from_markdown_extensions ---
 
 
-def test_extract_callouts_from_markdown_extensions_list_str(tmp_path: Path):
+def test_extract_callouts_from_markdown_extensions_list_str(tmp_path: Path) -> None:
     """Should extract 'callouts' when it's a string in a list."""
     md_ext = ["admonition", "callouts", "footnotes"]
     updated, extracted, modified = _extract_callouts_from_markdown_extensions(md_ext)
@@ -83,7 +83,7 @@ def test_extract_callouts_from_markdown_extensions_list_str(tmp_path: Path):
     assert modified is True
 
 
-def test_extract_callouts_from_markdown_extensions_list_dict(tmp_path: Path):
+def test_extract_callouts_from_markdown_extensions_list_dict(tmp_path: Path) -> None:
     """Should extract 'callouts' when it's a dict in a list."""
     md_ext = ["admonition", {"callouts": {"data": "value"}}, "footnotes"]
     updated, extracted, modified = _extract_callouts_from_markdown_extensions(md_ext)
@@ -92,7 +92,7 @@ def test_extract_callouts_from_markdown_extensions_list_dict(tmp_path: Path):
     assert modified is True
 
 
-def test_extract_callouts_from_markdown_extensions_dict(tmp_path: Path):
+def test_extract_callouts_from_markdown_extensions_dict(tmp_path: Path) -> None:
     """Should extract 'callouts' when it's a key in a dict."""
     md_ext = {"admonition": {}, "callouts": {"data": "value"}, "footnotes": {}}
     updated, extracted, modified = _extract_callouts_from_markdown_extensions(md_ext)
@@ -101,7 +101,7 @@ def test_extract_callouts_from_markdown_extensions_dict(tmp_path: Path):
     assert modified is True
 
 
-def test_extract_callouts_from_markdown_extensions_not_present(tmp_path: Path):
+def test_extract_callouts_from_markdown_extensions_not_present(tmp_path: Path) -> None:
     """Should not modify if 'callouts' is not present."""
     md_ext = ["admonition", "footnotes"]
     updated, extracted, modified = _extract_callouts_from_markdown_extensions(md_ext)
@@ -110,7 +110,7 @@ def test_extract_callouts_from_markdown_extensions_not_present(tmp_path: Path):
     assert modified is False
 
 
-def test_extract_callouts_from_markdown_extensions_empty_or_none(tmp_path: Path):
+def test_extract_callouts_from_markdown_extensions_empty_or_none(tmp_path: Path) -> None:
     """Should handle empty list, dict, or None gracefully."""
     assert _extract_callouts_from_markdown_extensions(None) == (None, None, False)
     assert _extract_callouts_from_markdown_extensions([]) == ([], None, False)
@@ -120,22 +120,22 @@ def test_extract_callouts_from_markdown_extensions_empty_or_none(tmp_path: Path)
 # --- Tests for _is_plugin_callouts ---
 
 
-def test_is_plugin_callouts_str():
+def test_is_plugin_callouts_str() -> None:
     """Should return True for 'callouts' string."""
     assert _is_plugin_callouts("callouts") is True
 
 
-def test_is_plugin_callouts_dict():
+def test_is_plugin_callouts_dict() -> None:
     """Should return True for {'callouts': ...} dict."""
     assert _is_plugin_callouts({"callouts": {"data": "value"}}) is True
 
 
-def test_is_plugin_callouts_other_str():
+def test_is_plugin_callouts_other_str() -> None:
     """Should return False for other strings."""
     assert _is_plugin_callouts("other_plugin") is False
 
 
-def test_is_plugin_callouts_other_dict():
+def test_is_plugin_callouts_other_dict() -> None:
     """Should return False for other dicts."""
     assert _is_plugin_callouts({"other_plugin": {}}) is False
 
@@ -143,7 +143,7 @@ def test_is_plugin_callouts_other_dict():
 # --- Tests for _add_callouts_to_plugins_if_missing ---
 
 
-def test_add_callouts_to_plugins_if_missing_empty_list():
+def test_add_callouts_to_plugins_if_missing_empty_list() -> None:
     """Should add callouts to an empty plugin list."""
     plugins = []
     updated, added = _add_callouts_to_plugins_if_missing(plugins, "callouts")
@@ -151,7 +151,7 @@ def test_add_callouts_to_plugins_if_missing_empty_list():
     assert added is True
 
 
-def test_add_callouts_to_plugins_if_missing_not_present():
+def test_add_callouts_to_plugins_if_missing_not_present() -> None:
     """Should add callouts if not already present."""
     plugins = ["search", "macros"]
     updated, added = _add_callouts_to_plugins_if_missing(plugins, {"callouts": {}})
@@ -159,7 +159,7 @@ def test_add_callouts_to_plugins_if_missing_not_present():
     assert added is True
 
 
-def test_add_callouts_to_plugins_if_missing_already_present_str():
+def test_add_callouts_to_plugins_if_missing_already_present_str() -> None:
     """Should not add if callouts (str) is already present."""
     plugins = ["search", "callouts"]
     updated, added = _add_callouts_to_plugins_if_missing(plugins, "callouts")
@@ -175,14 +175,14 @@ def test_add_callouts_to_plugins_if_missing_already_present_dict() -> None:
     assert added is False
 
 
-def test_add_callouts_to_plugins_if_missing_none_config():
-    """Should handle None as initial plugins config."""
+def test_add_callouts_to_plugins_if_missing_none_config() -> None:
+    """Should handle None as initial plugins' config."""
     updated, added = _add_callouts_to_plugins_if_missing(None, "callouts")
     assert updated == ["callouts"]
     assert added is True
 
 
-def test_add_callouts_to_plugins_if_missing_non_list_config():
+def test_add_callouts_to_plugins_if_missing_non_list_config() -> None:
     """Should handle non-list initial plugins config by initializing a new list."""
     updated, added = _add_callouts_to_plugins_if_missing("invalid_type", "callouts")
     assert updated == ["callouts"]
@@ -192,7 +192,7 @@ def test_add_callouts_to_plugins_if_missing_non_list_config():
 # --- Tests for _preprocess_mkdocs_config ---
 
 
-def test_preprocess_mkdocs_config_moves_callouts(tmp_path: Path):
+def test_preprocess_mkdocs_config_moves_callouts(tmp_path: Path) -> None:
     """Should move 'callouts' from markdown_extensions to plugins."""
     original_config = {
         "site_name": "Test",
@@ -209,7 +209,7 @@ def test_preprocess_mkdocs_config_moves_callouts(tmp_path: Path):
     assert "callouts" in processed_config["plugins"]
 
 
-def test_preprocess_mkdocs_config_resolves_docs_dir(tmp_path: Path):
+def test_preprocess_mkdocs_config_resolves_docs_dir(tmp_path: Path) -> None:
     """Should resolve relative docs_dir to an absolute path."""
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()
@@ -226,7 +226,7 @@ def test_preprocess_mkdocs_config_resolves_docs_dir(tmp_path: Path):
     assert Path(processed_config["docs_dir"]) == docs_dir.resolve()
 
 
-def test_preprocess_mkdocs_config_handles_none_config(tmp_path: Path):
+def test_preprocess_mkdocs_config_handles_none_config(tmp_path: Path) -> None:
     """Should return None and False if original_config_content is None."""
     config_path = tmp_path / "mkdocs.yml"
     processed_config, modified = _preprocess_mkdocs_config(None, config_path)
@@ -234,7 +234,7 @@ def test_preprocess_mkdocs_config_handles_none_config(tmp_path: Path):
     assert modified is False
 
 
-def test_preprocess_mkdocs_config_docs_dir_not_found(tmp_path: Path):
+def test_preprocess_mkdocs_config_docs_dir_not_found(tmp_path: Path) -> None:
     """Should not resolve docs_dir if the directory does not exist."""
     original_config = {"site_name": "Test", "docs_dir": "non_existent_docs"}
     config_path = tmp_path / "mkdocs.yml"
@@ -249,29 +249,29 @@ def test_preprocess_mkdocs_config_docs_dir_not_found(tmp_path: Path):
 # --- Tests for _get_theme_packages_to_install ---
 
 
-def test_get_theme_packages_to_install_material():
+def test_get_theme_packages_to_install_material() -> None:
     """Should return 'mkdocs-material' for 'material' theme."""
     assert _get_theme_packages_to_install("material") == ["mkdocs-material"]
 
 
-def test_get_theme_packages_to_install_material_dict():
+def test_get_theme_packages_to_install_material_dict() -> None:
     """Should return 'mkdocs-material' for 'material' theme in dict form."""
     assert _get_theme_packages_to_install({"name": "material"}) == ["mkdocs-material"]
 
 
-def test_get_theme_packages_to_install_mkdocs_or_readthedocs():
+def test_get_theme_packages_to_install_mkdocs_or_readthedocs() -> None:
     """Should return empty list for 'mkdocs' or 'readthedocs' themes."""
     assert _get_theme_packages_to_install("mkdocs") == []
     assert _get_theme_packages_to_install("readthedocs") == []
 
 
-def test_get_theme_packages_to_install_unknown_theme():
+def test_get_theme_packages_to_install_unknown_theme() -> None:
     """Should return empty list for unknown themes."""
     assert _get_theme_packages_to_install("unknown_theme") == []
     assert _get_theme_packages_to_install({"name": "unknown_theme"}) == []
 
 
-def test_get_theme_packages_to_install_none():
+def test_get_theme_packages_to_install_none() -> None:
     """Should return empty list for None theme config."""
     assert _get_theme_packages_to_install(None) == []
 
@@ -279,7 +279,7 @@ def test_get_theme_packages_to_install_none():
 # --- Tests for _prepare_mkdocs_output_directory ---
 
 
-def test_prepare_mkdocs_output_directory_creates_new(tmp_path: Path):
+def test_prepare_mkdocs_output_directory_creates_new(tmp_path: Path) -> None:
     """Should create the output directory if it doesn't exist."""
     base_output = tmp_path / "builds"
     output_dir = _prepare_mkdocs_output_directory(base_output, "my-project", "1.0")
@@ -288,7 +288,7 @@ def test_prepare_mkdocs_output_directory_creates_new(tmp_path: Path):
     assert output_dir.is_dir()
 
 
-def test_prepare_mkdocs_output_directory_cleans_existing(tmp_path: Path):
+def test_prepare_mkdocs_output_directory_cleans_existing(tmp_path: Path) -> None:
     """Should clean (remove and recreate) an existing output directory."""
     base_output = tmp_path / "builds"
     existing_dir = base_output / "mkdocs_builds" / "my-project" / "1.0"
@@ -301,7 +301,7 @@ def test_prepare_mkdocs_output_directory_cleans_existing(tmp_path: Path):
     assert not (output_dir / "old_file.txt").exists()  # Should be cleaned
 
 
-def test_prepare_mkdocs_output_directory_os_error(tmp_path: Path, mocker: MagicMock):
+def test_prepare_mkdocs_output_directory_os_error(tmp_path: Path, mocker: MagicMock) -> None:
     """Should return None if an OSError occurs during directory creation/cleaning."""
     # Mock Path.mkdir to raise an OSError
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied"))
@@ -313,7 +313,7 @@ def test_prepare_mkdocs_output_directory_os_error(tmp_path: Path, mocker: MagicM
 # --- Tests for _extract_names_from_config_list_or_dict ---
 
 
-def test_extract_names_from_config_list_of_strings():
+def test_extract_names_from_config_list_of_strings() -> None:
     """Should extract names from a list of strings."""
     config = ["plugin1", "plugin2"]
     assert _extract_names_from_config_list_or_dict(config) == ["plugin1", "plugin2"]
@@ -325,7 +325,7 @@ def test_extract_names_from_config_list_of_dicts() -> None:
     assert _extract_names_from_config_list_or_dict(config) == ["plugin1", "plugin2"]
 
 
-def test_extract_names_from_config_list_mixed():
+def test_extract_names_from_config_list_mixed() -> None:
     """Should extract names from a mixed list of strings and dictionaries."""
     config = ["plugin1", {"plugin2": {}}, "plugin3"]
     assert _extract_names_from_config_list_or_dict(config) == [
@@ -335,20 +335,20 @@ def test_extract_names_from_config_list_mixed():
     ]
 
 
-def test_extract_names_from_config_dict():
+def test_extract_names_from_config_dict() -> None:
     """Should extract names from a dictionary."""
     config = {"plugin1": {}, "plugin2": {"opt": "val"}}
     assert _extract_names_from_config_list_or_dict(config) == ["plugin1", "plugin2"]
 
 
-def test_extract_names_from_config_empty_or_none():
+def test_extract_names_from_config_empty_or_none() -> None:
     """Should return empty list for empty or None config."""
     assert _extract_names_from_config_list_or_dict(None) == []
     assert _extract_names_from_config_list_or_dict([]) == []
     assert _extract_names_from_config_list_or_dict({}) == []
 
 
-def test_extract_names_from_config_pymdownx_plugins():
+def test_extract_names_from_config_pymdownx_plugins() -> None:
     """Should handle pymdownx plugins correctly."""
     config = ["pymdownx.highlight", {"pymdownx.superfences": {}}]
     assert _extract_names_from_config_list_or_dict(config) == [
@@ -360,7 +360,7 @@ def test_extract_names_from_config_pymdownx_plugins():
 # --- Tests for _get_plugin_packages_to_install ---
 
 
-def test_get_plugin_packages_to_install_basic():
+def test_get_plugin_packages_to_install_basic() -> None:
     """Should identify basic plugin packages."""
     plugins = ["mkdocstrings", "macros"]
     markdown_extensions = []
@@ -371,7 +371,7 @@ def test_get_plugin_packages_to_install_basic():
     )
 
 
-def test_get_plugin_packages_to_install_pymdownx():
+def test_get_plugin_packages_to_install_pymdownx() -> None:
     """Should identify pymdownx packages."""
     plugins = []
     markdown_extensions = ["pymdownx.highlight", "pymdownx.superfences"]
@@ -382,14 +382,14 @@ def test_get_plugin_packages_to_install_pymdownx():
     )
 
 
-def test_get_plugin_packages_to_install_built_in():
+def test_get_plugin_packages_to_install_built_in() -> None:
     """Should ignore built-in plugins/extensions."""
     plugins = ["search"]
     markdown_extensions = ["toc"]
     assert _get_plugin_packages_to_install(plugins, markdown_extensions) == []
 
 
-def test_get_plugin_packages_to_install_mixed():
+def test_get_plugin_packages_to_install_mixed() -> None:
     """Should handle a mix of known, unknown, and built-in."""
     plugins = ["mkdocstrings", {"search": {}}]
     markdown_extensions = ["pymdownx.highlight", "admonition", "unknown_ext"]
@@ -398,7 +398,7 @@ def test_get_plugin_packages_to_install_mixed():
     assert sorted(actual) == expected
 
 
-def test_get_plugin_packages_to_install_none_configs():
+def test_get_plugin_packages_to_install_none_configs() -> None:
     """Should return empty list if both configs are None."""
     assert _get_plugin_packages_to_install(None, None) == []
 

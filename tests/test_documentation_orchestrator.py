@@ -31,7 +31,7 @@ def mock_orchestrator(
     )
 
 
-def test_orchestrator_init(mock_package_details, tmp_path):
+def test_orchestrator_init(mock_package_details, tmp_path) -> None:
     output_dir = tmp_path / "custom_docset_output"
     orchestrator = Orchestrator(
         package_details=mock_package_details, base_output_dir=output_dir
@@ -54,7 +54,7 @@ def test_orchestrator_init(mock_package_details, tmp_path):
 
 def test_fetch_repo_initial_path_exists(
     mock_package_details, mock_orchestrator, tmp_path, mocker
-):
+) -> None:
     """Test fetch repo initial path exists."""
     initial_source_path = tmp_path / "initial_source"
     initial_source_path.mkdir()
@@ -68,7 +68,7 @@ def test_fetch_repo_initial_path_exists(
 
 def test_fetch_repo_initial_path_does_not_exist(
     mock_package_details, mock_orchestrator, tmp_path, mocker
-):
+) -> None:
     # Set initial_source_path to a non-existent path
     mock_package_details.initial_source_path = str(tmp_path / "non_existent_path")
 
@@ -146,7 +146,7 @@ def test_fetch_repo_no_initial_path_fetch_succeeds(
 
 def test_fetch_repo_no_initial_path_fetch_fails(
     mock_package_details, mock_orchestrator, mocker
-):
+) -> None:
     mock_package_details.initial_source_path = None
     mock_fetcher_instance = mocker.patch(
         "devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher"
@@ -161,7 +161,7 @@ def test_fetch_repo_no_initial_path_fetch_fails(
 
 def test_fetch_repo_fetch_raises_os_error(
     mock_package_details, mock_orchestrator, mocker
-):
+) -> None:
     mock_package_details.initial_source_path = None
 
     # Mock PackageSourceFetcher.fetch to raise OSError
@@ -229,7 +229,7 @@ def test_internal_fetch_repo_fetch_success(
 @patch("devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher")
 def test_internal_fetch_repo_fetch_failure(
     mock_fetcher_class, mock_orchestrator, tmp_path
-):
+) -> None:
     mock_fetcher_instance = mock_fetcher_class.return_value
     mock_fetcher_instance.fetch.return_value = (False, False, None)
 
@@ -328,7 +328,7 @@ def test_start_scan_detects_sphinx(
     mock_fetch_repo,
     mock_orchestrator,
     tmp_path,
-):
+) -> None:
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "sphinx"
@@ -360,7 +360,7 @@ def test_start_scan_detects_mkdocs(
     mock_fetch_repo,
     mock_orchestrator,
     tmp_path,
-):
+) -> None:
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "mkdocs"
@@ -391,7 +391,7 @@ def test_start_scan_detects_docstrings(
     mock_fetch_repo,
     mock_orchestrator,
     tmp_path,
-):
+) -> None:
     """Test start_scan detects docstrings."""
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
@@ -424,7 +424,7 @@ def test_start_scan_detects_unknown(
     mock_fetch_repo,
     mock_orchestrator,
     tmp_path,
-):
+) -> None:
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "unknown"
@@ -455,7 +455,7 @@ def test_start_scan_effective_source_path_none(
     mock_is_sphinx_project,
     mock_fetch_repo,
     mock_orchestrator,
-):
+) -> None:
     """Test start_scan with no effective source path."""
     mock_orchestrator._effective_source_path = None
     mock_orchestrator.start_scan()
@@ -465,15 +465,15 @@ def test_start_scan_effective_source_path_none(
     mock_has_docstrings.assert_not_called()
 
 
-# Tests for grab_build_doc method
-def test_grab_build_doc_no_scan_result(mock_orchestrator):
+
+def test_grab_build_doc_no_scan_result(mock_orchestrator) -> None:
     mock_orchestrator.detected_doc_type = None
     result = mock_orchestrator.grab_build_doc()
     assert result is False
     assert mock_orchestrator.last_operation_result is False
 
 
-def test_grab_build_doc_unknown_doc_type(mock_orchestrator):
+def test_grab_build_doc_unknown_doc_type(mock_orchestrator) -> None:
     mock_orchestrator.detected_doc_type = "unknown"
     result = mock_orchestrator.grab_build_doc()
     assert result is False
@@ -498,7 +498,7 @@ def test_grab_build_doc_sphinx(mock_download_sphinx, mock_orchestrator, tmp_path
 )
 def test_grab_build_doc_sphinx_with_existing_source_path(
     mock_download_sphinx, mock_orchestrator, tmp_path
-):
+) -> None:
     mock_orchestrator.detected_doc_type = "sphinx"
     existing_source_path = tmp_path / "existing_source"
     existing_source_path.mkdir()
@@ -521,7 +521,7 @@ def test_grab_build_doc_sphinx_with_existing_source_path(
 )
 def test_grab_build_doc_sphinx_raises_exception(
     mock_download_sphinx, mock_orchestrator, tmp_path
-):
+) -> None:
     mock_orchestrator.detected_doc_type = "sphinx"
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_download_sphinx.side_effect = Exception("Sphinx build failed")
@@ -547,7 +547,7 @@ def test_grab_build_doc_mkdocs(mock_process_mkdocs, mock_orchestrator, tmp_path)
 @patch(
     "devildex.orchestrator.documentation_orchestrator.download_readthedocs_prebuilt_robust"
 )
-def test_grab_build_doc_readthedocs(mock_download_readthedocs, mock_orchestrator):
+def test_grab_build_doc_readthedocs(mock_download_readthedocs, mock_orchestrator) -> None:
     mock_orchestrator.detected_doc_type = "readthedocs"
     mock_download_readthedocs.return_value = "readthedocs_output_path"
     result = mock_orchestrator.grab_build_doc()
@@ -571,14 +571,14 @@ def test_grab_build_doc_docstrings(
     mock_generate_docs_from_folder.assert_called_once()
 
 
-def test_grab_build_doc_key_error(mock_orchestrator):
+def test_grab_build_doc_key_error(mock_orchestrator) -> None:
     mock_orchestrator.detected_doc_type = "non_existent_type"
     result = mock_orchestrator.grab_build_doc()
     assert result is False
     assert mock_orchestrator.last_operation_result is False
 
 
-def test_interpret_tuple_res_string():
+def test_interpret_tuple_res_string() -> None:
     result = Orchestrator._interpret_tuple_res("some_string")
     assert result == "some_string"
 
@@ -589,16 +589,16 @@ def test_interpret_tuple_res_tuple_true() -> None:
     assert result == "path/to/doc"
 
 
-def test_interpret_tuple_res_tuple_false():
+def test_interpret_tuple_res_tuple_false() -> None:
     result = Orchestrator._interpret_tuple_res(("path/to/doc", False))
     assert result is False
 
 
-def test_get_detected_doc_type(mock_orchestrator):
+def test_get_detected_doc_type(mock_orchestrator) -> None:
     mock_orchestrator.detected_doc_type = "sphinx"
     assert mock_orchestrator.get_detected_doc_type() == "sphinx"
 
 
-def test_get_last_operation_result(mock_orchestrator):
+def test_get_last_operation_result(mock_orchestrator) -> None:
     mock_orchestrator.last_operation_result = "success"
     assert mock_orchestrator.get_last_operation_result() == "success"

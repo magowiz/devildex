@@ -99,10 +99,11 @@ class DocumentViewPanel(wx.Panel):
         button_sizer.Add(self.home_button, 0, wx.ALL, 5)
         return button_sizer
 
-    def _on_webview_event(self, event: wx.html2.WebViewEvent) -> None:
+    @staticmethod
+    def _on_webview_event(
+            event: wx.html2.WebViewEvent) -> None:
         event.Skip()
 
-    # --- Public API ---
 
     def load_url(self, url_to_load: str) -> None:
         """Load a specific URL into the WebView."""

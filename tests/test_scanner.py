@@ -236,7 +236,7 @@ def test_is_sphinx_project_read_file_content_robustly_returns_none(
 
 
 def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
-    """Verify that is_sphinx_project returns False for a conf.py with no strong Sphinx indicators."""
+    """Verify that returns False for a conf.py with no strong Sphinx indicators."""
     # Arrange
     conf_content = "MY_APP_NAME = 'My Custom App'\nDEBUG_MODE = True"
     (tmp_path / "conf.py").write_text(conf_content)

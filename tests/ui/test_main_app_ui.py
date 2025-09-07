@@ -17,7 +17,7 @@ if app is None:
 class TestMainAppUI(unittest.TestCase):
     """Test the main application UI using UIActionSimulator."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up the test environment."""
         self.patcher = patch("devildex.main.GenerationTaskManager")
         self.mock_gen_task_manager_cls = self.patcher.start()
@@ -34,7 +34,7 @@ class TestMainAppUI(unittest.TestCase):
         self.frame = self.app.main_frame
         self.simulator = wx.UIActionSimulator()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Tear down the test environment."""
         self.patcher.stop()
         if self.frame:
@@ -49,7 +49,7 @@ class TestMainAppUI(unittest.TestCase):
         self.assertTrue(self.frame.IsShown(), "Main frame should be visible")
         self.assertEqual(self.frame.GetTitle(), "DevilDex", "Window title is incorrect")
 
-    def test_view_mode_selector_initial_value(self):
+    def test_view_mode_selector_initial_value(self) -> None:
         """Test the initial value of the view mode selector ComboBox."""
         view_selector = self.app.view_mode_selector
         self.assertIsNotNone(view_selector, "View mode selector should exist")
@@ -65,7 +65,7 @@ class TestMainAppUI(unittest.TestCase):
             "View mode selector has incorrect initial value",
         )
 
-    def test_grid_selection_enables_buttons(self):
+    def test_grid_selection_enables_buttons(self) -> None:
         """Test that selecting a row in the grid enables the proper action buttons."""
         actions_panel = self.app.actions_panel
         self.assertIsNotNone(actions_panel, "Actions panel should exist")
@@ -91,7 +91,7 @@ class TestMainAppUI(unittest.TestCase):
         self.assertIsNotNone(grid_panel, "Grid panel should exist")
 
         class MockGridEvent(wx.grid.GridEvent):
-            def __init__(self, row):
+            def __init__(self, row) -> None:
                 super().__init__()
                 self.m_row = row
 
@@ -120,7 +120,7 @@ class TestMainAppUI(unittest.TestCase):
             "Delete button should be disabled for unavailable docset",
         )
 
-    def test_generate_docset_button_starts_task(self):
+    def test_generate_docset_button_starts_task(self) -> None:
         """Test that clicking the Generate Docset button starts a generation task."""
         actions_panel = self.app.actions_panel
         grid_panel = self.app.grid_panel
