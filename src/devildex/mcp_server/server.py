@@ -1,5 +1,10 @@
 """mcp server module."""
 
+# IMPORTANT: This MCP server is currently under active development and is INCOMPLETE.
+# Only the 'get_docsets_list' tool is fully functional.
+# Other functionalities are either placeholders or not yet implemented.
+# Use with caution and refer to the documentation for current capabilities.
+
 from typing import Any
 
 from fastmcp import FastMCP
@@ -8,7 +13,14 @@ mcp = FastMCP("Demo 🚀")
 
 
 class DevilDexMcp:
-    """DevilDex MCP server."""
+    """DevilDex MCP server.
+
+    This is a singleton class managing the Multi-Tool Command Protocol (MCP) server
+    for DevilDex. It exposes various tools for external clients.
+    WARNING: This server is currently INCOMPLETE. Only the 'get_docsets_list'
+    tool is fully implemented and functional. Other tools or planned features
+    are either placeholders or not yet developed.
+    """
 
     _instance = None
 

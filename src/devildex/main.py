@@ -157,6 +157,14 @@ class DevilDexApp(wx.App):
         )
         self._update_grid_after_delete()
 
+    def _display_mcp_warning_in_gui(self) -> None:
+        """Display a warning message box for the MCP server in GUI mode."""
+        wx.MessageBox(
+            "The MCP server is currently experimental in all modes (GUI and headless).\n\n" 
+            "It has limited functionality and is primarily for development and testing.",
+            "MCP Server: Experimental",
+            wx.OK | wx.ICON_INFORMATION,
+        )
 
     @staticmethod
     def _handle_delete_failure(package_name: str, message: str) -> None:
@@ -165,7 +173,7 @@ class DevilDexApp(wx.App):
             f"GUI: Core failed to delete docset for '{package_name}'. Reason: {message}"
         )
         wx.MessageBox(
-            f"Could not delete the docset for '{package_name}'.\n\n"
+            f"Could not delete the docset for '{package_name}'.\n\n" 
             f"Reason: {message}",
             "Deletion Failed",
             wx.OK | wx.ICON_ERROR,
@@ -310,19 +318,8 @@ class DevilDexApp(wx.App):
         """Set up gui widgets on application startup."""
         wx.Log.SetActiveTarget(wx.LogStderr())
         window_title = "DevilDex"
-        scanned_project_packages: Optional[list[PackageDetails]] = (
-            self.core.scan_project()
-        )
-        scan_successful = bool(scanned_project_packages)
-        is_fallback_data = False
-        if not scanned_project_packages:
-            scanned_project_packages = PACKAGES_DATA_AS_DETAILS
-            is_fallback_data = True
         self.main_frame = wx.Frame(
             parent=None, title=window_title, size=Size(1280, 900)
-        )
-        self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
-            scanned_project_packages, is_fallback_data
         )
         self.panel = wx.Panel(self.main_frame)
         self.main_panel_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -332,24 +329,12 @@ class DevilDexApp(wx.App):
 
         self._init_buttons()
 
-        self._perform_startup_docset_scan()
-
-        self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
-        if self.core:
-            self.generation_task_manager = GenerationTaskManager(
-                core_instance=self.core,
-                owner_for_timer=self.main_frame,
-                update_grid_cell_callback=self._update_grid_cell_from_manager,
-                on_task_complete_callback=self._on_generation_complete_from_manager,
-                update_action_buttons_callback=self._update_action_buttons_state,
-            )
-
         # --- Start of refactored view setup ---
         # Create all main view components once
-        view_mode_sizer = self._setup_view_mode_selector(self.panel)
-        self.main_panel_sizer.Add(
-            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-        )
+        # view_mode_sizer = self._setup_view_mode_selector(self.panel) # Moved to _initialize_data_and_managers
+        # self.main_panel_sizer.Add(
+        #     view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        # )
 
         self._init_splitter_components(self.panel)  # This creates self.splitter
         if self.splitter:
@@ -363,18 +348,12 @@ class DevilDexApp(wx.App):
         bottom_bar_sizer = self._init_log_toggle_bar(self.panel)
         self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
 
-        self.update_grid_data()
-        # --- End of refactored view setup ---
-
         self.init_log()
         if self.gui_log_handler and self.log_text_ctrl:
             self.gui_log_handler.text_ctrl = self.log_text_ctrl
         self._update_log_toggle_button_icon()
 
         self.main_frame.Show(True)
-        if scan_successful:
-            active_project_file_path = self.core.app_paths.active_project_file
-            active_project_file_path.unlink(missing_ok=True)
 
         self.jokes_timer = wx.Timer(self)
         return True
@@ -1020,6 +999,41 @@ class DevilDexApp(wx.App):
         if self.grid_panel:
             self.grid_panel.update_data(self.current_grid_source_data)
 
+    def _initialize_data_and_managers(self) -> None:
+        """Initialize data and managers that depend on self.core being available."""
+        scanned_project_packages: Optional[list[PackageDetails]] = (
+            self.core.scan_project()
+        )
+        scan_successful = bool(scanned_project_packages)
+        is_fallback_data = False
+        if not scanned_project_packages:
+            scanned_project_packages = PACKAGES_DATA_AS_DETAILS
+            is_fallback_data = True
+        self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
+            scanned_project_packages, is_fallback_data
+        )
+        self._perform_startup_docset_scan()
+
+        self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
+        self.generation_task_manager = GenerationTaskManager(
+            core_instance=self.core,
+            owner_for_timer=self.main_frame,
+            update_grid_cell_callback=self._update_grid_cell_from_manager,
+            on_task_complete_callback=self._on_generation_complete_from_manager,
+            update_action_buttons_callback=self._update_action_buttons_state,
+        )
+        self.update_grid_data() # Call update_grid_data here after data is loaded
+
+        if scan_successful:
+            active_project_file_path = self.core.app_paths.active_project_file
+            active_project_file_path.unlink(missing_ok=True)
+
+        # Add the view mode selector setup here
+        view_mode_sizer = self._setup_view_mode_selector(self.panel)
+        self.main_panel_sizer.Add(
+            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        )
+
     def _clear_main_panel(self) -> None:
         pass
 
@@ -1079,9 +1093,8 @@ def main() -> None:
     mcp_enabled = config.get_mcp_server_enabled()
     hide_gui = config.get_mcp_server_hide_gui_when_enabled()
 
-    core = DevilDexCore()
-
     if mcp_enabled and hide_gui:
+        core = DevilDexCore()
         print("MCP server started in headless mode. Press Ctrl+C to exit.")
         try:
             while True:
@@ -1091,7 +1104,18 @@ def main() -> None:
             core.shutdown()
             print("Server shut down.")
     else:
-        app = DevilDexApp(core=core)
+        app = DevilDexApp() # Create app instance first
+        
+        # Determine if GUI warning callback should be passed
+        warning_callback = None
+        if mcp_enabled and not hide_gui: # Only pass if MCP is enabled AND GUI is not hidden
+            warning_callback = app._display_mcp_warning_in_gui
+
+        # Create core instance, passing the callback if applicable
+        core = DevilDexCore(gui_warning_callback=warning_callback)
+
+        app.core = core # Set app.core before MainLoop()
+        app._initialize_data_and_managers() # Call the new initialization method
         app.MainLoop()
 
 

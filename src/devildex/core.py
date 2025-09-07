@@ -30,7 +30,9 @@ import subprocess
 class DevilDexCore:
     """DevilDex Core."""
 
-    def __init__(self, database_url: Optional[str] = None) -> None:
+    def __init__(
+        self, database_url: Optional[str] = None, gui_warning_callback: Optional[callable] = None
+    ) -> None:
         """Initialize a new DevilDexCore instance."""
         self.app_paths = AppPaths()
         self.database_url = database_url or f"sqlite:///{self.app_paths.database_path}"
@@ -43,9 +45,10 @@ class DevilDexCore:
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
         self.mcp_server_process = None
+        self.gui_warning_callback = gui_warning_callback
 
         self._setup_registered_project()
-        self._start_mcp_server_if_enabled()
+        self._start_mcp_server_if_enabled(self.gui_warning_callback)
     
     def shutdown(self) -> None:
         """Shut down the core services, like the MCP server."""
@@ -59,7 +62,7 @@ class DevilDexCore:
                 logger.warning("MCP server did not terminate in time, killing it.")
                 self.mcp_server_process.kill()
 
-    def _start_mcp_server_if_enabled(self) -> None:
+    def _start_mcp_server_if_enabled(self, gui_warning_callback: Optional[callable] = None) -> None:
         """Check the configuration and start the MCP server if it's enabled."""
         config = ConfigManager()
         is_mcp_enabled = config.get_mcp_server_enabled()
@@ -80,6 +83,8 @@ class DevilDexCore:
                     stderr=subprocess.PIPE
                 )
                 logger.info(f"MCP server started with PID: {self.mcp_server_process.pid}")
+                if gui_warning_callback:
+                    gui_warning_callback()
             except FileNotFoundError:
                 logger.error(f"Error: Could not find the server script at {server_command[1]}")
             except Exception as e:
