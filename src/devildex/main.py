@@ -233,14 +233,16 @@ class DevilDexApp(wx.App):
         """Show the document view."""
         if event:
             event.Skip()
-        self._clear_main_panel()
 
-        if not self.panel or not self.main_panel_sizer:
+        if self.splitter and self.splitter.IsShown():
+            self.splitter.Hide()
+
+        if self.document_view_panel and not self.document_view_panel.IsShown():
+            self.document_view_panel.Show()
+
+        if not self.panel or not self.main_panel_sizer or not self.document_view_panel:
             logger.error("GUI: Main panel not ready for document view.")
             return
-
-        self.document_view_panel = DocumentViewPanel(self.panel, self.go_home)
-        self.main_panel_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
 
         new_label_text = "Viewing documentation"
         if package_data_to_show:
@@ -252,7 +254,8 @@ class DevilDexApp(wx.App):
         if self.initial_url:
             self.document_view_panel.load_url(self.initial_url)
 
-        self.panel.Layout()
+        if self.panel:
+            self.panel.Layout()
 
     def _init_buttons(self) -> None:
         original_icon_size = Size(16, 16)
@@ -335,8 +338,34 @@ class DevilDexApp(wx.App):
                 on_task_complete_callback=self._on_generation_complete_from_manager,
                 update_action_buttons_callback=self._update_action_buttons_state,
             )
-        self._setup_initial_view()
+
+        # --- Start of refactored view setup ---
+        # Create all main view components once
+        view_mode_sizer = self._setup_view_mode_selector(self.panel)
+        self.main_panel_sizer.Add(
+            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        )
+
+        self._init_splitter_components(self.panel)  # This creates self.splitter
+        if self.splitter:
+            self.main_panel_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
+
+        # Create the document view panel once and hide it
+        self.document_view_panel = DocumentViewPanel(self.panel, self.go_home)
+        self.main_panel_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
+        self.document_view_panel.Hide()
+
+        bottom_bar_sizer = self._init_log_toggle_bar(self.panel)
+        self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
+
+        self.update_grid_data()
+        # --- End of refactored view setup ---
+
         self.init_log()
+        if self.gui_log_handler and self.log_text_ctrl:
+            self.gui_log_handler.text_ctrl = self.log_text_ctrl
+        self._update_log_toggle_button_icon()
+
         self.main_frame.Show(True)
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
@@ -363,7 +392,15 @@ class DevilDexApp(wx.App):
         """Go to initial view."""
         if event:
             event.Skip()
-        self._setup_initial_view()
+
+        if self.document_view_panel and self.document_view_panel.IsShown():
+            self.document_view_panel.Hide()
+
+        if self.splitter and not self.splitter.IsShown():
+            self.splitter.Show()
+
+        if self.panel:
+            self.panel.Layout()
 
     def _setup_view_mode_selector(self, parent: wx.Window) -> wx.Sizer:
         """Configura il ComboBox per la selection della mode di vista."""
@@ -534,38 +571,7 @@ class DevilDexApp(wx.App):
         return bar_sizer
 
     def _setup_initial_view(self) -> None:
-        self._clear_main_panel()
-
-        if not self.panel or not self.main_panel_sizer:
-            logger.error(
-                "GUI: Panel or main_panel_sizer not initialized in"
-                " _setup_initial_view"
-            )
-            return
-
-        view_mode_sizer = self._setup_view_mode_selector(self.panel)
-        self.main_panel_sizer.Add(
-            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-        )
-
-        self._init_splitter_components(self.panel)
-        if self.splitter:
-            self.main_panel_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
-
-        bottom_bar_sizer = self._init_log_toggle_bar(self.panel)
-        self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
-
-        self.update_grid_data()
-
-        if self.gui_log_handler and self.log_text_ctrl:
-            self.gui_log_handler.text_ctrl = self.log_text_ctrl
-
-        self._update_log_toggle_button_icon()
-
-        if self.panel:
-            self.panel.Layout()
-        if self.main_frame:
-            self.main_frame.Layout()
+        pass
 
     def _init_splitter_components(self, parent_panel: wx.Panel) -> None:
         self.splitter = wx.SplitterWindow(
@@ -1005,22 +1011,7 @@ class DevilDexApp(wx.App):
             self.grid_panel.update_data(self.current_grid_source_data)
 
     def _clear_main_panel(self) -> None:
-        if self.main_panel_sizer and self.main_panel_sizer.GetItemCount() > 0:
-            self.main_panel_sizer.Clear(True)
-        self.document_view_panel = None
-        self.grid_panel = None
-        self.actions_panel = None
-        self.view_mode_selector = None
-        self.log_text_ctrl = None
-        self.log_toggle_button = None
-        self.splitter = None
-        self.top_splitter_panel = None
-        self.bottom_splitter_panel = None
-
-        if self.panel:
-            self.panel.Layout()
-        if self.main_frame:
-            self.main_frame.Layout()
+        pass
 
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.
