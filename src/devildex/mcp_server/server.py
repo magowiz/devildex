@@ -90,17 +90,32 @@ def get_docsets_list(
 
 
 if __name__ == "__main__":
-    # Get the singleton instance and run it
+    import logging
+    import uvicorn
+    server_logger = logging.getLogger(__name__)
+    server_logger.info("MCP server standalone mode started.")
+
     from devildex.core import DevilDexCore
-    import os # Add import for os
-    from devildex import database # Add import for database
+    import os
+    from devildex import db_manager as database
 
-    from devildex.config_manager import ConfigManager # Import ConfigManager
-    config = ConfigManager() # Get config instance
-    mcp_port = config.get_mcp_server_port() # Get port from config
+    from devildex.config_manager import ConfigManager
+    config = ConfigManager()
+    mcp_port = config.get_mcp_server_port()
 
-    db_url = os.getenv("DEVILDEX_MCP_DB_URL", None) # Get DB URL from environment variable
-    standalone_core = DevilDexCore(database_url=db_url) # Pass DB URL to DevilDexCore
-    database.init_db(database_url=db_url) # Explicitly initialize the database for the server
-    dd_mcp_instance = DevilDexMcp(enabled=True, core_instance=standalone_core, port=mcp_port) # Pass port
-    dd_mcp_instance.run()
+    db_url = os.getenv("DEVILDEX_MCP_DB_URL", None)
+    server_logger.info(f"Using database URL: {db_url}")
+    standalone_core = DevilDexCore(database_url=db_url)
+    database.init_db(database_url=db_url)
+    server_logger.info("Database initialized for standalone server.")
+    dd_mcp_instance = DevilDexCp(enabled=True, core_instance=standalone_core, port=mcp_port)
+    server_logger.info(f"DevilDexMcp instance created. Port: {mcp_port}")
+
+    try:
+        server_logger.info(f"Starting Uvicorn server on port {mcp_port}...")
+        uvicorn.run(mcp, host="0.0.0.0", port=mcp_port)
+    except KeyboardInterrupt:
+        server_logger.info("KeyboardInterrupt received. Shutting down.")
+    except Exception as e:
+        server_logger.error(f"Error running MCP server: {e}")
+    server_logger.info("MCP server standalone mode finished.")

@@ -5,7 +5,7 @@ import logging
 import pytest
 from sqlalchemy.orm import Session
 
-from devildex import database
+from devildex import db_manager as database
 from devildex.database import Docset, PackageInfo, RegisteredProject
 
 

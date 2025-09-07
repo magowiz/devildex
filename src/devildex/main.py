@@ -1,7 +1,8 @@
-"""main application."""
+"main application."
 
 import logging
 import time
+import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -11,6 +12,15 @@ import wx.html2
 from wx import Size
 
 from devildex.config_manager import ConfigManager
+
+# Configure logging at the application's entry point
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[logging.FileHandler("mylogfile.txt", mode="w"), logging.StreamHandler()],
+)
+
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
@@ -96,7 +106,6 @@ class DevilDexApp(wx.App):
         self.bottom_splitter_panel: Optional[wx.Panel] = None
         self.last_sash_position: int = -200
         self.generation_task_manager: Optional[GenerationTaskManager] = None
-
         super().__init__(redirect=False)
 
     def scan_docset_dir(self, grid_pkg: list[dict]) -> set:
@@ -415,6 +424,29 @@ class DevilDexApp(wx.App):
         self.view_mode_selector.Bind(wx.EVT_COMBOBOX, self.on_view_mode_changed)
 
         return selector_sizer
+
+    def _setup_top_bar(self, parent: wx.Window) -> wx.Sizer:
+        """Set up the top bar containing the view mode selector and settings button."""
+        top_bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        # View Mode Selector
+        view_mode_sizer = self._setup_view_mode_selector(parent)
+        top_bar_sizer.Add(
+            view_mode_sizer, 1, wx.EXPAND | wx.RIGHT, 5
+        )  # Removed wx.ALIGN_CENTER_VERTICAL
+
+        # Settings Button
+        settings_button = wx.BitmapButton(
+            parent,
+            wx.ID_ANY,
+            wx.ArtProvider.GetBitmap(
+                wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, Size(24, 24)
+            ),
+        )  # Using ART_EXECUTABLE_FILE for settings
+        settings_button.Bind(wx.EVT_BUTTON, self.on_show_settings)
+        top_bar_sizer.Add(settings_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
+
+        return top_bar_sizer
 
     def on_view_mode_changed(self, event: wx.CommandEvent) -> None:
         """Handle view mode change from the ComboBox."""
@@ -902,6 +934,31 @@ class DevilDexApp(wx.App):
 
         return 0
 
+    def on_show_settings(self, event: wx.CommandEvent) -> None:
+        """Handle the 'Settings' menu item click."""
+        self.show_settings_view()
+        event.Skip()
+
+    def on_settings_saved(self) -> None:
+        """Callback when settings are saved. Re-initializes core services."""
+        logger.info("Settings saved. Re-initializing core services...")
+        if self.core:
+            self.core.shutdown()  # Shut down existing services
+            # Re-initialize core with potentially new settings
+            # This is a simplified re-initialization. A more robust solution
+            # might involve passing new config values directly or recreating the core.
+            # For now, we'll just recreate it.
+            self.core = DevilDexCore(
+                gui_warning_callback=self._display_mcp_warning_in_gui
+            )
+            self._initialize_data_and_managers()  # Re-load data based on new settings
+        self.show_main_view()
+
+    def on_settings_cancelled(self) -> None:
+        """Callback when settings are cancelled. Simply returns to main view."""
+        logger.info("Settings cancelled. Returning to main view.")
+        self.show_main_view()
+
     def on_view_log(self, event: wx.CommandEvent) -> None:
         """Handle view log action."""
         sel_data = self.get_selected_row()
@@ -996,6 +1053,24 @@ class DevilDexApp(wx.App):
         if isinstance(self.log_toggle_button, wx.BitmapButton):
             self.log_toggle_button.SetBitmap(target_bmp_bundle)
 
+    def show_main_view(self) -> None:
+        """Show the main application view (grid and actions)."""
+        if self.main_content_panel:
+            self.main_content_panel.Show(True)
+        if self.settings_panel:
+            self.settings_panel.Hide()
+        if self.panel:
+            self.panel.Layout()
+
+    def show_settings_view(self) -> None:
+        """Show the settings view."""
+        if self.main_content_panel:
+            self.main_content_panel.Hide()
+        if self.settings_panel:
+            self.settings_panel.Show(True)
+        if self.panel:
+            self.panel.Layout()
+
     def update_grid_data(self) -> None:
         """Populate self.data_grid con i dati."""
         self.selected_row_index = None
@@ -1030,6 +1105,12 @@ class DevilDexApp(wx.App):
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
+
+        # Add the view mode selector setup here
+        view_mode_sizer = self._setup_view_mode_selector(self.panel)
+        self.main_panel_sizer.Add(
+            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        )
 
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.
@@ -1107,8 +1188,13 @@ def main() -> None:
         # Create core instance, passing the callback if applicable
         core = DevilDexCore(gui_warning_callback=warning_callback)
 
-        app.core = core
-        app._initialize_data_and_managers()
+        app.core = core  # Assign the core instance to the app
+
+        # If MCP is enabled and GUI is not hidden, update core with the app's callback
+        if mcp_enabled and not hide_gui:
+            core.gui_warning_callback = app._display_mcp_warning_in_gui
+
+        app._initialize_data_and_managers()  # Call the initialization method
         app.MainLoop()
 
 

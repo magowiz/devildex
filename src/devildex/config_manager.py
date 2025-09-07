@@ -57,6 +57,27 @@ class ConfigManager:
     def get_mcp_server_port(self) -> int:
         return self._config.getint("mcp_server_dev", "port", fallback=8001)
 
+    def set_mcp_server_enabled(self, value: bool) -> None:
+        self._config.set("mcp_server_dev", "enabled", str(value))
+
+    def set_mcp_server_hide_gui_when_enabled(self, value: bool) -> None:
+        self._config.set("mcp_server_dev", "hide_gui_when_enabled", str(value))
+
+    def set_mcp_server_port(self, value: int) -> None:
+        self._config.set("mcp_server_dev", "port", str(value))
+
+    def save_config(self) -> None:
+        if self._config_path:
+            try:
+                logger.debug(f"Attempting to save config. Current _config state: {self._config}")
+                with open(self._config_path, 'w') as configfile:
+                    self._config.write(configfile)
+                logger.info(f"Configuration saved to: {self._config_path}")
+            except IOError as e:
+                logger.error(f"Error saving configuration file {self._config_path}: {e}")
+        else:
+            logger.error("Cannot save configuration: _config_path is not set.")
+
 # Example usage (for testing/demonstration)
 if __name__ == "__main__":
     # Set DEVILDEX_DEV_MODE to '1' to test reading from project root
@@ -67,7 +88,7 @@ if __name__ == "__main__":
     #     f.write("enabled = true\n")
     #     f.write("hide_gui_when_enabled = true\n")
 
-    logging.basicConfig(level=logging.INFO)
+    
     config = ConfigManager()
     print(f"MCP Server Enabled: {config.get_mcp_server_enabled()}")
     print(f"Hide GUI When Enabled: {config.get_mcp_server_hide_gui_when_enabled()}")

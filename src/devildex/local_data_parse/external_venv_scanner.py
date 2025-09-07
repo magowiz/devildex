@@ -301,7 +301,7 @@ class ExternalVenvScanner:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    
     test_exec_path = "/home/magowiz/venvs/tempenv-08109221402d/bin/python"
 
     if not Path(test_exec_path).is_file():

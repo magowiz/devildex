@@ -1,31 +1,29 @@
 """core module."""
 
-import logging
-import os
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from devildex import database
+from devildex import db_manager as database
 from devildex.app_paths import AppPaths
-from devildex.database import Docset
-from devildex.local_data_parse import registered_project_parser
-from devildex.local_data_parse.common_read import (
+from devildex.config_manager import ConfigManager
+from devildex.database.models import Docset
+from devildex.models import PackageDetails
+from devildex.orchestrator import Orchestrator
+from devildex.scanner import (
+    ExternalVenvScanner,
     get_explicit_dependencies_from_project_config,
 )
-from devildex.local_data_parse.external_venv_scanner import ExternalVenvScanner
-from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
-from devildex.models import PackageDetails
-from devildex.orchestrator.documentation_orchestrator import Orchestrator
+from devildex.utils import registered_project_parser
+from devildex.utils.registered_project_parser import RegisteredProjectData
+import logging
+import os
 
 logger = logging.getLogger(__name__)
-
-
-from devildex.config_manager import ConfigManager
-import subprocess
 
 class DevilDexCore:
     """DevilDex Core."""
@@ -72,6 +70,9 @@ class DevilDexCore:
             logger.info("Starting MCP server...")
             env = os.environ.copy()
             env["DEVILDEX_MCP_DB_URL"] = self.database_url
+            # Ensure DEVILDEX_DEV_MODE is passed if it's set in the current environment
+            if os.getenv("DEVILDEX_DEV_MODE") == "1":
+                env["DEVILDEX_DEV_MODE"] = "1"
             
             server_command = ["python", "src/devildex/mcp_server/server.py"]
             
