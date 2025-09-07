@@ -465,7 +465,6 @@ def test_start_scan_effective_source_path_none(
     mock_has_docstrings.assert_not_called()
 
 
-
 def test_grab_build_doc_no_scan_result(mock_orchestrator) -> None:
     mock_orchestrator.detected_doc_type = None
     result = mock_orchestrator.grab_build_doc()
@@ -547,7 +546,9 @@ def test_grab_build_doc_mkdocs(mock_process_mkdocs, mock_orchestrator, tmp_path)
 @patch(
     "devildex.orchestrator.documentation_orchestrator.download_readthedocs_prebuilt_robust"
 )
-def test_grab_build_doc_readthedocs(mock_download_readthedocs, mock_orchestrator) -> None:
+def test_grab_build_doc_readthedocs(
+    mock_download_readthedocs, mock_orchestrator
+) -> None:
     mock_orchestrator.detected_doc_type = "readthedocs"
     mock_download_readthedocs.return_value = "readthedocs_output_path"
     result = mock_orchestrator.grab_build_doc()

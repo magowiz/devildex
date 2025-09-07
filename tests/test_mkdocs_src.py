@@ -110,7 +110,9 @@ def test_extract_callouts_from_markdown_extensions_not_present(tmp_path: Path) -
     assert modified is False
 
 
-def test_extract_callouts_from_markdown_extensions_empty_or_none(tmp_path: Path) -> None:
+def test_extract_callouts_from_markdown_extensions_empty_or_none(
+    tmp_path: Path,
+) -> None:
     """Should handle empty list, dict, or None gracefully."""
     assert _extract_callouts_from_markdown_extensions(None) == (None, None, False)
     assert _extract_callouts_from_markdown_extensions([]) == ([], None, False)
@@ -301,7 +303,9 @@ def test_prepare_mkdocs_output_directory_cleans_existing(tmp_path: Path) -> None
     assert not (output_dir / "old_file.txt").exists()  # Should be cleaned
 
 
-def test_prepare_mkdocs_output_directory_os_error(tmp_path: Path, mocker: MagicMock) -> None:
+def test_prepare_mkdocs_output_directory_os_error(
+    tmp_path: Path, mocker: MagicMock
+) -> None:
     """Should return None if an OSError occurs during directory creation/cleaning."""
     # Mock Path.mkdir to raise an OSError
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied"))
