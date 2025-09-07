@@ -8,7 +8,6 @@ from typing import Callable
 import wx
 import wx.html2
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +50,6 @@ class DocumentViewPanel(wx.Panel):
         sizer.Add(nav_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
 
         self.webview = wx.html2.WebView.New(self)
-        # Bind to all WebView events for comprehensive logging (corrected)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_NAVIGATING, self._on_webview_event)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_NAVIGATED, self._on_webview_event)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_LOADED, self._on_webview_event)
@@ -60,7 +58,6 @@ class DocumentViewPanel(wx.Panel):
         self.webview.Bind(wx.html2.EVT_WEBVIEW_FULLSCREEN_CHANGED, self._on_webview_event)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED, self._on_webview_event)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, self._on_webview_event)
-        # Removed: EVT_WEBVIEW_PAGE_STARTED, EVT_WEBVIEW_PAGE_FINISHED, EVT_WEBVIEW_READY, EVT_WEBVIEW_BEFORE_LOAD
 
         sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 5)
 
@@ -99,7 +96,6 @@ class DocumentViewPanel(wx.Panel):
         return button_sizer
 
     def _on_webview_event(self, event: wx.html2.WebViewEvent) -> None:
-        logger.info(f"WebView Event: {event.GetEventType()} - URL: {event.GetURL()} - String: {event.GetString()}")
         event.Skip()
 
     # --- Public API ---
