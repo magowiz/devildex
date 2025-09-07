@@ -1,6 +1,7 @@
 """app paths module."""
 
 import logging
+import os
 from pathlib import Path
 
 import platformdirs
@@ -100,6 +101,16 @@ class AppPaths:
         And then deleted by DevildexApp.OnInit if tried successfully.
         """
         return self.active_project_registry_dir / ACTIVE_PROJECT_REGISTRATION_FILENAME
+
+    @property
+    def devildex_ini_path(self) -> Path:
+        """Path for the devildex.ini configuration file."""
+        if os.getenv("DEVILDEX_DEV_MODE") == "1":
+            # In dev mode, look in the project root
+            return Path("devildex.ini")
+        else:
+            # Otherwise, use the user's config directory
+            return self.user_config_dir / "devildex.ini"
 
 
 if __name__ == "__main__":

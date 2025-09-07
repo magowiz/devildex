@@ -24,25 +24,68 @@ from devildex.orchestrator.documentation_orchestrator import Orchestrator
 logger = logging.getLogger(__name__)
 
 
+from devildex.config_manager import ConfigManager
+import subprocess
+
 class DevilDexCore:
     """DevilDex Core."""
 
     def __init__(self, database_url: Optional[str] = None) -> None:
         """Initialize a new DevilDexCore instance."""
         self.app_paths = AppPaths()
-        self.database_url = database_url
+        self.database_url = database_url or f"sqlite:///{self.app_paths.database_path}"
         if os.getenv("DEVILDEX_DEV_MODE") == "1":
             self.docset_base_output_path = Path("devildex_docsets")
-            self.database_file_path = Path("devildex_dev.db")
         else:
             self.docset_base_output_path = self.app_paths.docsets_base_dir
-            self.database_file_path = self.app_paths.database_path
         self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
         self.registered_project_name: Optional[str] = None
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
+        self.mcp_server_process = None
 
         self._setup_registered_project()
+        self._start_mcp_server_if_enabled()
+    
+    def shutdown(self) -> None:
+        """Shut down the core services, like the MCP server."""
+        if self.mcp_server_process:
+            logger.info("Shutting down MCP server...")
+            self.mcp_server_process.terminate()
+            try:
+                self.mcp_server_process.wait(timeout=5)
+                logger.info("MCP server shut down successfully.")
+            except subprocess.TimeoutExpired:
+                logger.warning("MCP server did not terminate in time, killing it.")
+                self.mcp_server_process.kill()
+
+    def _start_mcp_server_if_enabled(self) -> None:
+        """Check the configuration and start the MCP server if it's enabled."""
+        config = ConfigManager()
+        is_mcp_enabled = config.get_mcp_server_enabled()
+        logger.info(f"MCP Server enabled in config: {is_mcp_enabled}")
+
+        if is_mcp_enabled:
+            logger.info("Starting MCP server...")
+            env = os.environ.copy()
+            env["DEVILDEX_MCP_DB_URL"] = self.database_url
+            
+            server_command = ["python", "src/devildex/mcp_server/server.py"]
+            
+            try:
+                self.mcp_server_process = subprocess.Popen(
+                    server_command,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                logger.info(f"MCP server started with PID: {self.mcp_server_process.pid}")
+            except FileNotFoundError:
+                logger.error(f"Error: Could not find the server script at {server_command[1]}")
+            except Exception as e:
+                logger.error(f"Failed to start MCP server: {e}")
+
+
 
     @staticmethod
     def query_project_names() -> list[str]:
