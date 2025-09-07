@@ -1,4 +1,4 @@
-"""main application."""
+"main application."
 
 import logging
 from pathlib import Path
@@ -61,7 +61,9 @@ class DevilDexApp(wx.App):
     """Main Application."""
 
     def __init__(
-        self, core: DevilDexCore | None = None, initial_url: str | None = None
+        self,
+        core: DevilDexCore | None = None,
+        initial_url: str | None = None,
     ) -> None:
         """Construct DevilDexApp class."""
         self.document_view_panel = None
@@ -177,7 +179,8 @@ class DevilDexApp(wx.App):
 
     @staticmethod
     def _docset_scan_subdir(
-        subdirs_to_check: list, package_root_on_disk: Path
+        subdirs_to_check: list,
+        package_root_on_disk: Path,
     ) -> Path | None:
         for subdir_candidate_name in subdirs_to_check:
             potential_docset_path = package_root_on_disk / subdir_candidate_name
@@ -188,7 +191,8 @@ class DevilDexApp(wx.App):
 
     @staticmethod
     def _docset_scan_set_status(
-        found_specific_docset_subdir: Path | None, pkg_data: dict
+        found_specific_docset_subdir: Path | None,
+        pkg_data: dict,
     ) -> None:
         if found_specific_docset_subdir:
             pkg_data["docset_status"] = AVAILABLE_BTN_LABEL
@@ -217,7 +221,8 @@ class DevilDexApp(wx.App):
                     subdirs_to_check.append(str(pkg_version))
                 subdirs_to_check.extend(["main", "master"])
                 found_specific_docset_subdir: Optional[Path] = self._docset_scan_subdir(
-                    subdirs_to_check, package_root_on_disk
+                    subdirs_to_check,
+                    package_root_on_disk,
                 )
                 self._docset_scan_set_status(found_specific_docset_subdir, pkg_data)
             else:
@@ -805,7 +810,10 @@ class DevilDexApp(wx.App):
             event.Skip()
 
     def _update_grid_cell_from_manager(
-        self, row_idx: int, col_idx: int, value: str
+        self,
+        row_idx: int,
+        col_idx: int,
+        value: str,
     ) -> None:  # sourcery skip: class-extract-method
         """Call GenerationTaskManager to update a grid cell."""
         if self.grid_panel and self.grid_panel.grid:
@@ -904,12 +912,14 @@ class DevilDexApp(wx.App):
         if event:
             event.Skip()
 
-    def OnExit(  # noqa: N802
+    def OnExit(
         self,
     ) -> int:
         """Perform cleanup before the application terminates."""
         if self.generation_task_manager:
             self.generation_task_manager.cleanup()
+        if self.core:
+            self.core.shutdown()
 
         return 0
 
@@ -1060,11 +1070,29 @@ class DevilDexApp(wx.App):
         return True
 
 
+import time
+from devildex.config_manager import ConfigManager
+
 def main() -> None:
     """Launch whole application."""
+    config = ConfigManager()
+    mcp_enabled = config.get_mcp_server_enabled()
+    hide_gui = config.get_mcp_server_hide_gui_when_enabled()
+
     core = DevilDexCore()
-    app = DevilDexApp(core=core, initial_url="https://www.gazzetta.it")
-    app.MainLoop()
+
+    if mcp_enabled and hide_gui:
+        print("MCP server started in headless mode. Press Ctrl+C to exit.")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nShutting down server...")
+            core.shutdown()
+            print("Server shut down.")
+    else:
+        app = DevilDexApp(core=core)
+        app.MainLoop()
 
 
 if __name__ == "__main__":
