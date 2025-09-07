@@ -55,8 +55,12 @@ class DocumentViewPanel(wx.Panel):
         self.webview.Bind(wx.html2.EVT_WEBVIEW_LOADED, self._on_webview_event)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_ERROR, self._on_webview_event)
         self.webview.Bind(wx.html2.EVT_WEBVIEW_NEWWINDOW, self._on_webview_event)
-        self.webview.Bind(wx.html2.EVT_WEBVIEW_FULLSCREEN_CHANGED, self._on_webview_event)
-        self.webview.Bind(wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED, self._on_webview_event)
+        self.webview.Bind(
+            wx.html2.EVT_WEBVIEW_FULLSCREEN_CHANGED, self._on_webview_event
+        )
+        self.webview.Bind(
+            wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED, self._on_webview_event
+        )
         self.webview.Bind(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, self._on_webview_event)
 
         sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 5)
