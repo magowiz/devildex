@@ -1,6 +1,7 @@
 """main application."""
 
 import logging
+import time
 from pathlib import Path
 from typing import Any, Optional
 
@@ -9,6 +10,7 @@ import wx.grid
 import wx.html2
 from wx import Size
 
+from devildex.config_manager import ConfigManager
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
@@ -157,11 +159,14 @@ class DevilDexApp(wx.App):
         )
         self._update_grid_after_delete()
 
-    def _display_mcp_warning_in_gui(self) -> None:
+    @staticmethod
+    def _display_mcp_warning_in_gui() -> None:
         """Display a warning message box for the MCP server in GUI mode."""
         wx.MessageBox(
-            "The MCP server is currently experimental in all modes (GUI and headless).\n\n"
-            "It has limited functionality and is primarily for development and testing.",
+            "The MCP server is currently experimental in all modes "
+            "(GUI and headless).\n\n"
+            "It has limited functionality and is primarily "
+            "for development and testing.",
             "MCP Server: Experimental",
             wx.OK | wx.ICON_INFORMATION,
         )
@@ -551,9 +556,6 @@ class DevilDexApp(wx.App):
         bar_sizer.SetMinSize(wx.Size(-1, desired_bar_height))
         bar_sizer.AddStretchSpacer(1)
         return bar_sizer
-
-    def _setup_initial_view(self) -> None:
-        pass
 
     def _init_splitter_components(self, parent_panel: wx.Panel) -> None:
         self.splitter = wx.SplitterWindow(
@@ -1029,9 +1031,6 @@ class DevilDexApp(wx.App):
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
 
-    def _clear_main_panel(self) -> None:
-        pass
-
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.
 
@@ -1079,11 +1078,6 @@ class DevilDexApp(wx.App):
         return True
 
 
-import time
-
-from devildex.config_manager import ConfigManager
-
-
 def main() -> None:
     """Launch whole application."""
     config = ConfigManager()
@@ -1092,14 +1086,14 @@ def main() -> None:
 
     if mcp_enabled and hide_gui:
         core = DevilDexCore()
-        print("MCP server started in headless mode. Press Ctrl+C to exit.")
+        logger.info("MCP server started in headless mode. Press Ctrl+C to exit.")
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\nShutting down server...")
+            logger.info("\nShutting down server...")
             core.shutdown()
-            print("Server shut down.")
+            logger.info("Server shut down.")
     else:
         app = DevilDexApp()  # Create app instance first
 
@@ -1113,8 +1107,8 @@ def main() -> None:
         # Create core instance, passing the callback if applicable
         core = DevilDexCore(gui_warning_callback=warning_callback)
 
-        app.core = core  # Set app.core before MainLoop()
-        app._initialize_data_and_managers()  # Call the new initialization method
+        app.core = core
+        app._initialize_data_and_managers()
         app.MainLoop()
 
 
