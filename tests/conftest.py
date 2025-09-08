@@ -7,12 +7,16 @@ from sqlalchemy.orm import Session
 from devildex import database
 
 
+_WX_APP_INSTANCE = None
+
 @pytest.fixture(scope="session")
 def wx_app() -> wx.App:
-    """Fixture to create a wx.App instance for the entire test session."""
-    app = wx.App(redirect=False)
-    app.SetAppName("DevilDexTest")
-    return app
+    """Fixture to create a wx.App instance for the entire test session (once per worker)."""
+    global _WX_APP_INSTANCE
+    if _WX_APP_INSTANCE is None:
+        _WX_APP_INSTANCE = wx.App(redirect=False)
+        _WX_APP_INSTANCE.SetAppName("DevilDexTest")
+    return _WX_APP_INSTANCE
 
 
 @pytest.fixture

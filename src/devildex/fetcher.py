@@ -103,13 +103,17 @@ class PackageSourceFetcher:
             response = requests.get(api_url, timeout=15)
             response.raise_for_status()
             pypi_data = response.json()
-            fetched_pypi_urls = pypi_data.get("info", {}).get("project_urls", {})
-            if fetched_pypi_urls:
-                return fetched_pypi_urls
+            return pypi_data.get("info", {}).get("project_urls")
         except requests.RequestException:
-            pass
+            logger.warning(
+                f"Failed to fetch project URLs from PyPI for {self.package_name} "
+                f"v{self.package_version} due to network error."
+            )
         except json.JSONDecodeError:
-            pass
+            logger.warning(
+                f"Failed to decode JSON from PyPI for {self.package_name} "
+                f"v{self.package_version}."
+            )
         return None
 
     def _find_vcs_url_in_dict(

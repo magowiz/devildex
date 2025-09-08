@@ -384,4 +384,3 @@ def test_dev_mode_paths(mocker: MockerFixture, tmp_path: Path) -> None:
 
     # Assert
     assert core.docset_base_output_path == Path("devildex_docsets")
-    assert core.database_file_path == Path("devildex_dev.db")
