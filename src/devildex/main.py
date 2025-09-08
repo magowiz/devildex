@@ -24,7 +24,7 @@ logging.basicConfig(
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 from devildex.task_manager import GenerationTaskManager
 from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 

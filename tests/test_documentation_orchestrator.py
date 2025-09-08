@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 

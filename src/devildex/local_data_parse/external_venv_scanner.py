@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 
 HELPER_SCRIPT_FILENAME = "_external_scanner_script.py"
 

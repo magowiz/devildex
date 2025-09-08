@@ -4,7 +4,7 @@ import pytest
 import wx
 from sqlalchemy.orm import Session
 
-from devildex import database
+from devildex.database import db_manager
 
 
 _WX_APP_INSTANCE = None
@@ -25,10 +25,10 @@ def populated_db_session() -> Session:
     Fixture to set up an in-memory SQLite database and populate it with test data.
     """
     db_url = "sqlite:///:memory:"
-    database.init_db(db_url)
+    db_manager.init_db(db_url)
     try:
-        with database.get_session() as session:
-            database.ensure_package_entities_exist(
+        with db_manager.get_session() as session:
+            db_manager.ensure_package_entities_exist(
                 package_name="requests",
                 package_version="2.25.1",
                 summary="HTTP for Humans.",
@@ -37,7 +37,7 @@ def populated_db_session() -> Session:
                 project_path="/path/to/project",
                 python_executable="/path/to/python",
             )
-            database.ensure_package_entities_exist(
+            db_manager.ensure_package_entities_exist(
                 package_name="pytest",
                 package_version="7.0.0",
                 summary="A better summary.",
@@ -48,4 +48,4 @@ def populated_db_session() -> Session:
             )
             yield session
     finally:
-        database.DatabaseManager.close_db()
+        db_manager.DatabaseManager.close_db()

@@ -25,22 +25,16 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
-from sqlalchemy.orm import declarative_base, relationship, selectinload, sessionmaker
+from sqlalchemy.orm import relationship, selectinload, sessionmaker
 
 from devildex.app_paths import AppPaths
+from .models import Base, Docset, PackageInfo, RegisteredProject, project_docset_association
 
 logger = logging.getLogger(__name__)
 
-Base = declarative_base()
 
-project_docset_association = Table(
-    "project_docset_association",
-    Base.metadata,
-    Column(
-        "project_id", Integer, ForeignKey("registered_project.id"), primary_key=True
-    ),
-    Column("docset_id", Integer, ForeignKey("docset.id"), primary_key=True),
-)
+
+
 
 
 class DatabaseNotInitializedError(RuntimeError):
@@ -122,47 +116,7 @@ class RegisteredProject(Base):  # type: ignore[valid-type,misc]
         )
 
 
-class Docset(Base):  # type: ignore[valid-type,misc]
-    """Model for docset, specific to a package version."""
 
-    __tablename__ = "docset"
-
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-
-    # package_name è ora una FK a PackageInfo.package_name
-    package_name = Column(
-        String, ForeignKey("package_info.package_name"), nullable=False, index=True
-    )
-    package_version = Column(String, nullable=False, index=True)
-
-    index_file_name = Column(String, nullable=False, default="index.html")
-    generation_timestamp_utc = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=lambda: datetime.datetime.now(datetime.timezone.utc),
-    )
-    status = Column(String, nullable=False, default="unknown")
-
-    package_info = relationship("PackageInfo", back_populates="docsets")
-
-    associated_projects = relationship(
-        "RegisteredProject",
-        secondary=project_docset_association,
-        back_populates="docsets",
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "package_name", "package_version", name="uq_docset_package_name_version"
-        ),
-    )
-
-    def __repr__(self) -> str:
-        """Implement repr method."""
-        return (
-            f"<Docset(id={self.id}, name='{self.package_name}', "
-            f"version='{self.package_version}')>"
-        )
 
 
 class DatabaseManager:

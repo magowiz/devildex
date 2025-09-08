@@ -8,11 +8,11 @@ from typing import Any, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from devildex import db_manager as database
+from devildex.database import db_manager as database
 from devildex.app_paths import AppPaths
 from devildex.config_manager import ConfigManager
 from devildex.database.models import Docset
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 from devildex.orchestrator import Orchestrator
 from devildex.scanner import (
     ExternalVenvScanner,

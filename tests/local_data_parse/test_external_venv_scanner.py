@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from devildex.local_data_parse.external_venv_scanner import ExternalVenvScanner
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 
 
 @pytest.fixture

@@ -8,7 +8,7 @@ from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
 from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.scanner.scanner import (

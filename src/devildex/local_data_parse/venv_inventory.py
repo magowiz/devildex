@@ -3,7 +3,7 @@
 import importlib.metadata
 import logging
 
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 
 logger = logging.getLogger(__name__)
 PART_LENGTH = 2

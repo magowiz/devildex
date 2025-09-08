@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     from devildex.core import DevilDexCore
     import os
-    from devildex import db_manager as database
+    from devildex.database import db_manager as database
 
     from devildex.config_manager import ConfigManager
     config = ConfigManager()

@@ -6,7 +6,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from devildex.core import DevilDexCore
-from devildex.models import PackageDetails
+from devildex.database.models import PackageDetails
 
 
 @pytest.fixture
