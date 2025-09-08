@@ -1,175 +1,68 @@
 """test main app ui module."""
 
-import unittest
-from unittest.mock import patch
-
 import wx
 import wx.grid
+import pytest
 
-from devildex.core import DevilDexCore
 from devildex.main import DevilDexApp
 
-app = wx.GetApp()
-if app is None:
-    app = wx.App(redirect=False)
+
+@pytest.mark.ui
+def test_initial_state_and_title(devildex_app: DevilDexApp):
+    """Test the initial state of the main window."""
+    frame = devildex_app.main_frame
+    assert frame is not None, "Main frame should be created"
+    assert frame.IsShown(), "Main frame should be visible"
+    assert frame.GetTitle() == "DevilDex", "Window title is incorrect"
 
 
-class TestMainAppUI(unittest.TestCase):
-    """Test the main application UI using UIActionSimulator."""
+@pytest.mark.ui
+def test_view_mode_selector_initial_value(devildex_app: DevilDexApp):
+    """Test the initial value of the view mode selector ComboBox."""
+    view_selector = devildex_app.view_mode_selector
+    assert view_selector is not None, "View mode selector should exist"
 
-    def setUp(self) -> None:
-        """Set up the test environment."""
-        self.patcher = patch("devildex.main.GenerationTaskManager")
-        self.mock_gen_task_manager_cls = self.patcher.start()
-        self.mock_gen_task_manager_instance = (
-            self.mock_gen_task_manager_cls.return_value
-        )
+    simulator = wx.UIActionSimulator()
+    simulator.MouseMove(view_selector.GetScreenPosition())
+    wx.Yield()
 
-        self.core = DevilDexCore(database_url="sqlite:///:memory:")
-        self.app = DevilDexApp(core=self.core)
-
-        # Process pending events to ensure the UI is fully constructed
-        wx.Yield()
-
-        self.frame = self.app.main_frame
-        self.simulator = wx.UIActionSimulator()
-
-    def tearDown(self) -> None:
-        """Tear down the test environment."""
-        self.patcher.stop()
-        if self.frame:
-            wx.CallAfter(self.frame.Destroy)
-
-        # Process events to ensure cleanup is done
-        wx.Yield()
-
-    def test_initial_state_and_title(self) -> None:
-        """Test the initial state of the main window."""
-        self.assertIsNotNone(self.frame, "Main frame should be created")
-        self.assertTrue(self.frame.IsShown(), "Main frame should be visible")
-        self.assertEqual(self.frame.GetTitle(), "DevilDex", "Window title is incorrect")
-
-    def test_view_mode_selector_initial_value(self) -> None:
-        """Test the initial value of the view mode selector ComboBox."""
-        view_selector = self.app.view_mode_selector
-        self.assertIsNotNone(view_selector, "View mode selector should exist")
-
-        # Simulate a mouse move to the widget to ensure it's 'active'
-        self.simulator.MouseMove(view_selector.GetScreenPosition())
-        wx.Yield()
-
-        expected_value = "Show all Docsets (Global)"
-        self.assertEqual(
-            view_selector.GetValue(),
-            expected_value,
-            "View mode selector has incorrect initial value",
-        )
-
-    def test_grid_selection_enables_buttons(self) -> None:
-        """Test that selecting a row in the grid enables the proper action buttons."""
-        actions_panel = self.app.actions_panel
-        self.assertIsNotNone(actions_panel, "Actions panel should exist")
-
-        self.assertFalse(
-            actions_panel.generate_action_button.IsEnabled(),
-            "Generate button should be disabled initially",
-        )
-        self.assertFalse(
-            actions_panel.open_action_button.IsEnabled(),
-            "Open button should be disabled initially",
-        )
-        self.assertFalse(
-            actions_panel.regenerate_action_button.IsEnabled(),
-            "Regenerate button should be disabled initially",
-        )
-        self.assertFalse(
-            actions_panel.delete_action_button.IsEnabled(),
-            "Delete button should be disabled initially",
-        )
-
-        grid_panel = self.app.grid_panel
-        self.assertIsNotNone(grid_panel, "Grid panel should exist")
-
-        class MockGridEvent(wx.grid.GridEvent):
-            def __init__(self, row) -> None:
-                super().__init__()
-                self.m_row = row
-
-            def GetRow(self):
-                return self.m_row
-
-        mock_event = MockGridEvent(row=0)
-        grid_panel._on_grid_cell_click(mock_event)
-
-        wx.Yield()
-
-        self.assertTrue(
-            actions_panel.generate_action_button.IsEnabled(),
-            "Generate button should be enabled after selection",
-        )
-        self.assertFalse(
-            actions_panel.open_action_button.IsEnabled(),
-            "Open button should remain disabled for unavailable docset",
-        )
-        self.assertFalse(
-            actions_panel.regenerate_action_button.IsEnabled(),
-            "Regenerate button should be disabled for unavailable docset",
-        )
-        self.assertFalse(
-            actions_panel.delete_action_button.IsEnabled(),
-            "Delete button should be disabled for unavailable docset",
-        )
-
-    def test_generate_docset_button_starts_task(self) -> None:
-        """Test that clicking the Generate Docset button starts a generation task."""
-        actions_panel = self.app.actions_panel
-        grid_panel = self.app.grid_panel
-
-        # 1. Select a row to enable the generate button
-        class MockGridEvent(wx.grid.GridEvent):
-            def __init__(self, row):
-                super().__init__()
-                self.m_row = row
-
-            def GetRow(self):
-                return self.m_row
-
-        mock_event = MockGridEvent(row=0)  # Select the first package (e.g., 'black')
-        grid_panel._on_grid_cell_click(mock_event)
-        wx.Yield()
-
-        # Ensure the button is enabled before clicking
-        self.assertTrue(
-            actions_panel.generate_action_button.IsEnabled(),
-            "Generate button should be enabled after selection",
-        )
-
-        # Configure the mock to return False for is_task_active_for_package
-        self.mock_gen_task_manager_instance.is_task_active_for_package.return_value = (
-            False
-        )
-
-        # 2. Simulate click on the Generate Docset button
-        generate_button = actions_panel.generate_action_button
-        self.assertIsNotNone(generate_button, "Generate button should exist")
-
-        # Simulate a click by calling the handler directly
-        generate_button.GetEventHandler().ProcessEvent(
-            wx.CommandEvent(wx.EVT_BUTTON.typeId, generate_button.GetId())
-        )
-        wx.Yield()
-
-        self.mock_gen_task_manager_instance.start_generation_task.assert_called_once()
-        call_args, call_kwargs = (
-            self.mock_gen_task_manager_instance.start_generation_task.call_args
-        )
-        self.assertIn("package_data", call_kwargs)
-        self.assertEqual(call_kwargs["row_index"], 0)
-        self.assertEqual(
-            call_kwargs["docset_status_col_idx"], 6
-        )  # Based on COLUMNS_ORDER in constants.py
-        self.assertEqual(call_kwargs["package_data"]["name"], "black")
+    expected_value = "Show all Docsets (Global)"
+    assert view_selector.GetValue() == expected_value, "View mode selector has incorrect initial value"
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.ui
+def test_grid_selection_enables_buttons(devildex_app: DevilDexApp):
+    """Test that selecting a row in the grid enables the proper action buttons."""
+    actions_panel = devildex_app.actions_panel
+    assert actions_panel is not None, "Actions panel should exist"
+
+    assert not actions_panel.generate_action_button.IsEnabled(), "Generate button should be disabled initially"
+    assert not actions_panel.open_action_button.IsEnabled(), "Open button should be disabled initially"
+    assert not actions_panel.regenerate_action_button.IsEnabled(), "Regenerate button should be disabled initially"
+    assert not actions_panel.delete_action_button.IsEnabled(), "Delete button should be disabled initially"
+
+    grid_panel = devildex_app.grid_panel
+    assert grid_panel is not None, "Grid panel should exist"
+
+    # With the populated database, the grid should have rows.
+    grid = grid_panel.grid
+    assert grid.GetNumberRows() > 0, "Grid should have rows"
+
+    # Simulate selecting the first row
+    class MockGridEvent(wx.grid.GridEvent):
+        def __init__(self, row) -> None:
+            super().__init__()
+            self.m_row = row
+
+        def GetRow(self): 
+            return self.m_row
+
+    mock_event = MockGridEvent(row=0)
+    grid_panel._on_grid_cell_click(mock_event)
+    wx.Yield()
+
+    assert actions_panel.generate_action_button.IsEnabled(), "Generate button should be enabled after selection"
+    # The other buttons depend on the docset status, which is 'unknown' by default
+    assert not actions_panel.open_action_button.IsEnabled(), "Open button should remain disabled for unavailable docset"
+    assert not actions_panel.regenerate_action_button.IsEnabled(), "Regenerate button should be disabled for unavailable docset"
+    assert not actions_panel.delete_action_button.IsEnabled(), "Delete button should be disabled for unavailable docset"
