@@ -18,7 +18,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%H:%M:%S",
-    handlers=[logging.FileHandler("mylogfile.txt", mode="w"), logging.StreamHandler()],
+    handlers=[logging.StreamHandler()],
 )
 
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
@@ -1106,11 +1106,7 @@ class DevilDexApp(wx.App):
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
 
-        # Add the view mode selector setup here
-        view_mode_sizer = self._setup_view_mode_selector(self.panel)
-        self.main_panel_sizer.Add(
-            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
-        )
+        
 
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.
