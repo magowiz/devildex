@@ -177,7 +177,7 @@ def test_parse_and_convert_scan_data_item_not_a_dict(caplog: pytest.LogCaptureFi
 def test_parse_and_convert_scan_data_package_details_error(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
     """Verify that an error during PackageDetails conversion is handled."""
     # Arrange
-    mocker.patch("devildex.models.PackageDetails.from_dict", side_effect=Exception("Conversion error"))
+    mocker.patch("devildex.database.models.PackageDetails.from_dict", side_effect=Exception("Conversion error"))
     json_data = '[{"name": "pkg1"}]'
 
     # Act

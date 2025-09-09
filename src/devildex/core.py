@@ -13,13 +13,15 @@ from devildex.app_paths import AppPaths
 from devildex.config_manager import ConfigManager
 from devildex.database.models import Docset
 from devildex.database.models import PackageDetails
-from devildex.orchestrator import Orchestrator
-from devildex.scanner import (
+from devildex.orchestrator.documentation_orchestrator import Orchestrator
+from devildex.local_data_parse.external_venv_scanner import (
     ExternalVenvScanner,
+)
+from devildex.local_data_parse.common_read import (
     get_explicit_dependencies_from_project_config,
 )
-from devildex.utils import registered_project_parser
-from devildex.utils.registered_project_parser import RegisteredProjectData
+from devildex.local_data_parse import registered_project_parser
+from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
 import logging
 import os
 

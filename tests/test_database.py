@@ -5,8 +5,8 @@ import logging
 import pytest
 from sqlalchemy.orm import Session
 
-from devildex import db_manager as database
-from devildex.database import Docset, PackageInfo, RegisteredProject
+from devildex.database import db_manager as database
+from devildex.database.models import Docset, PackageInfo, RegisteredProject
 
 
 @pytest.fixture
@@ -130,14 +130,14 @@ def test_database_manager_init_db_called_twice(caplog, mocker) -> None:
     database.DatabaseManager._session_local = None
 
     # Act 1: First call to init_db
-    mocker.patch("devildex.database.logger.info")
+    mocker.patch("devildex.database.db_manager.logger.info")
     database.init_db("sqlite:///:memory:")
     database.logger.info.assert_any_call("Initializing database at: sqlite:///:memory:")
     database.logger.info.assert_any_call("Database tables checked/created.")
 
     # Act 2: Second call to init_db
     database.logger.info.reset_mock()  # Reset mock calls for the second check
-    mocker.patch("devildex.database.logger.debug")
+    mocker.patch("devildex.database.db_manager.logger.debug")
     database.init_db("sqlite:///:memory:")
     database.logger.debug.assert_any_call("Database engine already initialized.")
 
@@ -149,12 +149,12 @@ def test_get_docsets_for_project_view_sqlalchemy_error(mocker, caplog) -> None:
     """Verify get_docsets_for_project_view handles SQLAlchemyError."""
     # Arrange
     mocker.patch(
-        "devildex.database.DatabaseManager.execute_statement",
+        "devildex.database.db_manager.DatabaseManager.execute_statement",
         side_effect=database.SQLAlchemyError("Test DB Error"),
     )
     # Ensure get_session yields a mock session that doesn't raise an error on close
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
-    mocker.patch("devildex.database.get_session", return_value=mock_session)
+    mocker.patch("devildex.database.db_manager.get_session", return_value=mock_session)
 
     # Act
     with caplog.at_level(logging.ERROR):
@@ -169,11 +169,11 @@ def test_get_all_registered_projects_details_sqlalchemy_error(mocker, caplog) ->
     """Verify get_all_registered_projects_details handles SQLAlchemyError."""
     # Arrange
     mocker.patch(
-        "devildex.database.DatabaseManager.execute_statement",
+        "devildex.database.db_manager.DatabaseManager.execute_statement",
         side_effect=database.SQLAlchemyError("Test DB Error"),
     )
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
-    mocker.patch("devildex.database.get_session", return_value=mock_session)
+    mocker.patch("devildex.database.db_manager.get_session", return_value=mock_session)
 
     # Act
     with caplog.at_level(logging.ERROR):
@@ -206,11 +206,11 @@ def test_get_project_details_by_name_sqlalchemy_error(mocker, caplog) -> None:
     """Verify get_project_details_by_name handles SQLAlchemyError."""
     # Arrange
     mocker.patch(
-        "devildex.database.DatabaseManager.execute_statement",
+        "devildex.database.db_manager.DatabaseManager.execute_statement",
         side_effect=database.SQLAlchemyError("Test DB Error"),
     )
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
-    mocker.patch("devildex.database.get_session", return_value=mock_session)
+    mocker.patch("devildex.database.db_manager.get_session", return_value=mock_session)
 
     # Act
     with caplog.at_level(logging.ERROR):
@@ -227,7 +227,7 @@ def test_get_session_raises_database_not_initialized_error(mocker, caplog) -> No
     database.DatabaseManager._session_local = None  # Ensure it's not initialized
     # Mock init_db to not set _session_local, simulating a failure
     mocker.patch(
-        "devildex.database.DatabaseManager.init_db",
+        "devildex.database.db_manager.DatabaseManager.init_db",
         side_effect=lambda *args, **kwargs: None,
     )
 
@@ -247,7 +247,7 @@ def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
     database.DatabaseManager._session_local = None  # Ensure it's not initialized
     # Mock init_db to actually initialize the session, but we still expect the warning
     mocker.patch(
-        "devildex.database.DatabaseManager.init_db",
+        "devildex.database.db_manager.DatabaseManager.init_db",
         side_effect=lambda *args, **kwargs: (
             setattr(database.DatabaseManager, "_session_local", mocker.MagicMock())
         ),
@@ -315,7 +315,7 @@ def test_ensure_package_entities_exist_commit_exception(mocker, caplog) -> None:
     )
 
     mock_context_manager.__enter__.return_value = mock_session
-    mocker.patch("devildex.database.get_session", return_value=mock_context_manager)
+    mocker.patch("devildex.database.db_manager.get_session", return_value=mock_context_manager)
 
     # Act & Assert
     with pytest.raises(database.SQLAlchemyError) as excinfo:
@@ -334,7 +334,7 @@ def test_ensure_package_handles_no_project_context(db_session: Session) -> None:
         "package_name": "numpy",
         "package_version": "1.20.1",
         "summary": "Fundamental package for scientific computing",
-        "project_urls": {},
+        "project_urls": {}, #
         # No project_name, project_path, or python_executable
     }
 
@@ -561,7 +561,7 @@ def test_get_docsets_for_project_view_no_summary_or_urls(db_session: Session) ->
 def test_get_db_path(mocker):
     """Verify that the get_db_path method returns the correct path."""
     # Arrange
-    mock_app_paths = mocker.patch("devildex.database.AppPaths").return_value
+    mock_app_paths = mocker.patch("devildex.database.db_manager.AppPaths").return_value
     mock_app_paths.database_path = "/fake/path/devildex.db"
 
     # Act

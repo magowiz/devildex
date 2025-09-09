@@ -108,12 +108,12 @@ if __name__ == "__main__":
     standalone_core = DevilDexCore(database_url=db_url)
     database.init_db(database_url=db_url)
     server_logger.info("Database initialized for standalone server.")
-    dd_mcp_instance = DevilDexCp(enabled=True, core_instance=standalone_core, port=mcp_port)
+    dd_mcp_instance = DevilDexMcp(enabled=True, core_instance=standalone_core, port=mcp_port)
     server_logger.info(f"DevilDexMcp instance created. Port: {mcp_port}")
 
     try:
         server_logger.info(f"Starting Uvicorn server on port {mcp_port}...")
-        uvicorn.run(mcp, host="0.0.0.0", port=mcp_port)
+        mcp.run(transport="http", host="0.0.0.0", port=mcp_port, path="/mcp")
     except KeyboardInterrupt:
         server_logger.info("KeyboardInterrupt received. Shutting down.")
     except Exception as e:

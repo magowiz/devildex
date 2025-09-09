@@ -41,7 +41,7 @@ def test_bootstrap_database_and_load_data(
     mocker.patch(
         "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
     )
-    mock_ensure_pkg = mocker.patch("devildex.database.ensure_package_entities_exist")
+    mock_ensure_pkg = mocker.patch("devildex.core.database.ensure_package_entities_exist")
 
     # Act
     core.bootstrap_database_and_load_data(
@@ -328,7 +328,7 @@ def test_bootstrap_database_and_load_data_fallback(
     mocker.patch(
         "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
     )
-    mock_ensure_pkg = mocker.patch("devildex.database.ensure_package_entities_exist")
+    mock_ensure_pkg = mocker.patch("devildex.core.database.ensure_package_entities_exist")
 
     # Act
     core.bootstrap_database_and_load_data(
@@ -348,7 +348,7 @@ def test_bootstrap_database_and_load_data_missing_pkg_data(
     mocker.patch(
         "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
     )
-    mock_ensure_pkg = mocker.patch("devildex.database.ensure_package_entities_exist")
+    mock_ensure_pkg = mocker.patch("devildex.core.database.ensure_package_entities_exist")
     packages = [PackageDetails(name="requests", version=None, project_urls={})]
 
     # Act

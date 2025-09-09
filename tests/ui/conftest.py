@@ -15,12 +15,14 @@ def core(populated_db_session) -> DevilDexCore:
 
 
 @pytest.fixture
-def devildex_app(wx_app: wx.App, core: DevilDexCore) -> DevilDexApp:
+def devildex_app(core: DevilDexCore) -> DevilDexApp:
     """Fixture to create the main DevilDexApp instance."""
-    app = DevilDexApp(core=core)
-    app._initialize_data_and_managers()
+    app = wx.App()
+    main_app = DevilDexApp(core=core)
+    main_app._initialize_data_and_managers()
     wx.Yield()  # Allow the UI to initialize
-    yield app
-    if app.main_frame:
-        wx.CallAfter(app.main_frame.Destroy)
+    yield main_app
+    if main_app.main_frame:
+        wx.CallAfter(main_app.main_frame.Destroy)
     wx.Yield()
+    app.Destroy()
