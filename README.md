@@ -18,13 +18,13 @@ And have you seen the friendly little devil in the logo? Isn't it cute?
 
 ## Key Features 🔑
 
--   **Project Scanning**: Automatically scans your Python projects (`pyproject.toml`, `requirements.txt`) to find all their dependencies.
--   **Docset Generation**: Uses tools like Sphinx, pdoc, and pydoctor to generate HTML documentation for your packages. ![Docset Generation Log](imgs/running_log.png)
--   **Uniform Theming**: Applies a consistent and professional DevilDex theme across different documentation generators (Sphinx, pdoc3, pydoctor, MkDocs) for a unified viewing experience.
--   **Integrated Viewer**: A built-in browser view to read and navigate the generated docsets without leaving the application. ![Docset View](imgs/docset.png)
--   **Database Management**: Uses SQLAlchemy to keep track of your packages, projects, and available docsets.
+- **Project Scanning**: Automatically scans your Python projects (`pyproject.toml`, `requirements.txt`) to find all their dependencies.
+- **Docset Generation**: Uses tools like Sphinx, pdoc, and pydoctor to generate HTML documentation for your packages. ![Docset Generation Log](imgs/running_log.png)
+- **Uniform Theming**: Applies a consistent and professional DevilDex theme across different documentation generators (Sphinx, pdoc3, pydoctor, MkDocs) for a unified viewing experience.
+- **Integrated Viewer**: A built-in browser view to read and navigate the generated docsets without leaving the application. ![Docset View](imgs/docset.png)
+- **Database Management**: Uses SQLAlchemy to keep track of your packages, projects, and available docsets.
 
--   **Cross-Platform GUI**: Built with the wxPython framework to run on multiple operating systems.
+- **Cross-Platform GUI**: Built with the wxPython framework to run on multiple operating systems.
 
 ![Main Application View](imgs/main.png)
 
@@ -116,13 +116,13 @@ pip install path/to/your/downloaded/devildex-*.whl
 
 For development or if you prefer to install from source, follow these steps:
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
     ```bash
     git clone <repository-url>
     cd devildex
     ```
 
-2.  **Install Python packages using Poetry:**
+2. **Install Python packages using Poetry:**
     ```bash
     poetry install
     ```
@@ -141,7 +141,7 @@ DevilDex needs to know about your projects and their associated Python virtual e
 
 **Important:** You must run this script from within the **activated virtual environment** of the project you wish to register.
 
-1.  **Activate your project\'s virtual environment:**
+1. **Activate your project\'s virtual environment:**
     ```bash
     # Example for a Poetry project
     poetry shell
@@ -149,12 +149,12 @@ DevilDex needs to know about your projects and their associated Python virtual e
     source .venv/bin/activate
     ```son
 
-2.  **Navigate to your project\'s root directory:**
+2. **Navigate to your project\'s root directory:**
     ```bash
     cd /path/to/your/project
     ```
 
-3.  **Run the registration script:**
+3. **Run the registration script:**
     ```bash
     devildex-register-project
     ```

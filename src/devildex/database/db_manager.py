@@ -1,7 +1,5 @@
 """docset database module."""
 
-import datetime
-import json
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -9,32 +7,27 @@ from pathlib import Path
 from typing import Any, Optional, cast
 
 from sqlalchemy import (
-    Column,
-    DateTime,
     Engine,
     Executable,
-    ForeignKey,
-    Integer,
     Result,
-    String,
-    Table,
-    Text,
-    UniqueConstraint,
     create_engine,
     select,
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
-from sqlalchemy.orm import relationship, selectinload, sessionmaker
+from sqlalchemy.orm import selectinload, sessionmaker
 
 from devildex.app_paths import AppPaths
-from .models import Base, Docset, PackageInfo, RegisteredProject, project_docset_association
+
+from .models import (
+    Base,
+    Docset,
+    PackageInfo,
+    RegisteredProject,
+    project_docset_association,
+)
 
 logger = logging.getLogger(__name__)
-
-
-
-
 
 
 class DatabaseNotInitializedError(RuntimeError):

@@ -126,7 +126,7 @@ test_cases = [
 
 @pytest.mark.ui
 @pytest.mark.parametrize(
-    "package_data, is_task_running, expected_states, test_id",
+    ("package_data", "is_task_running", "expected_states", "test_id"),
     test_cases,
     ids=[case[3] for case in test_cases],
 )

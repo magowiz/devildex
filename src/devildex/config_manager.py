@@ -2,11 +2,11 @@ import configparser
 import logging
 from pathlib import Path
 from typing import Optional
-import os
 
 from devildex.app_paths import AppPaths
 
 logger = logging.getLogger(__name__)
+
 
 class ConfigManager:
     _instance = None
@@ -31,28 +31,40 @@ class ConfigManager:
                 self._config.read(self._config_path)
                 logger.info(f"Loaded configuration from: {self._config_path}")
             except configparser.Error as e:
-                logger.error(f"Error reading configuration file {self._config_path}: {e}")
-                self._config = configparser.ConfigParser() # Reset to empty config
+                logger.error(
+                    f"Error reading configuration file {self._config_path}: {e}"
+                )
+                self._config = configparser.ConfigParser()  # Reset to empty config
         else:
-            logger.info(f"Configuration file not found at: {self._config_path}. Creating with default settings.")
+            logger.info(
+                f"Configuration file not found at: {self._config_path}. Creating with default settings."
+            )
             # Create the file with default settings
             self._config.add_section("mcp_server_dev")
             self._config.set("mcp_server_dev", "enabled", "false")
             self._config.set("mcp_server_dev", "hide_gui_when_enabled", "false")
             if self._config_path:
                 try:
-                    self._config_path.parent.mkdir(parents=True, exist_ok=True) # Ensure parent directory exists
-                    with open(self._config_path, 'w') as configfile:
+                    self._config_path.parent.mkdir(
+                        parents=True, exist_ok=True
+                    )  # Ensure parent directory exists
+                    with open(self._config_path, "w") as configfile:
                         self._config.write(configfile)
-                    logger.info(f"Created default configuration file at: {self._config_path}")
-                except IOError as e:
-                    logger.error(f"Error creating default configuration file {self._config_path}: {e}")
+                    logger.info(
+                        f"Created default configuration file at: {self._config_path}"
+                    )
+                except OSError as e:
+                    logger.error(
+                        f"Error creating default configuration file {self._config_path}: {e}"
+                    )
 
     def get_mcp_server_enabled(self) -> bool:
         return self._config.getboolean("mcp_server_dev", "enabled", fallback=False)
 
     def get_mcp_server_hide_gui_when_enabled(self) -> bool:
-        return self._config.getboolean("mcp_server_dev", "hide_gui_when_enabled", fallback=False)
+        return self._config.getboolean(
+            "mcp_server_dev", "hide_gui_when_enabled", fallback=False
+        )
 
     def get_mcp_server_port(self) -> int:
         return self._config.getint("mcp_server_dev", "port", fallback=8001)
@@ -69,14 +81,19 @@ class ConfigManager:
     def save_config(self) -> None:
         if self._config_path:
             try:
-                logger.debug(f"Attempting to save config. Current _config state: {self._config}")
-                with open(self._config_path, 'w') as configfile:
+                logger.debug(
+                    f"Attempting to save config. Current _config state: {self._config}"
+                )
+                with open(self._config_path, "w") as configfile:
                     self._config.write(configfile)
                 logger.info(f"Configuration saved to: {self._config_path}")
-            except IOError as e:
-                logger.error(f"Error saving configuration file {self._config_path}: {e}")
+            except OSError as e:
+                logger.error(
+                    f"Error saving configuration file {self._config_path}: {e}"
+                )
         else:
             logger.error("Cannot save configuration: _config_path is not set.")
+
 
 # Example usage (for testing/demonstration)
 if __name__ == "__main__":
@@ -88,7 +105,6 @@ if __name__ == "__main__":
     #     f.write("enabled = true\n")
     #     f.write("hide_gui_when_enabled = true\n")
 
-    
     config = ConfigManager()
     print(f"MCP Server Enabled: {config.get_mcp_server_enabled()}")
     print(f"Hide GUI When Enabled: {config.get_mcp_server_hide_gui_when_enabled()}")

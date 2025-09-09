@@ -7,7 +7,7 @@
 
 import logging
 import os
-import sys # Added for sys.path
+import sys  # Added for sys.path
 from typing import Any
 
 from fastmcp import FastMCP
@@ -18,20 +18,19 @@ mcp = FastMCP("Demo 🚀")
 # Global variable to hold the DevilDexCore instance
 standalone_core: Any = None
 
+
 @mcp.tool
 def get_docsets_list(
     project: str | None = None, all_projects: bool = False
 ) -> dict[str, str] | list[str]:
     """Get a list of docsets."""
-    global standalone_core # Access the global standalone_core
-    
+    global standalone_core  # Access the global standalone_core
+
     if not standalone_core:
         return {"error": "DevilDexCore not initialized in MCP server."}
 
     if not project and not all_projects:
-        return {
-            "error": "invalid parameters: project or all_projects must be provided"
-        }
+        return {"error": "invalid parameters: project or all_projects must be provided"}
 
     if project:
         docsets = standalone_core.get_docsets_info_for_project(project_name=project)
@@ -43,14 +42,15 @@ def get_docsets_list(
 
     return []
 
+
 if __name__ == "__main__":
-    import uvicorn # Keep uvicorn import for mcp.run()
+
     server_logger = logging.getLogger(__name__)
     server_logger.info("MCP server standalone mode started.")
 
+    from devildex.config_manager import ConfigManager
     from devildex.core import DevilDexCore
     from devildex.database import db_manager as database
-    from devildex.config_manager import ConfigManager
 
     config = ConfigManager()
     mcp_port = os.getenv("DEVILDEX_MCP_SERVER_PORT")
@@ -61,19 +61,19 @@ if __name__ == "__main__":
 
     db_url = os.getenv("DEVILDEX_MCP_DB_URL", None)
     server_logger.info(f"Using database URL: {db_url}")
-    standalone_core = DevilDexCore(database_url=db_url) # Initialize global core
+    standalone_core = DevilDexCore(database_url=db_url)  # Initialize global core
     database.init_db(database_url=db_url)
     server_logger.info("Database initialized for standalone server.")
-    
+
     server_logger.info(f"Starting Uvicorn server on port {mcp_port}...")
-    
+
     # Debugging prints
     server_logger.info(f"Server sys.path: {sys.path}")
     server_logger.info(f"Server os.environ: {os.environ}")
 
     try:
         # Reverted to mcp.run() as per original intention, and to debug
-        mcp.run(transport="http", host="0.0.0.0", port=mcp_port, path="/mcp")
+        mcp.run(transport="http", host="127.0.0.1", port=mcp_port, path="/mcp")
     except KeyboardInterrupt:
         server_logger.info("KeyboardInterrupt received. Shutting down.")
     except Exception as e:

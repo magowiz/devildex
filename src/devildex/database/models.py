@@ -70,11 +70,13 @@ class PackageInfo(Base):  # type: ignore[valid-type,misc]
         if self._project_urls_json:
             try:
                 import json
+
                 return json.loads(
                     self._project_urls_json
                 )  # type: ignore[no-any-return]
             except json.JSONDecodeError:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.exception(
                     "Error nel decoding project_urls JSON per package_info "
@@ -89,6 +91,7 @@ class PackageInfo(Base):  # type: ignore[valid-type,misc]
         """Set up project_urls, converting it in JSON."""
         if value:
             import json
+
             self._project_urls_json = json.dumps(value)
         else:
             self._project_urls_json = None

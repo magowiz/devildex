@@ -719,9 +719,8 @@ class DocStringsSrc:
         # A pdoc dummy module typically lacks __file__ and __path__
         # and might have a __name__ that doesn't match the expected one
         # or is just a placeholder.
-        return (
-            not hasattr(module_candidate, "__file__")
-            and not hasattr(module_candidate, "__path__")
+        return not hasattr(module_candidate, "__file__") and not hasattr(
+            module_candidate, "__path__"
         )
 
     @staticmethod

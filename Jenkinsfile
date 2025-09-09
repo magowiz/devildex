@@ -130,7 +130,7 @@ pipeline {
                         sh 'pip install -r requirements.txt --index-url $IP_INDEX_URL --trusted-host $IP_TRUSTED_HOST'
                         sh 'pip install --no-deps -e . --index-url $IP_INDEX_URL --trusted-host $IP_TRUSTED_HOST'
                     }
-                }
+                                 }
 
                 pyTestXvfb(buildType: 'pip', pythonInterpreter: 'python', skipMarkers: '')
                 script {
@@ -205,7 +205,7 @@ pipeline {
                             withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
                                 sh 'poetry build --format wheel --no-interaction --no-ansi --verbose'
                             }
-                        }
+                                         }
                     }
                     echo '--- Python Wheel Build Finished ---'
                 }
@@ -301,7 +301,7 @@ pipeline {
                                         """
                                     }
                                 }
-                            }
+                                             }
                         }
                         post {
                             success {
@@ -335,7 +335,7 @@ pipeline {
                             DISABLE_ERRORS = true
                         }
                         steps {
-                             withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
+                            withCredentials([string(credentialsId: 'INTERNAL_PIP_INDEX_URL_IP', variable: 'PIP_INDEX_URL_VAR'),
                                              string(credentialsId: 'HEPHAESTUS_IP', variable: 'PIP_TRUSTED_HOST_VAR')]) {
                                 withEnv(["IP_INDEX_URL=${PIP_INDEX_URL_VAR}", "IP_TRUSTED_HOST=${PIP_TRUSTED_HOST_VAR}"]) {
                                     script {
@@ -373,7 +373,7 @@ pipeline {
                                         echo "--- Build Nuitka finished for ${env.ARCH} ---"
                                     }
                                 }
-                            }
+                                             }
                         }
                         post {
                             success {
@@ -449,7 +449,7 @@ pipeline {
                                         echo "--- End Build PyOxidizer for ${env.ARCH} ---"
                                     }
                                 }
-                            }
+                                             }
                         }
                         post {
                             success {
@@ -522,7 +522,7 @@ pipeline {
                                         echo "--- End Build PyInstaller for ${env.ARCH} ---"
                                     }
                                 }
-                            }
+                                             }
                         }
                         post {
                             success {

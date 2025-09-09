@@ -35,7 +35,7 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
-permissions: { }
+permissions: {}
 
 jobs:
   megalinter:
@@ -93,7 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: true
           # Exclude directories from the scan
-          FILTER_REGEX_EXCLUDE: '(source/|src/devildex/theming/common_assets/bootstrap/)'
+          FILTER_REGEX_EXCLUDE: "(source/|src/devildex/theming/common_assets/bootstrap/)"
 
           # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE
           # .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY

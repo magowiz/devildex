@@ -307,4 +307,3 @@ if __name__ == "__main__":  # pragma: no cover
     else:
         logger.error("  FAILURE: Download failed for Sphinx.")
     logger.info("-" * 30)
-

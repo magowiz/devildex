@@ -140,64 +140,75 @@ def test_documentation_generation_for_package(
         ), f"The expected HTML entry point Path is not a file:{entry_point_file}"
         logger.error(f"Found entry point html expected:{entry_point_file}")
 
+
 def test_build_pdoc_command_no_modules(tmp_path: Path, caplog) -> None:
     """Verify _build_pdoc_command handles no modules to document."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-    
+
     with caplog.at_level(logging.ERROR):
         command = doc_generator._build_pdoc_command(
             python_executable="/usr/bin/python",
-            modules_to_document=[], # Empty list
-            output_directory=tmp_path / "output"
+            modules_to_document=[],  # Empty list
+            output_directory=tmp_path / "output",
         )
-    
+
     assert command == []
     assert "DocstringsSrc: No module specified for PDOC." in caplog.text
 
-def test_generate_docs_from_folder_non_existent_input_folder(tmp_path: Path, caplog) -> None:
+
+def test_generate_docs_from_folder_non_existent_input_folder(
+    tmp_path: Path, caplog
+) -> None:
     """Verify generate_docs_from_folder handles non-existent input folder."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-    
+
     non_existent_folder = tmp_path / "non_existent_project"
-    
+
     with caplog.at_level(logging.ERROR):
         result = doc_generator.generate_docs_from_folder(
             project_name="test_project",
             input_folder=str(non_existent_folder),
-            output_folder=str(tmp_path / "output")
+            output_folder=str(tmp_path / "output"),
         )
-    
+
     assert result is False
-    assert "DocstringsSrc: The Specified Source Project Folder does not exist" in caplog.text
+    assert (
+        "DocstringsSrc: The Specified Source Project Folder does not exist"
+        in caplog.text
+    )
+
 
 def test_build_pdoc_command_with_template_dir(tmp_path: Path, caplog) -> None:
     """Verify _build_pdoc_command includes template_dir when provided."""
     template_dir = tmp_path / "my_template"
     template_dir.mkdir()
     doc_generator = DocStringsSrc(template_dir=template_dir, output_dir=str(tmp_path))
-    
+
     with caplog.at_level(logging.INFO):
         command = doc_generator._build_pdoc_command(
             python_executable="/usr/bin/python",
             modules_to_document=["my_module"],
-            output_directory=tmp_path / "output"
+            output_directory=tmp_path / "output",
         )
-    
+
     assert "--template-dir" in command
     assert str(template_dir.resolve()) in command
     assert "Using customized template directory" in caplog.text
 
-def test_handle_successful_doc_move_existing_destination(tmp_path: Path, mocker) -> None:
+
+def test_handle_successful_doc_move_existing_destination(
+    tmp_path: Path, mocker
+) -> None:
     """Verify _handle_successful_doc_move cleans up existing destination."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-    
+
     generated_content_path = tmp_path / "generated_content"
     generated_content_path.mkdir()
     (generated_content_path / "file.html").touch()
 
     final_docs_destination = tmp_path / "final_docs"
     final_docs_destination.mkdir()
-    (final_docs_destination / "old_file.html").touch() # Existing content
+    (final_docs_destination / "old_file.html").touch()  # Existing content
 
     mock_cleanup_folder = mocker.patch.object(doc_generator, "cleanup_folder")
     mock_shutil_move = mocker.patch("shutil.move")
@@ -209,10 +220,11 @@ def test_handle_successful_doc_move_existing_destination(tmp_path: Path, mocker)
     mock_cleanup_folder.assert_called_once_with(final_docs_destination)
     mock_shutil_move.assert_called_once()
 
+
 def test_cleanup_pdoc_output_on_failure(tmp_path: Path, mocker) -> None:
     """Verify that _cleanup_pdoc_output_on_failure removes the correct directories."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-    
+
     pdoc_command_output_dir = tmp_path / "pdoc_output"
     project_specific_output_dir = pdoc_command_output_dir / "test_project"
     project_specific_output_dir.mkdir(parents=True)
@@ -220,19 +232,22 @@ def test_cleanup_pdoc_output_on_failure(tmp_path: Path, mocker) -> None:
 
     mock_rmtree = mocker.patch("shutil.rmtree")
 
-    doc_generator._cleanup_pdoc_output_on_failure(pdoc_command_output_dir, "test_project")
+    doc_generator._cleanup_pdoc_output_on_failure(
+        pdoc_command_output_dir, "test_project"
+    )
 
     mock_rmtree.assert_called_once_with(project_specific_output_dir)
+
 
 def test_find_and_report_non_package_folders(tmp_path: Path) -> None:
     """Verify that _find_and_report_non_package_folders correctly identifies non-package folders."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-    
+
     project_root = tmp_path / "project"
     project_root.mkdir()
     (project_root / "__init__.py").touch()
     (project_root / "module.py").touch()
-    
+
     non_package_folder = project_root / "non_package"
     non_package_folder.mkdir()
     (non_package_folder / "file.txt").touch()
@@ -242,21 +257,22 @@ def test_find_and_report_non_package_folders(tmp_path: Path) -> None:
     doc_generator._find_and_report_non_package_folders(
         scan_base_path=project_root,
         project_root_for_relative_paths=project_root,
-        output_report_file=report_file
+        output_report_file=report_file,
     )
 
     assert report_file.exists()
-    with open(report_file, "r") as f:
+    with open(report_file) as f:
         content = f.read()
         assert "- non_package" in content
+
 
 def test_process_reported_folders(tmp_path: Path, mocker) -> None:
     """Verify that _process_reported_folders correctly removes reported folders and links."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-    
+
     pdoc_project_output_path = tmp_path / "pdoc_output"
     pdoc_project_output_path.mkdir()
-    
+
     reported_folder = pdoc_project_output_path / "reported_folder"
     reported_folder.mkdir()
     (reported_folder / "file.txt").touch()
@@ -267,35 +283,48 @@ def test_process_reported_folders(tmp_path: Path, mocker) -> None:
     report_file = tmp_path / "report.txt"
     report_file.write_text("- reported_folder")
 
-    mocker.patch.object(doc_generator, "_read_non_package_report", return_value=["reported_folder"])
+    mocker.patch.object(
+        doc_generator, "_read_non_package_report", return_value=["reported_folder"]
+    )
     mock_rmtree = mocker.patch("shutil.rmtree")
-    mock_clean_html = mocker.patch.object(doc_generator, "_clean_html_file_for_reported_path")
+    mock_clean_html = mocker.patch.object(
+        doc_generator, "_clean_html_file_for_reported_path"
+    )
 
     doc_generator._process_reported_folders(report_file, pdoc_project_output_path)
 
     mock_rmtree.assert_called_once_with(reported_folder)
     mock_clean_html.assert_called_once()
 
+
 def test_attempt_install_missing_dependency(mocker) -> None:
     """Verify that _attempt_install_missing_dependency correctly calls pip."""
     doc_generator = DocStringsSrc()
-    mock_execute = mocker.patch("devildex.docstrings.docstrings_src.execute_command", return_value=("", "", 0))
+    mock_execute = mocker.patch(
+        "devildex.docstrings.docstrings_src.execute_command", return_value=("", "", 0)
+    )
 
-    result = doc_generator._attempt_install_missing_dependency("requests", "/usr/bin/python")
+    result = doc_generator._attempt_install_missing_dependency(
+        "requests", "/usr/bin/python"
+    )
 
     assert result is True
-    mock_execute.assert_called_once_with([
-        "/usr/bin/python",
-        "-m",
-        "pip",
-        "install",
-        "requests",
-    ], "Install missing dependency requests")
+    mock_execute.assert_called_once_with(
+        [
+            "/usr/bin/python",
+            "-m",
+            "pip",
+            "install",
+            "requests",
+        ],
+        "Install missing dependency requests",
+    )
+
 
 def test_is_pdoc_dummy_module(mocker) -> None:
     """Verify _is_pdoc_dummy_module correctly identifies dummy modules."""
     doc_generator = DocStringsSrc()
-    
+
     # Case 1: None module
     assert doc_generator._is_pdoc_dummy_module(None, "any_module") is True
 
@@ -304,7 +333,10 @@ def test_is_pdoc_dummy_module(mocker) -> None:
     del mock_module_no_attrs.__file__
     del mock_module_no_attrs.__path__
     mock_module_no_attrs.__name__ = "dummy_module"
-    assert doc_generator._is_pdoc_dummy_module(mock_module_no_attrs, "dummy_module") is True
+    assert (
+        doc_generator._is_pdoc_dummy_module(mock_module_no_attrs, "dummy_module")
+        is True
+    )
 
     # Case 3: Module with __file__ (real module)
     mock_real_module = mocker.MagicMock()
@@ -316,13 +348,19 @@ def test_is_pdoc_dummy_module(mocker) -> None:
     mock_real_package = mocker.MagicMock()
     mock_real_package.__path__ = ["/path/to/real_package"]
     mock_real_package.__name__ = "real_package"
-    assert doc_generator._is_pdoc_dummy_module(mock_real_package, "real_package") is False
+    assert (
+        doc_generator._is_pdoc_dummy_module(mock_real_package, "real_package") is False
+    )
 
     # Case 5: Module with __name__ not matching expected_name
     mock_module_wrong_name = mocker.MagicMock()
     mock_module_wrong_name.__file__ = "/path/to/file.py"
     mock_module_wrong_name.__name__ = "wrong_name"
-    assert doc_generator._is_pdoc_dummy_module(mock_module_wrong_name, "expected_name") is False
+    assert (
+        doc_generator._is_pdoc_dummy_module(mock_module_wrong_name, "expected_name")
+        is False
+    )
+
 
 def test_log_traceback(mocker, caplog) -> None:
     """Verify _log_traceback logs a debug message with exc_info."""

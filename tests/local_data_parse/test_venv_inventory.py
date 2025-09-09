@@ -3,10 +3,10 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+from devildex.database.models import PackageDetails
 from devildex.local_data_parse.venv_inventory import (
     get_installed_packages_with_project_urls,
 )
-from devildex.database.models import PackageDetails
 
 
 def create_mock_distribution(

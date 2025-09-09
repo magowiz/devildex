@@ -1,5 +1,7 @@
 """Fixtures for UI tests."""
 
+from collections.abc import Generator
+
 import pytest
 import wx
 
@@ -8,7 +10,7 @@ from devildex.main import DevilDexApp
 
 
 @pytest.fixture(scope="session")
-def wx_app():
+def wx_app() -> Generator[wx.App, None, None]:
     """Fixture to create a single wx.App instance for all UI tests."""
     app = wx.App()
     yield app
@@ -16,14 +18,13 @@ def wx_app():
 
 
 @pytest.fixture
-def core(populated_db_session) -> DevilDexCore:
+def core(populated_db_session: str) -> DevilDexCore:
     """Fixture to provide a DevilDexCore instance with a populated database."""
-    # The database is already initialized by the populated_db_session fixture
     return DevilDexCore(database_url="sqlite:///:memory:")
 
 
 @pytest.fixture
-def devildex_app(wx_app, core: DevilDexCore) -> DevilDexApp:
+def devildex_app(wx_app: wx.App, core: DevilDexCore) -> DevilDexApp:
     """Fixture to create the main DevilDexApp instance."""
     main_app = DevilDexApp(core=core)
     main_app._initialize_data_and_managers()

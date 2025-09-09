@@ -1,8 +1,7 @@
-"main application."
+"""main application."""
 
 import logging
 import time
-import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -23,8 +22,8 @@ logging.basicConfig(
 
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
-from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.database.models import PackageDetails
+from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.task_manager import GenerationTaskManager
 from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 
@@ -1105,8 +1104,6 @@ class DevilDexApp(wx.App):
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
             active_project_file_path.unlink(missing_ok=True)
-
-        
 
     def _validate_can_generate(self, package_data: dict) -> bool:
         """Validate if generation can start for the given package data.

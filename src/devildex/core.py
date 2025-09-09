@@ -1,5 +1,7 @@
 """core module."""
 
+import logging
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -8,30 +10,30 @@ from typing import Any, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from devildex.database import db_manager as database
 from devildex.app_paths import AppPaths
 from devildex.config_manager import ConfigManager
-from devildex.database.models import Docset
-from devildex.database.models import PackageDetails
-from devildex.orchestrator.documentation_orchestrator import Orchestrator
-from devildex.local_data_parse.external_venv_scanner import (
-    ExternalVenvScanner,
-)
+from devildex.database import db_manager as database
+from devildex.database.models import Docset, PackageDetails
+from devildex.local_data_parse import registered_project_parser
 from devildex.local_data_parse.common_read import (
     get_explicit_dependencies_from_project_config,
 )
-from devildex.local_data_parse import registered_project_parser
+from devildex.local_data_parse.external_venv_scanner import (
+    ExternalVenvScanner,
+)
 from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
-import logging
-import os
+from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
+
 
 class DevilDexCore:
     """DevilDex Core."""
 
     def __init__(
-        self, database_url: Optional[str] = None, gui_warning_callback: Optional[callable] = None
+        self,
+        database_url: Optional[str] = None,
+        gui_warning_callback: Optional[callable] = None,
     ) -> None:
         """Initialize a new DevilDexCore instance."""
         self.app_paths = AppPaths()
@@ -49,7 +51,7 @@ class DevilDexCore:
 
         self._setup_registered_project()
         self._start_mcp_server_if_enabled(self.gui_warning_callback)
-    
+
     def shutdown(self) -> None:
         """Shut down the core services, like the MCP server."""
         if self.mcp_server_process:
@@ -62,7 +64,9 @@ class DevilDexCore:
                 logger.warning("MCP server did not terminate in time, killing it.")
                 self.mcp_server_process.kill()
 
-    def _start_mcp_server_if_enabled(self, gui_warning_callback: Optional[callable] = None) -> None:
+    def _start_mcp_server_if_enabled(
+        self, gui_warning_callback: Optional[callable] = None
+    ) -> None:
         """Check the configuration and start the MCP server if it's enabled."""
         config = ConfigManager()
         is_mcp_enabled = config.get_mcp_server_enabled()
@@ -78,25 +82,27 @@ class DevilDexCore:
             # Ensure DEVILDEX_DEV_MODE is passed if it's set in the current environment
             if os.getenv("DEVILDEX_DEV_MODE") == "1":
                 env["DEVILDEX_DEV_MODE"] = "1"
-            
+
             server_command = ["python", "src/devildex/mcp_server/server.py"]
-            
+
             try:
                 self.mcp_server_process = subprocess.Popen(
                     server_command,
                     env=env,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
                 )
-                logger.info(f"MCP server started with PID: {self.mcp_server_process.pid}")
+                logger.info(
+                    f"MCP server started with PID: {self.mcp_server_process.pid}"
+                )
                 if gui_warning_callback:
                     gui_warning_callback()
             except FileNotFoundError:
-                logger.error(f"Error: Could not find the server script at {server_command[1]}")
+                logger.error(
+                    f"Error: Could not find the server script at {server_command[1]}"
+                )
             except Exception as e:
                 logger.error(f"Failed to start MCP server: {e}")
-
-
 
     @staticmethod
     def query_project_names() -> list[str]:
@@ -292,10 +298,13 @@ class DevilDexCore:
         if self.database_url:
             db_url = self.database_url
         else:
-            db_url = f"sqlite:///{self.app_paths.database_path}" # Use app_paths.database_path
-        
+            db_url = f"sqlite:///{self.app_paths.database_path}"  # Use app_paths.database_path
+
         # Ensure the database is initialized if it hasn't been already
-        if database.DatabaseManager._engine is None or str(database.DatabaseManager._engine.url) != db_url:
+        if (
+            database.DatabaseManager._engine is None
+            or str(database.DatabaseManager._engine.url) != db_url
+        ):
             database.init_db(database_url=db_url)
             logger.info("Core: Database initialized.")
         else:
@@ -418,7 +427,14 @@ class DevilDexCore:
         """Retrieve information for all docsets from the database."""
         with database.get_session() as session:
             docsets = session.scalars(select(database.Docset)).all()
-            return [{"name": d.package_name, "version": d.package_version, "status": d.status} for d in docsets]
+            return [
+                {
+                    "name": d.package_name,
+                    "version": d.package_version,
+                    "status": d.status,
+                }
+                for d in docsets
+            ]
 
     def get_docsets_info_for_project(self, project_name: str) -> list[dict[str, Any]]:
         """Retrieve information for docsets associated with a specific project."""
@@ -429,7 +445,14 @@ class DevilDexCore:
                 .join(database.Docset.associated_projects)
                 .where(database.RegisteredProject.project_name == project_name)
             ).all()
-            return [{"name": d.package_name, "version": d.package_version, "status": d.status} for d in docsets]
+            return [
+                {
+                    "name": d.package_name,
+                    "version": d.package_version,
+                    "status": d.status,
+                }
+                for d in docsets
+            ]
 
     def generate_docset(self, package_data: dict) -> tuple[bool, str]:
         """Generate a docset using Orchestrator.

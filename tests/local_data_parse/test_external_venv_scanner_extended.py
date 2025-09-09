@@ -23,7 +23,9 @@ def test_init_invalid_python_path(caplog: pytest.LogCaptureFixture) -> None:
     assert "doesn't seem to be a valid file" in caplog.text
 
 
-def test_init_script_content_not_loaded(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_init_script_content_not_loaded(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an error is logged if the helper script content cannot be loaded."""
     # Arrange
     mocker.patch(
@@ -33,7 +35,6 @@ def test_init_script_content_not_loaded(mocker: MagicMock, caplog: pytest.LogCap
     mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value.is_file.return_value = True
 
-
     # Act
     with caplog.at_level(logging.ERROR):
         ExternalVenvScanner(python_executable_path="/fake/path")
@@ -42,7 +43,9 @@ def test_init_script_content_not_loaded(mocker: MagicMock, caplog: pytest.LogCap
     assert "script helper content not loaded" in caplog.text
 
 
-def test_load_helper_script_content_file_not_found(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_helper_script_content_file_not_found(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an error is logged when the helper script is not found."""
     # Arrange
     mocker.patch("importlib.resources.files", side_effect=FileNotFoundError)
@@ -56,7 +59,9 @@ def test_load_helper_script_content_file_not_found(mocker: MagicMock, caplog: py
     assert "non trovato (FileNotFoundError)" in caplog.text
 
 
-def test_load_helper_script_content_os_error(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_helper_script_content_os_error(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an error is logged on OSError while loading the helper script."""
     # Arrange
     mocker.patch("importlib.resources.files", side_effect=OSError)
@@ -85,10 +90,14 @@ def test_execute_helper_script_no_content(caplog: pytest.LogCaptureFixture) -> N
     assert "Cannot execute helper script: script content not loaded." in caplog.text
 
 
-def test_execute_helper_script_timeout(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_execute_helper_script_timeout(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that a TimeoutExpired exception is handled correctly."""
     # Arrange
-    mocker.patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="", timeout=1))
+    mocker.patch(
+        "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="", timeout=1)
+    )
     scanner = ExternalVenvScanner(python_executable_path="/fake/path")
 
     # Act
@@ -100,7 +109,9 @@ def test_execute_helper_script_timeout(mocker: MagicMock, caplog: pytest.LogCapt
     assert "Timeout Expired during the execution of the helper script" in caplog.text
 
 
-def test_execute_helper_script_file_not_found(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_execute_helper_script_file_not_found(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that a FileNotFoundError is handled correctly."""
     # Arrange
     mocker.patch("subprocess.run", side_effect=FileNotFoundError)
@@ -115,7 +126,9 @@ def test_execute_helper_script_file_not_found(mocker: MagicMock, caplog: pytest.
     assert "Python executable '/fake/path' not found" in caplog.text
 
 
-def test_execute_helper_script_os_error(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_execute_helper_script_os_error(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an OSError is handled correctly."""
     # Arrange
     mocker.patch("subprocess.run", side_effect=OSError)
@@ -130,7 +143,9 @@ def test_execute_helper_script_os_error(mocker: MagicMock, caplog: pytest.LogCap
     assert "OS error during execution of the helper script" in caplog.text
 
 
-def test_parse_and_convert_scan_data_with_error(caplog: pytest.LogCaptureFixture) -> None:
+def test_parse_and_convert_scan_data_with_error(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Verify that an error in the JSON output is handled correctly."""
     # Arrange
     json_data = '{"error": "Something went wrong", "traceback": "Traceback..."}'
@@ -145,7 +160,9 @@ def test_parse_and_convert_scan_data_with_error(caplog: pytest.LogCaptureFixture
     assert "Traceback from helper script" in caplog.text
 
 
-def test_parse_and_convert_scan_data_not_a_list(caplog: pytest.LogCaptureFixture) -> None:
+def test_parse_and_convert_scan_data_not_a_list(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Verify that non-list JSON data is handled correctly."""
     # Arrange
     json_data = '{"key": "value"}'
@@ -159,7 +176,9 @@ def test_parse_and_convert_scan_data_not_a_list(caplog: pytest.LogCaptureFixture
     assert "Unexpected output format" in caplog.text
 
 
-def test_parse_and_convert_scan_data_item_not_a_dict(caplog: pytest.LogCaptureFixture) -> None:
+def test_parse_and_convert_scan_data_item_not_a_dict(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Verify that a non-dict element in the JSON list is handled correctly."""
     # Arrange
     json_data = '[{"name": "pkg1"}, "not-a-dict"]'
@@ -174,10 +193,15 @@ def test_parse_and_convert_scan_data_item_not_a_dict(caplog: pytest.LogCaptureFi
     assert "Non-dictionary element found" in caplog.text
 
 
-def test_parse_and_convert_scan_data_package_details_error(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_parse_and_convert_scan_data_package_details_error(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an error during PackageDetails conversion is handled."""
     # Arrange
-    mocker.patch("devildex.database.models.PackageDetails.from_dict", side_effect=Exception("Conversion error"))
+    mocker.patch(
+        "devildex.database.models.PackageDetails.from_dict",
+        side_effect=Exception("Conversion error"),
+    )
     json_data = '[{"name": "pkg1"}]'
 
     # Act
@@ -189,10 +213,12 @@ def test_parse_and_convert_scan_data_package_details_error(mocker: MagicMock, ca
     assert "Error converting JSON package data" in caplog.text
 
 
-def test_parse_and_convert_scan_data_json_decode_error(caplog: pytest.LogCaptureFixture) -> None:
+def test_parse_and_convert_scan_data_json_decode_error(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Verify that a JSONDecodeError is handled correctly."""
     # Arrange
-    json_data = 'invalid-json'
+    json_data = "invalid-json"
 
     # Act
     with caplog.at_level(logging.ERROR):
@@ -203,7 +229,9 @@ def test_parse_and_convert_scan_data_json_decode_error(caplog: pytest.LogCapture
     assert "Error decoding JSON output" in caplog.text
 
 
-def test_read_and_process_output_file_os_error(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_read_and_process_output_file_os_error(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an OSError during file reading is handled."""
     # Arrange
     mock_path_instance = mocker.MagicMock(spec=Path)
@@ -236,7 +264,9 @@ def test_scan_packages_no_script_content(caplog: pytest.LogCaptureFixture) -> No
     assert "Helper script content not loaded. Cannot scan packages." in caplog.text
 
 
-def test_scan_packages_unlink_os_error(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+def test_scan_packages_unlink_os_error(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an OSError during temporary file cleanup is handled."""
     # Arrange
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
@@ -253,7 +283,9 @@ def test_scan_packages_unlink_os_error(mocker: MagicMock, caplog: pytest.LogCapt
     mocker.patch.object(Path, "stat").return_value.st_size = 2
     mocker.patch.object(Path, "read_text", return_value="[]")
 
-    scanner = ExternalVenvScanner(python_executable_path=str(temp_file_path.parent / "python"))
+    scanner = ExternalVenvScanner(
+        python_executable_path=str(temp_file_path.parent / "python")
+    )
 
     # Act
     with caplog.at_level(logging.WARNING):
@@ -262,7 +294,10 @@ def test_scan_packages_unlink_os_error(mocker: MagicMock, caplog: pytest.LogCapt
     # Assert
     assert "Could not delete temporary output file" in caplog.text
 
-def test_execute_helper_script_with_stdout(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+
+def test_execute_helper_script_with_stdout(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that stdout from the helper script is logged."""
     # Arrange
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
@@ -277,7 +312,10 @@ def test_execute_helper_script_with_stdout(mocker: MagicMock, caplog: pytest.Log
     # Assert
     assert "STDOUT (diagnostic) of helper script" in caplog.text
 
-def test_load_helper_script_content_not_a_file(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+
+def test_load_helper_script_content_not_a_file(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an error is logged when the helper script path is not a file."""
     # Arrange
     mock_path = mocker.MagicMock()
@@ -292,7 +330,10 @@ def test_load_helper_script_content_not_a_file(mocker: MagicMock, caplog: pytest
     assert result is None
     assert "not found as file" in caplog.text
 
-def test_read_and_process_output_file_empty_file(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+
+def test_read_and_process_output_file_empty_file(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that an empty file is handled correctly."""
     # Arrange
     mock_path_instance = mocker.MagicMock(spec=Path)
@@ -309,7 +350,10 @@ def test_read_and_process_output_file_empty_file(mocker: MagicMock, caplog: pyte
     assert result == []
     assert "No JSON content" in caplog.text
 
-def test_scan_packages_logs_completion(mocker: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+
+def test_scan_packages_logs_completion(
+    mocker: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that a successful scan logs the completion message."""
     # Arrange
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
@@ -323,9 +367,13 @@ def test_scan_packages_logs_completion(mocker: MagicMock, caplog: pytest.LogCapt
 
     mocker.patch.object(Path, "is_file", return_value=True)
     mocker.patch.object(Path, "stat").return_value.st_size = 2
-    mocker.patch.object(Path, "read_text", return_value='[{"name": "requests", "version": "2.25.1"}] ')
+    mocker.patch.object(
+        Path, "read_text", return_value='[{"name": "requests", "version": "2.25.1"}] '
+    )
 
-    scanner = ExternalVenvScanner(python_executable_path=str(temp_file_path.parent / "python"))
+    scanner = ExternalVenvScanner(
+        python_executable_path=str(temp_file_path.parent / "python")
+    )
 
     # Act
     with caplog.at_level(logging.DEBUG):
@@ -333,12 +381,3 @@ def test_scan_packages_logs_completion(mocker: MagicMock, caplog: pytest.LogCapt
 
     # Assert
     assert "Scan complete" in caplog.text
-
-
-
-
-
-
-
-
-

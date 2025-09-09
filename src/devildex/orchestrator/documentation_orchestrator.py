@@ -4,11 +4,11 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from devildex.database.models import PackageDetails
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
 from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
-from devildex.database.models import PackageDetails
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.scanner.scanner import (
@@ -215,7 +215,9 @@ class Orchestrator:
                     return int_res
             else:
                 self.last_operation_result = False
-                logger.error(f"Orchestrator: No grabber configuration found for type: {self.detected_doc_type}")
+                logger.error(
+                    f"Orchestrator: No grabber configuration found for type: {self.detected_doc_type}"
+                )
         elif not self.detected_doc_type:
             self.last_operation_result = False
             logger.error("no scan result, please call start_scan first")

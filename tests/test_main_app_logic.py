@@ -40,7 +40,7 @@ def app(mocker: MockerFixture) -> DevilDexApp:
 
 
 @pytest.mark.parametrize(
-    "package_data, is_task_running, case_id",
+    ("package_data", "is_task_running", "case_id"),
     [
         (None, False, "no_selection"),
         ({"name": "test-package"}, True, "selection_with_task_running"),
@@ -428,18 +428,21 @@ def test_on_view_mode_changed_core_setting_fails(
     mocker.patch.object(app, "_handle_core_project_setting", return_value=False)
     mock_bootstrap = app.core.bootstrap_database_and_load_data
 
-    # Act
     app.on_view_mode_changed(mock_event)
 
-    # Assert
     mock_bootstrap.assert_not_called()
     mock_event.Skip.assert_called_once()
 
 
 @pytest.mark.parametrize(
-    "package_data, task_active, core_exists, expected_result, expected_msg_part",
+    (
+        "package_data",
+        "task_active",
+        "core_exists",
+        "expected_result",
+        "expected_msg_part",
+    ),
     [
-        # Success case
         (
             {"id": "pkg-123", "name": "p", "docset_status": "Not Available"},
             False,

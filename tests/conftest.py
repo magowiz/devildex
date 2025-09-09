@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from devildex.database import db_manager
 
-
 _WX_APP_INSTANCE = None
+
 
 @pytest.fixture(scope="session")
 def wx_app() -> wx.App:
@@ -21,9 +21,7 @@ def wx_app() -> wx.App:
 
 @pytest.fixture
 def populated_db_session() -> Session:
-    """
-    Fixture to set up an in-memory SQLite database and populate it with test data.
-    """
+    """Fixture to set up an in-memory SQLite database and populate it with test data."""
     db_url = "sqlite:///:memory:"
     db_manager.init_db(db_url)
     try:

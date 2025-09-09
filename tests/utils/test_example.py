@@ -4,11 +4,14 @@ import importlib
 import logging
 from unittest.mock import MagicMock
 
-# The module to test
+import pytest
+
 from devildex.utils import example
 
 
-def test_example_script_logs_correctly(mocker: MagicMock, caplog) -> None:
+def test_example_script_logs_correctly(
+    mocker: MagicMock, cap_log: pytest.LogCaptureFixture
+) -> None:
     """Verify that the example script runs and logs the expected messages.
 
     This test mocks the IsolatedVenvManager to avoid actual filesystem
@@ -34,7 +37,7 @@ def test_example_script_logs_correctly(mocker: MagicMock, caplog) -> None:
     # Act
     # The script's code runs on import. We must reload it to execute it
     # again for this test with our patch in place.
-    with caplog.at_level(logging.INFO):
+    with cap_log.at_level(logging.INFO):
         importlib.reload(example)
 
     # Assert
@@ -42,6 +45,6 @@ def test_example_script_logs_correctly(mocker: MagicMock, caplog) -> None:
     mock_venv_manager_class.assert_called_once_with(project_name="mio_project")
 
     # Check the log messages produced by the script
-    assert "Using Python da: /fake/venv/bin/python" in caplog.text
-    assert "Using pip da: /fake/venv/bin/pip" in caplog.text
-    assert "Environment virtual per mio_project removed." in caplog.text
+    assert "Using Python da: /fake/venv/bin/python" in cap_log.text
+    assert "Using pip da: /fake/venv/bin/pip" in cap_log.text
+    assert "Environment virtual per mio_project removed." in cap_log.text

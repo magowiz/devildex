@@ -213,7 +213,7 @@ def load_active_registered_project() -> Optional[RegisteredProjectData]:
 
 
 if __name__ == "__main__":
-    
+
     active_project = load_active_registered_project()
     if active_project:
         logger.info("Actively registered project loaded:")

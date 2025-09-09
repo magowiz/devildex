@@ -23,6 +23,7 @@ from devildex.mkdocs.mkdocs_src import (
 
 
 def create_mkdocs_yml(path: Path, content: dict | None = None) -> None:
+    """Create a mkdocs.yml file with the given content."""
     if content is None:
         content = {"site_name": "Test Site"}
     path.mkdir(parents=True, exist_ok=True)

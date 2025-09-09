@@ -315,7 +315,9 @@ def test_ensure_package_entities_exist_commit_exception(mocker, caplog) -> None:
     )
 
     mock_context_manager.__enter__.return_value = mock_session
-    mocker.patch("devildex.database.db_manager.get_session", return_value=mock_context_manager)
+    mocker.patch(
+        "devildex.database.db_manager.get_session", return_value=mock_context_manager
+    )
 
     # Act & Assert
     with pytest.raises(database.SQLAlchemyError) as excinfo:
@@ -334,7 +336,7 @@ def test_ensure_package_handles_no_project_context(db_session: Session) -> None:
         "package_name": "numpy",
         "package_version": "1.20.1",
         "summary": "Fundamental package for scientific computing",
-        "project_urls": {}, #
+        "project_urls": {},
         # No project_name, project_path, or python_executable
     }
 

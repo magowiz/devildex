@@ -1,22 +1,17 @@
-import pytest
-import wx
-import os
+import socket
 import time
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock
-import socket
 
+import pytest
+import wx
 from fastmcp import Client
 
-import devildex 
-from devildex.core import DevilDexCore
-from devildex.main import DevilDexApp
 from devildex.config_manager import ConfigManager
+from devildex.core import DevilDexCore
 from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageInfo, RegisteredProject
-
-
+from devildex.main import DevilDexApp
 
 
 @pytest.fixture(scope="session")
@@ -26,25 +21,29 @@ def free_port():
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
 
+
 @pytest.fixture(scope="function")
 def mock_config_manager(mocker: MagicMock, free_port: int):
     """Fixture to mock the ConfigManager singleton for test control."""
     # Ensure a fresh ConfigManager instance for each test
     ConfigManager._instance = None
-    mocker.patch('devildex.config_manager.ConfigManager._initialize', return_value=None)
-    mocker.patch('devildex.config_manager.ConfigManager._load_config', return_value=None)
-    mocker.patch('devildex.config_manager.ConfigManager.save_config', return_value=None)
-    
+    mocker.patch("devildex.config_manager.ConfigManager._initialize", return_value=None)
+    mocker.patch(
+        "devildex.config_manager.ConfigManager._load_config", return_value=None
+    )
+    mocker.patch("devildex.config_manager.ConfigManager.save_config", return_value=None)
+
     mock_instance = ConfigManager()
-    mocker.patch('devildex.config_manager.ConfigManager', return_value=mock_instance)
-    mocker.patch('devildex.config_manager.ConfigManager._instance', new=mock_instance)
-    
+    mocker.patch("devildex.config_manager.ConfigManager", return_value=mock_instance)
+    mocker.patch("devildex.config_manager.ConfigManager._instance", new=mock_instance)
+
     # Default mocks for the test
     mock_instance.get_mcp_server_enabled = mocker.Mock(return_value=False)
     mock_instance.get_mcp_server_hide_gui_when_enabled = mocker.Mock(return_value=False)
     mock_instance.get_mcp_server_port = mocker.Mock(return_value=free_port)
-    
+
     return mock_instance
+
 
 @pytest.fixture(scope="function")
 def populated_db_session(tmp_path: Path):
@@ -100,19 +99,23 @@ def populated_db_session(tmp_path: Path):
 
     yield db_url
     database.DatabaseManager.close_db()
-    (tmp_path / 'test_db.db').unlink(missing_ok=True)
+    (tmp_path / "test_db.db").unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="function")
-def devildex_app_fixture(wx_app, mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock):
+def devildex_app_fixture(
+    wx_app, mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
+):
     """Fixture to create the main DevilDexApp instance for UI tests."""
     # Mock DevilDexCore to use the populated_db_session
     # Removed mocker.patch('devildex.main.DevilDexCore.__init__', return_value=None)
-    mocker.patch('devildex.main.DevilDexCore.bootstrap_database_and_load_data', return_value=[])
-    mocker.patch('devildex.main.DevilDexCore.shutdown', return_value=None)
-    
+    mocker.patch(
+        "devildex.main.DevilDexCore.bootstrap_database_and_load_data", return_value=[]
+    )
+    mocker.patch("devildex.main.DevilDexCore.shutdown", return_value=None)
+
     core_instance = DevilDexCore(database_url=populated_db_session)
-    
+
     # Removed mocker.patch.object(core_instance, '_start_mcp_server_if_enabled', return_value=None)
     # Allow the actual _start_mcp_server_if_enabled to run
 
@@ -126,19 +129,25 @@ def devildex_app_fixture(wx_app, mock_config_manager: MagicMock, populated_db_se
 
 
 @pytest.mark.integration
-def test_gui_only_no_mcp_starts(devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock):
+def test_gui_only_no_mcp_starts(
+    devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock
+):
     """Verify that when MCP is disabled, the server process does not start."""
     # Arrange: ConfigManager is already mocked by fixture, ensure MCP is disabled
     mock_config_manager.get_mcp_server_enabled.return_value = False
-    mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = False # Ensure GUI is visible
+    mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = (
+        False  # Ensure GUI is visible
+    )
 
     # We need to ensure the DevilDexCore instance used by the app is the one we control
     core_instance = devildex_app_fixture.core
-    
+
     # Act: Simulate app startup with the desired config
     # Here, we directly call the method that would start MCP.
     try:
-        core_instance._start_mcp_server_if_enabled(None) # Pass None for gui_warning_callback
+        core_instance._start_mcp_server_if_enabled(
+            None
+        )  # Pass None for gui_warning_callback
     except Exception as e:
         print(f"Exception during _start_mcp_server_if_enabled: {e}")
 
@@ -151,7 +160,9 @@ def test_gui_only_no_mcp_starts(devildex_app_fixture: DevilDexApp, mock_config_m
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_mcp_only_no_gui(mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock):
+async def test_mcp_only_no_gui(
+    mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
+):
     """Verify that when only MCP is enabled, the server starts and responds, and GUI is hidden."""
     # Arrange
     mock_config_manager.get_mcp_server_enabled.return_value = True
@@ -159,25 +170,37 @@ async def test_mcp_only_no_gui(mock_config_manager: MagicMock, populated_db_sess
     mcp_port = mock_config_manager.get_mcp_server_port()
 
     # Mock DevilDexApp to prevent GUI initialization
-    mocker.patch('devildex.main.DevilDexApp.__init__', return_value=None)
-    mocker.patch('devildex.main.DevilDexApp._initialize_data_and_managers', return_value=None)
-    mocker.patch('devildex.main.DevilDexApp.MainLoop', return_value=None) # Prevent GUI loop
-    mocker.patch('devildex.main.DevilDexApp.OnInit', return_value=True) # Ensure OnInit returns True
-    mocker.patch('devildex.main.DevilDexApp.OnExit', return_value=0) # Ensure OnExit returns 0
+    mocker.patch("devildex.main.DevilDexApp.__init__", return_value=None)
+    mocker.patch(
+        "devildex.main.DevilDexApp._initialize_data_and_managers", return_value=None
+    )
+    mocker.patch(
+        "devildex.main.DevilDexApp.MainLoop", return_value=None
+    )  # Prevent GUI loop
+    mocker.patch(
+        "devildex.main.DevilDexApp.OnInit", return_value=True
+    )  # Ensure OnInit returns True
+    mocker.patch(
+        "devildex.main.DevilDexApp.OnExit", return_value=0
+    )  # Ensure OnExit returns 0
 
     # Create a DevilDexCore instance that will actually start the MCP server
     core_instance = DevilDexCore(database_url=populated_db_session)
-    core_instance.database_url = populated_db_session # Manually set after mocking __init__
-    
+    core_instance.database_url = (
+        populated_db_session  # Manually set after mocking __init__
+    )
+
     # The MCP server is started by the DevilDexCore constructor if enabled in config.
     # No need to call _start_mcp_server_if_enabled explicitly here.
-    
+
     # Give the server some time to start up
-    time.sleep(5) # Increased sleep time for server startup
+    time.sleep(5)  # Increased sleep time for server startup
 
     # Assert MCP server process is running
     assert core_instance.mcp_server_process is not None
-    assert core_instance.mcp_server_process.poll() is None # Check if process is still running
+    assert (
+        core_instance.mcp_server_process.poll() is None
+    )  # Check if process is still running
 
     # Assert GUI is not shown
     # This is tricky. We can't directly assert wx.App().IsMainLoopRunning()
@@ -191,13 +214,17 @@ async def test_mcp_only_no_gui(mock_config_manager: MagicMock, populated_db_sess
             "my_server": {"url": f"http://127.0.0.1:{mcp_port}/mcp"},
         }
     }
-    client = Client(config, timeout=10) # Increased timeout for client
+    client = Client(config, timeout=10)  # Increased timeout for client
     try:
         async with client:
             docsets_list = await client.call_tool(
                 "get_docsets_list", {"all_projects": True}, timeout=5
             )
-            expected_names = ["requests", "flask", "django"] # Based on populated_db_session
+            expected_names = [
+                "requests",
+                "flask",
+                "django",
+            ]  # Based on populated_db_session
             assert isinstance(docsets_list.data, list)
             assert sorted(docsets_list.data) == sorted(expected_names)
             print(f"Docsets list (MCP only): {docsets_list.data}")
@@ -217,22 +244,26 @@ async def test_mcp_only_no_gui(mock_config_manager: MagicMock, populated_db_sess
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_gui_and_mcp_coexistence(devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock):
+async def test_gui_and_mcp_coexistence(
+    devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock
+):
     """Verify that GUI and MCP can coexist and function together."""
     # Arrange
     mock_config_manager.get_mcp_server_enabled.return_value = True
-    mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = False # Ensure GUI is visible
+    mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = (
+        False  # Ensure GUI is visible
+    )
     mcp_port = mock_config_manager.get_mcp_server_port()
 
     core_instance = devildex_app_fixture.core
-    
+
     # Manually start MCP server via core instance, as it's mocked in fixture setup
     try:
         core_instance._start_mcp_server_if_enabled(None)
     except Exception as e:
         pytest.fail(f"Exception during MCP server startup in coexistence test: {e}")
-    
-    time.sleep(5) # Give server time to start
+
+    time.sleep(5)  # Give server time to start
 
     # Assert MCP server process is running
     assert core_instance.mcp_server_process is not None
@@ -254,7 +285,11 @@ async def test_gui_and_mcp_coexistence(devildex_app_fixture: DevilDexApp, mock_c
             docsets_list = await client.call_tool(
                 "get_docsets_list", {"all_projects": True}, timeout=5
             )
-            expected_names = ["requests", "flask", "django"] # Based on populated_db_session
+            expected_names = [
+                "requests",
+                "flask",
+                "django",
+            ]  # Based on populated_db_session
             assert isinstance(docsets_list.data, list)
             assert sorted(docsets_list.data) == sorted(expected_names)
             print(f"Docsets list (GUI and MCP): {docsets_list.data}")

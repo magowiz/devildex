@@ -8,6 +8,8 @@ from pytest_mock import MockerFixture
 
 from devildex.task_manager import GenerationTaskManager
 
+CB_CALL_COUNT = 2
+
 
 @pytest.fixture
 def mock_core(mocker: MockerFixture) -> MagicMock:
@@ -37,9 +39,9 @@ def mock_callbacks(mocker: MockerFixture) -> dict:
 
 @pytest.fixture
 def task_manager(
-    mock_core,
-    mock_owner,
-    mock_callbacks,
+    mock_core: MagicMock,
+    mock_owner: MagicMock,
+    mock_callbacks: MagicMock,
     mocker: MockerFixture,
 ) -> GenerationTaskManager:
     """Provide an instance of GenerationTaskManager with mocked dependencies."""
@@ -60,24 +62,18 @@ def task_manager(
     return manager
 
 
-# --- Test Cases ---
-
-
 def test_start_generation_task_success(
     task_manager: GenerationTaskManager, mocker: MockerFixture
 ) -> None:
     """Verify that a new generation task can be started successfully."""
-    # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
     row_index = 1
     col_index = 5
     mock_thread_class = mocker.patch("threading.Thread")
     mock_thread_instance = mock_thread_class.return_value
 
-    # Act
     result = task_manager.start_generation_task(package_data, row_index, col_index)
 
-    # Assert
     assert result is True
     assert "pkg-123" in task_manager.active_tasks
     task_manager.animation_timer.Start.assert_called_once_with(150)
@@ -94,35 +90,29 @@ def test_start_generation_task_already_active(
     task_manager: GenerationTaskManager, mocker: MockerFixture
 ) -> None:
     """Verify that a task for the same package cannot be started if one is active."""
-    # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
     task_manager.active_tasks["pkg-123"] = 1
     mock_thread_class = mocker.patch("threading.Thread")
 
-    # Act
     result = task_manager.start_generation_task(package_data, 1, 5)
 
-    # Assert
     assert result is False
     task_manager.animation_timer.Start.assert_not_called()
     mock_thread_class.assert_not_called()
 
 
 def test_on_animation_tick_updates_grid_for_active_tasks(
-    task_manager: GenerationTaskManager, mock_callbacks: dict, mock_owner
+    task_manager: GenerationTaskManager, mock_callbacks: dict, mock_owner: MagicMock
 ) -> None:
     """Verify the timer callback updates the UI for all active tasks."""
-    # Arrange
     task_manager.active_tasks = {"pkg-123": 1, "pkg-456": 3}
     task_manager.current_animation_frame_idx = 0
     update_grid_cb = mock_callbacks["update_grid"]
 
-    # Act
     task_manager._on_animation_tick(None)
 
-    # Assert
     assert task_manager.current_animation_frame_idx == 1
-    assert update_grid_cb.call_count == 2
+    assert update_grid_cb.call_count == CB_CALL_COUNT
     new_frame_char = task_manager.animation_frames[1]
     update_grid_cb.assert_any_call(
         1, mock_owner.docset_status_col_grid_idx, new_frame_char
@@ -133,19 +123,16 @@ def test_on_animation_tick_updates_grid_for_active_tasks(
 
 
 def test_perform_generation_in_thread_handles_success(
-    task_manager: GenerationTaskManager, mock_core, mocker: MockerFixture
+    task_manager: GenerationTaskManager, mock_core: MagicMock, mocker: MockerFixture
 ) -> None:
     """Verify the thread worker calls the core and wx.CallAfter on success."""
-    # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
     row_index = 1
     mock_call_after = mocker.patch("wx.CallAfter")
     mock_core.generate_docset.return_value = (True, "/fake/path")
 
-    # Act
     task_manager._perform_generation_in_thread(package_data, row_index)
 
-    # Assert
     mock_core.generate_docset.assert_called_once_with(package_data)
     mock_call_after.assert_called_once_with(
         task_manager._handle_task_completion,
@@ -158,19 +145,16 @@ def test_perform_generation_in_thread_handles_success(
 
 
 def test_perform_generation_in_thread_handles_failure(
-    task_manager: GenerationTaskManager, mock_core, mocker: MockerFixture
+    task_manager: GenerationTaskManager, mock_core: MagicMock, mocker: MockerFixture
 ) -> None:
     """Verify the thread worker calls the core and wx.CallAfter on failure."""
-    # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
     row_index = 1
     mock_call_after = mocker.patch("wx.CallAfter")
     mock_core.generate_docset.return_value = (False, "Explosion!")
 
-    # Act
     task_manager._perform_generation_in_thread(package_data, row_index)
 
-    # Assert
     mock_core.generate_docset.assert_called_once_with(package_data)
     mock_call_after.assert_called_once_with(
         task_manager._handle_task_completion,
@@ -186,13 +170,11 @@ def test_handle_task_completion_cleans_up_and_notifies(
     task_manager: GenerationTaskManager, mock_callbacks: dict
 ) -> None:
     """Verify the completion handler cleans up state and calls final callbacks."""
-    # Arrange
     task_manager.active_tasks = {"pkg-123": 1}
     on_complete_cb = mock_callbacks["on_complete"]
     update_buttons_cb = mock_callbacks["update_buttons"]
     task_manager.animation_timer.IsRunning.return_value = True
 
-    # Act
     task_manager._handle_task_completion(
         success=True,
         message="/path",
@@ -201,7 +183,6 @@ def test_handle_task_completion_cleans_up_and_notifies(
         row_index=1,
     )
 
-    # Assert
     assert "pkg-123" not in task_manager.active_tasks
     assert not task_manager.active_tasks
 
@@ -210,15 +191,14 @@ def test_handle_task_completion_cleans_up_and_notifies(
     task_manager.animation_timer.Stop.assert_called_once()
 
 
-def test_start_generation_task_missing_package_id(task_manager: GenerationTaskManager) -> None:
+def test_start_generation_task_missing_package_id(
+    task_manager: GenerationTaskManager,
+) -> None:
     """Verify that a task is not started if package_id is missing."""
-    # Arrange
     package_data = {"name": "test-package"}  # Missing 'id'
 
-    # Act
     result = task_manager.start_generation_task(package_data, 1, 5)
 
-    # Assert
     assert result is False
 
 
@@ -226,68 +206,57 @@ def test_perform_generation_in_thread_missing_package_id(
     task_manager: GenerationTaskManager, mocker: MockerFixture
 ) -> None:
     """Verify the thread worker handles missing package_id gracefully."""
-    # Arrange
-    package_data = {"name": "test-package"}  # Missing 'id'
+    package_data = {"name": "test-package"}
     mock_call_after = mocker.patch("wx.CallAfter")
 
-    # Act
     task_manager._perform_generation_in_thread(package_data, 1)
 
-    # Assert
     mock_call_after.assert_not_called()
 
 
 def test_perform_generation_in_thread_exception_handling(
-    task_manager: GenerationTaskManager, mock_core, mocker: MockerFixture
+    task_manager: GenerationTaskManager, mock_core: MagicMock, mocker: MockerFixture
 ) -> None:
     """Verify that exceptions during generation are caught and handled."""
-    # Arrange
     package_data = {"id": "pkg-123", "name": "test-package"}
     mock_call_after = mocker.patch("wx.CallAfter")
     mock_core.generate_docset.side_effect = Exception("Core exploded")
 
-    # Act
     task_manager._perform_generation_in_thread(package_data, 1)
 
-    # Assert
     mock_call_after.assert_called_once()
     args, _ = mock_call_after.call_args
-    assert args[1] is False  # success
-    assert "Core exploded" in args[2]  # message
+    assert args[1] is False
+    assert "Core exploded" in args[2]
 
 
-def test_handle_task_completion_missing_package_id(task_manager: GenerationTaskManager) -> None:
+def test_handle_task_completion_missing_package_id(
+    task_manager: GenerationTaskManager,
+) -> None:
     """Verify that the completion handler works correctly with a missing package_id."""
-    # Arrange
     task_manager.active_tasks = {"pkg-123": 1}
 
-    # Act
     task_manager._handle_task_completion(True, "/path", "test-package", None, 1)
 
-    # Assert
     assert len(task_manager.active_tasks) == 1  # No task should be removed
 
 
 def test_cleanup(task_manager: GenerationTaskManager) -> None:
     """Verify that the cleanup method stops the timer."""
-    # Arrange
     task_manager.animation_timer.IsRunning.return_value = True
 
-    # Act
     task_manager.cleanup()
 
-    # Assert
     task_manager.animation_timer.Stop.assert_called_once()
 
 
-def test_on_animation_tick_no_col_idx(task_manager: GenerationTaskManager, mock_callbacks: dict) -> None:
+def test_on_animation_tick_no_col_idx(
+    task_manager: GenerationTaskManager, mock_callbacks: dict
+) -> None:
     """Verify that the animation tick does not update grid if col_idx is -1."""
-    # Arrange
     task_manager.active_tasks = {"pkg-123": 1}
     task_manager.owner_for_timer.docset_status_col_grid_idx = -1
 
-    # Act
     task_manager._on_animation_tick(None)
 
-    # Assert
     mock_callbacks["update_grid"].assert_not_called()

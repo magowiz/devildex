@@ -176,7 +176,9 @@ def test_load_active_project_invalid_path_in_json(mock_app_paths: Path, caplog) 
     assert "Invalid path for 'python_executable'" in caplog.text
 
 
-def test_load_active_project_os_error_on_open(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+def test_load_active_project_os_error_on_open(
+    mock_app_paths: Path, mocker: MockerFixture, caplog
+) -> None:
     """Verify that loading handles an OSError when opening the file."""
     # Arrange
     mock_app_paths.write_text(json.dumps(TEST_PROJECT_DATA))
@@ -203,7 +205,9 @@ def test_save_active_project_mkdir_os_error(mocker: MockerFixture, caplog) -> No
     assert "Error determining or creating the path" in caplog.text
 
 
-def test_save_active_project_open_os_error(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+def test_save_active_project_open_os_error(
+    mock_app_paths: Path, mocker: MockerFixture, caplog
+) -> None:
     """Verify that saving handles an OSError when opening the file for writing."""
     # Arrange
     mocker.patch.object(Path, "open", side_effect=OSError("Test open OSError"))
@@ -216,7 +220,9 @@ def test_save_active_project_open_os_error(mock_app_paths: Path, mocker: MockerF
     assert "I/O error while saving the active project" in caplog.text
 
 
-def test_save_active_project_json_type_error(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+def test_save_active_project_json_type_error(
+    mock_app_paths: Path, mocker: MockerFixture, caplog
+) -> None:
     """Verify that saving handles a TypeError during JSON serialization."""
     # Arrange
     mocker.patch("json.dump", side_effect=TypeError("Test TypeError"))
@@ -232,7 +238,10 @@ def test_save_active_project_json_type_error(mock_app_paths: Path, mocker: Mocke
 def test_clear_active_project_app_paths_os_error(mocker: MockerFixture, caplog) -> None:
     """Verify that clearing handles an OSError when initializing AppPaths."""
     # Arrange
-    mocker.patch("devildex.local_data_parse.registered_project_parser.AppPaths", side_effect=OSError("Test AppPaths OSError"))
+    mocker.patch(
+        "devildex.local_data_parse.registered_project_parser.AppPaths",
+        side_effect=OSError("Test AppPaths OSError"),
+    )
 
     # Act
     registered_project_parser.clear_active_registered_project()
@@ -241,7 +250,9 @@ def test_clear_active_project_app_paths_os_error(mocker: MockerFixture, caplog) 
     assert "Error determining the path of the registration file" in caplog.text
 
 
-def test_clear_active_project_unlink_os_error(mock_app_paths: Path, mocker: MockerFixture, caplog) -> None:
+def test_clear_active_project_unlink_os_error(
+    mock_app_paths: Path, mocker: MockerFixture, caplog
+) -> None:
     """Verify that clearing handles an OSError during file deletion."""
     # Arrange
     mock_app_paths.write_text(json.dumps(TEST_PROJECT_DATA))
@@ -257,7 +268,10 @@ def test_clear_active_project_unlink_os_error(mock_app_paths: Path, mocker: Mock
 def test_load_active_project_app_paths_os_error(mocker: MockerFixture, caplog) -> None:
     """Verify that loading handles an OSError when initializing AppPaths."""
     # Arrange
-    mocker.patch("devildex.local_data_parse.registered_project_parser.AppPaths", side_effect=OSError("Test AppPaths OSError"))
+    mocker.patch(
+        "devildex.local_data_parse.registered_project_parser.AppPaths",
+        side_effect=OSError("Test AppPaths OSError"),
+    )
 
     # Act
     loaded_data = registered_project_parser.load_active_registered_project()
@@ -267,11 +281,15 @@ def test_load_active_project_app_paths_os_error(mocker: MockerFixture, caplog) -
     assert "Error determining the path of the registration file" in caplog.text
 
 
-def test_load_active_project_no_registry_dir(tmp_path: Path, mocker: MockerFixture, caplog) -> None:
+def test_load_active_project_no_registry_dir(
+    tmp_path: Path, mocker: MockerFixture, caplog
+) -> None:
     """Verify that loading handles the case where the registry directory doesn't exist."""
     # Arrange
     # Mock AppPaths to point to our temporary directory
-    mock_app_paths_class = mocker.patch("devildex.local_data_parse.registered_project_parser.AppPaths")
+    mock_app_paths_class = mocker.patch(
+        "devildex.local_data_parse.registered_project_parser.AppPaths"
+    )
     mock_app_paths_instance = mock_app_paths_class.return_value
     mock_app_paths_instance.user_data_dir = tmp_path
 

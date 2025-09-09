@@ -1,9 +1,11 @@
-import wx
 import logging
+
+import wx
 
 from devildex.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
+
 
 class SettingsPanel(wx.Panel):
     def __init__(self, parent, on_save_callback, on_cancel_callback):
@@ -17,23 +19,33 @@ class SettingsPanel(wx.Panel):
 
     def _init_ui(self):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        
+
         # Title
         title = wx.StaticText(self, label="MCP Server Settings")
-        title_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        title_font = wx.Font(
+            14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD
+        )
         title.SetFont(title_font)
         main_sizer.Add(title, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
 
         # Settings controls
-        settings_box = wx.StaticBoxSizer(wx.StaticBox(self, label="MCP Server Configuration"), wx.VERTICAL)
+        settings_box = wx.StaticBoxSizer(
+            wx.StaticBox(self, label="MCP Server Configuration"), wx.VERTICAL
+        )
 
         # Warning Message (inside the settings box)
         warning_panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
-        warning_panel.SetBackgroundColour(wx.Colour(255, 255, 204)) # Light yellow
+        warning_panel.SetBackgroundColour(wx.Colour(255, 255, 204))  # Light yellow
         warning_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Add a warning icon
-        warning_icon = wx.StaticBitmap(warning_panel, wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_WARNING, wx.ART_MESSAGE_BOX, wx.Size(24, 24)))
+        warning_icon = wx.StaticBitmap(
+            warning_panel,
+            wx.ID_ANY,
+            wx.ArtProvider.GetBitmap(
+                wx.ART_WARNING, wx.ART_MESSAGE_BOX, wx.Size(24, 24)
+            ),
+        )
         warning_sizer.Add(warning_icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
 
         warning_text_content = (
@@ -41,8 +53,12 @@ class SettingsPanel(wx.Panel):
             "It has limited functionality and is primarily for development and testing. "
             "Use with caution."
         )
-        warning_label = wx.StaticText(warning_panel, label=warning_text_content, style=wx.ALIGN_LEFT)
-        bold_font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        warning_label = wx.StaticText(
+            warning_panel, label=warning_text_content, style=wx.ALIGN_LEFT
+        )
+        bold_font = wx.Font(
+            10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD
+        )
         warning_label.SetFont(bold_font)
         warning_label.SetForegroundColour(wx.BLACK)
 
@@ -55,17 +71,25 @@ class SettingsPanel(wx.Panel):
         settings_grid_sizer.AddGrowableCol(1)
 
         # Enabled Checkbox
-        settings_grid_sizer.Add(wx.StaticText(self, label="Enable MCP Server:"), 0, wx.ALIGN_CENTER_VERTICAL)
+        settings_grid_sizer.Add(
+            wx.StaticText(self, label="Enable MCP Server:"), 0, wx.ALIGN_CENTER_VERTICAL
+        )
         self.enabled_checkbox = wx.CheckBox(self)
         settings_grid_sizer.Add(self.enabled_checkbox, 0, wx.EXPAND)
 
         # Hide GUI Checkbox
-        settings_grid_sizer.Add(wx.StaticText(self, label="Hide GUI when enabled:"), 0, wx.ALIGN_CENTER_VERTICAL)
+        settings_grid_sizer.Add(
+            wx.StaticText(self, label="Hide GUI when enabled:"),
+            0,
+            wx.ALIGN_CENTER_VERTICAL,
+        )
         self.hide_gui_checkbox = wx.CheckBox(self)
         settings_grid_sizer.Add(self.hide_gui_checkbox, 0, wx.EXPAND)
 
         # Port Text Control
-        settings_grid_sizer.Add(wx.StaticText(self, label="Port:"), 0, wx.ALIGN_CENTER_VERTICAL)
+        settings_grid_sizer.Add(
+            wx.StaticText(self, label="Port:"), 0, wx.ALIGN_CENTER_VERTICAL
+        )
         self.port_text_ctrl = wx.TextCtrl(self)
         settings_grid_sizer.Add(self.port_text_ctrl, 0, wx.EXPAND)
 
@@ -89,26 +113,42 @@ class SettingsPanel(wx.Panel):
 
     def _load_settings(self):
         self.enabled_checkbox.SetValue(self.config_manager.get_mcp_server_enabled())
-        self.hide_gui_checkbox.SetValue(self.config_manager.get_mcp_server_hide_gui_when_enabled())
+        self.hide_gui_checkbox.SetValue(
+            self.config_manager.get_mcp_server_hide_gui_when_enabled()
+        )
         self.port_text_ctrl.SetValue(str(self.config_manager.get_mcp_server_port()))
 
     def _on_save(self, event):
         try:
             port = int(self.port_text_ctrl.GetValue())
             if not (1024 <= port <= 65535):
-                wx.MessageBox("Port number must be between 1024 and 65535.", "Invalid Port", wx.OK | wx.ICON_ERROR)
+                wx.MessageBox(
+                    "Port number must be between 1024 and 65535.",
+                    "Invalid Port",
+                    wx.OK | wx.ICON_ERROR,
+                )
                 return
             self.config_manager.set_mcp_server_enabled(self.enabled_checkbox.GetValue())
-            self.config_manager.set_mcp_server_hide_gui_when_enabled(self.hide_gui_checkbox.GetValue())
+            self.config_manager.set_mcp_server_hide_gui_when_enabled(
+                self.hide_gui_checkbox.GetValue()
+            )
             self.config_manager.set_mcp_server_port(port)
             self.config_manager.save_config()
             logger.info("MCP Server settings saved.")
             self.on_save_callback()
         except ValueError:
-            wx.MessageBox("Invalid port number. Please enter a valid integer.", "Input Error", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(
+                "Invalid port number. Please enter a valid integer.",
+                "Input Error",
+                wx.OK | wx.ICON_ERROR,
+            )
         except Exception as e:
             logger.error(f"Error saving settings: {e}")
-            wx.MessageBox(f"An error occurred while saving settings: {e}", "Error", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(
+                f"An error occurred while saving settings: {e}",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
 
     def _on_cancel(self, event):
         logger.info("MCP Server settings cancelled.")
