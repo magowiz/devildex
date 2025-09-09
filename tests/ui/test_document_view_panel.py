@@ -1,92 +1,87 @@
-import unittest
 import wx
 import wx.html2
 from unittest.mock import MagicMock, patch
 import pytest
 
-# Fixture to create a wx.App instance for UI tests
-@pytest.fixture(scope="function")
-def wx_app():
-    app = wx.App(False)
-    yield app
-    app.Destroy()
-
 from devildex.ui.document_view_panel import DocumentViewPanel
 
 
-class TestDocumentViewPanel(unittest.TestCase):
-    @pytest.mark.ui
-    def setUp(self):
-        # Manually create wx.App instance for each test
-        self.app = wx.App(False)
-        self.frame = wx.Frame(None)
-        self.mock_on_home_callback = MagicMock()
-        self.panel = DocumentViewPanel(self.frame, self.mock_on_home_callback)
-        wx.Yield()  # Process UI events
+@pytest.fixture(scope="function")
+def document_view_panel(wx_app, mocker):
+    """Fixture to provide an instance of DocumentViewPanel for testing."""
+    frame = wx.Frame(wx_app.GetTopWindow())
+    mock_on_home_callback = mocker.MagicMock()
+    panel = DocumentViewPanel(frame, mock_on_home_callback)
+    wx.Yield()
+    yield panel, mock_on_home_callback
+    if frame:
+        wx.CallAfter(frame.Destroy)
+    wx.Yield()
 
-    def tearDown(self):
-        if self.frame:
-            wx.CallAfter(self.frame.Destroy)
-        if self.app:
-            self.app.Destroy()
-        wx.Yield()
 
-    def test_initialization(self):
-        self.assertIsInstance(self.panel, DocumentViewPanel)
-        self.assertIsNotNone(self.panel.webview)
-        self.assertIsNotNone(self.panel.back_button)
-        self.assertIsNotNone(self.panel.forward_button)
-        self.assertIsNotNone(self.panel.home_button)
-        self.assertIsNotNone(self.panel.package_display_label)
-        self.assertEqual(self.panel.on_home_callback, self.mock_on_home_callback)
+class TestDocumentViewPanel:
 
-    def test_setup_ui_elements(self):
+    def test_initialization(self, document_view_panel):
+        panel, mock_on_home_callback = document_view_panel
+        assert isinstance(panel, DocumentViewPanel)
+        assert panel.webview is not None
+        assert panel.back_button is not None
+        assert panel.forward_button is not None
+        assert panel.home_button is not None
+        assert panel.package_display_label is not None
+        assert panel.on_home_callback == mock_on_home_callback
+
+    def test_setup_ui_elements(self, document_view_panel):
+        panel, _ = document_view_panel
         # Verify webview creation and binding
-        self.assertIsInstance(self.panel.webview, wx.html2.WebView)
+        assert isinstance(panel.webview, wx.html2.WebView)
         # The Bind call happens in DocumentViewPanel.__init__ -> _setup_ui.
         # We cannot easily assert that Bind was called on it without mocking WebView.New.
         # Let's remove the problematic assertion.
         pass
 
         # Verify label properties
-        self.assertIsInstance(self.panel.package_display_label, wx.StaticText)
-        self.assertEqual(self.panel.package_display_label.GetLabel(), "Loading document...")
-        self.assertTrue(self.panel.package_display_label.GetFont().GetWeight() == wx.FONTWEIGHT_BOLD)
+        assert isinstance(panel.package_display_label, wx.StaticText)
+        assert panel.package_display_label.GetLabel() == "Loading document..."
+        assert panel.package_display_label.GetFont().GetWeight() == wx.FONTWEIGHT_BOLD
 
         # Verify button creation
-        self.assertIsInstance(self.panel.back_button, wx.Button)
-        self.assertIsInstance(self.panel.forward_button, wx.Button)
-        self.assertIsInstance(self.panel.home_button, wx.Button)
+        assert isinstance(panel.back_button, wx.Button)
+        assert isinstance(panel.forward_button, wx.Button)
+        assert isinstance(panel.home_button, wx.Button)
 
-    def test_load_url(self):
+    def test_load_url(self, document_view_panel):
+        panel, _ = document_view_panel
         # Patch LoadURL on the real webview instance
-        with patch.object(self.panel.webview, 'LoadURL') as mock_load_url:
+        with patch.object(panel.webview, 'LoadURL') as mock_load_url:
             test_url = "https://example.com"
-            self.panel.load_url(test_url)
+            panel.load_url(test_url)
             mock_load_url.assert_called_once_with(test_url)
 
-    def test_set_document_title(self):
+    def test_set_document_title(self, document_view_panel):
+        panel, _ = document_view_panel
         mock_label = MagicMock(spec=wx.StaticText)
-        self.panel.package_display_label = mock_label
+        panel.package_display_label = mock_label
         test_title = "My Test Document"
-        self.panel.set_document_title(test_title)
+        panel.set_document_title(test_title)
         mock_label.SetLabel.assert_called_once_with(test_title)
 
-    def test_update_navigation_buttons_state(self):
+    def test_update_navigation_buttons_state(self, document_view_panel):
+        panel, _ = document_view_panel
         # Patch CanGoBack and CanGoForward on the real webview instance
-        with patch.object(self.panel.webview, 'CanGoBack') as mock_can_go_back, \
-             patch.object(self.panel.webview, 'CanGoForward') as mock_can_go_forward:
+        with patch.object(panel.webview, 'CanGoBack') as mock_can_go_back, \
+             patch.object(panel.webview, 'CanGoForward') as mock_can_go_forward:
 
             mock_back_button = MagicMock(spec=wx.Button)
             mock_forward_button = MagicMock(spec=wx.Button)
 
-            self.panel.back_button = mock_back_button
-            self.panel.forward_button = mock_forward_button
+            panel.back_button = mock_back_button
+            panel.forward_button = mock_forward_button
 
             # Test case 1: Can go back and forward
             mock_can_go_back.return_value = True
             mock_can_go_forward.return_value = True
-            self.panel.update_navigation_buttons_state()
+            panel.update_navigation_buttons_state()
             mock_back_button.Enable.assert_called_with(True)
             mock_forward_button.Enable.assert_called_with(True)
 
@@ -97,20 +92,21 @@ class TestDocumentViewPanel(unittest.TestCase):
             # Test case 2: Cannot go back or forward
             mock_can_go_back.return_value = False
             mock_can_go_forward.return_value = False
-            self.panel.update_navigation_buttons_state()
+            panel.update_navigation_buttons_state()
             mock_back_button.Enable.assert_called_with(False)
             mock_forward_button.Enable.assert_called_with(False)
 
-    def test_on_back_button_click(self):
+    def test_on_back_button_click(self, document_view_panel):
+        panel, _ = document_view_panel
         # Patch CanGoBack and GoBack on the real webview instance
-        with patch.object(self.panel.webview, 'CanGoBack') as mock_can_go_back, \
-             patch.object(self.panel.webview, 'GoBack') as mock_go_back:
+        with patch.object(panel.webview, 'CanGoBack') as mock_can_go_back, \
+             patch.object(panel.webview, 'GoBack') as mock_go_back:
 
             mock_event = MagicMock(spec=wx.CommandEvent)
 
             # Test case 1: Can go back
             mock_can_go_back.return_value = True
-            self.panel._on_back(mock_event)
+            panel._on_back(mock_event)
             mock_go_back.assert_called_once()
             mock_event.Skip.assert_called_once()
 
@@ -121,20 +117,21 @@ class TestDocumentViewPanel(unittest.TestCase):
 
             # Test case 2: Cannot go back
             mock_can_go_back.return_value = False
-            self.panel._on_back(mock_event)
+            panel._on_back(mock_event)
             mock_go_back.assert_not_called()
             mock_event.Skip.assert_called_once()
 
-    def test_on_forward_button_click(self):
+    def test_on_forward_button_click(self, document_view_panel):
+        panel, _ = document_view_panel
         # Patch CanGoForward and GoForward on the real webview instance
-        with patch.object(self.panel.webview, 'CanGoForward') as mock_can_go_forward, \
-             patch.object(self.panel.webview, 'GoForward') as mock_go_forward:
+        with patch.object(panel.webview, 'CanGoForward') as mock_can_go_forward, \
+             patch.object(panel.webview, 'GoForward') as mock_go_forward:
 
             mock_event = MagicMock(spec=wx.CommandEvent)
 
             # Test case 1: Can go forward
             mock_can_go_forward.return_value = True
-            self.panel._on_forward(mock_event)
+            panel._on_forward(mock_event)
             mock_go_forward.assert_called_once()
             mock_event.Skip.assert_called_once()
 
@@ -145,20 +142,21 @@ class TestDocumentViewPanel(unittest.TestCase):
 
             # Test case 2: Cannot go forward
             mock_can_go_forward.return_value = False
-            self.panel._on_forward(mock_event)
+            panel._on_forward(mock_event)
             mock_go_forward.assert_not_called()
             mock_event.Skip.assert_called_once()
 
-    def test_home_button_calls_callback(self):
+    def test_home_button_calls_callback(self, document_view_panel):
+        panel, mock_on_home_callback = document_view_panel
         # Simulate a click on the home button
         # We need to create a real wx.Button and bind it to the lambda
         # then simulate the event.
-        home_button = wx.Button(self.panel, label="Home")
-        home_button.Bind(wx.EVT_BUTTON, lambda evt: self.mock_on_home_callback())
+        home_button = wx.Button(panel, label="Home")
+        home_button.Bind(wx.EVT_BUTTON, lambda evt: mock_on_home_callback())
         
         # Simulate the event
         event = wx.CommandEvent(wx.EVT_BUTTON.typeId, home_button.GetId())
         home_button.GetEventHandler().ProcessEvent(event)
         wx.Yield()
 
-        self.mock_on_home_callback.assert_called_once()
+        mock_on_home_callback.assert_called_once()

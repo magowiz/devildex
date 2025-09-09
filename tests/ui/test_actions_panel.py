@@ -34,7 +34,7 @@ def actions_panel(
     Mocks the Enable() method on each button to allow tracking calls.
     """
     # A dummy frame is needed as a parent for the panel
-    frame = wx.Frame(None)
+    frame = wx.Frame(wx_app.GetTopWindow())
     panel = ActionsPanel(frame, mock_handler)
 
     for button_attr in [

@@ -72,6 +72,9 @@ class DevilDexCore:
             logger.info("Starting MCP server...")
             env = os.environ.copy()
             env["DEVILDEX_MCP_DB_URL"] = self.database_url
+            # Pass the dynamically assigned MCP server port to the subprocess
+            mcp_port = config.get_mcp_server_port()
+            env["DEVILDEX_MCP_SERVER_PORT"] = str(mcp_port)
             # Ensure DEVILDEX_DEV_MODE is passed if it's set in the current environment
             if os.getenv("DEVILDEX_DEV_MODE") == "1":
                 env["DEVILDEX_DEV_MODE"] = "1"
@@ -82,8 +85,8 @@ class DevilDexCore:
                 self.mcp_server_process = subprocess.Popen(
                     server_command,
                     env=env,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
                 )
                 logger.info(f"MCP server started with PID: {self.mcp_server_process.pid}")
                 if gui_warning_callback:
@@ -289,8 +292,14 @@ class DevilDexCore:
         if self.database_url:
             db_url = self.database_url
         else:
-            db_url = f"sqlite:///{self.database_file_path}"
-        database.init_db(database_url=db_url)
+            db_url = f"sqlite:///{self.app_paths.database_path}" # Use app_paths.database_path
+        
+        # Ensure the database is initialized if it hasn't been already
+        if database.DatabaseManager._engine is None or str(database.DatabaseManager._engine.url) != db_url:
+            database.init_db(database_url=db_url)
+            logger.info("Core: Database initialized.")
+        else:
+            logger.info("Core: Database already initialized and bound to correct URL.")
         logger.info("Core: Database initialized.")
 
         project_db_name = self.registered_project_name
