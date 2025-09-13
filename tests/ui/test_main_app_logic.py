@@ -63,10 +63,7 @@ class TestMainAppLogic(unittest.TestCase):
         assert (
             self.app.log_toggle_button is not None
         ), "Log toggle button should be initialized"
-        assert not (
-            self.app.is_log_panel_visible,
-            "Log panel should be hidden initially",
-        )
+        assert not self.app.is_log_panel_visible, "Log panel should be hidden initially"
 
     def test_on_log_toggle_button_click(self) -> None:
         """Test toggling the log panel visibility."""

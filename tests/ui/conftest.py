@@ -13,6 +13,7 @@ from devildex.main import DevilDexApp
 def wx_app() -> Generator[wx.App, None, None]:
     """Fixture to create a single wx.App instance for all UI tests."""
     app = wx.App()
+    wx.App.SetInstance(app) # Add this line
     yield app
     app.Destroy()
 
