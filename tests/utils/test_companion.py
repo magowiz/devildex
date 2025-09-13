@@ -29,7 +29,7 @@ def test_register_project_success(
     tmp_path: Path,
     mock_app_paths: Path,
     mocker: MagicMock,
-    cap_log: pytest.LogCaptureFixture,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Verify a successful project registration creates the correct JSON file."""
     # Arrange
@@ -68,11 +68,11 @@ def test_register_project_success(
     assert "registration_timestamp_utc" in data
     assert "devildex_version_at_registration" in data
 
-    assert "Project 'my-cool-project' registered successfully!" in cap_log.text
-    assert f"Registration File: {registration_file}" in cap_log.text
+    assert "Project 'my-cool-project' registered successfully!" in caplog.text
+    assert f"Registration File: {registration_file}" in caplog.text
 
 
-def test_register_project_no_venv(cap_log: pytest.LogCaptureFixture) -> None:
+def test_register_project_no_venv(caplog: pytest.LogCaptureFixture) -> None:
     """Verify registration fails gracefully when VIRTUAL_ENV is not set."""
     # Arrange
     with patch.dict("os.environ", {}, clear=True):
@@ -80,11 +80,11 @@ def test_register_project_no_venv(cap_log: pytest.LogCaptureFixture) -> None:
         companion.register_project("/fake/project")
 
     # Assert
-    assert "Operation cancelled: no active user virtual environment" in cap_log.text
+    assert "Operation cancelled: no active user virtual environment" in caplog.text
 
 
 def test_register_project_no_python_executable(
-    tmp_path: Path, mocker: MagicMock, cap_log: pytest.LogCaptureFixture
+    tmp_path: Path, mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify registration fails if the python executable is not found in the venv."""
     # Arrange
@@ -97,11 +97,11 @@ def test_register_project_no_python_executable(
     companion.register_project("/fake/project")
 
     # Assert
-    assert "unable to determine the correct Python executable" in cap_log.text
+    assert "unable to determine the correct Python executable" in caplog.text
 
 
 def test_register_project_invalid_project_path(
-    tmp_path: Path, mocker: MagicMock, cap_log: pytest.LogCaptureFixture
+    tmp_path: Path, mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify registration fails if the provided project path is not a directory."""
     # Arrange: Make the venv part succeed
@@ -121,7 +121,7 @@ def test_register_project_invalid_project_path(
     # Assert
     assert (
         f"The specified project path is not a valid directory: "
-        f"{invalid_project_path.resolve()}" in cap_log.text
+        f"{invalid_project_path.resolve()}" in caplog.text
     )
 
 

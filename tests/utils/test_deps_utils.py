@@ -17,17 +17,17 @@ EXPECTED_DEBUG_CALL_COUNT = 2
 
 @patch("devildex.utils.deps_utils.RequirementsFile", None)
 def test_filter_requirements_lines_requirements_file_none(
-    cap_log: pytest.LogCaptureFixture,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Verify filter_requirements_lines handles RequirementsFile being None."""
-    with cap_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = filter_requirements_lines("/fake/path/reqs.txt")
     assert result is None
-    assert "The 'pip-requirements-parser' package is not installed." in cap_log.text
+    assert "The 'pip-requirements-parser' package is not installed." in caplog.text
 
 
 def test_process_requirements_obj_invalid_lines(
-    cap_log: pytest.LogCaptureFixture,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Verify _process_requirements_obj logs warning for invalid lines."""
     mock_req_file = MagicMock(spec=RequirementsFile)
@@ -39,18 +39,18 @@ def test_process_requirements_obj_invalid_lines(
         MagicMock(line=None),
     ]
 
-    with cap_log.at_level(logging.WARNING):
+    with caplog.at_level(logging.WARNING):
         result = _process_requirements_obj(mock_req_file, Path("/fake/reqs.txt"), set())
 
     assert result == []
-    assert len(cap_log.records) == 1
-    record = cap_log.records[0]
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
     assert "Found 2 RS ROWS NOT VALID" in record.message
     assert "in ' /fake/reqs.txt'." in record.message
 
 
 def test_process_requirements_obj_explicit_removal(
-    cap_log: pytest.LogCaptureFixture,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Verify _process_requirements_obj handles explicit removal lines."""
     mock_req_file = MagicMock(spec=RequirementsFile)
@@ -61,13 +61,13 @@ def test_process_requirements_obj_explicit_removal(
     mock_req_file.invalid_lines = []
 
     lines_to_remove = {"-e ."}
-    with cap_log.at_level(logging.INFO):
+    with caplog.at_level(logging.INFO):
         result = _process_requirements_obj(
             mock_req_file, Path("/fake/reqs.txt"), lines_to_remove
         )
 
     assert result == ["valid-dep"]
-    assert "Explicit removal of the line '-e .' from '/fake/reqs.txt'" in cap_log.text
+    assert "Explicit removal of the line '-e .' from '/fake/reqs.txt'" in caplog.text
 
 
 @patch("devildex.utils.deps_utils.logger.error")
