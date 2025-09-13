@@ -3,6 +3,7 @@ import subprocess  # Import subprocess
 import tempfile  # Import tempfile
 import time  # Import time
 from pathlib import Path  # Import Path
+import socket # Import socket
 
 import pytest
 from fastmcp import Client
@@ -17,7 +18,15 @@ from devildex.database import (  # Import necessary models
 
 
 @pytest.fixture(scope="module")
-def mcp_server_with_populated_db():
+def free_port():
+    """Fixture to provide a free port for testing."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+@pytest.fixture(scope="module")
+def mcp_server_with_populated_db(free_port):
     """Fixture to set up an in-memory SQLite database, populate it,
     and yield a DevilDexCore instance initialized with it.
     """
@@ -110,6 +119,7 @@ def mcp_server_with_populated_db():
         # Set the environment variable for the subprocess
         env = os.environ.copy()
         env["DEVILDEX_MCP_DB_URL"] = db_url
+        env["DEVILDEX_MCP_SERVER_PORT"] = str(free_port)
 
         # Command to run the server
         server_command = [
@@ -151,7 +161,7 @@ def mcp_server_with_populated_db():
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_all_projects(
-    mcp_server_with_populated_db: DevilDexCore,
+    mcp_server_with_populated_db: DevilDexCore, free_port
 ) -> None:
     """Tests the 'get_docsets_list' tool with all_projects=True."""
     # The server under test (src/devildex/mcp_server/server.py) will use the
@@ -166,7 +176,7 @@ async def test_get_docsets_list_all_projects(
 
     config = {
         "mcpServers": {
-            "my_server": {"url": "http://127.0.0.1:8001/mcp"},
+            "my_server": {"url": f"http://127.0.0.1:{free_port}/mcp"},
         }
     }
     client = Client(config, timeout=5)
@@ -191,12 +201,12 @@ async def test_get_docsets_list_all_projects(
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_by_project(
-    mcp_server_with_populated_db: DevilDexCore,
+    mcp_server_with_populated_db: DevilDexCore, free_port
 ) -> None:
     """Tests the 'get_docsets_list' tool with a specific project."""
     config = {
         "mcpServers": {
-            "my_server": {"url": "http://127.0.0.1:8001/mcp"},
+            "my_server": {"url": f"http://127.0.0.1:{free_port}/mcp"},
         }
     }
     client = Client(config, timeout=5)
@@ -220,12 +230,12 @@ async def test_get_docsets_list_by_project(
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_invalid_params(
-    mcp_server_with_populated_db: DevilDexCore,
+    mcp_server_with_populated_db: DevilDexCore, free_port
 ) -> None:
     """Tests the 'get_docsets_list' tool with invalid parameters (neither project nor all_projects)."""
     config = {
         "mcpServers": {
-            "my_server": {"url": "http://127.0.0.1:8001/mcp"},
+            "my_server": {"url": f"http://127.0.0.1:{free_port}/mcp"},
         }
     }
     client = Client(config, timeout=5)
