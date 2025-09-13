@@ -1738,14 +1738,14 @@ testing-docutils = ["pygments", "pytest (>=8,<9)", "pytest-param-files (>=0.6.0,
 
 [[package]]
 name = "nuitka"
-version = "2.7.13"
+version = "2.7.14"
 description = "Python compiler with full language support and CPython compatibility"
 optional = false
 python-versions = "*"
 groups = ["packaging"]
 markers = "platform_machine == \"x86_64\" or platform_machine == \"i686\" or platform_machine == \"aarch64\" or platform_machine == \"armv7l\" or platform_machine == \"ppc64le\" or platform_machine == \"s390x\" or sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"i686\" and platform_machine != \"aarch64\" and platform_machine != \"armv7l\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
-    {file = "Nuitka-2.7.13.tar.gz", hash = "sha256:941c6ee2321fea1d297b29669228939200640110be2a8b0bdedfcf6c3bc816b9"},
+    {file = "Nuitka-2.7.14.tar.gz", hash = "sha256:88233ed175d6d2abb2e1d5fa3c2e28b2fac604764ddc319c614325ff87c77117"},
 ]
 
 [package.dependencies]
@@ -3724,4 +3724,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "63f4d03709fc2b788caad8801f8270ea27756f0f0bd51cf7ce2bad8d11e9a0c1"
+content-hash = "c50ed1b0a7698c2cf4add5ddd33dadd85c5ea832135ab0771f4ac4dbb17e17de"
