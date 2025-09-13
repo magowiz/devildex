@@ -30,7 +30,7 @@ packages = [
 
 [tool.poetry.group.packaging.dependencies]
 cx-freeze = "^8.4.0"
-nuitka = "^2.7.12"
+nuitka = "^2.7.14"
 pyoxidizer = "^0.24.0"
 
 [tool.poetry.group.test.dependencies]
