@@ -68,7 +68,7 @@ def test_fetch_from_pypi_success(
     # Assert
     assert result is True
     fetcher_instance._download_and_extract_archive.assert_called_once_with(
-        "https://example.com/sdist.tar.gz", mocker.ANY
+        "https://example.com/sdist.tar.gz", mocker.ANY, from_vcs=False
     )
 
 
@@ -123,10 +123,9 @@ def test_download_and_extract_zip_archive(
     test_zip_path = create_test_zip(tmp_path, "my-package-1.2.3", "main.py")
 
     # 2. Mock the download to just copy our local fake zip
-    # FIX: Patch the static method on the CLASS, not the instance.
     mocker.patch(
         "devildex.fetcher.PackageSourceFetcher._download_file",
-        side_effect=lambda filename, url: shutil.copy(test_zip_path, filename),
+        side_effect=lambda filename, url, **kwargs: shutil.copy(test_zip_path, filename),
     )
 
     # 3. The temporary directory for the whole operation
@@ -134,7 +133,7 @@ def test_download_and_extract_zip_archive(
 
     # Act
     success = fetcher_instance._download_and_extract_archive(
-        "https://example.com/test.zip", temp_base_dir
+        "https://example.com/test.zip", temp_base_dir, from_vcs=True
     )
 
     # Assert

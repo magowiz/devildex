@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from src.devildex.fetcher import PackageSourceFetcher, _pprint_
+from src.devildex.fetcher import PackageSourceFetcher
 
 DUMMY_PACKAGE_INFO = {"name": "test_package", "version": "1.0.0"}
 
@@ -612,14 +612,4 @@ class TestPackageSourceFetcherCoverage:
         assert path_str is None
         mock_cleanup_target_dir_content.assert_called_once()
 
-    @patch("src.devildex.fetcher.logger")
-    def test_pprint_function_logs_json(self, mock_logger: MagicMock) -> None:
-        """Test pprint function logs JSON."""
-        data = {"key": "value", "num": 123}
-        _pprint_(data)
-        mock_logger.info.assert_called_once()
-        logged_message = mock_logger.info.call_args[0][0]
-        assert (
-            '{\n    "key": "value",\n    "num": 123\n}' in logged_message
-            or '{\n    "num": 123,\n    "key": "value"\n}' in logged_message
-        )
+    
