@@ -258,9 +258,11 @@ class PackageSourceFetcher:
         return success
 
     @staticmethod
-    def _download_file(filename: Path, url: str) -> None:
+    def _download_file(filename: Path, url: str, allow_redirects: bool = True) -> None:
         filename.parent.mkdir(parents=True, exist_ok=True)
-        response = requests.get(url, stream=True, timeout=60)
+        response = requests.get(
+            url, stream=True, timeout=60, allow_redirects=allow_redirects
+        )
         response.raise_for_status()
         with open(filename, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
@@ -293,7 +295,7 @@ class PackageSourceFetcher:
             return True
 
     def _download_and_extract_archive(
-        self, url: str, temp_base_dir: pathlib.Path
+        self, url: str, temp_base_dir: pathlib.Path, from_vcs: bool = False
     ) -> bool:
         archive_filename = temp_base_dir / url.split("/")[-1].split("?")[0]
         temp_extract_dir = temp_base_dir / "extracted_content"
@@ -303,7 +305,12 @@ class PackageSourceFetcher:
             if temp_base_dir.exists():
                 shutil.rmtree(temp_base_dir)
             temp_base_dir.mkdir(parents=True, exist_ok=True)
-            PackageSourceFetcher._download_file(archive_filename, url)
+            # For VCS archives, we don't want to follow redirects to avoid downloading
+            # the main branch by mistake.
+            allow_redirects = not from_vcs
+            PackageSourceFetcher._download_file(
+                archive_filename, url, allow_redirects=allow_redirects
+            )
             temp_extract_dir.mkdir(parents=True, exist_ok=True)
             if not self._extract_archive(archive_filename, temp_extract_dir):
                 return False
@@ -322,7 +329,8 @@ class PackageSourceFetcher:
                 operation_successful = True
 
         except requests.RequestException:
-            pass
+            logger.warning(f"Failed to download archive from {url}")
+            return False
         finally:
             if temp_base_dir.exists():
                 shutil.rmtree(temp_base_dir)
@@ -408,7 +416,9 @@ class PackageSourceFetcher:
                 / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
                 / "pypi_sdist"
             )
-            if self._download_and_extract_archive(sdist_url, temp_dir_for_pypi):
+            if self._download_and_extract_archive(
+                sdist_url, temp_dir_for_pypi, from_vcs=False
+            ):
                 return True
         except requests.RequestException:
             pass
@@ -442,7 +452,7 @@ class PackageSourceFetcher:
                     / "github_archive"
                 )
                 if self._download_and_extract_archive(
-                    archive_url, temp_dir_for_archive_download
+                    archive_url, temp_dir_for_archive_download, from_vcs=True
                 ):
                     return True
         return False
@@ -648,42 +658,4 @@ class PackageSourceFetcher:
         return fetch_successful, is_master_branch_fetched, path_to_return
 
 
-def _pprint_(data: dict | list) -> None:
-    logger.info(json.dumps(data, sort_keys=True, indent=4))
 
-
-def main() -> None:
-    """Test purpose."""
-    test_packages = [
-        {
-            "name": "requests",
-            "version": "2.25.1",
-            "project_urls": {"Source Code": "https://github.com/psf/requests"},
-        },
-        {"name": "non_existent_package", "version": "1.0.0"},
-        {
-            "name": "flask",
-            "version": "2.0.1",
-            "project_urls": {"Repository": "https://github.com/pallets/flask"},
-        },
-    ]
-
-    for p_info in test_packages:
-        logger.info(f"\n>>> Testing fetch for: {p_info['name']} v{p_info['version']}")
-        fetcher_obj = PackageSourceFetcher(
-            base_save_path="devildex_fetcher_test_output", package_info_dict=p_info
-        )
-        success, is_master, path_str = fetcher_obj.fetch()
-        if success:
-            logger.info(f"    SUCCESS: Path: {path_str}, Is Master: {is_master}")
-        else:
-            logger.error(f"    FAILED to fetch {p_info['name']}")
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    Path("devildex_fetcher_test_output").mkdir(exist_ok=True)
-    main()
