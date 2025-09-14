@@ -1,3 +1,5 @@
+"""db_manager module."""
+
 from .db_manager import (
     DatabaseManager,
     Docset,

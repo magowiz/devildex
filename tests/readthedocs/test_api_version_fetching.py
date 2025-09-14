@@ -14,7 +14,7 @@ class MockResponse:
     """A mock class to simulate requests.Response for testing."""
 
     def __init__(
-        self, json_data=None, text_data: str = "", status_code: int = 200
+        self, json_data: dict | None = None, text_data: str = "", status_code: int = 200
     ) -> None:
         """Initialize the mock response."""
         self._json_data = json_data
@@ -25,7 +25,6 @@ class MockResponse:
         """Mock the json method."""
         if self._json_data is not None:
             return self._json_data
-        # Simulate the error caught in the source code
         raise json.JSONDecodeError("Expecting value", self._text_data, 0)
 
     def raise_for_status(self) -> None:

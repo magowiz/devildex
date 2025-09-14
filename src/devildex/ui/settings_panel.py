@@ -1,3 +1,5 @@
+"""settings panel module."""
+
 import logging
 
 import wx
@@ -8,7 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class SettingsPanel(wx.Panel):
-    def __init__(self, parent, on_save_callback, on_cancel_callback):
+    """Settings Panel class."""
+
+    def __init__(self, parent, on_save_callback, on_cancel_callback) -> None:
+        """Initialize the SettingsPanel."""
         super().__init__(parent)
         self.config_manager = ConfigManager()
         self.on_save_callback = on_save_callback
@@ -17,7 +22,7 @@ class SettingsPanel(wx.Panel):
         self._init_ui()
         self._load_settings()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Title
@@ -49,9 +54,10 @@ class SettingsPanel(wx.Panel):
         warning_sizer.Add(warning_icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
 
         warning_text_content = (
-            "WARNING: The MCP server is currently experimental in all modes (GUI and headless). "
-            "It has limited functionality and is primarily for development and testing. "
-            "Use with caution."
+            "WARNING: The MCP server is currently experimental in "
+            "all modes (GUI and headless). "
+            "It has limited functionality and is primarily for development and testing."
+            " Use with caution."
         )
         warning_label = wx.StaticText(
             warning_panel, label=warning_text_content, style=wx.ALIGN_LEFT
@@ -111,14 +117,14 @@ class SettingsPanel(wx.Panel):
 
         self.SetSizerAndFit(main_sizer)
 
-    def _load_settings(self):
+    def _load_settings(self) -> None:
         self.enabled_checkbox.SetValue(self.config_manager.get_mcp_server_enabled())
         self.hide_gui_checkbox.SetValue(
             self.config_manager.get_mcp_server_hide_gui_when_enabled()
         )
         self.port_text_ctrl.SetValue(str(self.config_manager.get_mcp_server_port()))
 
-    def _on_save(self, event):
+    def _on_save(self, _event) -> None:
         try:
             port = int(self.port_text_ctrl.GetValue())
             if not (1024 <= port <= 65535):
@@ -143,13 +149,13 @@ class SettingsPanel(wx.Panel):
                 wx.OK | wx.ICON_ERROR,
             )
         except Exception as e:
-            logger.error(f"Error saving settings: {e}")
+            logger.exception("Error saving settings")
             wx.MessageBox(
                 f"An error occurred while saving settings: {e}",
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
 
-    def _on_cancel(self, event):
+    def _on_cancel(self, _event) -> None:
         logger.info("MCP Server settings cancelled.")
         self.on_cancel_callback()

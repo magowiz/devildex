@@ -11,8 +11,13 @@ import wx.html2
 from wx import Size
 
 from devildex.config_manager import ConfigManager
+from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
+from devildex.core import DevilDexCore
+from devildex.database.models import PackageDetails
+from devildex.default_data import PACKAGES_DATA_AS_DETAILS
+from devildex.task_manager import GenerationTaskManager
+from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 
-# Configure logging at the application's entry point
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -20,12 +25,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 
-from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
-from devildex.core import DevilDexCore
-from devildex.database.models import PackageDetails
-from devildex.default_data import PACKAGES_DATA_AS_DETAILS
-from devildex.task_manager import GenerationTaskManager
-from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 
 logger = logging.getLogger(__name__)
 
@@ -939,7 +938,7 @@ class DevilDexApp(wx.App):
         event.Skip()
 
     def on_settings_saved(self) -> None:
-        """Callback when settings are saved. Re-initializes core services."""
+        """Handle when settings are saved. Re-initializes core services."""
         logger.info("Settings saved. Re-initializing core services...")
         if self.core:
             self.core.shutdown()  # Shut down existing services
@@ -954,7 +953,7 @@ class DevilDexApp(wx.App):
         self.show_main_view()
 
     def on_settings_cancelled(self) -> None:
-        """Callback when settings are cancelled. Simply returns to main view."""
+        """Handle when settings are cancelled. Simply returns to main view."""
         logger.info("Settings cancelled. Returning to main view.")
         self.show_main_view()
 

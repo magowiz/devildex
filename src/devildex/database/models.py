@@ -1,6 +1,8 @@
 """models module."""
 
 import datetime
+import json
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -69,13 +71,11 @@ class PackageInfo(Base):  # type: ignore[valid-type,misc]
         """Get project_urls come dictionary."""
         if self._project_urls_json:
             try:
-                import json
 
                 return json.loads(
                     self._project_urls_json
                 )  # type: ignore[no-any-return]
             except json.JSONDecodeError:
-                import logging
 
                 logger = logging.getLogger(__name__)
                 logger.exception(
@@ -90,7 +90,6 @@ class PackageInfo(Base):  # type: ignore[valid-type,misc]
     def project_urls(self, value: dict[str, str]) -> None:
         """Set up project_urls, converting it in JSON."""
         if value:
-            import json
 
             self._project_urls_json = json.dumps(value)
         else:

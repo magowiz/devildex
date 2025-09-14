@@ -477,7 +477,7 @@ def _execute_mkdocs_build_in_venv(build_context: MkDocsBuildContext) -> bool:
 def _perform_actual_mkdocs_build(
     python_executable: str, build_context: MkDocsBuildContext
 ) -> bool:
-    """Execute the mkdocs build using the provided python executable and build context."""
+    """Execute mkdocs build using the provided python executable and build context."""
     mkdocs_build_command = [
         python_executable,
         "-m",

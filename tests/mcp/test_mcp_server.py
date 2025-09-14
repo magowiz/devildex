@@ -1,15 +1,17 @@
-import os  # Import os
-import subprocess  # Import subprocess
-import tempfile  # Import tempfile
-import time  # Import time
-from pathlib import Path  # Import Path
+"""module that tests mcp server."""
+
+import os
+import subprocess
+import tempfile
+import time
+from pathlib import Path
 
 import pytest
 from fastmcp import Client
 
 from devildex import database
 from devildex.core import DevilDexCore
-from devildex.database import (  # Import necessary models
+from devildex.database import (
     Docset,
     PackageInfo,
     RegisteredProject,
@@ -18,9 +20,7 @@ from devildex.database import (  # Import necessary models
 
 @pytest.fixture(scope="module")
 def mcp_server_with_populated_db():
-    """Fixture to set up an in-memory SQLite database, populate it,
-    and yield a DevilDexCore instance initialized with it.
-    """
+    """Fixture to set up an in-memory SQLite database, populate it."""
     # Use a temporary file for the SQLite database
     temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
     temp_db_file.close()  # Close the file handle, but keep the file
@@ -65,11 +65,9 @@ def mcp_server_with_populated_db():
         )
         session.add_all([pkg_info_flask, docset_flask])
         session.commit()
-        # Associate docset with project
         project1.docsets.append(docset_flask)
         session.commit()
 
-        # Add PackageInfo and Docset for "django" (not associated with any project for now)
         pkg_info_django = PackageInfo(package_name="django", summary="Web framework.")
         docset_django = Docset(
             package_name="django",
@@ -185,7 +183,8 @@ async def test_get_docsets_list_all_projects(
             print(f"Docsets list (all_projects): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_docsets_list' (all_projects) tool communication: {e}"
+                "An error occurred during 'get_docsets_list' "
+                f"(all_projects) tool communication: {e}"
             )
 
 
@@ -214,7 +213,8 @@ async def test_get_docsets_list_by_project(
             print(f"Docsets list (by project): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_docsets_list' (by project) tool communication: {e}"
+                "An error occurred during 'get_docsets_list' "
+                f"(by project) tool communication: {e}"
             )
 
 
@@ -222,7 +222,7 @@ async def test_get_docsets_list_by_project(
 async def test_get_docsets_list_invalid_params(
     mcp_server_with_populated_db: DevilDexCore,
 ) -> None:
-    """Tests the 'get_docsets_list' tool with invalid parameters (neither project nor all_projects)."""
+    """Tests the 'get_docsets_list' tool with invalid parameters."""
     config = {
         "mcpServers": {
             "my_server": {"url": "http://127.0.0.1:8001/mcp"},
@@ -240,5 +240,6 @@ async def test_get_docsets_list_invalid_params(
             print(f"Docsets list (invalid params): {response.data}")
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_docsets_list' (invalid params) tool communication: {e}"
+                "An error occurred during 'get_docsets_list' (invalid params)"
+                f" tool communication: {e}"
             )

@@ -11,7 +11,7 @@ _WX_APP_INSTANCE = None
 
 @pytest.fixture(scope="session")
 def wx_app() -> wx.App:
-    """Fixture to create a wx.App instance for the entire test session (once per worker)."""
+    """Fixture to create a wx.App instance for the entire test session."""
     global _WX_APP_INSTANCE
     if _WX_APP_INSTANCE is None:
         _WX_APP_INSTANCE = wx.App(redirect=False)

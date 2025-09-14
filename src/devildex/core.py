@@ -98,11 +98,11 @@ class DevilDexCore:
                 if gui_warning_callback:
                     gui_warning_callback()
             except FileNotFoundError:
-                logger.error(
+                logger.exception(
                     f"Error: Could not find the server script at {server_command[1]}"
                 )
-            except Exception as e:
-                logger.error(f"Failed to start MCP server: {e}")
+            except Exception:
+                logger.exception("Failed to start MCP server")
 
     @staticmethod
     def query_project_names() -> list[str]:
@@ -298,9 +298,8 @@ class DevilDexCore:
         if self.database_url:
             db_url = self.database_url
         else:
-            db_url = f"sqlite:///{self.app_paths.database_path}"  # Use app_paths.database_path
+            db_url = f"sqlite:///{self.app_paths.database_path}"
 
-        # Ensure the database is initialized if it hasn't been already
         if (
             database.DatabaseManager._engine is None
             or str(database.DatabaseManager._engine.url) != db_url

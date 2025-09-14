@@ -14,30 +14,30 @@ from devildex.fetcher import PackageSourceFetcher
 
 logger = logging.getLogger(__name__)
 
-# Common test case for all tests in this file
 PACKAGE_NAME = "requests"
 PACKAGE_VERSION = "2.25.1"
 REPO_URL = "https://github.com/psf/requests.git"
-# The actual tag in the repo is 'v2.25.1'
 EXPECTED_TAG = f"v{PACKAGE_VERSION}"
 
 
 @pytest.fixture
 def fetcher_and_path() -> tuple[PackageSourceFetcher, Path]:
-    """Provides a PackageSourceFetcher instance and a temporary directory for a test.
-    """
+    """Provide a PackageSourceFetcher instance and a temporary directory for a test."""
     with tempfile.TemporaryDirectory(prefix="devildex_real_vcs_") as tmpdir:
         tmp_path = Path(tmpdir)
         package_info = {"name": PACKAGE_NAME, "version": PACKAGE_VERSION}
-        fetcher = PackageSourceFetcher(base_save_path=str(tmp_path), package_info_dict=package_info)
+        fetcher = PackageSourceFetcher(
+            base_save_path=str(tmp_path), package_info_dict=package_info
+        )
         yield fetcher, tmp_path
 
 
 def _verify_downloaded_content(download_path: Path) -> bool:
-    """Verifies that the downloaded content is the correct version of 'requests'.
-    """
+    """Verify that the downloaded content is the right version of 'requests'."""
     if not download_path.exists() or not any(download_path.iterdir()):
-        logger.error("Verification failed: Download directory is empty or does not exist.")
+        logger.error(
+            "Verification failed: Download directory is empty or does not exist."
+        )
         return False
 
     version_file = download_path / "requests" / "__version__.py"
@@ -48,7 +48,10 @@ def _verify_downloaded_content(download_path: Path) -> bool:
     content = version_file.read_text()
     expected_string = f"__version__ = '{PACKAGE_VERSION}'"
     if expected_string not in content:
-        logger.error(f"Verification failed: Expected string '{expected_string}' not in {version_file.name}")
+        logger.error(
+            f"Verification failed: Expected string '{expected_string}' not in"
+            f" {version_file.name}"
+        )
         logger.error(f"File content was: {content}")
         return False
 
@@ -57,10 +60,10 @@ def _verify_downloaded_content(download_path: Path) -> bool:
 
 
 @pytest.mark.integration
-def test_real_github_archive_fails_correctly(fetcher_and_path: tuple[PackageSourceFetcher, Path]):
-    """Tests that the first fallback (direct archive download) correctly fails
-    for a tag that doesn't have a direct archive link, due to our redirect fix.
-    """
+def test_real_github_archive_fails_correctly(
+    fetcher_and_path: tuple[PackageSourceFetcher, Path],
+) -> None:
+    """Tests that the first fallback correctly fails."""
     fetcher, _ = fetcher_and_path
     logger.info("Testing that _try_fetch_tag_github_archive correctly fails...")
 
@@ -72,9 +75,10 @@ def test_real_github_archive_fails_correctly(fetcher_and_path: tuple[PackageSour
 
 
 @pytest.mark.integration
-def test_real_shallow_clone_succeeds(fetcher_and_path: tuple[PackageSourceFetcher, Path]):
-    """Tests that the second fallback (shallow clone) succeeds and fetches the correct source.
-    """
+def test_real_shallow_clone_succeeds(
+    fetcher_and_path: tuple[PackageSourceFetcher, Path],
+) -> None:
+    """Tests that the second fallback succeeds and fetches the correct source."""
     fetcher, _ = fetcher_and_path
     logger.info("Testing that _try_fetch_tag_shallow_clone succeeds...")
 
@@ -86,10 +90,10 @@ def test_real_shallow_clone_succeeds(fetcher_and_path: tuple[PackageSourceFetche
 
 
 @pytest.mark.integration
-def test_real_full_clone_checkout_succeeds(fetcher_and_path: tuple[PackageSourceFetcher, Path]):
-    """Tests that the third fallback (full clone and checkout) succeeds and fetches the correct source.
-    This is the most time-consuming test.
-    """
+def test_real_full_clone_checkout_succeeds(
+    fetcher_and_path: tuple[PackageSourceFetcher, Path],
+) -> None:
+    """Tests that the third fallback succeeds and fetches the correct source."""
     fetcher, _ = fetcher_and_path
     logger.info("Testing that _try_fetch_tag_full_clone_checkout succeeds...")
 

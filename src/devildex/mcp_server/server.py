@@ -12,10 +12,8 @@ from typing import Any
 
 from fastmcp import FastMCP
 
-# Initialize FastMCP instance
 mcp = FastMCP("Demo 🚀")
 
-# Global variable to hold the DevilDexCore instance
 standalone_core: Any = None
 
 
@@ -24,8 +22,6 @@ def get_docsets_list(
     project: str | None = None, all_projects: bool = False
 ) -> dict[str, str] | list[str]:
     """Get a list of docsets."""
-    global standalone_core  # Access the global standalone_core
-
     if not standalone_core:
         return {"error": "DevilDexCore not initialized in MCP server."}
 
@@ -54,14 +50,11 @@ if __name__ == "__main__":
 
     config = ConfigManager()
     mcp_port = os.getenv("DEVILDEX_MCP_SERVER_PORT")
-    if mcp_port:
-        mcp_port = int(mcp_port)
-    else:
-        mcp_port = config.get_mcp_server_port()
+    mcp_port = int(mcp_port) if mcp_port else config.get_mcp_server_port()
 
     db_url = os.getenv("DEVILDEX_MCP_DB_URL", None)
     server_logger.info(f"Using database URL: {db_url}")
-    standalone_core = DevilDexCore(database_url=db_url)  # Initialize global core
+    standalone_core = DevilDexCore(database_url=db_url)
     database.init_db(database_url=db_url)
     server_logger.info("Database initialized for standalone server.")
 
@@ -76,6 +69,6 @@ if __name__ == "__main__":
         mcp.run(transport="http", host="127.0.0.1", port=mcp_port, path="/mcp")
     except KeyboardInterrupt:
         server_logger.info("KeyboardInterrupt received. Shutting down.")
-    except Exception as e:
-        server_logger.error(f"Error running MCP server: {e}")
+    except Exception:
+        server_logger.exception("Error running MCP server")
     server_logger.info("MCP server standalone mode finished.")

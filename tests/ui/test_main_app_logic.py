@@ -67,7 +67,7 @@ class TestMainAppLogic(unittest.TestCase):
 
     def test_on_log_toggle_button_click(self) -> None:
         """Test toggling the log panel visibility."""
-        assert not (self.app.is_log_panel_visible)
+        assert not self.app.is_log_panel_visible
         assert not (self.app.bottom_splitter_panel.IsShown())
 
         self.app.on_log_toggle_button_click(wx.CommandEvent())
@@ -77,7 +77,7 @@ class TestMainAppLogic(unittest.TestCase):
 
         self.app.on_log_toggle_button_click(wx.CommandEvent())
         wx.Yield()
-        assert not (self.app.is_log_panel_visible)
+        assert not self.app.is_log_panel_visible
         assert not (self.app.bottom_splitter_panel.IsShown())
 
 
