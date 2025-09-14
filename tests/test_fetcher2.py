@@ -125,7 +125,9 @@ def test_download_and_extract_zip_archive(
     # 2. Mock the download to just copy our local fake zip
     mocker.patch(
         "devildex.fetcher.PackageSourceFetcher._download_file",
-        side_effect=lambda filename, url, **kwargs: shutil.copy(test_zip_path, filename),
+        side_effect=lambda filename, url, **kwargs: shutil.copy(
+            test_zip_path, filename
+        ),
     )
 
     # 3. The temporary directory for the whole operation

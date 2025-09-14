@@ -25,7 +25,7 @@ sanitize_test_cases = [
 ]
 
 
-@pytest.mark.parametrize("input_name, expected", sanitize_test_cases)
+@pytest.mark.parametrize(("input_name", "expected"), sanitize_test_cases)
 def test_sanitize_path_component(input_name: str, expected: str) -> None:
     """Verify path component sanitization for various inputs."""
     # This is a static method, so we can call it directly on the class
@@ -146,7 +146,7 @@ vcs_url_test_cases = [
 ]
 
 
-@pytest.mark.parametrize("url, expected", vcs_url_test_cases)
+@pytest.mark.parametrize(("url", "expected"), vcs_url_test_cases)
 def test_is_valid_vcs_url(url: str, expected: str) -> None:
     """Verify VCS URL validation for various inputs."""
     assert PackageSourceFetcher._is_valid_vcs_url(url) is expected
@@ -178,7 +178,7 @@ def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "member_name, expected",
+    ("member_name", "expected"),
     [
         # Standard safe cases
         ("file.txt", True),
@@ -240,7 +240,7 @@ find_vcs_url_test_cases = [
 
 
 @pytest.mark.parametrize(
-    "urls_dict, case_id, expected_url",
+    ("urls_dict", "case_id", "expected_url"),
     find_vcs_url_test_cases,
     ids=[c[1] for c in find_vcs_url_test_cases],
 )
@@ -248,12 +248,8 @@ def test_find_vcs_url_in_dict(
     fetcher_instance: PackageSourceFetcher, urls_dict: dict, case_id, expected_url: str
 ) -> None:
     """Verify that _find_vcs_url_in_dict correctly identifies the best VCS URL."""
-    # The 'source_description' argument is only for logging, so we use a dummy value.
     found_url = fetcher_instance._find_vcs_url_in_dict(urls_dict, "test_source")
     assert found_url == expected_url
-
-
-# --- Tests for _get_vcs_url ---
 
 
 def test_get_vcs_url_uses_local_url_first(
@@ -342,17 +338,14 @@ def test_fetch_from_pypi_success(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it returns the correct dict on a successful API call."""
-    # Arrange
     expected_urls = {"Homepage": "http://example.com"}
     mock_response = mocker.Mock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {"info": {"project_urls": expected_urls}}
     mocker.patch("requests.get", return_value=mock_response)
 
-    # Act
     result = fetcher_instance._fetch_project_urls_from_pypi()
 
-    # Assert
     assert result == expected_urls
 
 
@@ -360,13 +353,10 @@ def test_fetch_from_pypi_request_exception(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it returns None when a network error occurs."""
-    # Arrange
     mocker.patch("requests.get", side_effect=requests.RequestException("Network Error"))
 
-    # Act
     result = fetcher_instance._fetch_project_urls_from_pypi()
 
-    # Assert
     assert result is None
 
 
