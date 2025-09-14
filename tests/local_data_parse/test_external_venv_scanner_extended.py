@@ -303,9 +303,10 @@ def test_execute_helper_script_with_stdout(
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
         args=[], returncode=0, stdout="Some output"
     )
-    scanner = ExternalVenvScanner(python_executable_path="/fake/path")
+    scanner = ExternalVenvScanner(python_executable_path="/usr/bin/python3")
 
     # Act
+    caplog.clear()
     with caplog.at_level(logging.DEBUG):
         scanner._execute_helper_script("any/path")
 

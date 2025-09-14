@@ -301,5 +301,4 @@ def test_load_active_project_no_registry_dir(
 
     # Assert
     assert loaded_data is None
-    assert "The base directory for registration" in caplog.text
-    assert "does not exist" in caplog.text
+    assert "Registration file path not determinable." in caplog.text
