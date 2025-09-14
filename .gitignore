@@ -23,4 +23,5 @@ coverage_reports/
 gemini/
 tools/
 .env
-git_push_all.shgithub.log
+git_push_all.sh
+github.log

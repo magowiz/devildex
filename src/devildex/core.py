@@ -10,6 +10,8 @@ from typing import Any, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from devildex.mcp_server.mcp_server_manager import McpServerManager # New import
+
 from devildex.app_paths import AppPaths
 from devildex.config_manager import ConfigManager
 from devildex.database import db_manager as database
@@ -34,75 +36,37 @@ class DevilDexCore:
         self,
         database_url: Optional[str] = None,
         gui_warning_callback: Optional[callable] = None,
+        docset_base_output_path: Optional[Path] = None,
     ) -> None:
         """Initialize a new DevilDexCore instance."""
         self.app_paths = AppPaths()
         self.database_url = database_url or f"sqlite:///{self.app_paths.database_path}"
-        if os.getenv("DEVILDEX_DEV_MODE") == "1":
-            self.docset_base_output_path = Path("devildex_docsets")
-        else:
-            self.docset_base_output_path = self.app_paths.docsets_base_dir
-        self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
+        self.docset_base_output_path: Optional[Path] = None
         self.registered_project_name: Optional[str] = None
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
-        self.mcp_server_process = None
+        self.mcp_server_manager: Optional[McpServerManager] = None
         self.gui_warning_callback = gui_warning_callback
 
-        self._setup_registered_project()
-        self._start_mcp_server_if_enabled(self.gui_warning_callback)
+        if docset_base_output_path:
+            self.set_docset_base_output_path(docset_base_output_path)
+        else:
+            self._setup_registered_project()
+
+    def set_docset_base_output_path(self, path: Path) -> None:
+        """Sets the base output path for docsets and initializes related components."""
+        self.docset_base_output_path = path
+        self.docset_base_output_path.mkdir(parents=True, exist_ok=True) # Ensure directory exists
+        self.registered_project_name = None
+        self.registered_project_path = None
+        self.registered_project_python_executable = None
+        self._setup_registered_project() # Re-run setup after path is known
 
     def shutdown(self) -> None:
-        """Shut down the core services, like the MCP server."""
-        if self.mcp_server_process:
-            logger.info("Shutting down MCP server...")
-            self.mcp_server_process.terminate()
-            try:
-                self.mcp_server_process.wait(timeout=5)
-                logger.info("MCP server shut down successfully.")
-            except subprocess.TimeoutExpired:
-                logger.warning("MCP server did not terminate in time, killing it.")
-                self.mcp_server_process.kill()
-
-    def _start_mcp_server_if_enabled(
-        self, gui_warning_callback: Optional[callable] = None
-    ) -> None:
-        """Check the configuration and start the MCP server if it's enabled."""
-        config = ConfigManager()
-        is_mcp_enabled = config.get_mcp_server_enabled()
-        logger.info(f"MCP Server enabled in config: {is_mcp_enabled}")
-
-        if is_mcp_enabled:
-            logger.info("Starting MCP server...")
-            env = os.environ.copy()
-            env["DEVILDEX_MCP_DB_URL"] = self.database_url
-            # Pass the dynamically assigned MCP server port to the subprocess
-            mcp_port = config.get_mcp_server_port()
-            env["DEVILDEX_MCP_SERVER_PORT"] = str(mcp_port)
-            # Ensure DEVILDEX_DEV_MODE is passed if it's set in the current environment
-            if os.getenv("DEVILDEX_DEV_MODE") == "1":
-                env["DEVILDEX_DEV_MODE"] = "1"
-
-            server_command = ["python", "src/devildex/mcp_server/server.py"]
-
-            try:
-                self.mcp_server_process = subprocess.Popen(
-                    server_command,
-                    env=env,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-                logger.info(
-                    f"MCP server started with PID: {self.mcp_server_process.pid}"
-                )
-                if gui_warning_callback:
-                    gui_warning_callback()
-            except FileNotFoundError:
-                logger.exception(
-                    f"Error: Could not find the server script at {server_command[1]}"
-                )
-            except Exception:
-                logger.exception("Failed to start MCP server")
+        """Shut down the core services."""
+        # The MCP server manager is now handled externally by the main application loop.
+        # No need to shut it down from here.
+        pass # No action needed here for MCP server shutdown
 
     @staticmethod
     def query_project_names() -> list[str]:
@@ -421,6 +385,10 @@ class DevilDexCore:
         if not self.docset_base_output_path.exists():
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
+
+    def get_docset_path(self, package_name: str, version: str) -> Path:
+        """Constructs and returns the path to a specific docset."""
+        return self.docset_base_output_path / package_name / version
 
     def get_all_docsets_info(self) -> list[dict[str, Any]]:
         """Retrieve information for all docsets from the database."""
