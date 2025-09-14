@@ -14,6 +14,9 @@ from typing import Any
 from fastmcp import FastMCP
 from markdownify import markdownify
 
+from devildex.database import db_manager as database
+from devildex.core import DevilDexCore # Import DevilDexCore
+
 # IMPORTANT: This MCP server is currently under active development and is INCOMPLETE.
 # Only the 'get_docsets_list' tool is fully functional.
 # Other functionalities are either placeholders or not yet implemented.
@@ -23,34 +26,36 @@ from markdownify import markdownify
 mcp = FastMCP("Demo 🚀")
 
 # Global variable to hold the DevilDexCore instance
-standalone_core: Any = None
+# This will be set by the main application or by the standalone server initialization
+_core_instance: Any = None
 
+def set_core_instance(core_instance: Any):
+    global _core_instance
+    _core_instance = core_instance
 
 @mcp.tool
 def get_docsets_list(
     project: str | None = None, all_projects: bool = False
 ) -> dict[str, str] | list[str]:
     """Get a list of docsets."""
-    if not standalone_core:
+    if not _core_instance:
         return {"error": "DevilDexCore not initialized in MCP server."}
 
     if not project and not all_projects:
         return {"error": "invalid parameters: project or all_projects must be provided"}
 
     if project:
-        docsets = standalone_core.get_docsets_info_for_project(project_name=project)
+        docsets = _core_instance.get_docsets_info_for_project(project_name=project)
         return [d["name"] for d in docsets]
 
     if all_projects:
-        docsets = standalone_core.get_all_docsets_info()
+        docsets = _core_instance.get_all_docsets_info()
         return [d["name"] for d in docsets]
 
     return []
 
-
 def _html_to_markdown(html_content: str) -> str:
     return markdownify(html_content)
-
 
 def _is_valid_path(base_path: str, requested_path: str) -> bool:
     """Check if the requested_path is strictly within the base_path."""
@@ -61,23 +66,22 @@ def _is_valid_path(base_path: str, requested_path: str) -> bool:
     except OSError:
         return False
 
-
 def _get_docset_root_path(
     package: str, version: str | None
 ) -> tuple[pathlib.Path | None, str | None]:
     """Get docset root path and handle initialization/not found errors."""
-    if not standalone_core:
+    if not _core_instance:
         return None, "DevilDexCore not initialized in MCP server."
 
-    docset_root_path_str = standalone_core.get_docset_path(
+    docset_path_obj = _core_instance.get_docset_path(
         package_name=package, version=version
     )
-
-    if not docset_root_path_str:
+    server_logger.info(f"MCP Server: Attempting to access docset path: {docset_path_obj}") # Added logging
+    server_logger.info(f"MCP Server: Does docset path exist? {docset_path_obj.exists()}") # Added logging
+    if not docset_path_obj.exists():
         return None, f"Docset for package '{package}' version '{version}' not found."
 
-    return pathlib.Path(docset_root_path_str), None
-
+    return docset_path_obj, None
 
 def _validate_page_path(
     docset_root_path_obj: pathlib.Path, page: str, package: str, version: str | None
@@ -88,12 +92,13 @@ def _validate_page_path(
     if not _is_valid_path(str(docset_root_path_obj), str(full_requested_page_path)):
         return None, f"Invalid page path: path traversal attempt detected for '{page}'."
 
+    server_logger.info(f"MCP Server: Attempting to access page path: {full_requested_page_path}") # Added logging
+    server_logger.info(f"MCP Server: Is page file? {full_requested_page_path.is_file()}") # Added logging
     if not full_requested_page_path.is_file():
         return None, (
             f"Page '{page}' not found in docset '{package}' version '{version}'."
         )
     return full_requested_page_path, None
-
 
 def _read_and_convert_content(
     file_path_obj: pathlib.Path, page: str
@@ -122,7 +127,6 @@ def _read_and_convert_content(
             f"An unexpected runtime error occurred while processing page '{page}'."
         )
 
-
 @mcp.tool
 def get_page_content(
     package: str, page: str = "index.html", version: str | None = None
@@ -147,14 +151,17 @@ def get_page_content(
     return content
 
 
+
 if __name__ == "__main__":
 
     server_logger = logging.getLogger(__name__)
     server_logger.info("MCP server standalone mode started.")
+    server_logger.info(f"Current Working Directory (subprocess): {os.getcwd()}") # Added logging
 
     from devildex.config_manager import ConfigManager
     from devildex.core import DevilDexCore
     from devildex.database import db_manager as database
+    from pathlib import Path
 
     config = ConfigManager()
     mcp_port = os.getenv("DEVILDEX_MCP_SERVER_PORT")
@@ -162,18 +169,24 @@ if __name__ == "__main__":
 
     db_url = os.getenv("DEVILDEX_MCP_DB_URL", None)
     server_logger.info(f"Using database URL: {db_url}")
-    standalone_core = DevilDexCore(database_url=db_url)
+    
+    # Get the docset base output path from environment, if set by the test fixture
+    docset_base_output_path_env = os.getenv("DEVILDEX_DOCSET_BASE_OUTPUT_PATH", None)
+    
+    if docset_base_output_path_env:
+        standalone_core = DevilDexCore(database_url=db_url, docset_base_output_path=Path(docset_base_output_path_env))
+    else:
+        standalone_core = DevilDexCore(database_url=db_url)
+        
     database.init_db(database_url=db_url)
     server_logger.info("Database initialized for standalone server.")
 
+    # Set the global core instance for the server
+    set_core_instance(standalone_core)
+
     server_logger.info(f"Starting Uvicorn server on port {mcp_port}...")
 
-    # Debugging prints
-    server_logger.info(f"Server sys.path: {sys.path}")
-    server_logger.info(f"Server os.environ: {os.environ}")
-
     try:
-        # Reverted to mcp.run() as per original intention, and to debug
         mcp.run(transport="http", host="127.0.0.1", port=mcp_port, path="/mcp")
     except KeyboardInterrupt:
         server_logger.info("KeyboardInterrupt received. Shutting down.")
@@ -185,4 +198,4 @@ if __name__ == "__main__":
         )
     except Exception:
         server_logger.exception("Error running MCP server")
-    server_logger.info("MCP server standalone mode finished.")
+    server_logger.info("MCP server finished.")

@@ -16,6 +16,7 @@ from devildex.core import DevilDexCore
 from devildex.database.models import PackageDetails
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.task_manager import GenerationTaskManager
+from devildex.mcp_server.mcp_server_manager import McpServerManager # Import McpServerManager
 from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 
 logging.basicConfig(
@@ -74,6 +75,7 @@ class DevilDexApp(wx.App):
         self,
         core: DevilDexCore | None = None,
         initial_url: str | None = None,
+    self, core: DevilDexCore | None = None, initial_url: str | None = None, mcp_server_manager: McpServerManager | None = None
     ) -> None:
         """Construct DevilDexApp class."""
         self.document_view_panel = None
@@ -82,6 +84,7 @@ class DevilDexApp(wx.App):
         self.core = core
         self.home_url = "https://www.google.com"
         self.initial_url = initial_url
+        self.mcp_server_manager = mcp_server_manager # Store the manager
         self.main_frame: Optional[wx.Frame] = None
         self.panel: Optional[wx.Panel] = None
         self.main_panel_sizer: Optional[wx.BoxSizer] = None
@@ -1157,38 +1160,55 @@ def main() -> None:
     mcp_enabled = config.get_mcp_server_enabled()
     hide_gui = config.get_mcp_server_hide_gui_when_enabled()
 
-    if mcp_enabled and hide_gui:
-        core = DevilDexCore()
-        logger.info("MCP server started in headless mode. Press Ctrl+C to exit.")
-        try:
+    mcp_server_manager: Optional[McpServerManager] = None
+    core: Optional[DevilDexCore] = None
+
+    try:
+        if mcp_enabled:
+            mcp_server_manager = McpServerManager()
+            # The database_url is needed by the MCP server.
+            # DevilDexCore also needs it, so we'll ensure it's consistent.
+            # For now, let's assume the default database path for the server
+            # if not explicitly set via config or env.
+            # The core will determine the actual database_url.
+            temp_core_for_db_url = DevilDexCore() # Temporary core to get database_url
+            db_url_for_mcp = temp_core_for_db_url.database_url
+            temp_core_for_db_url.shutdown() # Clean up temporary core
+
+            server_started = mcp_server_manager.start_server(db_url_for_mcp)
+            if not server_started:
+                logger.error("Failed to start MCP server. Exiting.")
+                return # Exit if server fails to start
+
+        if mcp_enabled and hide_gui:
+            logger.info("MCP server started in headless mode. Press Ctrl+C to exit.")
             while True:
                 time.sleep(1)
-        except KeyboardInterrupt:
-            logger.info("\nShutting down server...")
+        else:
+            # GUI mode
+            # Determine if GUI warning callback should be passed
+            warning_callback = None
+            # Create core instance, passing the callback if applicable
+            core = DevilDexCore(gui_warning_callback=warning_callback)
+
+            app = DevilDexApp(core=core, mcp_server_manager=mcp_server_manager) # Pass core and manager to app
+
+            # If MCP is enabled and GUI is not hidden, update core with the app's callback
+            if mcp_enabled and not hide_gui:
+                core.gui_warning_callback = app._display_mcp_warning_in_gui
+
+            app._initialize_data_and_managers() # Call the initialization method
+            app.MainLoop()
+    except KeyboardInterrupt:
+        logger.info("\nShutting down application...")
+    finally:
+        if core:
             core.shutdown()
-            logger.info("Server shut down.")
-    else:
-        app = DevilDexApp()  # Create app instance first
-
-        # Determine if GUI warning callback should be passed
-        warning_callback = None
-        if (
-            mcp_enabled and not hide_gui
-        ):  # Only pass if MCP is enabled AND GUI is not hidden
-            warning_callback = app._display_mcp_warning_in_gui
-
-        # Create core instance, passing the callback if applicable
-        core = DevilDexCore(gui_warning_callback=warning_callback)
-
-        app.core = core  # Assign the core instance to the app
-
-        # If MCP is enabled and GUI is not hidden, update core with the app's callback
-        if mcp_enabled and not hide_gui:
-            core.gui_warning_callback = app._display_mcp_warning_in_gui
-
-        app._initialize_data_and_managers()  # Call the initialization method
-        app.MainLoop()
-
+        if mcp_server_manager:
+            logger.info("Main: Shutting down MCP server via manager...")
+            mcp_server_manager.stop_server()
+        logger.info("Application shut down.")
 
 if __name__ == "__main__":
     main()
+
