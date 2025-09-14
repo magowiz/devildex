@@ -75,8 +75,7 @@ class DevilDexApp(wx.App):
     def __init__(
         self,
         core: DevilDexCore | None = None,
-        initial_url: str | None = None,
-        mcp_server_manager: McpServerManager | None = None
+        initial_url: str | None = None
     ) -> None:
         """Construct DevilDexApp class."""
         self.document_view_panel = None
@@ -85,7 +84,7 @@ class DevilDexApp(wx.App):
         self.core = core
         self.home_url = "https://www.google.com"
         self.initial_url = initial_url
-        self.mcp_server_manager = mcp_server_manager # Store the manager
+        self.mcp_server_manager: Optional[McpServerManager] = None # Initialize to None
         self.main_frame: Optional[wx.Frame] = None
         self.panel: Optional[wx.Panel] = None
         self.main_panel_sizer: Optional[wx.BoxSizer] = None
@@ -108,6 +107,7 @@ class DevilDexApp(wx.App):
         self.bottom_splitter_panel: Optional[wx.Panel] = None
         self.last_sash_position: int = -200
         self.generation_task_manager: Optional[GenerationTaskManager] = None
+        self.config_manager = ConfigManager() # Keep this line as it is
         super().__init__(redirect=False)
 
     def scan_docset_dir(self, grid_pkg: list[dict]) -> set:
@@ -122,12 +122,7 @@ class DevilDexApp(wx.App):
         return available_pkg
 
     def _confirm_deletion(self, package_name: str, docset_path: str) -> bool:
-        """Show a confirmation dialog for deletion.
-
-        Returns:
-            True if the user clicks 'Yes', False otherwise.
-
-        """
+        """Show a confirmation dialog for deletion."""
         confirm_dialog = wx.MessageDialog(
             self.main_frame,
             f"Are you sure you want to delete the docset for '{package_name}'?\n"
@@ -225,10 +220,7 @@ class DevilDexApp(wx.App):
             pkg_data.pop("docset_path", None)
 
     def _perform_startup_docset_scan(self) -> None:
-        """Execute the scan dei existing docsets on startup e updates.
-
-        self.current_grid_source_data.
-        """
+        """Execute the scan dei existing docsets on startup e updates."""
         matched_top_level_dir_names: set[str] = self.scan_docset_dir(
             self.current_grid_source_data
         )
@@ -490,10 +482,7 @@ class DevilDexApp(wx.App):
         return not self.view_mode_selector or not self.core
 
     def _handle_core_project_setting(self, selected_view_str: str) -> bool:
-        """Set the active project in the core based on the selection.
-
-        Returns True if the setting is successful, False otherwise.
-        """
+        """Set the active project in the core based on the selection."""
         if not self.core:
             logger.error("GUI: Core not initialized in _handle_core_project_setting.")
             return False
@@ -852,13 +841,9 @@ class DevilDexApp(wx.App):
         """Handle completion of a generation task, called by GenerationTaskManager."""
         _ = package_id
         if success:
-            log_message_to_append = (
-                f"SUCCESS: Generation for '{package_name}' completed. {message}\n"
-            )
+            log_message_to_append = f"SUCCESS: Generation for '{package_name}' completed. {message}\n"
         else:
-            log_message_to_append = (
-                f"ERROR: Generation for '{package_name}' failed. {message}\n"
-            )
+            log_message_to_append = f"ERROR: Generation for '{package_name}' failed. {message}\n"
             wx.MessageBox(
                 f"Error during generation for '{package_name}':\n{message}",
                 "Generation Error",
@@ -1109,11 +1094,7 @@ class DevilDexApp(wx.App):
             active_project_file_path.unlink(missing_ok=True)
 
     def _validate_can_generate(self, package_data: dict) -> bool:
-        """Validate if generation can start for the given package data.
-
-        Shows message boxes for validation failures.
-        Returns True if all checks pass, False otherwise.
-        """
+        """Validate if generation can start for the given package data."""
         package_id = package_data.get("id")
         package_name = package_data.get("name", "N/D")
 
@@ -1161,22 +1142,17 @@ def main() -> None:
     mcp_enabled = config.get_mcp_server_enabled()
     hide_gui = config.get_mcp_server_hide_gui_when_enabled()
 
-    mcp_server_manager: Optional[McpServerManager] = None
-    core: Optional[DevilDexCore] = None
+    core: Optional[DevilDexCore] = None # mcp_server_manager is now inside core
 
     try:
-        if mcp_enabled:
-            mcp_server_manager = McpServerManager()
-            # The database_url is needed by the MCP server.
-            # DevilDexCore also needs it, so we'll ensure it's consistent.
-            # For now, let's assume the default database path for the server
-            # if not explicitly set via config or env.
-            # The core will determine the actual database_url.
-            temp_core_for_db_url = DevilDexCore() # Temporary core to get database_url
-            db_url_for_mcp = temp_core_for_db_url.database_url
-            temp_core_for_db_url.shutdown() # Clean up temporary core
+        # Create core instance early to get database_url
+        app_paths = AppPaths()
+        core = DevilDexCore(docset_base_output_path=app_paths.docsets_base_dir)
 
-            server_started = mcp_server_manager.start_server(db_url_for_mcp)
+        db_url_for_mcp = core.database_url # Get database_url from core
+
+        if mcp_enabled:
+            server_started = core.start_mcp_server_if_enabled(db_url_for_mcp)
             if not server_started:
                 logger.error("Failed to start MCP server. Exiting.")
                 return # Exit if server fails to start
@@ -1188,12 +1164,9 @@ def main() -> None:
         else:
             # GUI mode
             # Determine if GUI warning callback should be passed
-            warning_callback = None
-            # Create core instance, passing the callback if applicable
-            app_paths = AppPaths() # Instantiate AppPaths
-            core = DevilDexCore(gui_warning_callback=warning_callback, docset_base_output_path=app_paths.docsets_base_dir)
+            warning_callback = None # This will be set by the app if needed
 
-            app = DevilDexApp(core=core, mcp_server_manager=mcp_server_manager) # Pass core and manager to app
+            app = DevilDexApp(core=core) # No mcp_server_manager parameter here
 
             # If MCP is enabled and GUI is not hidden, update core with the app's callback
             if mcp_enabled and not hide_gui:
@@ -1205,12 +1178,8 @@ def main() -> None:
         logger.info("\nShutting down application...")
     finally:
         if core:
-            core.shutdown()
-        if mcp_server_manager:
-            logger.info("Main: Shutting down MCP server via manager...")
-            mcp_server_manager.stop_server()
+            core.shutdown() # This will now call core.stop_mcp_server()
         logger.info("Application shut down.")
 
 if __name__ == "__main__":
     main()
-

@@ -364,7 +364,6 @@ def test_bootstrap_database_and_load_data_missing_pkg_data(
 
     mock_ensure_pkg.assert_not_called()
 
-
 def test_list_package_dirs_no_base_dir(core: DevilDexCore, tmp_path: Path) -> None:
     """Verify list_package_dirs returns empty list if base directory doesn't exist."""
     core.docset_base_output_path = tmp_path / "non_existent_dir"
@@ -389,4 +388,4 @@ def test_dev_mode_paths(mocker: MockerFixture, tmp_path: Path) -> None:
     core = DevilDexCore()
 
     # Assert
-    assert core.docset_base_output_path == Path("devildex_docsets")
+    assert core.docset_base_output_path == mock_app_paths_instance.docsets_base_dir

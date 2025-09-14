@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import subprocess
+import time # Added for time.sleep in start_mcp_server_if_enabled
 from pathlib import Path
 from typing import Any, Optional
 
@@ -11,9 +12,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from devildex.mcp_server.mcp_server_manager import McpServerManager # New import
+from devildex.config_manager import ConfigManager # New import for ConfigManager
 
 from devildex.app_paths import AppPaths
-from devildex.config_manager import ConfigManager
 from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageDetails
 from devildex.local_data_parse import registered_project_parser
@@ -45,13 +46,15 @@ class DevilDexCore:
         self.registered_project_name: Optional[str] = None
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
-        self.mcp_server_manager: Optional[McpServerManager] = None
+        self.mcp_server_manager: Optional[McpServerManager] = None # Added MCP server manager attribute
         self.gui_warning_callback = gui_warning_callback
 
         if docset_base_output_path:
             self.set_docset_base_output_path(docset_base_output_path)
         else:
-            self._setup_registered_project()
+            # Initialize with default from AppPaths if not provided
+            self.docset_base_output_path = self.app_paths.docsets_base_dir
+            self._setup_registered_project() # Still call this for registered project logic
 
     def set_docset_base_output_path(self, path: Path) -> None:
         """Sets the base output path for docsets and initializes related components."""
@@ -64,28 +67,19 @@ class DevilDexCore:
 
     def shutdown(self) -> None:
         """Shut down the core services."""
-        # The MCP server manager is now handled externally by the main application loop.
-        # No need to shut it down from here.
-        pass # No action needed here for MCP server shutdown
+        self.stop_mcp_server() # Call the new method
+        pass # No other action needed here for MCP server shutdown
 
     @staticmethod
     def query_project_names() -> list[str]:
-        """Retrieve only the NAMES of all registered projects from the database.
-
-        Used to populate the ComboBox in the GUI.
-        """
+        """Retrieve only the NAMES of all registered projects from the database."""
         logger.info("Core: Requesting list of project names from the DB...")
         project_names = database.DatabaseManager.get_all_project_names()
         logger.info(f"Core: Received {len(project_names)} project names.")
         return project_names
 
     def set_active_project(self, project_name: Optional[str]) -> bool:
-        """Set the specified project as active in the core.
-
-        If project_name is None, sets the global view.
-        Loads details (path, python_exec) from the DB for the specified project.
-        Returns True if the project was set successfully, False otherwise.
-        """
+        """Set the specified project as active in the core."""
         if project_name is None:
             logger.info("Core: Setting global view (no active project).")
             self.registered_project_name = None
@@ -133,26 +127,7 @@ class DevilDexCore:
             return False
 
     def scan_project(self) -> list | None:
-        """Scan the active project's virtual environment for installed packages.
-
-        If a project is currently registered and active, this method uses its
-        configured Python executable to scan its virtual environment.
-        It attempts to identify explicit dependencies from project configuration
-        files (e.g., pyproject.toml, requirements.txt).
-
-        - If explicit dependencies are found, only those packages (if installed
-          in the venv) are returned.
-        - If no explicit dependencies are found, all packages from the venv
-          are returned.
-        - If no project is active, or if the venv scan yields no packages,
-          it returns None.
-
-        Returns:
-            Optional[list[PackageDetails]]: A list of PackageDetails objects
-            representing the found packages, or None if no project is active
-            or no packages are found.
-
-        """
+        """Scan the active project's virtual environment for installed packages."""
         if self.registered_project_name:
             evenv_scanner = ExternalVenvScanner(
                 self.registered_project_python_executable
@@ -176,17 +151,7 @@ class DevilDexCore:
 
     @staticmethod
     def delete_docset_build(docset_path_str: str) -> tuple[bool, str]:
-        """Delete a specific docset build directory and its parent if it becomes empty.
-
-        Args:
-            docset_path_str: The string path to the specific docset build to delete.
-
-        Returns:
-            A tuple containing:
-            - bool: True if deletion was successful, False otherwise.
-            - str: A message describing the outcome.
-
-        """
+        """Delete a specific docset build directory and its parent if it becomes empty."""
         try:
             path_of_specific_docset_build = Path(docset_path_str)
             if (
@@ -254,10 +219,7 @@ class DevilDexCore:
     def bootstrap_database_and_load_data(
         self, initial_package_source: list[PackageDetails], is_fallback_data: bool
     ) -> list[dict[str, Any]]:
-        """Initialize the database, populates it with initial data.
-
-        and loads data for the grid.
-        """
+        """Initialize the database, populates it with initial data."""
         logger.info("Core: Initializing database...")
         if self.database_url:
             db_url = self.database_url
@@ -378,10 +340,7 @@ class DevilDexCore:
         return grid_data_to_return
 
     def list_package_dirs(self) -> list[str]:
-        """List i nomi delle directory di primo level nella folder base dei docset.
-
-        These are potential folders root per i packages.
-        """
+        """List i nomi delle directory di primo level nella folder base dei docset."""
         if not self.docset_base_output_path.exists():
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
@@ -422,10 +381,7 @@ class DevilDexCore:
             ]
 
     def generate_docset(self, package_data: dict) -> tuple[bool, str]:
-        """Generate a docset using Orchestrator.
-
-        Returns (success, message).
-        """
+        """Generate a docset using Orchestrator."""
         package_name = package_data.get("name")
         package_version = package_data.get("version")
         project_urls = package_data.get("project_urls")
@@ -465,3 +421,26 @@ class DevilDexCore:
                 f"dalla generation del docset per {details.name}."
             )
             return False, unexpected_msg
+
+    def start_mcp_server_if_enabled(self, db_url: str) -> bool:
+        config = ConfigManager() # Get the singleton instance
+        if config.get_mcp_server_enabled():
+            logger.info("Core: MCP server is enabled. Starting...")
+            if not self.mcp_server_manager:
+                self.mcp_server_manager = McpServerManager()
+            server_started = self.mcp_server_manager.start_server(db_url)
+            if server_started:
+                logger.info("Core: MCP server started successfully.")
+                return True
+            else:
+                logger.error("Core: Failed to start MCP server.")
+                return False
+        else:
+            logger.info("Core: MCP server is disabled. Not starting.")
+            return False
+
+    def stop_mcp_server(self) -> None:
+        if self.mcp_server_manager:
+            logger.info("Core: Stopping MCP server...")
+            self.mcp_server_manager.stop_server()
+            logger.info("Core: MCP server stopped.")

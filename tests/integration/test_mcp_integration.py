@@ -38,7 +38,6 @@ def mock_config_manager(mocker: MagicMock, free_port: int):
     mocker.patch("devildex.config_manager.ConfigManager", return_value=mock_instance)
     mocker.patch("devildex.config_manager.ConfigManager._instance", new=mock_instance)
 
-    # Default mocks for the test
     mock_instance.get_mcp_server_enabled = mocker.Mock(return_value=False)
     mock_instance.get_mcp_server_hide_gui_when_enabled = mocker.Mock(return_value=False)
     mock_instance.get_mcp_server_port = mocker.Mock(return_value=free_port)
@@ -53,7 +52,6 @@ def populated_db_session(tmp_path: Path):
     database.init_db(db_url)
 
     with database.get_session() as session:
-        # Add a project
         project1 = RegisteredProject(
             project_name="TestProject",
             project_path="/path/to/test_project",
@@ -116,8 +114,6 @@ def devildex_app_fixture(
     core_instance = DevilDexCore(database_url=populated_db_session)
 
     main_app = DevilDexApp(core=core_instance)
-    main_app._initialize_data_and_managers()
-    wx.Yield()
     yield main_app
     if main_app.main_frame:
         wx.CallAfter(main_app.main_frame.Destroy)
@@ -132,113 +128,37 @@ def test_gui_only_no_mcp_starts(
     mock_config_manager.get_mcp_server_enabled.return_value = False
     mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = False
 
-    core_instance = devildex_app_fixture.core
+    devildex_app_fixture.OnInit()
+    devildex_app_fixture._initialize_data_and_managers()
 
-    try:
-        core_instance._start_mcp_server_if_enabled(None)
-    except Exception as e:
-        print(f"Exception during _start_mcp_server_if_enabled: {e}")
-
-    assert core_instance.mcp_server_process is None
+    assert devildex_app_fixture.core.mcp_server_manager is None
     assert devildex_app_fixture.main_frame is not None
     assert devildex_app_fixture.main_frame.IsShown()
 
 
+@pytest.mark.mcp_config(enabled=True, hide_gui=True)
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_mcp_only_no_gui(
-    mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
+    devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock
 ):
     """Verify that when only MCP is on, the server responds, and GUI is hidden."""
     mock_config_manager.get_mcp_server_enabled.return_value = True
     mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = True
     mcp_port = mock_config_manager.get_mcp_server_port()
 
-    mocker.patch("devildex.main.DevilDexApp.__init__", return_value=None)
-    mocker.patch(
-        "devildex.main.DevilDexApp._initialize_data_and_managers", return_value=None
-    )
-    mocker.patch(
-        "devildex.main.DevilDexApp.MainLoop", return_value=None
-    )  # Prevent GUI loop
-    mocker.patch(
-        "devildex.main.DevilDexApp.OnInit", return_value=True
-    )  # Ensure OnInit returns True
-    mocker.patch("devildex.main.DevilDexApp.OnExit", return_value=0)
+    devildex_app_fixture.OnInit()
+    devildex_app_fixture._initialize_data_and_managers()
 
-    core_instance = DevilDexCore(database_url=populated_db_session)
-    core_instance.database_url = populated_db_session
+    db_url = devildex_app_fixture.core.database_url
+    devildex_app_fixture.core.start_mcp_server_if_enabled(db_url)
 
-    time.sleep(5)
+    assert devildex_app_fixture.core.mcp_server_manager is not None
+    assert devildex_app_fixture.core.mcp_server_manager.is_server_running()
 
-    assert core_instance.mcp_server_process is not None
-    assert core_instance.mcp_server_process.poll() is None
-
-    config = {
-        "mcpServers": {
-            "my_server": {"url": f"http://127.0.0.1:{mcp_port}/mcp"},
-        }
-    }
-    client = Client(config, timeout=10)  # Increased timeout for client
-    try:
-        async with client:
-            docsets_list = await client.call_tool(
-                "get_docsets_list", {"all_projects": True}, timeout=5
-            )
-            expected_names = [
-                "requests",
-                "flask",
-                "django",
-            ]  # Based on populated_db_session
-            assert isinstance(docsets_list.data, list)
-            assert sorted(docsets_list.data) == sorted(expected_names)
-            print(f"Docsets list (MCP only): {docsets_list.data}")
-    except Exception as e:
-        pytest.fail(f"MCP client communication failed: {e}")
-    finally:
-        # Clean up the MCP server process
-        if core_instance.mcp_server_process:
-            core_instance.mcp_server_process.terminate()
-            core_instance.mcp_server_process.wait(timeout=5)
-            stdout, stderr = core_instance.mcp_server_process.communicate()
-            if stdout:
-                print(f"Server STDOUT on teardown:{stdout.decode()}")
-            if stderr:
-                print(f"Server STDERR on teardown:{stderr.decode()}")
-
-
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_gui_and_mcp_coexistence(
-    devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock
-) -> None:
-    """Verify that GUI and MCP can coexist and function together."""
-    # Arrange
-    mock_config_manager.get_mcp_server_enabled.return_value = True
-    mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = (
-        False  # Ensure GUI is visible
-    )
-    mcp_port = mock_config_manager.get_mcp_server_port()
-
-    core_instance = devildex_app_fixture.core
-
-    # Manually start MCP server via core instance, as it's mocked in fixture setup
-    try:
-        core_instance._start_mcp_server_if_enabled(None)
-    except Exception as e:
-        pytest.fail(f"Exception during MCP server startup in coexistence test: {e}")
-
-    time.sleep(5)  # Give server time to start
-
-    # Assert MCP server process is running
-    assert core_instance.mcp_server_process is not None
-    assert core_instance.mcp_server_process.poll() is None
-
-    # Assert GUI is present
     assert devildex_app_fixture.main_frame is not None
-    assert devildex_app_fixture.main_frame.IsShown()
+    assert not devildex_app_fixture.main_frame.IsShown()
 
-    # Test MCP client communication
     config = {
         "mcpServers": {
             "my_server": {"url": f"http://127.0.0.1:{mcp_port}/mcp"},
@@ -254,19 +174,59 @@ async def test_gui_and_mcp_coexistence(
                 "requests",
                 "flask",
                 "django",
-            ]  # Based on populated_db_session
+            ]
+            assert isinstance(docsets_list.data, list)
+            assert sorted(docsets_list.data) == sorted(expected_names)
+            print(f"Docsets list (MCP only): {docsets_list.data}")
+    except Exception as e:
+        pytest.fail(f"MCP client communication failed: {e}")
+    finally:
+        pass
+
+
+@pytest.mark.mcp_config(enabled=True, hide_gui=False)
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_gui_and_mcp_coexistence(
+    devildex_app_fixture: DevilDexApp, mock_config_manager: MagicMock, mocker: MagicMock
+) -> None:
+    """Verify that GUI and MCP can coexist and function together."""
+    mock_config_manager.get_mcp_server_enabled.return_value = True
+    mock_config_manager.get_mcp_server_hide_gui_when_enabled.return_value = False
+    mcp_port = mock_config_manager.get_mcp_server_port()
+
+    devildex_app_fixture.OnInit()
+    devildex_app_fixture._initialize_data_and_managers()
+
+    db_url = devildex_app_fixture.core.database_url
+    devildex_app_fixture.core.start_mcp_server_if_enabled(db_url)
+
+    assert devildex_app_fixture.core.mcp_server_manager is not None
+    assert devildex_app_fixture.core.mcp_server_manager.is_server_running()
+
+    assert devildex_app_fixture.main_frame is not None
+    assert devildex_app_fixture.main_frame.IsShown()
+
+    config = {
+        "mcpServers": {
+            "my_server": {"url": f"http://127.0.0.1:{mcp_port}/mcp"},
+        }
+    }
+    client = Client(config, timeout=10)
+    try:
+        async with client:
+            docsets_list = await client.call_tool(
+                "get_docsets_list", {"all_projects": True}, timeout=5
+            )
+            expected_names = [
+                "requests",
+                "flask",
+                "django",
+            ]
             assert isinstance(docsets_list.data, list)
             assert sorted(docsets_list.data) == sorted(expected_names)
             print(f"Docsets list (GUI and MCP): {docsets_list.data}")
     except Exception as e:
         pytest.fail(f"MCP client communication failed in coexistence test: {e}")
     finally:
-        # Clean up the MCP server process
-        if core_instance.mcp_server_process:
-            core_instance.mcp_server_process.terminate()
-            core_instance.mcp_server_process.wait(timeout=5)
-            stdout, stderr = core_instance.mcp_server_process.communicate()
-            if stdout:
-                print(f"Server STDOUT on teardown (coexistence):{stdout.decode()}")
-            if stderr:
-                print(f"Server STDERR on teardown (coexistence):{stderr.decode()}")
+        pass
