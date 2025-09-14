@@ -711,14 +711,11 @@ class DocStringsSrc:
 
     @staticmethod
     def _is_pdoc_dummy_module(
-        module_candidate: ModuleType | None, expected_name: str
+        module_candidate: ModuleType | None, _expected_name: str
     ) -> bool:
         """Check if the imported object is a pdoc dummy module."""
         if not module_candidate:
             return True
-        # A pdoc dummy module typically lacks __file__ and __path__
-        # and might have a __name__ that doesn't match the expected one
-        # or is just a placeholder.
         return not hasattr(module_candidate, "__file__") and not hasattr(
             module_candidate, "__path__"
         )

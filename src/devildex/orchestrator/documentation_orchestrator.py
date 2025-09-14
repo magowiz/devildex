@@ -216,7 +216,8 @@ class Orchestrator:
             else:
                 self.last_operation_result = False
                 logger.error(
-                    f"Orchestrator: No grabber configuration found for type: {self.detected_doc_type}"
+                    f"Orchestrator: No grabber configuration found for type:"
+                    f" {self.detected_doc_type}"
                 )
         elif not self.detected_doc_type:
             self.last_operation_result = False

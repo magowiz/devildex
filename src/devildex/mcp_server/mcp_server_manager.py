@@ -27,25 +27,31 @@ class McpServerManager:
         self.shutdown_url = f"http://127.0.0.1:{self.mcp_port}/shutdown"
 
     def _run_server(self, db_url: str) -> None:
-        """Internal method to run the MCP server process."""
+        """Run the MCP server process."""
         env = os.environ.copy()
         env["DEVILDEX_MCP_DB_URL"] = db_url
         env["DEVILDEX_MCP_SERVER_PORT"] = str(self.mcp_port)
         if os.getenv("DEVILDEX_DEV_MODE") == "1":
             env["DEVILDEX_DEV_MODE"] = "1"
 
-        server_command = ["poetry", "run", "python", "src/devildex/mcp_server/server.py"]
+        server_command = [
+            "poetry",
+            "run",
+            "python",
+            "src/devildex/mcp_server/server.py",
+        ]
 
         try:
-            # Use subprocess.Popen to run the server in a non-blocking way
             self.server_process = subprocess.Popen(
                 server_command,
                 env=env,
                 stdout=subprocess.PIPE,  # Capture stdout
                 stderr=subprocess.PIPE,  # Capture stderr
-                text=True, # Decode stdout/stderr as text
+                text=True,  # Decode stdout/stderr as text
             )
-            logger.info(f"MCP server process started with PID: {self.server_process.pid}")
+            logger.info(
+                f"MCP server process started with PID: {self.server_process.pid}"
+            )
             # Continuously read stdout/stderr to prevent buffer full issues
             for line in self.server_process.stdout:
                 logger.info(f"[MCP Server STDOUT]: {line.strip()}")
@@ -53,9 +59,11 @@ class McpServerManager:
                 logger.error(f"[MCP Server STDERR]: {line.strip()}")
 
         except FileNotFoundError:
-            logger.error(f"Error: Could not find the server script at {server_command[1]}")
-        except Exception as e:
-            logger.error(f"Failed to start MCP server process: {e}")
+            logger.exception(
+                f"Error: Could not find the server script at {server_command[1]}"
+            )
+        except Exception:
+            logger.exception("Failed to start MCP server process")
         finally:
             if self.server_process and self.server_process.poll() is None:
                 logger.warning("MCP server process did not exit cleanly. Terminating.")
@@ -65,16 +73,17 @@ class McpServerManager:
                     self.server_process.kill()
             logger.info("MCP server thread finished.")
 
-
     def start_server(self, db_url: str) -> bool:
-        """Starts the MCP server in a separate thread and waits for it to be ready."""
+        """Start the MCP server in a separate thread and waits for it to be ready."""
         if self.is_server_running():
             logger.info("MCP server is already running.")
             return True
 
         logger.info("Attempting to start MCP server thread...")
         self.server_thread = threading.Thread(target=self._run_server, args=(db_url,))
-        self.server_thread.daemon = True  # Allow main program to exit even if thread is running
+        self.server_thread.daemon = (
+            True  # Allow main program to exit even if thread is running
+        )
         self.server_thread.start()
 
         # Wait for the server to be ready
@@ -92,11 +101,11 @@ class McpServerManager:
                 time.sleep(0.5)
 
         logger.error("MCP server did not become ready within the timeout period.")
-        self.stop_server() # Attempt to stop it if it didn't become ready
+        self.stop_server()  # Attempt to stop it if it didn't become ready
         return False
 
     def stop_server(self) -> None:
-        """Sends a shutdown request to the MCP server and waits for its thread to terminate."""
+        """Send a shutdown request to MCP server and waits for it to terminate."""
         if not self.is_server_running():
             logger.info("MCP server is not running.")
             return
@@ -107,15 +116,19 @@ class McpServerManager:
             if response.status_code == 200:
                 logger.info("Shutdown request sent successfully to MCP server.")
             else:
-                logger.warning(f"Failed to send shutdown request. Status: {response.status_code}")
-        except requests.RequestException as e:
-            logger.error(f"Error sending shutdown request to MCP server: {e}")
+                logger.warning(
+                    f"Failed to send shutdown request. Status: {response.status_code}"
+                )
+        except requests.RequestException:
+            logger.exception("Error sending shutdown request to MCP server")
 
         if self.server_thread and self.server_thread.is_alive():
             logger.info("Waiting for MCP server thread to terminate...")
-            self.server_thread.join(timeout=10) # Give it some time to shut down
+            self.server_thread.join(timeout=10)  # Give it some time to shut down
             if self.server_thread.is_alive():
-                logger.warning("MCP server thread did not terminate gracefully. Forcing shutdown.")
+                logger.warning(
+                    "MCP server thread did not terminate gracefully. Forcing shutdown."
+                )
                 if self.server_process and self.server_process.poll() is None:
                     self.server_process.terminate()
                     self.server_process.wait(timeout=5)
@@ -125,14 +138,15 @@ class McpServerManager:
         self.server_process = None
         logger.info("MCP server stopped.")
 
-
     def is_server_running(self) -> bool:
-        """Checks if the MCP server thread is alive and its process is running."""
+        """Check if the MCP server thread is alive and its process is running."""
         if self.server_thread and self.server_thread.is_alive():
             if self.server_process and self.server_process.poll() is None:
                 return True
             else:
-                logger.warning("Server thread is alive but process is not. Cleaning up.")
+                logger.warning(
+                    "Server thread is alive but process is not. Cleaning up."
+                )
                 self.server_thread = None
                 self.server_process = None
                 return False

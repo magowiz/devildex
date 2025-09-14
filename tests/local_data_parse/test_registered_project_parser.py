@@ -284,7 +284,7 @@ def test_load_active_project_app_paths_os_error(mocker: MockerFixture, caplog) -
 def test_load_active_project_no_registry_dir(
     tmp_path: Path, mocker: MockerFixture, caplog
 ) -> None:
-    """Verify that loading handles the case where the registry directory doesn't exist."""
+    """Verify that loading handles the case: the registry directory doesn't exist."""
     # Arrange
     # Mock AppPaths to point to our temporary directory
     mock_app_paths_class = mocker.patch(

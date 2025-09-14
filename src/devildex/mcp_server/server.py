@@ -7,10 +7,17 @@
 
 import logging
 import os
-import sys  # Added for sys.path
+import pathlib
+import sys
 from typing import Any
 
 from fastmcp import FastMCP
+from markdownify import markdownify
+
+# IMPORTANT: This MCP server is currently under active development and is INCOMPLETE.
+# Only the 'get_docsets_list' tool is fully functional.
+# Other functionalities are either placeholders or not yet implemented.
+# Use with caution and refer to the documentation for current capabilities.
 
 # Initialize FastMCP instance
 mcp = FastMCP("Demo 🚀")
@@ -24,8 +31,6 @@ def get_docsets_list(
     project: str | None = None, all_projects: bool = False
 ) -> dict[str, str] | list[str]:
     """Get a list of docsets."""
-    global standalone_core  # Access the global standalone_core
-
     if not standalone_core:
         return {"error": "DevilDexCore not initialized in MCP server."}
 
@@ -43,6 +48,105 @@ def get_docsets_list(
     return []
 
 
+def _html_to_markdown(html_content: str) -> str:
+    return markdownify(html_content)
+
+
+def _is_valid_path(base_path: str, requested_path: str) -> bool:
+    """Check if the requested_path is strictly within the base_path."""
+    try:
+        base_path_obj = pathlib.Path(base_path).resolve()
+        requested_path_obj = pathlib.Path(requested_path).resolve()
+        return requested_path_obj.is_relative_to(base_path_obj)
+    except OSError:
+        return False
+
+
+def _get_docset_root_path(
+    package: str, version: str | None
+) -> tuple[pathlib.Path | None, str | None]:
+    """Get docset root path and handle initialization/not found errors."""
+    if not standalone_core:
+        return None, "DevilDexCore not initialized in MCP server."
+
+    docset_root_path_str = standalone_core.get_docset_path(
+        package_name=package, version=version
+    )
+
+    if not docset_root_path_str:
+        return None, f"Docset for package '{package}' version '{version}' not found."
+
+    return pathlib.Path(docset_root_path_str), None
+
+
+def _validate_page_path(
+    docset_root_path_obj: pathlib.Path, page: str, package: str, version: str | None
+) -> tuple[pathlib.Path | None, str | None]:
+    """Validate the requested page path against path traversal and existence."""
+    full_requested_page_path = docset_root_path_obj / page
+
+    if not _is_valid_path(str(docset_root_path_obj), str(full_requested_page_path)):
+        return None, f"Invalid page path: path traversal attempt detected for '{page}'."
+
+    if not full_requested_page_path.is_file():
+        return None, (
+            f"Page '{page}' not found in docset '{package}' version '{version}'."
+        )
+    return full_requested_page_path, None
+
+
+def _read_and_convert_content(
+    file_path_obj: pathlib.Path, page: str
+) -> tuple[str | None, str | None]:
+    """Read file content and convert to Markdown if applicable."""
+    try:
+        with open(file_path_obj, encoding="utf-8") as content_file:
+            content = content_file.read()
+            if page.lower().endswith((".html", ".htm")):
+                return _html_to_markdown(content), None
+            else:
+                return content, None
+    except UnicodeDecodeError:
+        return None, (
+            f"Failed to decode content of page '{page}'. "
+            "It might not be a text file."
+        )
+    except OSError as e:
+        return None, f"File system error reading page '{page}': {e!s}"
+    except RuntimeError as e:  # Catch unexpected runtime errors during processing
+        logging.error(
+            f"An unexpected runtime error occurred while processing page '{page}': {e}",
+            exc_info=True,
+        )
+        return None, (
+            f"An unexpected runtime error occurred while processing page '{page}'."
+        )
+
+
+@mcp.tool
+def get_page_content(
+    package: str, page: str = "index.html", version: str | None = None
+) -> str | dict[str, str]:
+    """Get the content of a specific page within a docset."""
+    docset_root_path_obj, error_message = _get_docset_root_path(package, version)
+    if error_message:
+        return {"error": error_message}
+
+    full_requested_page_path_obj, error_message = _validate_page_path(
+        docset_root_path_obj, page, package, version
+    )
+    if error_message:
+        return {"error": error_message}
+
+    content, error_message = _read_and_convert_content(
+        full_requested_page_path_obj, page
+    )
+    if error_message:
+        return {"error": error_message}
+
+    return content
+
+
 if __name__ == "__main__":
 
     server_logger = logging.getLogger(__name__)
@@ -54,14 +158,11 @@ if __name__ == "__main__":
 
     config = ConfigManager()
     mcp_port = os.getenv("DEVILDEX_MCP_SERVER_PORT")
-    if mcp_port:
-        mcp_port = int(mcp_port)
-    else:
-        mcp_port = config.get_mcp_server_port()
+    mcp_port = int(mcp_port) if mcp_port else config.get_mcp_server_port()
 
     db_url = os.getenv("DEVILDEX_MCP_DB_URL", None)
     server_logger.info(f"Using database URL: {db_url}")
-    standalone_core = DevilDexCore(database_url=db_url)  # Initialize global core
+    standalone_core = DevilDexCore(database_url=db_url)
     database.init_db(database_url=db_url)
     server_logger.info("Database initialized for standalone server.")
 
@@ -76,6 +177,12 @@ if __name__ == "__main__":
         mcp.run(transport="http", host="127.0.0.1", port=mcp_port, path="/mcp")
     except KeyboardInterrupt:
         server_logger.info("KeyboardInterrupt received. Shutting down.")
-    except Exception as e:
-        server_logger.error(f"Error running MCP server: {e}")
+    except RuntimeError:
+        server_logger.exception("Error running MCP server: A runtime error occurred.")
+    except OSError:
+        server_logger.exception(
+            "Error running MCP server: An OS-related error occurred."
+        )
+    except Exception:
+        server_logger.exception("Error running MCP server")
     server_logger.info("MCP server standalone mode finished.")

@@ -9,14 +9,14 @@ from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageInfo, RegisteredProject
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def db_session() -> Session | None:
     """Fixture to set up an in-memory SQLite database for testing.
 
     Yields a session to interact with the database.
     """
     db_url = "sqlite:///:memory:"
-    database.DatabaseManager.close_db()  # Ensure clean state
+    database.DatabaseManager.close_db()
     database.init_db(db_url)
     try:
         with database.get_session() as session:
@@ -244,9 +244,7 @@ def test_get_session_raises_database_not_initialized_error(mocker, caplog) -> No
 
 def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
     """Verify get_session logs a warning if init_db was not called."""
-    # Arrange
-    database.DatabaseManager._session_local = None  # Ensure it's not initialized
-    # Mock init_db to actually initialize the session, but we still expect the warning
+    database.DatabaseManager._session_local = None
     mocker.patch(
         "devildex.database.db_manager.DatabaseManager.init_db",
         side_effect=lambda *args, **kwargs: (
@@ -254,12 +252,10 @@ def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
         ),
     )
 
-    # Act
     with caplog.at_level(logging.WARNING):
         with database.DatabaseManager.get_session():
             pass
 
-    # Assert
     assert (
         "Attempting to get a DB session, but init_db() was not called." in caplog.text
     )
@@ -269,7 +265,6 @@ def test_ensure_registered_project_and_association_value_error(
     db_session: Session, caplog
 ) -> None:
     """Check _ensure_registered_project_and_association raise ValueError if no proj details."""
-    # Arrange
     pkg_info = database.PackageInfo(package_name="test_pkg")
     docset = database.Docset(
         package_name="test_pkg", package_version="1.0", status="unknown"
@@ -277,7 +272,6 @@ def test_ensure_registered_project_and_association_value_error(
     db_session.add_all([pkg_info, docset])
     db_session.commit()
 
-    # Act & Assert
     with pytest.raises(ValueError) as excinfo:
         database._ensure_registered_project_and_association(
             db_session,
@@ -574,14 +568,12 @@ def test_get_db_path(mocker):
     assert db_path == "/fake/path/devildex.db"
 
 
-def test_ensure_docset_creates_new(db_session: Session):
+def test_ensure_docset_creates_new(db_session: Session) -> None:
     """Verify that _ensure_docset creates a new docset if it doesn't exist."""
-    # Arrange
     pkg_info = PackageInfo(package_name="test-pkg")
     db_session.add(pkg_info)
     db_session.commit()
 
-    # Act
     docset = database._ensure_docset(
         session=db_session,
         pkg_info=pkg_info,
@@ -591,7 +583,6 @@ def test_ensure_docset_creates_new(db_session: Session):
     )
     db_session.commit()
 
-    # Assert
     assert docset.package_name == "test-pkg"
     assert docset.package_version == "1.0.0"
     assert docset.status == "pending"

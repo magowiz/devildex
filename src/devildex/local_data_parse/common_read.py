@@ -336,7 +336,7 @@ pylint = "^2.10"
 
     if explicit_names:
         logger.info("\n--- Explicit Dependency Names Found ---")
-        for ex_name in sorted(list(explicit_names)):
+        for ex_name in sorted(explicit_names):
             logger.info(f"- {ex_name}")
         logger.info("--- End Explicit Dependency Names ---")
     else:

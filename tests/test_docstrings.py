@@ -240,7 +240,7 @@ def test_cleanup_pdoc_output_on_failure(tmp_path: Path, mocker) -> None:
 
 
 def test_find_and_report_non_package_folders(tmp_path: Path) -> None:
-    """Verify that _find_and_report_non_package_folders correctly identifies non-package folders."""
+    """Verify that find and report non-package folders identifies non-package one."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
     project_root = tmp_path / "project"
@@ -267,7 +267,7 @@ def test_find_and_report_non_package_folders(tmp_path: Path) -> None:
 
 
 def test_process_reported_folders(tmp_path: Path, mocker) -> None:
-    """Verify that _process_reported_folders correctly removes reported folders and links."""
+    """Verify that _process_reported_folders removes reported folders and links."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
     pdoc_project_output_path = tmp_path / "pdoc_output"

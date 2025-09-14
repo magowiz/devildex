@@ -167,18 +167,10 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _is_member_name_safe(member_name: str) -> bool:
-        """Check if member name is safe (no '..' or absolute paths).
-
-        This check correctly depends on the OS where the code is running.
-        pathlib.Path.is_absolute() correctly identifies absolute paths
-        for the current platform (e.g., /... on Linux, C:\\... on Windows).
-        """
-        # A path traversal attempt is always unsafe on any platform.
+        """Check if member name is safe (no '..' or absolute paths)."""
         if ".." in member_name:
             return False
 
-        # An absolute path is unsafe if it's considered absolute by the
-        # current operating system.
         return not pathlib.Path(member_name).is_absolute()
 
     @staticmethod
@@ -218,7 +210,7 @@ class PackageSourceFetcher:
             with tarfile.open(archive_filename, "r:*") as tar_ref:
                 for member in tar_ref.getmembers():
                     if not PackageSourceFetcher._is_member_name_safe(member.name):
-                        return False  # Error logged by helper
+                        return False
 
                     member_dest_path = temp_extract_dir_abs / member.name
                     if not PackageSourceFetcher._is_path_safe(
@@ -656,6 +648,3 @@ class PackageSourceFetcher:
             self._cleanup_target_dir_content()
 
         return fetch_successful, is_master_branch_fetched, path_to_return
-
-
-

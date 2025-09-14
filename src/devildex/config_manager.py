@@ -1,7 +1,9 @@
+"""config manager module."""
+
 import configparser
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self
 
 from devildex.app_paths import AppPaths
 
@@ -9,35 +11,39 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigManager:
+    """Config manager class."""
+
     _instance = None
     _config: Optional[configparser.ConfigParser] = None
     _config_path: Optional[Path] = None
 
-    def __new__(cls):
+    def __new__(cls) -> Self:
+        """Singleton implementation."""
         if cls._instance is None:
-            cls._instance = super(ConfigManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._initialize()
         return cls._instance
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         self.app_paths = AppPaths()
         self._config_path = self.app_paths.devildex_ini_path
         self._load_config()
 
-    def _load_config(self):
+    def _load_config(self) -> None:
         self._config = configparser.ConfigParser()
         if self._config_path and self._config_path.exists():
             try:
                 self._config.read(self._config_path)
                 logger.info(f"Loaded configuration from: {self._config_path}")
-            except configparser.Error as e:
-                logger.error(
-                    f"Error reading configuration file {self._config_path}: {e}"
+            except configparser.Error:
+                logger.exception(
+                    f"Error reading configuration file {self._config_path}"
                 )
                 self._config = configparser.ConfigParser()  # Reset to empty config
         else:
             logger.info(
-                f"Configuration file not found at: {self._config_path}. Creating with default settings."
+                f"Configuration file not found at: {self._config_path}."
+                " Creating with default settings."
             )
             # Create the file with default settings
             self._config.add_section("mcp_server_dev")
@@ -53,32 +59,40 @@ class ConfigManager:
                     logger.info(
                         f"Created default configuration file at: {self._config_path}"
                     )
-                except OSError as e:
-                    logger.error(
-                        f"Error creating default configuration file {self._config_path}: {e}"
+                except OSError:
+                    logger.exception(
+                        "Error creating default configuration file"
+                        f" {self._config_path}"
                     )
 
     def get_mcp_server_enabled(self) -> bool:
+        """Get mcp server enabled setting."""
         return self._config.getboolean("mcp_server_dev", "enabled", fallback=False)
 
     def get_mcp_server_hide_gui_when_enabled(self) -> bool:
+        """Get mcp server hide gui when enabled setting."""
         return self._config.getboolean(
             "mcp_server_dev", "hide_gui_when_enabled", fallback=False
         )
 
     def get_mcp_server_port(self) -> int:
+        """Get mcp server port setting."""
         return self._config.getint("mcp_server_dev", "port", fallback=8001)
 
     def set_mcp_server_enabled(self, value: bool) -> None:
+        """Set mcp server enabled setting."""
         self._config.set("mcp_server_dev", "enabled", str(value))
 
     def set_mcp_server_hide_gui_when_enabled(self, value: bool) -> None:
+        """Set mcp server hide gui when enabled setting."""
         self._config.set("mcp_server_dev", "hide_gui_when_enabled", str(value))
 
     def set_mcp_server_port(self, value: int) -> None:
+        """Set mcp server port setting."""
         self._config.set("mcp_server_dev", "port", str(value))
 
     def save_config(self) -> None:
+        """Save the configuration to the file."""
         if self._config_path:
             try:
                 logger.debug(
@@ -87,28 +101,14 @@ class ConfigManager:
                 with open(self._config_path, "w") as configfile:
                     self._config.write(configfile)
                 logger.info(f"Configuration saved to: {self._config_path}")
-            except OSError as e:
-                logger.error(
-                    f"Error saving configuration file {self._config_path}: {e}"
-                )
+            except OSError:
+                logger.exception(f"Error saving configuration file {self._config_path}")
         else:
             logger.error("Cannot save configuration: _config_path is not set.")
 
 
-# Example usage (for testing/demonstration)
 if __name__ == "__main__":
-    # Set DEVILDEX_DEV_MODE to '1' to test reading from project root
-    # os.environ["DEVILDEX_DEV_MODE"] = "1"
-    # Create a dummy devildex.ini in the project root for testing
-    # with open("devildex.ini", "w") as f:
-    #     f.write("[mcp_server_dev]\n")
-    #     f.write("enabled = true\n")
-    #     f.write("hide_gui_when_enabled = true\n")
 
     config = ConfigManager()
     print(f"MCP Server Enabled: {config.get_mcp_server_enabled()}")
     print(f"Hide GUI When Enabled: {config.get_mcp_server_hide_gui_when_enabled()}")
-
-    # Clean up dummy file if created
-    # if os.path.exists("devildex.ini"):
-    #     os.remove("devildex.ini")
