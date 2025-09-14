@@ -68,15 +68,20 @@ class McpServerManager:
 
         logger.info("Attempting to start MCP server thread...")
         self.server_thread = threading.Thread(target=self._run_server, args=(db_url,))
-        self.server_thread.daemon = (
-            True  # Allow main program to exit even if thread is running
-        )
+        self.server_thread.daemon = True
         self.server_thread.start()
 
-        # Give the server some time to start up (simplified readiness check)
-        time.sleep(5)
-        logger.info("MCP server start initiated. Assuming readiness after delay.")
-        return True
+        # Wait for the server process to be set and running
+        start_time = time.time()
+        while time.time() - start_time < 30: # 30-second timeout
+            if self.server_process and self.server_process.poll() is None:
+                logger.info("MCP server process is running.")
+                return True
+            time.sleep(0.5) # Increased sleep duration for real subprocesses
+
+        logger.error("MCP server process did not start within the timeout period.")
+        self.stop_server() # Attempt to stop it if it didn't become ready
+        return False
 
     def stop_server(self) -> None:
         """Send a shutdown request to MCP server and waits for it to terminate."""
