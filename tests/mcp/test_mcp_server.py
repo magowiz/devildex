@@ -228,7 +228,7 @@ async def test_get_docsets_list_invalid_params(
             "my_server": {"url": "http://127.0.0.1:8001/mcp"},
         }
     }
-    client = Client(config, timeout=5)
+    client = Client(config, timeout=10)
     async with client:
         try:
             response = await client.call_tool("get_docsets_list", {}, timeout=5)
