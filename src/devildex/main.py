@@ -17,6 +17,7 @@ from devildex.database.models import PackageDetails
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.task_manager import GenerationTaskManager
 from devildex.mcp_server.mcp_server_manager import McpServerManager # Import McpServerManager
+from devildex.app_paths import AppPaths # Import AppPaths
 from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
 
 logging.basicConfig(
@@ -75,7 +76,7 @@ class DevilDexApp(wx.App):
         self,
         core: DevilDexCore | None = None,
         initial_url: str | None = None,
-    self, core: DevilDexCore | None = None, initial_url: str | None = None, mcp_server_manager: McpServerManager | None = None
+        mcp_server_manager: McpServerManager | None = None
     ) -> None:
         """Construct DevilDexApp class."""
         self.document_view_panel = None
@@ -1189,7 +1190,8 @@ def main() -> None:
             # Determine if GUI warning callback should be passed
             warning_callback = None
             # Create core instance, passing the callback if applicable
-            core = DevilDexCore(gui_warning_callback=warning_callback)
+            app_paths = AppPaths() # Instantiate AppPaths
+            core = DevilDexCore(gui_warning_callback=warning_callback, docset_base_output_path=app_paths.docsets_base_dir)
 
             app = DevilDexApp(core=core, mcp_server_manager=mcp_server_manager) # Pass core and manager to app
 
