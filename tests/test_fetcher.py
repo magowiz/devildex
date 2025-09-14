@@ -345,7 +345,7 @@ def test_fetch_from_pypi_success(
     # Arrange
     expected_urls = {"Homepage": "http://example.com"}
     mock_response = mocker.Mock()
-    mock_response.raise_for_status.return_value = mock_response
+    mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {"info": {"project_urls": expected_urls}}
     mocker.patch("requests.get", return_value=mock_response)
 

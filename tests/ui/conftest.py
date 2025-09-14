@@ -9,11 +9,10 @@ from devildex.core import DevilDexCore
 from devildex.main import DevilDexApp
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def wx_app() -> Generator[wx.App, None, None]:
-    """Fixture to create a single wx.App instance for all UI tests."""
+    """Fixture to create a wx.App instance for each UI test."""
     app = wx.App()
-    wx.App.SetInstance(app) # Add this line
     yield app
     app.Destroy()
 

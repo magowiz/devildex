@@ -9,13 +9,14 @@ from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageInfo, RegisteredProject
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def db_session() -> Session | None:
     """Fixture to set up an in-memory SQLite database for testing.
 
     Yields a session to interact with the database.
     """
     db_url = "sqlite:///:memory:"
+    database.DatabaseManager.close_db()  # Ensure clean state
     database.init_db(db_url)
     try:
         with database.get_session() as session:

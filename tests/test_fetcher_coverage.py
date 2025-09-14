@@ -18,7 +18,7 @@ DUMMY_PACKAGE_INFO = {"name": "test_package", "version": "1.0.0"}
 class TestPackageSourceFetcherCoverage:
     """Class that test PackageSourceFetcher coverage."""
 
-    BASE_SAVE_PATH = pathlib.Path("/tmp/dummy_path_for_class_level_evaluation")
+    
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown_test_env(self, tmp_path: pathlib.Path) -> None:
