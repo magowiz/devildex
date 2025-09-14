@@ -31,8 +31,6 @@ def fetcher(tmp_path: Path) -> PackageSourceFetcher:
     )
 
 
-
-
 def test_fetch_github_archive_success(
     fetcher: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
@@ -119,8 +117,6 @@ def test_fetch_github_archive_not_a_github_url(
 
     assert result is False
     mock_download_extract.assert_not_called()
-
-
 
 
 def test_shallow_clone_success(
