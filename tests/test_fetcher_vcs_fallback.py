@@ -1,5 +1,4 @@
-"""
-Tests for the VCS fallback mechanisms in PackageSourceFetcher.
+"""Tests for the VCS fallback mechanisms in PackageSourceFetcher.
 
 This file focuses on unit testing the individual methods responsible for
 fetching source code from Version Control Systems, such as:
@@ -33,8 +32,7 @@ def fetcher(tmp_path: Path) -> PackageSourceFetcher:
 # --- Tests for _try_fetch_tag_github_archive ---
 
 def test_fetch_github_archive_success(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify _try_fetch_tag_github_archive succeeds if _download_and_extract_archive works.
+    """Verify _try_fetch_tag_github_archive succeeds if _download_and_extract_archive works.
     """
     # Arrange
     repo_url = "https://github.com/user/repo"
@@ -54,8 +52,7 @@ def test_fetch_github_archive_success(fetcher: PackageSourceFetcher, mocker: Moc
 
 
 def test_fetch_github_archive_falls_back_on_urls(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify it tries multiple URL variations for a tag until one succeeds.
+    """Verify it tries multiple URL variations for a tag until one succeeds.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"  # .git suffix should be handled
@@ -88,8 +85,7 @@ def test_fetch_github_archive_falls_back_on_urls(fetcher: PackageSourceFetcher, 
 
 
 def test_fetch_github_archive_all_fail(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify it returns False if all download attempts for all tags fail.
+    """Verify it returns False if all download attempts for all tags fail.
     """
     # Arrange
     repo_url = "https://github.com/user/repo"
@@ -107,8 +103,7 @@ def test_fetch_github_archive_all_fail(fetcher: PackageSourceFetcher, mocker: Mo
 
 
 def test_fetch_github_archive_not_a_github_url(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify it returns False immediately if the URL is not from GitHub.
+    """Verify it returns False immediately if the URL is not from GitHub.
     """
     # Arrange
     repo_url = "https://gitlab.com/user/repo"  # Not a github.com URL
@@ -127,13 +122,12 @@ def test_fetch_github_archive_not_a_github_url(fetcher: PackageSourceFetcher, mo
 # --- Tests for _try_fetch_tag_shallow_clone ---
 
 def test_shallow_clone_success(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify _try_fetch_tag_shallow_clone succeeds and calls git correctly.
+    """Verify _try_fetch_tag_shallow_clone succeeds and calls git correctly.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3", "v1.2.3"]
-    
+
     mock_run_git = mocker.patch.object(fetcher, "_run_git_command", return_value=mocker.Mock(returncode=0))
     mock_cleanup_git = mocker.patch.object(fetcher, "_cleanup_git_dir_from_path")
     mock_ensure_dir = mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=True)
@@ -151,8 +145,7 @@ def test_shallow_clone_success(fetcher: PackageSourceFetcher, mocker: MockerFixt
     mock_cleanup_git.assert_called_once_with(fetcher.download_target_path)
 
 def test_shallow_clone_falls_back_on_tags(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify it tries the next tag if the first git clone command fails.
+    """Verify it tries the next tag if the first git clone command fails.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
@@ -165,7 +158,7 @@ def test_shallow_clone_falls_back_on_tags(fetcher: PackageSourceFetcher, mocker:
     mock_cleanup_git = mocker.patch.object(fetcher, "_cleanup_git_dir_from_path")
     # Mock ensure_target_dir_exists to always return True for this test
     mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=True)
-    
+
     # Act
     result = fetcher._try_fetch_tag_shallow_clone(repo_url, tag_variations)
 
@@ -175,20 +168,19 @@ def test_shallow_clone_falls_back_on_tags(fetcher: PackageSourceFetcher, mocker:
     # Check the arguments of both calls
     first_call_args = mock_run_git.call_args_list[0].args[0]
     second_call_args = mock_run_git.call_args_list[1].args[0]
-    
+
     assert "1.2.3" in first_call_args
     assert "v1.2.3" in second_call_args
-    
+
     mock_cleanup_git.assert_called_once_with(fetcher.download_target_path)
 
 def test_shallow_clone_all_fail(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify it returns False if all git clone commands fail.
+    """Verify it returns False if all git clone commands fail.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3", "v1.2.3"]
-    
+
     # Mock git command to always fail
     mock_run_git = mocker.patch.object(fetcher, "_run_git_command", return_value=None)
     mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=True)
@@ -203,13 +195,12 @@ def test_shallow_clone_all_fail(fetcher: PackageSourceFetcher, mocker: MockerFix
     mock_cleanup_git.assert_not_called()
 
 def test_shallow_clone_dir_creation_fails(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify it returns False if it cannot create the target directory.
+    """Verify it returns False if it cannot create the target directory.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3"]
-    
+
     mock_run_git = mocker.patch.object(fetcher, "_run_git_command")
     # Simulate failure to create directory
     mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=False)
@@ -225,8 +216,7 @@ def test_shallow_clone_dir_creation_fails(fetcher: PackageSourceFetcher, mocker:
 # --- Tests for _try_fetch_tag_full_clone_checkout ---
 
 def test_full_clone_checkout_success(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify the full clone and checkout process succeeds.
+    """Verify the full clone and checkout process succeeds.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
@@ -237,7 +227,7 @@ def test_full_clone_checkout_success(fetcher: PackageSourceFetcher, mocker: Mock
     mock_git_clone = mocker.Mock(returncode=0)
     mock_git_checkout = mocker.Mock(returncode=0)
     mock_run_git = mocker.patch.object(fetcher, "_run_git_command", side_effect=[mock_git_clone, mock_git_checkout])
-    
+
     mock_copy = mocker.patch.object(fetcher, "_copy_cloned_content", return_value=True)
     mock_rmtree = mocker.patch("shutil.rmtree")
     mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=True)
@@ -249,11 +239,11 @@ def test_full_clone_checkout_success(fetcher: PackageSourceFetcher, mocker: Mock
 
     # Assert
     assert result is True
-    
+
     # Verify clone was called correctly
     clone_call = mock_run_git.call_args_list[0]
     assert clone_call.args[0] == ["git", "clone", repo_url, str(temp_clone_dir)]
-    
+
     # Verify checkout was called correctly
     checkout_call = mock_run_git.call_args_list[1]
     assert checkout_call.args[0] == ["git", "-C", str(temp_clone_dir), "checkout", "1.2.3"]
@@ -263,13 +253,12 @@ def test_full_clone_checkout_success(fetcher: PackageSourceFetcher, mocker: Mock
 
 
 def test_full_clone_fails(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify the process fails if the initial git clone fails.
+    """Verify the process fails if the initial git clone fails.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3"]
-    
+
     # Mock the clone to fail
     mocker.patch.object(fetcher, "_run_git_command", return_value=None)
     mock_rmtree = mocker.patch("shutil.rmtree")
@@ -284,8 +273,7 @@ def test_full_clone_fails(fetcher: PackageSourceFetcher, mocker: MockerFixture):
 
 
 def test_full_clone_checkout_fails(fetcher: PackageSourceFetcher, mocker: MockerFixture):
-    """
-    Verify the process fails if checkout fails for all tags.
+    """Verify the process fails if checkout fails for all tags.
     """
     # Arrange
     repo_url = "https://github.com/user/repo.git"
@@ -296,7 +284,7 @@ def test_full_clone_checkout_fails(fetcher: PackageSourceFetcher, mocker: Mocker
     mock_git_clone = mocker.Mock(returncode=0)
     mock_git_checkout_fail = mocker.Mock(returncode=1) # Non-zero return code
     mocker.patch.object(fetcher, "_run_git_command", side_effect=[mock_git_clone, mock_git_checkout_fail, mock_git_checkout_fail])
-    
+
     mock_copy = mocker.patch.object(fetcher, "_copy_cloned_content")
     mock_rmtree = mocker.patch("shutil.rmtree")
     # Mock path.exists() to ensure cleanup logic is triggered

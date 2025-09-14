@@ -1,5 +1,4 @@
-"""
-Real integration tests for the VCS fallback mechanisms in PackageSourceFetcher.
+"""Real integration tests for the VCS fallback mechanisms in PackageSourceFetcher.
 
 These tests make real network calls and use the git command. They are marked as
 'integration' and may be slow.
@@ -25,8 +24,7 @@ EXPECTED_TAG = f"v{PACKAGE_VERSION}"
 
 @pytest.fixture
 def fetcher_and_path() -> tuple[PackageSourceFetcher, Path]:
-    """
-    Provides a PackageSourceFetcher instance and a temporary directory for a test.
+    """Provides a PackageSourceFetcher instance and a temporary directory for a test.
     """
     with tempfile.TemporaryDirectory(prefix="devildex_real_vcs_") as tmpdir:
         tmp_path = Path(tmpdir)
@@ -36,8 +34,7 @@ def fetcher_and_path() -> tuple[PackageSourceFetcher, Path]:
 
 
 def _verify_downloaded_content(download_path: Path) -> bool:
-    """
-    Verifies that the downloaded content is the correct version of 'requests'.
+    """Verifies that the downloaded content is the correct version of 'requests'.
     """
     if not download_path.exists() or not any(download_path.iterdir()):
         logger.error("Verification failed: Download directory is empty or does not exist.")
@@ -61,8 +58,7 @@ def _verify_downloaded_content(download_path: Path) -> bool:
 
 @pytest.mark.integration
 def test_real_github_archive_fails_correctly(fetcher_and_path: tuple[PackageSourceFetcher, Path]):
-    """
-    Tests that the first fallback (direct archive download) correctly fails
+    """Tests that the first fallback (direct archive download) correctly fails
     for a tag that doesn't have a direct archive link, due to our redirect fix.
     """
     fetcher, _ = fetcher_and_path
@@ -77,8 +73,7 @@ def test_real_github_archive_fails_correctly(fetcher_and_path: tuple[PackageSour
 
 @pytest.mark.integration
 def test_real_shallow_clone_succeeds(fetcher_and_path: tuple[PackageSourceFetcher, Path]):
-    """
-    Tests that the second fallback (shallow clone) succeeds and fetches the correct source.
+    """Tests that the second fallback (shallow clone) succeeds and fetches the correct source.
     """
     fetcher, _ = fetcher_and_path
     logger.info("Testing that _try_fetch_tag_shallow_clone succeeds...")
@@ -92,8 +87,7 @@ def test_real_shallow_clone_succeeds(fetcher_and_path: tuple[PackageSourceFetche
 
 @pytest.mark.integration
 def test_real_full_clone_checkout_succeeds(fetcher_and_path: tuple[PackageSourceFetcher, Path]):
-    """
-    Tests that the third fallback (full clone and checkout) succeeds and fetches the correct source.
+    """Tests that the third fallback (full clone and checkout) succeeds and fetches the correct source.
     This is the most time-consuming test.
     """
     fetcher, _ = fetcher_and_path

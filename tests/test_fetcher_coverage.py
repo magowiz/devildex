@@ -18,8 +18,6 @@ DUMMY_PACKAGE_INFO = {"name": "test_package", "version": "1.0.0"}
 class TestPackageSourceFetcherCoverage:
     """Class that test PackageSourceFetcher coverage."""
 
-    
-
     @pytest.fixture(autouse=True)
     def setup_and_teardown_test_env(self, tmp_path: pathlib.Path) -> None:
         """Set up and teardown test environment."""
@@ -612,4 +610,4 @@ class TestPackageSourceFetcherCoverage:
         assert path_str is None
         mock_cleanup_target_dir_content.assert_called_once()
 
-    
+
