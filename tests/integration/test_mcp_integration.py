@@ -291,20 +291,34 @@ async def test_gui_and_mcp_coexistence(
         }
     }
     client = Client(config, timeout=10)
-    try:
-        async with client:
-            docsets_list = await client.call_tool(
-                "get_docsets_list", {"all_projects": True}, timeout=5
-            )
-            expected_names = [
-                "requests",
-                "flask",
-                "django",
-            ]
-            assert isinstance(docsets_list.data, list)
-            assert sorted(docsets_list.data) == sorted(expected_names)
-            print(f"Docsets list (GUI and MCP): {docsets_list.data}")
-    except Exception as e:
-        pytest.fail(f"MCP client communication failed in coexistence test: {e}")
-    finally:
-        pass
+
+    start_time = time.time()
+    max_wait = 10  # seconds
+    connected = False
+    last_exception = None
+    response = None
+
+    while time.time() - start_time < max_wait:
+        try:
+            async with client:
+                response = await client.call_tool("get_docsets_list", {"all_projects": True})
+            connected = True
+            break
+        except Exception as e:
+            last_exception = e
+            await asyncio.sleep(0.5)
+
+    if not connected:
+        pytest.fail(
+            f"Client could not connect to server within {max_wait} seconds. "
+            f"Last exception: {last_exception}"
+        )
+
+    assert response is not None
+    assert isinstance(response.data, list)
+    expected_names = [
+        "requests",
+        "flask",
+        "django",
+    ]
+    assert sorted(response.data) == sorted(expected_names)
