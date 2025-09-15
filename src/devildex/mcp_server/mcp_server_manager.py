@@ -59,6 +59,7 @@ class McpServerManager:
             stderr=subprocess.PIPE,  # Capture stderr
             text=True,  # Decode stdout/stderr as text
         )
+        self.server_process.wait()
 
     def start_server(self, db_url: str) -> bool:
         """Start the MCP server in a separate thread and waits for it to be ready."""
