@@ -104,8 +104,12 @@ class AppPaths:
 
     @property
     def devildex_ini_path(self) -> Path:
-        """Path for the devildex.ini configuration file."""
-        if os.getenv("DEVILDEX_DEV_MODE") == "1":
+        """Path per il file del database dell application."""
+        # New: Check for an explicit override environment variable
+        ini_path_override = os.getenv("DEVILDEX_INI_PATH_OVERRIDE")
+        if ini_path_override:
+            return Path(ini_path_override)
+        elif os.getenv("DEVILDEX_DEV_MODE") == "1":
             # In dev mode, look in the project root
             return Path("devildex.ini")
         else:
