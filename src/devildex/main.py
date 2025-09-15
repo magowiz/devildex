@@ -378,7 +378,8 @@ class DevilDexApp(wx.App):
             self.gui_log_handler.text_ctrl = self.log_text_ctrl
         self._update_log_toggle_button_icon()
 
-        self.main_frame.Show(True)
+        if not self.config_manager.get_mcp_server_hide_gui_when_enabled():
+            self.main_frame.Show(True)
 
         self.jokes_timer = wx.Timer(self)
         return True
