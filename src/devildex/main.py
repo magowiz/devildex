@@ -18,7 +18,12 @@ from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.task_manager import GenerationTaskManager
 from devildex.mcp_server.mcp_server_manager import McpServerManager # Import McpServerManager
 from devildex.app_paths import AppPaths # Import AppPaths
-from devildex.ui import ActionsPanel, DocsetGridPanel, DocumentViewPanel
+from devildex.ui import (
+    ActionsPanel,
+    DocsetGridPanel,
+    DocumentViewPanel,
+    SettingsPanel,
+)
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -87,6 +92,8 @@ class DevilDexApp(wx.App):
         self.mcp_server_manager: Optional[McpServerManager] = None # Initialize to None
         self.main_frame: Optional[wx.Frame] = None
         self.panel: Optional[wx.Panel] = None
+        self.main_content_panel: Optional[wx.Panel] = None
+        self.settings_panel: Optional[SettingsPanel] = None
         self.main_panel_sizer: Optional[wx.BoxSizer] = None
         self.current_grid_source_data: list[dict[str, Any]] = []
         self.actions_panel: ActionsPanel | None = None
@@ -336,23 +343,35 @@ class DevilDexApp(wx.App):
 
         self._init_buttons()
 
-        # --- Start of refactored view setup ---
-        # Create all main view components once
-        view_mode_sizer = self._setup_view_mode_selector(self.panel)
-        self.main_panel_sizer.Add(
-            view_mode_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
+        # Main content panel
+        self.main_content_panel = wx.Panel(self.panel)
+        main_content_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.main_content_panel.SetSizer(main_content_sizer)
+
+        top_bar_sizer = self._setup_top_bar(self.main_content_panel)
+        main_content_sizer.Add(
+            top_bar_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5
         )
 
-        self._init_splitter_components(self.panel)  # This creates self.splitter
+        self._init_splitter_components(self.main_content_panel)
         if self.splitter:
-            self.main_panel_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
+            main_content_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
 
-        self.document_view_panel = DocumentViewPanel(self.panel, self.go_home)
-        self.main_panel_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
+        self.document_view_panel = DocumentViewPanel(self.main_content_panel, self.go_home)
+        main_content_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
         self.document_view_panel.Hide()
 
-        bottom_bar_sizer = self._init_log_toggle_bar(self.panel)
-        self.main_panel_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
+        bottom_bar_sizer = self._init_log_toggle_bar(self.main_content_panel)
+        main_content_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
+
+        # Settings panel
+        self.settings_panel = SettingsPanel(
+            self.panel, self.on_settings_saved, self.on_settings_cancelled
+        )
+        self.settings_panel.Hide()
+
+        self.main_panel_sizer.Add(self.main_content_panel, 1, wx.EXPAND)
+        self.main_panel_sizer.Add(self.settings_panel, 1, wx.EXPAND)
 
         self.init_log()
         if self.gui_log_handler and self.log_text_ctrl:
