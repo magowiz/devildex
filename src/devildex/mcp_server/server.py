@@ -8,14 +8,12 @@
 import logging
 import os
 import pathlib
-import sys
-from typing import Any
 
 from fastmcp import FastMCP
 from markdownify import markdownify
 
+from devildex.core import DevilDexCore  # Import DevilDexCore
 from devildex.database import db_manager as database
-from devildex.core import DevilDexCore # Import DevilDexCore
 
 # IMPORTANT: This MCP server is currently under active development and is INCOMPLETE.
 # Only the 'get_docsets_list' tool is fully functional.
@@ -26,10 +24,11 @@ mcp = FastMCP("Demo 🚀")
 
 # Global variable to hold the DevilDexCore instance
 # This will be set by the main application or by the standalone server initialization
-_core_instance: Any = None
+_core_instance: DevilDexCore | None = None
 
-def set_core_instance(core_instance: Any):
-    global _core_instance
+def set_core_instance(core_instance: DevilDexCore) -> None:
+    """Set the global core instance."""
+    global _core_instance  # noqa: PLW0603
     _core_instance = core_instance
 
 @mcp.tool
@@ -75,8 +74,12 @@ def _get_docset_root_path(
     docset_path_obj = _core_instance.get_docset_path(
         package_name=package, version=version
     )
-    server_logger.info(f"MCP Server: Attempting to access docset path: {docset_path_obj}") # Added logging
-    server_logger.info(f"MCP Server: Does docset path exist? {docset_path_obj.exists()}") # Added logging
+    server_logger.info(
+        f"MCP Server: Attempting to access docset path: {docset_path_obj}"
+    ) # Added logging
+    server_logger.info(
+        f"MCP Server: Does docset path exist? {docset_path_obj.exists()}"
+    ) # Added logging
     if not docset_path_obj.exists():
         return None, f"Docset for package '{package}' version '{version}' not found."
 
@@ -91,8 +94,12 @@ def _validate_page_path(
     if not _is_valid_path(str(docset_root_path_obj), str(full_requested_page_path)):
         return None, f"Invalid page path: path traversal attempt detected for '{page}'."
 
-    server_logger.info(f"MCP Server: Attempting to access page path: {full_requested_page_path}") # Added logging
-    server_logger.info(f"MCP Server: Is page file? {full_requested_page_path.is_file()}") # Added logging
+    server_logger.info(
+        f"MCP Server: Attempting to access page path: {full_requested_page_path}"
+    ) # Added logging
+    server_logger.info(
+        f"MCP Server: Is page file? {full_requested_page_path.is_file()}"
+    ) # Added logging
     if not full_requested_page_path.is_file():
         return None, (
             f"Page '{page}' not found in docset '{package}' version '{version}'."
@@ -133,18 +140,24 @@ def get_page_content(
     """Get the content of a specific page within a docset.
 
     Args:
-        package (str): The name of the package for which to retrieve docset content (e.g., "black").
-        page (str, optional): The name of the page to retrieve within the docset (e.g., "index.html", "getting_started.html").
+        package (str): The name of the package for which to retrieve
+            docset content (e.g., "black").
+        page (str, optional): The name of the page to retrieve within the
+            docset (e.g., "index.html", "getting_started.html").
                               Defaults to "index.html".
-        version (str | None, optional): The specific version of the package's docset to retrieve (e.g., "main", "24.4.2").
-                                        If not provided, the system will attempt to automatically detect the version
-                                        by scanning the package's docset directory and its immediate subdirectories
+        version (str | None, optional): The specific version of the package's
+            docset to retrieve (e.g., "main", "24.4.2").
+                                        If not provided, the system will attempt to
+                                        automatically detect the version
+                                        by scanning the package's docset directory
+                                        and its immediate subdirectories
                                         for an 'index.html' file.
 
     Returns:
-        str | dict[str, str]: The content of the requested page as a string, or a dictionary
-                              containing an "error" key with a descriptive error message if the
-                              page or docset could not be found or accessed.
+        str | dict[str, str]: The content of the requested page as a string,
+            or a dictionary containing an "error" key with a descriptive
+            error message if the page or docset could not be found or accessed.
+
     """
     docset_root_path_obj, error_message = _get_docset_root_path(package, version)
     if error_message:
@@ -170,12 +183,15 @@ if __name__ == "__main__":
 
     server_logger = logging.getLogger(__name__)
     server_logger.info("MCP server standalone mode started.")
-    server_logger.info(f"Current Working Directory (subprocess): {os.getcwd()}") # Added logging
+    server_logger.info(
+        f"Current Working Directory (subprocess): {os.getcwd()}"
+    ) # Added logging
+
+    from pathlib import Path
 
     from devildex.config_manager import ConfigManager
     from devildex.core import DevilDexCore
     from devildex.database import db_manager as database
-    from pathlib import Path
 
     config = ConfigManager()
     mcp_port = os.getenv("DEVILDEX_MCP_SERVER_PORT")
@@ -188,8 +204,12 @@ if __name__ == "__main__":
     docset_base_output_path_env = os.getenv("DEVILDEX_DOCSET_BASE_OUTPUT_PATH", None)
 
     if docset_base_output_path_env:
-        standalone_core = DevilDexCore(database_url=db_url, docset_base_output_path=Path(docset_base_output_path_env))
-    else:standalone_core = DevilDexCore(database_url=db_url)
+        standalone_core = DevilDexCore(
+            database_url=db_url,
+            docset_base_output_path=Path(docset_base_output_path_env)
+        )
+    else:
+        standalone_core = DevilDexCore(database_url=db_url)
     database.init_db(database_url=db_url)
     server_logger.info("Database initialized for standalone server.")
 

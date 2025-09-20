@@ -24,6 +24,8 @@ from devildex.readthedocs.readthedocs_src import (
     run_clone,
 )
 
+EXPECTED_CLONE_ATTEMPTS = 2
+
 
 def test_get_vcs_executable_git_not_found(mocker, caplog) -> None:
     """Verify _get_vcs_executable logs error when git not found."""
@@ -535,7 +537,7 @@ def test_run_clone_all_attempts_fail(mocker, tmp_path: Path, caplog) -> None:
 
     assert result is None
     assert "Failed to clone any of the attempted branches" in caplog.text
-    assert mock_attempt_single_branch_clone.call_count == 2
+    assert mock_attempt_single_branch_clone.call_count == EXPECTED_CLONE_ATTEMPTS
 
 
 def test_attempt_clone_and_process_result_success(mocker, tmp_path: Path) -> None:

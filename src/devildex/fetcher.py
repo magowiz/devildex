@@ -341,7 +341,7 @@ class PackageSourceFetcher:
                 return None
 
             actual_command = (
-                [git_exe] + command_list[1:]
+                [git_exe, *command_list[1:]]
                 if command_list[0] == "git"
                 else [git_exe, *command_list]
             )

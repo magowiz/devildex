@@ -110,5 +110,4 @@ class ConfigManager:
 if __name__ == "__main__":
 
     config = ConfigManager()
-    print(f"MCP Server Enabled: {config.get_mcp_server_enabled()}")
-    print(f"Hide GUI When Enabled: {config.get_mcp_server_hide_gui_when_enabled()}")
+

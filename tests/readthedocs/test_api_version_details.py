@@ -7,6 +7,8 @@ from pytest_mock import MockerFixture
 
 from devildex.readthedocs.readthedocs_api import _fetch_version_details
 
+HTTP_BAD_REQUEST_STATUS = 400
+
 
 class MockResponse:
     """A mock class to simulate requests.Response for testing."""
@@ -27,7 +29,7 @@ class MockResponse:
 
     def raise_for_status(self) -> None:
         """Mock the raise_for_status() method."""
-        if self.status_code >= 400:
+        if self.status_code >= HTTP_BAD_REQUEST_STATUS:
             raise requests.exceptions.HTTPError(f"Error {self.status_code}")
 
 

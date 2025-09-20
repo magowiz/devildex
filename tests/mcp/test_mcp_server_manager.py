@@ -1,5 +1,6 @@
-import time
 from unittest.mock import MagicMock, patch
+
+MOCK_MCP_PORT = 12345
 
 import pytest
 
@@ -10,7 +11,7 @@ from devildex.mcp_server.mcp_server_manager import McpServerManager
 def mock_config_manager():
     with patch("devildex.mcp_server.mcp_server_manager.ConfigManager") as MockConfig:
         mock_instance = MockConfig.return_value
-        mock_instance.get_mcp_server_port.return_value = 12345
+        mock_instance.get_mcp_server_port.return_value = MOCK_MCP_PORT
         yield MockConfig
 
 
@@ -23,7 +24,7 @@ def mcp_manager(mock_config_manager):
 
 
 def test_mcp_manager_initialization(mcp_manager):
-    assert mcp_manager.mcp_port == 12345
+    assert mcp_manager.mcp_port == MOCK_MCP_PORT
     assert mcp_manager.server_process is None
     assert mcp_manager.server_thread is None
 
@@ -53,10 +54,10 @@ def test_start_server_success(mock_thread, mock_sleep, mock_popen, mcp_manager):
     assert mcp_manager.is_server_running() is True
 
 
- 
 
 
- 
+
+
 
 
 def test_is_server_running_true(mcp_manager):

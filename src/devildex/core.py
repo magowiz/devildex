@@ -1,20 +1,15 @@
 """core module."""
 
 import logging
-import os
 import shutil
-import subprocess
-import time # Added for time.sleep in start_mcp_server_if_enabled
 from pathlib import Path
 from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from devildex.mcp_server.mcp_server_manager import McpServerManager # New import
-from devildex.config_manager import ConfigManager # New import for ConfigManager
-
 from devildex.app_paths import AppPaths
+from devildex.config_manager import ConfigManager  # New import for ConfigManager
 from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageDetails
 from devildex.local_data_parse import registered_project_parser
@@ -25,6 +20,7 @@ from devildex.local_data_parse.external_venv_scanner import (
     ExternalVenvScanner,
 )
 from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
+from devildex.mcp_server.mcp_server_manager import McpServerManager  # New import
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
@@ -46,7 +42,8 @@ class DevilDexCore:
         self.registered_project_name: Optional[str] = None
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
-        self.mcp_server_manager: Optional[McpServerManager] = None # Added MCP server manager attribute
+        self.mcp_server_manager: Optional[McpServerManager] = None
+        # Added MCP server manager attribute
         self.gui_warning_callback = gui_warning_callback
 
         if docset_base_output_path:
@@ -54,12 +51,12 @@ class DevilDexCore:
         else:
             # Initialize with default from AppPaths if not provided
             self.docset_base_output_path = self.app_paths.docsets_base_dir
-            self._setup_registered_project() # Still call this for registered project logic
+            self._setup_registered_project()  # Call for registered project logic
 
     def set_docset_base_output_path(self, path: Path) -> None:
-        """Sets the base output path for docsets and initializes related components."""
+        """Set the base output path for docsets and initialize components."""
         self.docset_base_output_path = path
-        self.docset_base_output_path.mkdir(parents=True, exist_ok=True) # Ensure directory exists
+        self.docset_base_output_path.mkdir(parents=True, exist_ok=True)
         self.registered_project_name = None
         self.registered_project_path = None
         self.registered_project_python_executable = None
@@ -151,7 +148,7 @@ class DevilDexCore:
 
     @staticmethod
     def delete_docset_build(docset_path_str: str) -> tuple[bool, str]:
-        """Delete a specific docset build directory and its parent if it becomes empty."""
+        """Delete a docset build directory and its parent if empty."""
         try:
             path_of_specific_docset_build = Path(docset_path_str)
             if (
@@ -221,10 +218,7 @@ class DevilDexCore:
     ) -> list[dict[str, Any]]:
         """Initialize the database, populates it with initial data."""
         logger.info("Core: Initializing database...")
-        if self.database_url:
-            db_url = self.database_url
-        else:
-            db_url = f"sqlite:///{self.app_paths.database_path}"
+        db_url = self.database_url or f"sqlite:///{self.app_paths.database_path}"
 
         if (
             database.DatabaseManager._engine is None
@@ -345,13 +339,10 @@ class DevilDexCore:
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
 
-    def get_docset_path(self, package_name: str, version: Optional[str] = None) -> Optional[Path]:
-        """Constructs and returns the path to a specific docset.
-
-        If version is not provided, it attempts to find the docset by
-        checking the package directory and its immediate subdirectories
-        for an 'index.html' file.
-        """
+    def get_docset_path(
+        self, package_name: str, version: Optional[str] = None
+    ) -> Optional[Path]:
+        """Construct and return the path to a specific docset."""
         base_path = self.docset_base_output_path / package_name
 
         if version:
@@ -360,7 +351,10 @@ class DevilDexCore:
             if docset_path.is_dir():
                 return docset_path
             else:
-                logger.warning(f"Docset path for {package_name} version {version} not found at {docset_path}")
+                logger.warning(
+                    f"Docset path for {package_name} version {version} "
+                    f"not found at {docset_path}"
+                )
                 return None
 
         # If no version is provided, try to auto-detect
@@ -371,10 +365,16 @@ class DevilDexCore:
         # 2. Check one level deep in subdirectories
         for subdir in base_path.iterdir():
             if subdir.is_dir() and (subdir / "index.html").is_file():
-                logger.info(f"Auto-detected docset in subdirectory: {subdir.name} for package {package_name}")
+                logger.info(
+                    f"Auto-detected docset in subdirectory: {subdir.name} "
+                    f"for package {package_name}"
+                )
                 return subdir
 
-        logger.warning(f"No docset found for package {package_name} at {base_path} or its immediate subdirectories.")
+        logger.warning(
+            f"No docset found for package {package_name} at {base_path} "
+            f"or its immediate subdirectories."
+        )
         return None
 
     def get_all_docsets_info(self) -> list[dict[str, Any]]:
@@ -451,6 +451,7 @@ class DevilDexCore:
             return False, unexpected_msg
 
     def start_mcp_server_if_enabled(self, db_url: str) -> bool:
+        """Start the MCP server if it is enabled in the configuration."""
         config = ConfigManager() # Get the singleton instance
         if config.get_mcp_server_enabled():
             logger.info("Core: MCP server is enabled. Starting...")
@@ -468,6 +469,7 @@ class DevilDexCore:
             return False
 
     def stop_mcp_server(self) -> None:
+        """Stop the MCP server if it is running."""
         if self.mcp_server_manager:
             logger.info("Core: Stopping MCP server...")
             self.mcp_server_manager.stop_server()

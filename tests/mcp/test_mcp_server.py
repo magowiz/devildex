@@ -1,17 +1,12 @@
 """module that tests mcp server."""
 
 import os
+import re
+import socket
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-import os  # Import os
-import subprocess  # Import subprocess
-import tempfile  # Import tempfile
-import time  # Import time
-from pathlib import Path  # Import Path
-import socket # Import socket
-import re # Import re
 
 import pytest
 from fastmcp import Client
@@ -38,16 +33,11 @@ def mcp_server_with_populated_db(free_port):
     """Fixture to set up an in-memory SQLite database, populate it,
     and yield a DevilDexCore instance initialized with it.
     """
-    # Use a temporary file for the SQLite database
     temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    temp_db_file.close()  # Close the file handle, but keep the file
+    temp_db_file.close()
     db_url = f"sqlite:///{temp_db_file.name}"
-
-    # Create a temporary directory for docset files
     with tempfile.TemporaryDirectory() as temp_docset_dir:
         temp_docset_path = Path(temp_docset_dir)
-
-        # Create dummy docset files for 'requests'
         requests_docset_path = temp_docset_path / "requests" / "2.25.1"
         requests_docset_path.mkdir(parents=True, exist_ok=True)
         (requests_docset_path / "index.html").write_text("<h1>Requests Index</h1>")
@@ -58,7 +48,9 @@ def mcp_server_with_populated_db(free_port):
         )
 
         database.init_db(db_url)
-        core_instance = DevilDexCore(database_url=db_url, docset_base_output_path=temp_docset_path) # Pass the temp path to core
+        core_instance = DevilDexCore(
+            database_url=db_url, docset_base_output_path=temp_docset_path
+        )  # Pass the temp path to core
 
         # Populate the database with known data
         with database.get_session() as session:
@@ -97,7 +89,9 @@ def mcp_server_with_populated_db(free_port):
             project1.docsets.append(docset_flask)
             session.commit()
 
-            pkg_info_django = PackageInfo(package_name="django", summary="Web framework.")
+            pkg_info_django = PackageInfo(
+                package_name="django", summary="Web framework."
+            )
             docset_django = Docset(
                 package_name="django",
                 package_version="3.2.0",
@@ -121,7 +115,9 @@ def mcp_server_with_populated_db(free_port):
             session.commit()
 
             # Add PackageInfo and Docset for "pandas"
-            pkg_info_pandas = PackageInfo(package_name="pandas", summary="Data analysis.")
+            pkg_info_pandas = PackageInfo(
+                package_name="pandas", summary="Data analysis."
+            )
             docset_pandas = Docset(
                 package_name="pandas",
                 package_version="1.3.0",
@@ -138,8 +134,10 @@ def mcp_server_with_populated_db(free_port):
             env = os.environ.copy()
             env["DEVILDEX_MCP_DB_URL"] = db_url
             env["DEVILDEX_MCP_SERVER_PORT"] = str(free_port)
-            env["DEVILDEX_DEV_MODE"] = "1" # Ensure dev mode is enabled
-            env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = str(temp_docset_path) # Pass docset path to subprocess
+            env["DEVILDEX_DEV_MODE"] = "1"  # Ensure dev mode is enabled
+            env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = str(
+                temp_docset_path
+            )  # Pass docset path to subprocess
 
             # Command to run the server
             server_command = [
@@ -295,7 +293,9 @@ async def test_get_page_content_success(
             )
             assert response.data == "Requests Page 1\n---------------"
         except Exception as e:
-            pytest.fail(f"An error occurred during 'get_page_content' tool communication: {e}")
+            pytest.fail(
+                f"An error occurred during 'get_page_content' tool communication: {e}"
+            )
 
 
 @pytest.mark.asyncio
@@ -312,11 +312,15 @@ async def test_get_page_content_default_page(
     async with client:
         try:
             response = await client.call_tool(
-                "get_page_content", {"package": "requests", "version": "2.25.1"}, timeout=5
+                "get_page_content",
+                {"package": "requests", "version": "2.25.1"},
+                timeout=5,
             )
             assert response.data == "Requests Index\n=============="
         except Exception as e:
-            pytest.fail(f"An error occurred during 'get_page_content' tool communication: {e}")
+            pytest.fail(
+                f"An error occurred during 'get_page_content' tool communication: {e}"
+            )
 
 
 @pytest.mark.asyncio
@@ -334,13 +338,22 @@ async def test_get_page_content_non_existent_page(
         try:
             response = await client.call_tool(
                 "get_page_content",
-                {"package": "requests", "version": "2.25.1", "page": "non_existent.html"},
+                {
+                    "package": "requests",
+                    "version": "2.25.1",
+                    "page": "non_existent.html",
+                },
                 timeout=5,
             )
             assert "error" in response.data
-            assert re.search(r"Page '.*?' not found in docset '.*?' version '.*?'.", response.data["error"])
+            assert re.search(
+                r"Page '.*?' not found in docset '.*?' version '.*?'.",
+                response.data["error"],
+            )
         except Exception as e:
-            pytest.fail(f"An error occurred during 'get_page_content' tool communication: {e}")
+            pytest.fail(
+                f"An error occurred during 'get_page_content' tool communication: {e}"
+            )
 
 
 @pytest.mark.asyncio
@@ -362,9 +375,14 @@ async def test_get_page_content_non_existent_package_version(
                 timeout=5,
             )
             assert "error" in response.data
-            assert re.search(r"Docset for package '.*?' version '.*?' not found", response.data["error"])
+            assert re.search(
+                r"Docset for package '.*?' version '.*?' not found",
+                response.data["error"],
+            )
         except Exception as e:
-            pytest.fail(f"An error occurred during 'get_page_content' tool communication: {e}")
+            pytest.fail(
+                f"An error occurred during 'get_page_content' tool communication: {e}"
+            )
 
 
 @pytest.mark.asyncio
@@ -382,10 +400,16 @@ async def test_get_page_content_path_traversal_attempt(
         try:
             response = await client.call_tool(
                 "get_page_content",
-                {"package": "requests", "version": "2.25.1", "page": "../../../secret.txt"},
+                {
+                    "package": "requests",
+                    "version": "2.25.1",
+                    "page": "../../../secret.txt",
+                },
                 timeout=5,
             )
             assert "error" in response.data
             assert "Invalid page path" in response.data["error"]
         except Exception as e:
-            pytest.fail(f"An error occurred during 'get_page_content' tool communication: {e}")
+            pytest.fail(
+                f"An error occurred during 'get_page_content' tool communication: {e}"
+            )

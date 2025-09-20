@@ -43,9 +43,6 @@ def fetcher_instance(tmp_path: Path) -> PackageSourceFetcher:
     )
 
 
-# --- Tests for _ensure_target_dir_exists ---
-
-
 def test_ensure_target_dir_exists_success(
     fetcher_instance: PackageSourceFetcher,
 ) -> None:
@@ -245,7 +242,10 @@ find_vcs_url_test_cases = [
     ids=[c[1] for c in find_vcs_url_test_cases],
 )
 def test_find_vcs_url_in_dict(
-    fetcher_instance: PackageSourceFetcher, urls_dict: dict, case_id, expected_url: str
+    fetcher_instance: PackageSourceFetcher,
+    urls_dict: dict,
+    case_id: int,
+    expected_url: str,
 ) -> None:
     """Verify that _find_vcs_url_in_dict correctly identifies the best VCS URL."""
     found_url = fetcher_instance._find_vcs_url_in_dict(urls_dict, "test_source")

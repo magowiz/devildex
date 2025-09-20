@@ -3,12 +3,14 @@
 import asyncio
 import configparser
 import os
-import random
 import socket
 import time
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
+import aiofiles
 import pytest
 import wx
 from fastmcp import Client
@@ -19,8 +21,11 @@ from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageInfo, RegisteredProject
 from devildex.main import DevilDexApp
 
+MIN_PORT_NUMBER = 1024
+MAX_PORT_NUMBER = 65535
 
-@pytest.fixture(scope="function")
+
+@pytest.fixture
 def free_port() -> int:
     """Fixture to provide a free port for testing."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -50,7 +55,7 @@ def mock_config_manager(mocker: MagicMock, free_port: int):
 
 
 @pytest.fixture
-def populated_db_session(tmp_path: Path):
+def populated_db_session(tmp_path: Path) -> Generator[str, Any, None]:
     """Fixture to set up an in-memory SQLite database and populate it."""
     db_url = f"sqlite:///{tmp_path / 'test_db.db'}"
     database.init_db(db_url)
@@ -108,7 +113,7 @@ def populated_db_session(tmp_path: Path):
 @pytest.fixture
 def devildex_app_fixture(
     wx_app, mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
-):
+) -> Generator[DevilDexApp, Any, None]:
     """Fixture to create the main DevilDexApp instance for UI tests."""
     mocker.patch(
         "devildex.main.DevilDexCore.bootstrap_database_and_load_data", return_value=[]
@@ -146,7 +151,7 @@ async def test_mcp_only_no_gui(free_port, tmp_path):
     mcp_port = free_port
 
     assert isinstance(mcp_port, int)
-    assert 1024 <= mcp_port <= 65535
+    assert MIN_PORT_NUMBER <= mcp_port <= MAX_PORT_NUMBER
 
     # --- Step 2: Prepare the temporary configuration file (devildex.ini) ---
     temp_config_dir = tmp_path / "temp_config"
@@ -161,7 +166,7 @@ async def test_mcp_only_no_gui(free_port, tmp_path):
         "hide_gui_when_enabled": "true",
         "port": str(mcp_port),
     }
-    with open(temp_ini_path, "w") as f:
+    async with aiofiles.open(temp_ini_path, mode="w") as f:
         config.write(f)
 
     assert temp_ini_path.exists()
@@ -236,7 +241,9 @@ async def test_mcp_only_no_gui(free_port, tmp_path):
     while time.time() - start_time < max_wait:
         try:
             async with client:
-                response = await client.call_tool("get_docsets_list", {"all_projects": True})
+                response = await client.call_tool(
+                    "get_docsets_list", {"all_projects": True}
+                )
             connected = True
             break
         except Exception as e:
@@ -253,7 +260,7 @@ async def test_mcp_only_no_gui(free_port, tmp_path):
     assert isinstance(response.data, list)
 
     # Sleep for a short time to ensure server is stable
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # --- Cleanup (will be moved to a finally block later) ---
     del os.environ["DEVILDEX_INI_PATH_OVERRIDE"]
@@ -301,7 +308,9 @@ async def test_gui_and_mcp_coexistence(
     while time.time() - start_time < max_wait:
         try:
             async with client:
-                response = await client.call_tool("get_docsets_list", {"all_projects": True})
+                response = await client.call_tool(
+                    "get_docsets_list", {"all_projects": True}
+                )
             connected = True
             break
         except Exception as e:

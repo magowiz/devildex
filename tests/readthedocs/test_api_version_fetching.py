@@ -9,6 +9,12 @@ from devildex.readthedocs.readthedocs_api import (
     _fetch_available_versions,
 )
 
+EXPECTED_VERSION_COUNT_SINGLE_PAGE = 2
+EXPECTED_VERSION_COUNT_PAGINATION = 2
+EXPECTED_API_CALL_COUNT_PAGINATION = 2
+
+HTTP_BAD_REQUEST_STATUS = 400
+
 
 class MockResponse:
     """A mock class to simulate requests.Response for testing."""
@@ -29,7 +35,7 @@ class MockResponse:
 
     def raise_for_status(self) -> None:
         """Mock the raise_for_status method."""
-        if self.status_code >= 400:
+        if self.status_code >= HTTP_BAD_REQUEST_STATUS:
             raise requests.exceptions.HTTPError(f"Error {self.status_code}")
 
 
@@ -54,7 +60,7 @@ def test_fetch_available_versions_single_page(mocker: MockerFixture) -> None:
 
     # Assert
     assert versions is not None
-    assert len(versions) == 2
+    assert len(versions) == EXPECTED_VERSION_COUNT_SINGLE_PAGE
     assert versions[0]["slug"] == "stable"
     mock_get.assert_called_once()
 
@@ -81,9 +87,9 @@ def test_fetch_available_versions_with_pagination(mocker: MockerFixture) -> None
 
     # Assert
     assert versions is not None
-    assert len(versions) == 2
+    assert len(versions) == EXPECTED_VERSION_COUNT_PAGINATION
     assert [v["slug"] for v in versions] == ["v2.0", "v1.0"]
-    assert mock_get.call_count == 2
+    assert mock_get.call_count == EXPECTED_API_CALL_COUNT_PAGINATION
 
 
 def test_fetch_available_versions_handles_network_error(mocker: MockerFixture) -> None:

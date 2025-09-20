@@ -3,8 +3,9 @@
 import json
 from unittest.mock import MagicMock, mock_open, patch
 
-# The script starts with an underscore, so we import it this way
 from devildex.local_data_parse import _external_scanner_script as scanner_script
+
+EXPECTED_PACKAGE_COUNT = 2
 
 
 @patch("devildex.local_data_parse._external_scanner_script.sys.exit")
@@ -13,8 +14,6 @@ from devildex.local_data_parse import _external_scanner_script as scanner_script
 def test_main_success(mock_distributions, mock_write_json, mock_exit) -> None:
     """Verify that the main function generates correct JSON and exits cleanly."""
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):
-
-        # Mock for 'requests'
         mock_dist1 = MagicMock()
         mock_dist1.name = "requests"
         mock_dist1.version = "2.25.1"
@@ -23,8 +22,6 @@ def test_main_success(mock_distributions, mock_write_json, mock_exit) -> None:
         mock_dist1.metadata.get_all.return_value = [
             "Source, https://github.com/psf/requests"
         ]
-
-        # Mock for 'pytest'
         mock_dist2 = MagicMock()
         mock_dist2.name = "pytest"
         mock_dist2.version = "7.0.0"
@@ -34,30 +31,20 @@ def test_main_success(mock_distributions, mock_write_json, mock_exit) -> None:
             "Homepage, https://pytest.org",
             "Documentation, https://docs.pytest.org",
         ]
-
         mock_distributions.return_value = [mock_dist1, mock_dist2]
-
-        # Act
         scanner_script.main()
 
-    # Assert
-    # 1. Check that the write function was called
     mock_write_json.assert_called_once()
-
-    # 2. Check the data passed to the write function
     call_args = mock_write_json.call_args[0]
     written_data = call_args[1]
-
     assert isinstance(written_data, list)
-    assert len(written_data) == 2
-
+    assert len(written_data) == EXPECTED_PACKAGE_COUNT
     requests_data = next(p for p in written_data if p["name"] == "requests")
     assert requests_data["version"] == "2.25.1"
     assert requests_data["summary"] == "HTTP for Humans."
     assert requests_data["project_urls"] == {
         "Source": "https://github.com/psf/requests"
     }
-
     pytest_data = next(p for p in written_data if p["name"] == "pytest")
     assert pytest_data["version"] == "7.0.0"
     assert pytest_data["summary"] == ""
@@ -76,10 +63,8 @@ def test_main_discovery_exception(
     """Verify that the script exits with 1 on a discovery error."""
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):
         mock_distributions.side_effect = Exception("Discovery failed")
-        # Act
         scanner_script.main()
 
-    # Assert
     mock_exit.assert_called_once_with(1)
     mock_log_exception.assert_called_once()
     log_call_args = mock_log_exception.call_args[0][0]
@@ -119,9 +104,7 @@ def test_main_write_json_json_error(
     mock_open, mock_json_dump, mock_logger_debug, mock_exit
 ) -> None:
     """Verify _main_write_json handles JSON serialization errors."""
-    scanner_script._main_write_json(
-        "/fake/output.json", [object()]
-    )  # object() is not JSON serializable
+    scanner_script._main_write_json("/fake/output.json", [object()])
     mock_logger_debug.assert_called_once()
     assert (
         "Exception during final JSON dump/file write"
@@ -140,9 +123,7 @@ def test_main_write_json_success(
     """Verify _main_write_json successfully writes JSON and exits."""
     output_file_path = "/fake/output.json"
     package_list = [{"name": "test", "version": "1.0"}]
-
     scanner_script._main_write_json(output_file_path, package_list)
-
     mock_open.assert_called_once_with(output_file_path, "w", encoding="utf-8")
     mock_json_dump.assert_called_once_with(package_list, mock_open(), indent=2)
     mock_logger_debug.assert_called_once_with(
@@ -152,9 +133,7 @@ def test_main_write_json_success(
 
 
 @patch("devildex.local_data_parse._external_scanner_script.sys.exit")
-@patch(
-    "devildex.local_data_parse._external_scanner_script.logger.exception"
-)  # Patch logger.exception
+@patch("devildex.local_data_parse._external_scanner_script.logger.exception")
 @patch("devildex.local_data_parse._external_scanner_script._main_write_json")
 @patch("importlib.metadata.distributions")
 def test_main_project_url_attribute_error(
@@ -167,18 +146,13 @@ def test_main_project_url_attribute_error(
         mock_dist.version = "1.0.0"
         mock_dist.metadata = MagicMock()
         mock_dist.metadata.get.return_value = ""
-
-        # Simulate an AttributeError during iteration of Project-URL entries
         mock_project_urls = MagicMock()
         mock_project_urls.__iter__.side_effect = AttributeError("Mocked AttributeError")
         mock_dist.metadata.get_all.return_value = mock_project_urls
-
         mock_distributions.return_value = [mock_dist]
-
         scanner_script.main()
 
     mock_exit.assert_called_once_with(1)
-    # Ensure _main_write_json was not called with valid data
     mock_write_json.assert_not_called()
     mock_log_exception.assert_called_once()
     log_call_args = mock_log_exception.call_args[0][0]

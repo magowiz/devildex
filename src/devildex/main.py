@@ -10,14 +10,16 @@ import wx.grid
 import wx.html2
 from wx import Size
 
+from devildex.app_paths import AppPaths  # Import AppPaths
 from devildex.config_manager import ConfigManager
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
 from devildex.database.models import PackageDetails
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
+from devildex.mcp_server.mcp_server_manager import (
+    McpServerManager,  # Import McpServerManager
+)
 from devildex.task_manager import GenerationTaskManager
-from devildex.mcp_server.mcp_server_manager import McpServerManager # Import McpServerManager
-from devildex.app_paths import AppPaths # Import AppPaths
 from devildex.ui import (
     ActionsPanel,
     DocsetGridPanel,
@@ -357,7 +359,9 @@ class DevilDexApp(wx.App):
         if self.splitter:
             main_content_sizer.Add(self.splitter, 1, wx.EXPAND | wx.ALL, 5)
 
-        self.document_view_panel = DocumentViewPanel(self.main_content_panel, self.go_home)
+        self.document_view_panel = DocumentViewPanel(
+            self.main_content_panel, self.go_home
+        )
         main_content_sizer.Add(self.document_view_panel, 1, wx.EXPAND | wx.ALL, 5)
         self.document_view_panel.Hide()
 
@@ -861,9 +865,13 @@ class DevilDexApp(wx.App):
         """Handle completion of a generation task, called by GenerationTaskManager."""
         _ = package_id
         if success:
-            log_message_to_append = f"SUCCESS: Generation for '{package_name}' completed. {message}\n"
+            log_message_to_append = (
+                f"SUCCESS: Generation for '{package_name}' completed. {message}\n"
+            )
         else:
-            log_message_to_append = f"ERROR: Generation for '{package_name}' failed. {message}\n"
+            log_message_to_append = (
+                f"ERROR: Generation for '{package_name}' failed. {message}\n"
+            )
             wx.MessageBox(
                 f"Error during generation for '{package_name}':\n{message}",
                 "Generation Error",
@@ -930,7 +938,7 @@ class DevilDexApp(wx.App):
         if event:
             event.Skip()
 
-    def OnExit(
+    def OnExit(  # noqa: N802
         self,
     ) -> int:
         """Perform cleanup before the application terminates."""
@@ -1184,11 +1192,11 @@ def main() -> None:
         else:
             # GUI mode
             # Determine if GUI warning callback should be passed
-            warning_callback = None # This will be set by the app if needed
+
 
             app = DevilDexApp(core=core) # No mcp_server_manager parameter here
 
-            # If MCP is enabled and GUI is not hidden, update core with the app's callback
+            # If MCP is enabled and GUI not hidden, update core with app's callback
             if mcp_enabled and not hide_gui:
                 core.gui_warning_callback = app._display_mcp_warning_in_gui
 

@@ -1,10 +1,14 @@
 """settings panel module."""
 
 import logging
+from typing import Callable
 
 import wx
 
 from devildex.config_manager import ConfigManager
+
+MIN_PORT_NUMBER = 1024
+MAX_PORT_NUMBER = 65535
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +16,12 @@ logger = logging.getLogger(__name__)
 class SettingsPanel(wx.Panel):
     """Settings Panel class."""
 
-    def __init__(self, parent, on_save_callback, on_cancel_callback) -> None:
+    def __init__(
+        self,
+        parent: wx.Window,
+        on_save_callback: Callable,
+        on_cancel_callback: Callable,
+    ) -> None:
         """Initialize the SettingsPanel."""
         super().__init__(parent)
         self.config_manager = ConfigManager()
@@ -124,10 +133,10 @@ class SettingsPanel(wx.Panel):
         )
         self.port_text_ctrl.SetValue(str(self.config_manager.get_mcp_server_port()))
 
-    def _on_save(self, _event) -> None:
+    def _on_save(self, _event: wx.Event) -> None:
         try:
             port = int(self.port_text_ctrl.GetValue())
-            if not (1024 <= port <= 65535):
+            if not (MIN_PORT_NUMBER <= port <= MAX_PORT_NUMBER):
                 wx.MessageBox(
                     "Port number must be between 1024 and 65535.",
                     "Invalid Port",
@@ -156,6 +165,6 @@ class SettingsPanel(wx.Panel):
                 wx.OK | wx.ICON_ERROR,
             )
 
-    def _on_cancel(self, _event) -> None:
+    def _on_cancel(self, _event: wx.Event) -> None:
         logger.info("MCP Server settings cancelled.")
         self.on_cancel_callback()

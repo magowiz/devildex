@@ -166,6 +166,80 @@ def _add_callouts_to_plugins_if_missing(
     return plugins_list, False
 
 
+def _handle_config_preparation(
+    source_project_path: str, theme_custom_dir_override: Optional[str]
+) -> tuple[dict | None, Path | None]:
+    original_config_path = _find_mkdocs_config_file(Path(source_project_path))
+    if not original_config_path:
+        logger.error("No mkdocs.yml found in source project. Aborting build.")
+        return None, None
+
+    config_content = _parse_mkdocs_config(original_config_path)
+    if config_content is None:
+        logger.error(
+            "Failed to parse config file %s. Aborting.", original_config_path
+        )
+        return None, None
+
+    if theme_custom_dir_override:
+        logger.info(
+            "Applying theme override. Custom directory: %s",
+            theme_custom_dir_override,
+        )
+        if "theme" not in config_content or not isinstance(
+            config_content.get("theme"), dict
+        ):
+            config_content["theme"] = {}
+        config_content["theme"]["custom_dir"] = theme_custom_dir_override
+        config_content["theme"]["name"] = None
+
+    processed_config, _ = _preprocess_mkdocs_config(
+        config_content, original_config_path
+    )
+
+    if processed_config:
+        logger.info(
+            "Overwriting original mkdocs.yml with final processed config..."
+        )
+        try:
+            with open(original_config_path, "w", encoding="utf-8") as f_out:
+
+                class NullSafeDumper(yaml.SafeDumper):
+                    def represent_none(self, _: None) -> None:
+                        return self.represent_scalar(
+                            "tag:yaml.org,2002:null", "null"
+                        )
+
+                NullSafeDumper.add_representer(
+                    type(None), NullSafeDumper.represent_none
+                )
+
+                yaml.dump(
+                    processed_config,
+                    f_out,
+                    Dumper=NullSafeDumper,
+                    sort_keys=False,
+                    default_flow_style=False,
+                )
+            logger.info("Successfully overwrote: %s", original_config_path)
+            try:
+                patched_content = original_config_path.read_text(encoding="utf-8")
+                logger.info(
+                    "---\nCONTENT OF PATCHED mkdocs.yml:\n%s\n---",
+                    patched_content,
+                )
+            except OSError:
+                logger.warning("Could not read back patched config for logging.")
+
+        except (OSError, yaml.YAMLError):
+            logger.exception(
+                "FATAL: Could not overwrite modified config to %s. Aborting.",
+                original_config_path,
+            )
+            return None, None
+    return processed_config, original_config_path
+
+
 def process_mkdocs_source_and_build(
     source_project_path: str,
     project_slug: str,
@@ -180,74 +254,12 @@ def process_mkdocs_source_and_build(
     final_result_path: Optional[str] = None
 
     try:
-        original_config_path = _find_mkdocs_config_file(Path(source_project_path))
-        if not original_config_path:
-            logger.error("No mkdocs.yml found in source project. Aborting build.")
-            return None
-
-        config_content = _parse_mkdocs_config(original_config_path)
-        if config_content is None:
-            logger.error(
-                "Failed to parse config file %s. Aborting.", original_config_path
-            )
-            return None
-
-        if theme_custom_dir_override:
-            logger.info(
-                "Applying theme override. Custom directory: %s",
-                theme_custom_dir_override,
-            )
-            if "theme" not in config_content or not isinstance(
-                config_content.get("theme"), dict
-            ):
-                config_content["theme"] = {}
-            config_content["theme"]["custom_dir"] = theme_custom_dir_override
-            config_content["theme"]["name"] = None
-
-        processed_config, _ = _preprocess_mkdocs_config(
-            config_content, original_config_path
+        processed_config, original_config_path = _handle_config_preparation(
+            source_project_path, theme_custom_dir_override
         )
+        if processed_config is None or original_config_path is None:
+            return None
 
-        if processed_config:
-            logger.info(
-                "Overwriting original mkdocs.yml with final processed config..."
-            )
-            try:
-                with open(original_config_path, "w", encoding="utf-8") as f_out:
-
-                    class NullSafeDumper(yaml.SafeDumper):
-                        def represent_none(self, _):
-                            return self.represent_scalar(
-                                "tag:yaml.org,2002:null", "null"
-                            )
-
-                    NullSafeDumper.add_representer(
-                        type(None), NullSafeDumper.represent_none
-                    )
-
-                    yaml.dump(
-                        processed_config,
-                        f_out,
-                        Dumper=NullSafeDumper,
-                        sort_keys=False,
-                        default_flow_style=False,
-                    )
-                logger.info("Successfully overwrote: %s", original_config_path)
-                try:
-                    patched_content = original_config_path.read_text(encoding="utf-8")
-                    logger.info(
-                        "---\nCONTENT OF PATCHED mkdocs.yml:\n%s\n---",
-                        patched_content,
-                    )
-                except OSError:
-                    logger.warning("Could not read back patched config for logging.")
-
-            except (OSError, yaml.YAMLError):
-                logger.exception(
-                    "FATAL: Could not overwrite modified config to %s. Aborting.",
-                    original_config_path,
-                )
-                return None
         final_html_output_dir = _prepare_mkdocs_output_directory(
             base_output_dir, project_slug, version_identifier
         )

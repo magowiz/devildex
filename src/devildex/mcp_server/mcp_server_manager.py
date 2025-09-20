@@ -3,14 +3,14 @@
 import logging
 import os
 import subprocess
-import sys # Added import
+import sys
 import threading
 import time
-from typing import Optional, Any # Added Any
-
-import requests
+from typing import Optional
 
 from devildex.config_manager import ConfigManager
+
+SERVER_STARTUP_TIMEOUT_SECONDS = 30
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +36,14 @@ class McpServerManager:
             env["DEVILDEX_DEV_MODE"] = "1"
         # Pass the docset base output path from the environment to the subprocess
         if os.getenv("DEVILDEX_DOCSET_BASE_OUTPUT_PATH"):
-            env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = os.getenv("DEVILDEX_DOCSET_BASE_OUTPUT_PATH")
+            env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = os.getenv(
+                "DEVILDEX_DOCSET_BASE_OUTPUT_PATH"
+            )
 
         # Add the project's src directory to PYTHONPATH to ensure correct module loading
-        env["PYTHONPATH"] = os.path.abspath("src") + os.pathsep + env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            os.path.abspath("src") + os.pathsep + env.get("PYTHONPATH", "")
+        )
 
         # Set the environment variables for the subprocess
         # The initial env setup already copied os.environ, so we just update it.
@@ -51,7 +55,7 @@ class McpServerManager:
         ]
 
         # Start the server process
-        self.server_process = subprocess.Popen(
+        self.server_process = subprocess.Popen(  # noqa: S603
             server_command,
             env=env,
             cwd=os.getcwd(),  # Run from project root
@@ -74,7 +78,7 @@ class McpServerManager:
 
         # Wait for the server process to be set and running
         start_time = time.time()
-        while time.time() - start_time < 30: # 30-second timeout
+        while time.time() - start_time < SERVER_STARTUP_TIMEOUT_SECONDS: # 30s timeout
             if self.server_process and self.server_process.poll() is None:
                 logger.info("MCP server process is running.")
                 return True
@@ -100,7 +104,7 @@ class McpServerManager:
                 self.server_process.terminate()
                 self.server_process.wait(timeout=5)
                 if self.server_process.poll() is None:
-                    logger.warning("MCP server process did not terminate gracefully. Killing...")
+                    logger.warning("MCP server process did not terminate. Killing...")
                     self.server_process.kill()
             self.server_thread.join(timeout=10)  # Give it some time to shut down
             if self.server_thread.is_alive():

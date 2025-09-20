@@ -8,6 +8,9 @@ from devildex.local_data_parse.venv_inventory import (
     get_installed_packages_with_project_urls,
 )
 
+EXPECTED_PACKAGE_COUNT_SUCCESS = 2
+EXPECTED_FILTERED_PACKAGE_COUNT = 2
+
 
 def create_mock_distribution(
     name: str, version: str, project_urls_metadata: list[str] | None
@@ -46,7 +49,7 @@ def test_get_installed_packages_success(mock_distributions: MagicMock) -> None:
     packages = get_installed_packages_with_project_urls()
 
     # Assert
-    assert len(packages) == 2
+    assert len(packages) == EXPECTED_PACKAGE_COUNT_SUCCESS
     assert all(isinstance(p, PackageDetails) for p in packages)
 
     requests_pkg = next(p for p in packages if p.name == "requests")
@@ -78,7 +81,7 @@ def test_get_installed_packages_with_explicit_filter(
     packages = get_installed_packages_with_project_urls(explicit=explicit_set)
 
     # Assert
-    assert len(packages) == 2
+    assert len(packages) == EXPECTED_FILTERED_PACKAGE_COUNT
     package_names = {p.name for p in packages}
     assert package_names == {"requests", "pytest"}
 

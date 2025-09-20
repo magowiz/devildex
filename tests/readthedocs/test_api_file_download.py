@@ -8,6 +8,8 @@ from pytest_mock import MockerFixture
 
 from devildex.readthedocs.readthedocs_api import _download_file
 
+HTTP_BAD_REQUEST_STATUS = 400
+
 FAKE_FILE_CONTENT = b"some-binary-zip-content"
 
 
@@ -21,7 +23,7 @@ class MockStreamResponse:
 
     def raise_for_status(self) -> None:
         """Mock raise_for_status to raise on bad status codes."""
-        if self.status_code >= 400:
+        if self.status_code >= HTTP_BAD_REQUEST_STATUS:
             raise requests.exceptions.HTTPError(f"Error {self.status_code}")
 
     def iter_content(self, chunk_size: int = 8192) -> collections.abc:
