@@ -111,7 +111,10 @@ def populated_db_session(tmp_path: Path) -> Generator[str, Any, None]:
 
 @pytest.fixture
 def devildex_app_fixture(
-    wx_app: wx.App, mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
+    wx_app: wx.App,
+    mock_config_manager: MagicMock,
+    populated_db_session: str,
+    mocker: MagicMock,
 ) -> Generator[DevilDexApp, Any, None]:
     """Fixture to create the main DevilDexApp instance for UI tests."""
     mocker.patch(
@@ -146,13 +149,13 @@ def test_gui_only_no_mcp_starts(
 
 @pytest.mark.asyncio
 async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
+    """Test mcp only no gui."""
     test_name = "single_instance"
     mcp_port = free_port
 
     assert isinstance(mcp_port, int)
     assert MIN_PORT_NUMBER <= mcp_port <= MAX_PORT_NUMBER
 
-    # --- Step 2: Prepare the temporary configuration file (devildex.ini) ---
     temp_config_dir = tmp_path / "temp_config"
     temp_config_dir.mkdir()
     temp_ini_path = temp_config_dir / "devildex.ini"
@@ -191,22 +194,15 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
 
     main_app.OnInit()
     main_app._initialize_data_and_managers()
-
-    # Assertion 3.1: Verify the main application's core is present
     assert (
         main_app.core is not None
     ), "main_app.core should not be None after initialization."
 
-    # Assertion 3.2: Verify the MCP server manager is present
     assert (
         main_app.core.mcp_server_manager is not None
     ), "MCP server manager should be initialized."
 
-    # Assertion 3.3: Verify the MCP server manager is configured with the correct port
-    # This requires McpServerManager to expose its port, or we check the ConfigManager again
-    # Since McpServerManager's __init__ now takes mcp_port, we can assume it's correct if it's not None.
-    # We can also check the ConfigManager's state as seen by the app.
-    app_config = ConfigManager()  # Get the ConfigManager instance used by the app
+    app_config = ConfigManager()
     assert (
         app_config.get_mcp_server_port() == mcp_port
     ), "App's ConfigManager should reflect the correct MCP port."
@@ -222,7 +218,6 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
     assert not main_app.main_frame.IsShown(), "Main frame should be hidden."
 
     # --- Step 4: Test MCP client ---
-    from fastmcp import Client
 
     client_config = {
         "mcpServers": {

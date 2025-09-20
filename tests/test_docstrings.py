@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
+from pytest_mock import MockerFixture
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 
@@ -141,7 +142,9 @@ def test_documentation_generation_for_package(
         logger.error(f"Found entry point html expected:{entry_point_file}")
 
 
-def test_build_pdoc_command_no_modules(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_build_pdoc_command_no_modules(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _build_pdoc_command handles no modules to document."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
@@ -178,7 +181,9 @@ def test_generate_docs_from_folder_non_existent_input_folder(
     )
 
 
-def test_build_pdoc_command_with_template_dir(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_build_pdoc_command_with_template_dir(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _build_pdoc_command includes template_dir when provided."""
     template_dir = tmp_path / "my_template"
     template_dir.mkdir()

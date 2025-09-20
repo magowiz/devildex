@@ -3,9 +3,12 @@
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
+import pytest
 import requests
+from pytest_mock import MockerFixture
 
 from devildex.readthedocs.readthedocs_src import (
     CloneAttemptStatus,
@@ -27,10 +30,9 @@ from devildex.readthedocs.readthedocs_src import (
 EXPECTED_CLONE_ATTEMPTS = 2
 
 
-import pytest
-
-
-def test_get_vcs_executable_git_not_found(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_get_vcs_executable_git_not_found(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _get_vcs_executable logs error when git not found."""
     mocker.patch("shutil.which", return_value=None)
     with caplog.at_level(logging.ERROR):
@@ -66,7 +68,9 @@ def test_get_vcs_executable_bzr_found(mocker: MockerFixture) -> None:
     assert _get_vcs_executable(True) == "/usr/bin/bzr"
 
 
-def test_get_vcs_executable_bzr_not_found(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_get_vcs_executable_bzr_not_found(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _get_vcs_executable logs error when bzr not found."""
     mocker.patch("shutil.which", return_value=None)
     with caplog.at_level(logging.ERROR):
@@ -74,7 +78,9 @@ def test_get_vcs_executable_bzr_not_found(mocker: MockerFixture, caplog: pytest.
     assert "Error: 'bzr' command not found." in caplog.text
 
 
-def test_attempt_single_branch_clone_success(mocker: MockerFixture, tmp_path: Path) -> None:
+def test_attempt_single_branch_clone_success(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
     """Verify successful clone attempt."""
     mock_subprocess_run = mocker.patch(
         "subprocess.run", return_value=MagicMock(returncode=0)
@@ -164,7 +170,9 @@ def test_cleanup_non_existent_dir(tmp_path: Path) -> None:
     assert not non_existent_dir.exists()
 
 
-def test_cleanup_os_error(tmp_path: Path, mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_cleanup_os_error(
+    tmp_path: Path, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _cleanup handles OSError during rmtree."""
     test_dir = tmp_path / "test_dir"
     test_dir.mkdir()
@@ -176,7 +184,9 @@ def test_cleanup_os_error(tmp_path: Path, mocker: MockerFixture, caplog: pytest.
     assert "Error during deleting della repository cloned" in caplog.text
 
 
-def test_find_doc_source_in_clone_not_found(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_find_doc_source_in_clone_not_found(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify find_doc_source_in_clone returns None if doc source not found."""
     repo_path = tmp_path / "my_repo"
     repo_path.mkdir()
@@ -204,7 +214,9 @@ def test_find_doc_dir_in_repo_success(tmp_path: Path) -> None:
     assert result == str(docs_dir)
 
 
-def test_find_doc_dir_in_repo_no_conf_py(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_find_doc_dir_in_repo_no_conf_py(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _find_doc_dir_in_repo logs warning if doc dir exists but no conf.py."""
     repo_path = tmp_path / "repo"
     repo_path.mkdir()
@@ -263,7 +275,9 @@ def test_find_sphinx_doc_requirements_file_success(tmp_path: Path) -> None:
     assert result == (source_dir / "requirements.txt")
 
 
-def test_find_sphinx_doc_requirements_file_not_found(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_find_sphinx_doc_requirements_file_not_found(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _find_sphinx_doc_requirements_file returns None if no file is found."""
     source_dir = tmp_path / "source"
     source_dir.mkdir()
@@ -316,7 +330,9 @@ def test_build_sphinx_docs_success(mocker: MockerFixture, tmp_path: Path) -> Non
     mock_execute_command.assert_called_once()
 
 
-def test_build_sphinx_docs_conf_py_not_found(mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_build_sphinx_docs_conf_py_not_found(
+    mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify build_sphinx_docs returns None if conf.py is not found."""
     mocker.patch("devildex.readthedocs.readthedocs_src.execute_command")
 
@@ -347,7 +363,9 @@ def test_extract_repo_url_branch_success(mocker: MockerFixture) -> None:
     assert url == "https://github.com/user/repo"
 
 
-def test_extract_repo_url_branch_no_repo_url(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_extract_repo_url_branch_no_repo_url(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _extract_repo_url_branch handles missing repo URL."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"default_branch": "main"}
@@ -361,7 +379,9 @@ def test_extract_repo_url_branch_no_repo_url(mocker: MockerFixture, caplog: pyte
     assert "URL del repository sources non trovato" in caplog.text
 
 
-def test_extract_repo_url_branch_request_exception(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_extract_repo_url_branch_request_exception(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _extract_repo_url_branch handles requests.exceptions.RequestException."""
     mocker.patch(
         "requests.get",
@@ -404,7 +424,9 @@ def test_run_clone_success(mocker: MockerFixture, tmp_path: Path) -> None:
     )
 
 
-def test_run_clone_no_valid_branches(mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_run_clone_no_valid_branches(
+    mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify run_clone handles no valid branches to attempt."""
     mocker.patch(
         "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
@@ -431,7 +453,9 @@ def test_run_clone_no_valid_branches(mocker: MockerFixture, tmp_path: Path, capl
     assert "No valid branches to attempt for cloning" in caplog.text
 
 
-def test_run_clone_vcs_not_found(mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_run_clone_vcs_not_found(
+    mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify run_clone handles VCS executable not found."""
     mocker.patch(
         "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
@@ -457,7 +481,9 @@ def test_run_clone_vcs_not_found(mocker: MockerFixture, tmp_path: Path, caplog: 
     assert result is None
 
 
-def test_run_clone_failed_critical_prepare_dir(mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_run_clone_failed_critical_prepare_dir(
+    mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify run_clone handles critical failure during directory preparation."""
     mocker.patch(
         "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
@@ -515,7 +541,9 @@ def test_run_clone_failed_critical_vcs_not_found_exec(
     mock_attempt_single_branch_clone.assert_called_once()
 
 
-def test_run_clone_all_attempts_fail(mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_run_clone_all_attempts_fail(
+    mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify run_clone returns None when all branch attempts fail."""
     mocker.patch(
         "devildex.readthedocs.readthedocs_src._get_unique_branches_to_attempt",
@@ -543,7 +571,9 @@ def test_run_clone_all_attempts_fail(mocker: MockerFixture, tmp_path: Path, capl
     assert mock_attempt_single_branch_clone.call_count == EXPECTED_CLONE_ATTEMPTS
 
 
-def test_attempt_clone_and_process_result_success(mocker: MockerFixture, tmp_path: Path) -> None:
+def test_attempt_clone_and_process_result_success(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
     """Verify _attempt_clone_and_process_result handles successful clone."""
     mocker.patch("devildex.readthedocs.readthedocs_src.run_clone", return_value="main")
 
@@ -583,7 +613,9 @@ def test_attempt_clone_and_process_result_failure(
     assert "Cloning failed for 'test_project'" in caplog.text
 
 
-def test_handle_repository_cloning_no_repo_url(mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_handle_repository_cloning_no_repo_url(
+    mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify _handle_repository_cloning handles no repository URL."""
     cloning_config = RtdCloningConfig(
         repo_url=None,

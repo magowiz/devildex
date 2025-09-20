@@ -17,6 +17,10 @@ from pytest_mock import MockerFixture
 
 from devildex.fetcher import PackageSourceFetcher
 
+EXPECTED_GIT_CALL_COUNT = 2
+EXPECTED_DOWNLOAD_EXTRACT_COUNT = 8
+EXPECTED_GH_DOWNLOAD_EXTRACT_COUNT = 4
+
 
 @pytest.fixture
 def fetcher(tmp_path: Path) -> PackageSourceFetcher:
@@ -79,8 +83,7 @@ def test_fetch_github_archive_falls_back_on_urls(
 
     # Assert
     assert result is True
-    assert mock_download_extract.call_count == 4
-    # Check that it was called with all the expected URLs in order
+    assert mock_download_extract.call_count == EXPECTED_GH_DOWNLOAD_EXTRACT_COUNT
     expected_calls = [
         call(url, mocker.ANY, from_vcs=True) for url in archive_urls_to_try
     ]
@@ -100,7 +103,7 @@ def test_fetch_github_archive_all_fail(
     result = fetcher._try_fetch_tag_github_archive(repo_url, tag_variations)
 
     assert result is False
-    assert mock_download_extract.call_count == 8
+    assert mock_download_extract.call_count == EXPECTED_DOWNLOAD_EXTRACT_COUNT
 
 
 def test_fetch_github_archive_not_a_github_url(
@@ -171,7 +174,7 @@ def test_shallow_clone_falls_back_on_tags(
     result = fetcher._try_fetch_tag_shallow_clone(repo_url, tag_variations)
 
     assert result is True
-    assert mock_run_git.call_count == 2
+    assert mock_run_git.call_count == EXPECTED_GIT_CALL_COUNT
     first_call_args = mock_run_git.call_args_list[0].args[0]
     second_call_args = mock_run_git.call_args_list[1].args[0]
 
@@ -195,7 +198,7 @@ def test_shallow_clone_all_fail(
     result = fetcher._try_fetch_tag_shallow_clone(repo_url, tag_variations)
 
     assert result is False
-    assert mock_run_git.call_count == 2
+    assert mock_run_git.call_count == EXPECTED_GIT_CALL_COUNT
     mock_cleanup_git.assert_not_called()
 
 

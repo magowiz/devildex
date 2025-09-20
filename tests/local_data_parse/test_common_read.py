@@ -1,7 +1,9 @@
 """Tests for the common_read module."""
 
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 from devildex.local_data_parse.common_read import (
     _parse_pep621_dependencies,
@@ -78,7 +80,9 @@ def test_no_config_files_found(tmp_path: Path) -> None:
     assert deps == set()
 
 
-def test_handles_malformed_pyproject_toml(tmp_path: Path, caplog) -> None:
+def test_handles_malformed_pyproject_toml(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify it handles a corrupt pyproject.toml gracefully."""
     malformed_content = "this is not valid toml"
     (tmp_path / "pyproject.toml").write_text(malformed_content)
@@ -109,7 +113,9 @@ def test_parse_pep621_dependencies_non_string_dep_item() -> None:
 
 
 @patch("devildex.local_data_parse.common_read.logger.warning")
-def test_parse_requirement_line_invalid_requirement(mock_logger_warning) -> None:
+def test_parse_requirement_line_invalid_requirement(
+    mock_logger_warning: MagicMock,
+) -> None:
     """Verify _parse_requirement_line handles InvalidRequirement."""
     result = _parse_requirement_line("invalid-package==", "fake_path.txt")
     assert result is None
