@@ -6,8 +6,6 @@ on:
       - 'v*' # Trigger on tags starting with v
     branches: # Added branches trigger
       - master # Trigger on push to master
-    branches: # Added branches trigger
-      - master # Trigger on push to master
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
