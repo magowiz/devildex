@@ -36,9 +36,7 @@ def free_port() -> int:
 @pytest.fixture(scope="function")
 def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any, None]:
     """Fixture to set up an in-memory SQLite database, populate it."""
-    temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    temp_db_file.close()
-    db_url = f"sqlite:///{temp_db_file.name}"
+    db_url = "sqlite:///:memory:"
     with tempfile.TemporaryDirectory() as temp_docset_dir:
         temp_docset_path = Path(temp_docset_dir)
         requests_docset_path = temp_docset_path / "requests" / "2.25.1"
@@ -153,7 +151,7 @@ def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any,
                 if stderr:
                     logger.error(f"\nServer STDERR:\n{stderr.decode()}")
         database.DatabaseManager.close_db()
-        Path(temp_db_file.name).unlink(missing_ok=True)  # Delete the temporary file
+        
 
 
 @pytest.mark.asyncio
