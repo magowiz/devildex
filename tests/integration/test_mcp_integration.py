@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
-import aiofiles
 import pytest
 import wx
 from fastmcp import Client

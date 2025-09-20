@@ -2,23 +2,21 @@
 
 import logging
 import os
-import uuid
 import socket
 import subprocess
 import tempfile
 import time
+import uuid
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
 import pytest
 from fastmcp import Client
-
-from devildex import database
-from devildex.core import DevilDexCore
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from devildex.core import DevilDexCore
 from devildex.database import (
     Base,
     Docset,
@@ -40,7 +38,7 @@ def free_port() -> int:
 @pytest.fixture(scope="function")
 def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any, None]:
     """Fixture to set up an in-memory SQLite database, populate it."""
-    db_url = f"sqlite:///:memory:?cache=shared&uri=true"
+    db_url = "sqlite:///:memory:?cache=shared&uri=true"
     engine = create_engine(db_url)
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -159,7 +157,7 @@ def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any,
                 if stderr:
                     logger.error(f"\nServer STDERR:\n{stderr.decode()}")
             engine.dispose()
-        
+
 
 
 @pytest.mark.asyncio
