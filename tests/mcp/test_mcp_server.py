@@ -1,12 +1,15 @@
 """module that tests mcp server."""
 
+import logging
 import os
 import re
 import socket
 import subprocess
 import tempfile
 import time
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastmcp import Client
@@ -19,9 +22,11 @@ from devildex.database import (
     RegisteredProject,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @pytest.fixture(scope="module")
-def free_port():
+def free_port() -> int:
     """Fixture to provide a free port for testing."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
@@ -29,7 +34,7 @@ def free_port():
 
 
 @pytest.fixture(scope="module")
-def mcp_server_with_populated_db(free_port):
+def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any, None]:
     """Fixture to set up an in-memory SQLite database, populate it."""
     temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
     temp_db_file.close()
@@ -48,14 +53,11 @@ def mcp_server_with_populated_db(free_port):
         database.init_db(db_url)
         core_instance = DevilDexCore(
             database_url=db_url, docset_base_output_path=temp_docset_path
-        )  # Pass the temp path to core
-
-        # Populate the database with known data
+        )
         with database.get_session() as session:
-            # Add a project
             project1 = RegisteredProject(
                 project_name="TestProject",
-                project_path=str(temp_docset_path),  # Point to the temp docset dir
+                project_path=str(temp_docset_path),
                 python_executable="/path/to/python",
             )
             session.add(project1)
@@ -95,8 +97,6 @@ def mcp_server_with_populated_db(free_port):
             )
             session.add_all([pkg_info_django, docset_django])
             session.commit()
-
-            # Add PackageInfo and Docset for "numpy"
             pkg_info_numpy = PackageInfo(
                 package_name="numpy", summary="Numerical computing."
             )
@@ -133,52 +133,34 @@ def mcp_server_with_populated_db(free_port):
                 "python",
                 "src/devildex/mcp_server/server.py",
             ]
-
-            # Start the server process
-            server_process = subprocess.Popen(
+            server_process = subprocess.Popen(  # noqa: S603
                 server_command,
                 env=env,
-                cwd=os.getcwd(),  # Run from project root
-                stdout=subprocess.PIPE,  # Capture stdout
-                stderr=subprocess.PIPE,  # Capture stderr
+                cwd=os.getcwd(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
-            # Give the server some time to start up
             time.sleep(10)
-
-            # Yield the core instance for tests to use
             yield core_instance
 
         finally:
-            # Teardown: Terminate the server process and close the database
             if server_process:
                 server_process.terminate()
-                server_process.wait(timeout=5)  # Wait for process to terminate
-                # Log any remaining output from the server process
+                server_process.wait(timeout=5)
                 stdout, stderr = server_process.communicate()
                 if stdout:
-                    print(f"\nServer STDOUT:\n{stdout.decode()}")
+                    logger.info(f"\nServer STDOUT:\n{stdout.decode()}")
                 if stderr:
-                    print(f"\nServer STDERR:\n{stderr.decode()}")
+                    logger.error(f"\nServer STDERR:\n{stderr.decode()}")
         database.DatabaseManager.close_db()
-        # Clean up the temporary database file
         Path(temp_db_file.name).unlink(missing_ok=True)  # Delete the temporary file
 
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_all_projects(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_docsets_list' tool with all_projects=True."""
-    # The server under test (src/devildex/mcp_server/server.py) will use the
-    # DevilDexCore instance provided by this fixture.
-    # We need to ensure the server is running and configured to use this DB.
-    # For this test, we assume the server is running and its DevilDexMcp
-    # singleton has been initialized with the core_instance from this fixture.
-
-    # This test still needs to connect to the *running* server.
-    # The fixture populates the DB for the core instance that the server *should* use.
-    # The actual connection is still via HTTP.
-
     config = {
         "mcpServers": {
             "my_server": {"url": f"http://127.0.0.1:{free_port}/mcp"},
@@ -190,14 +172,12 @@ async def test_get_docsets_list_all_projects(
             docsets_list = await client.call_tool(
                 "get_docsets_list", {"all_projects": True}, timeout=5
             )
-            # Assert it's a list
             assert isinstance(docsets_list.data, list)
-            # Assert it contains the expected items from the populated DB
             expected_names = ["requests", "flask", "django", "numpy", "pandas"]
             assert sorted(docsets_list.data) == sorted(
                 expected_names
-            )  # Check exact content
-            print(f"Docsets list (all_projects): {docsets_list.data}")
+            )
+            logger.info(f"Docsets list (all_projects): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
                 "An error occurred during 'get_docsets_list' "
@@ -207,7 +187,7 @@ async def test_get_docsets_list_all_projects(
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_by_project(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_docsets_list' tool with a specific project."""
     config = {
@@ -218,7 +198,6 @@ async def test_get_docsets_list_by_project(
     client = Client(config, timeout=5)
     async with client:
         try:
-            # Use the project name from the populated DB
             docsets_list = await client.call_tool(
                 "get_docsets_list", {"project": "TestProject"}, timeout=5
             )
@@ -226,8 +205,8 @@ async def test_get_docsets_list_by_project(
             assert isinstance(docsets_list.data, list)
             assert sorted(docsets_list.data) == sorted(
                 expected_names
-            )  # Check exact content
-            print(f"Docsets list (by project): {docsets_list.data}")
+            )
+            logger.info(f"Docsets list (by project): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
                 "An error occurred during 'get_docsets_list' "
@@ -237,7 +216,7 @@ async def test_get_docsets_list_by_project(
 
 @pytest.mark.asyncio
 async def test_get_docsets_list_invalid_params(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_docsets_list' tool with invalid parameters."""
     config = {
@@ -252,7 +231,7 @@ async def test_get_docsets_list_invalid_params(
             }
             assert isinstance(response.data, dict)
             assert response.data == expected_error
-            print(f"Docsets list (invalid params): {response.data}")
+            logger.info(f"Docsets list (invalid params): {response.data}")
         except Exception as e:
             pytest.fail(
                 "An error occurred during 'get_docsets_list' (invalid params)"
@@ -262,7 +241,7 @@ async def test_get_docsets_list_invalid_params(
 
 @pytest.mark.asyncio
 async def test_get_page_content_success(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_page_content' tool for successful retrieval."""
     config = {
@@ -287,7 +266,7 @@ async def test_get_page_content_success(
 
 @pytest.mark.asyncio
 async def test_get_page_content_default_page(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_page_content' tool for default page retrieval."""
     config = {
@@ -312,7 +291,7 @@ async def test_get_page_content_default_page(
 
 @pytest.mark.asyncio
 async def test_get_page_content_non_existent_page(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_page_content' tool for a non-existent page."""
     config = {
@@ -345,7 +324,7 @@ async def test_get_page_content_non_existent_page(
 
 @pytest.mark.asyncio
 async def test_get_page_content_non_existent_package_version(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_page_content' tool for a non-existent package/version."""
     config = {
@@ -374,7 +353,7 @@ async def test_get_page_content_non_existent_package_version(
 
 @pytest.mark.asyncio
 async def test_get_page_content_path_traversal_attempt(
-    mcp_server_with_populated_db: DevilDexCore, free_port
+    mcp_server_with_populated_db: DevilDexCore, free_port: int
 ) -> None:
     """Tests the 'get_page_content' tool for path traversal attempts."""
     config = {
