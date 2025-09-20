@@ -54,7 +54,7 @@ sphinxcontrib-programoutput = "^0.18"
 sphinx-copybutton = "^0.5.2"
 
 [tool.poetry.group.lint.dependencies]
-ruff = "^0.12.10"
+ruff = "^0.13.1"
 black = "^25.1.0"
 
 [project.scripts]
