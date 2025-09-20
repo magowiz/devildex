@@ -1,10 +1,12 @@
 """test main app ui module."""
 
+import os
 import pytest
 import wx
 import wx.grid
 
 from devildex.main import DevilDexApp
+from devildex.constants import NOT_AVAILABLE_BTN_LABEL
 
 
 @pytest.mark.ui
@@ -32,9 +34,11 @@ def test_view_mode_selector_initial_value(devildex_app: DevilDexApp) -> None:
     ), "View mode selector has incorrect initial value"
 
 
+@pytest.mark.parametrize("default_docset_status", [NOT_AVAILABLE_BTN_LABEL])
 @pytest.mark.ui
-def test_grid_selection_enables_buttons(devildex_app: DevilDexApp) -> None:
+def test_grid_selection_enables_buttons(devildex_app: DevilDexApp, populated_db_session: tuple, default_docset_status: str) -> None:
     """Test that selecting a row in the grid enables the proper action buttons."""
+    db_url, _, _, _, _, _ = populated_db_session
     actions_panel = devildex_app.actions_panel
     assert actions_panel is not None, "Actions panel should exist"
 

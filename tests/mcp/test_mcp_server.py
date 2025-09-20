@@ -34,9 +34,7 @@ def mcp_server_process(
     free_port: int, populated_db_session: tuple[str, Any, str, Path, DevilDexCore]
 ) -> Generator[tuple[int, str], Any, None]:
     """Fixture to start the MCP server as a subprocess."""
-    db_url, SessionLocal, project_name, temp_docset_path, core_instance = (
-        populated_db_session
-    )
+    db_url, SessionLocal, project_name, temp_docset_path, core_instance = populated_db_session
 
     project_data_to_save: RegisteredProjectData = {
         "project_name": project_name,

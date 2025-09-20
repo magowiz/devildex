@@ -1,6 +1,7 @@
 """main application."""
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -1175,7 +1176,11 @@ def main() -> None:
     try:
         # Create core instance early to get database_url
         app_paths = AppPaths()
-        core = DevilDexCore(docset_base_output_path=app_paths.docsets_base_dir)
+        custom_db_path = os.getenv("DEVILDEX_CUSTOM_DB_PATH")
+        if custom_db_path:
+            core = DevilDexCore(database_url=f"sqlite:///{custom_db_path}", docset_base_output_path=app_paths.docsets_base_dir)
+        else:
+            core = DevilDexCore(docset_base_output_path=app_paths.docsets_base_dir)
 
         db_url_for_mcp = core.database_url # Get database_url from core
 

@@ -41,6 +41,7 @@ class PackageDetails:
     initial_source_path: Path | str | None = None
     vcs_url: str | None = None
     rtd_url: str | None = None
+    status: str = "unknown" # New attribute
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PackageDetails":

@@ -253,7 +253,7 @@ class DevilDexCore:
                     "package_version": str(pkg_version),
                     "summary": str(pkg_summary) if pkg_summary else None,
                     "project_urls": pkg_project_urls,
-                    "initial_docset_status": "unknown",
+                    "initial_docset_status": pkg_detail.status,
                 }
                 if not is_fallback_data and project_db_name:
                     build_dict["project_name"] = project_db_name

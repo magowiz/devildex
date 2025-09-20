@@ -17,7 +17,8 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from devildex.core import DevilDexCore
 from devildex.database import db_manager
-from devildex.database.models import Base, Docset, PackageInfo, RegisteredProject
+from devildex.database.models import Base, Docset, PackageInfo, RegisteredProject, PackageDetails
+from devildex.constants import NOT_AVAILABLE_BTN_LABEL, AVAILABLE_BTN_LABEL # Added AVAILABLE_BTN_LABEL
 
 logger = logging.getLogger(__name__)
 
@@ -127,20 +128,33 @@ def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
 @pytest.fixture(scope="function")
 def populated_db_session(
     db_connection_and_tables: tuple[str, Any, Any],
-) -> Generator[tuple[str, Any, str, Path, DevilDexCore], Any, None]:
+    default_docset_status: str = AVAILABLE_BTN_LABEL, # Changed to constant
+) -> Generator[tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]], Any, None]:
     """Fixture to populate the database with test data."""
     db_url, engine, SessionLocal = db_connection_and_tables
 
+    # Set the environment variable here, before any DevilDexCore instance might be created
+    # that relies on it.
+    os.environ["DEVILDEX_CUSTOM_DB_PATH"] = db_url.replace("sqlite:///", "")
+
     with tempfile.TemporaryDirectory() as temp_docset_dir:
         temp_docset_path = Path(temp_docset_dir)
-        requests_docset_path = temp_docset_path / "requests" / "2.25.1"
-        requests_docset_path.mkdir(parents=True, exist_ok=True)
-        (requests_docset_path / "index.html").write_text("<h1>Requests Index</h1>")
-        (requests_docset_path / "page1.html").write_text("<h2>Requests Page 1</h2>")
-        (requests_docset_path / "subdir").mkdir(exist_ok=True)
-        (requests_docset_path / "subdir" / "page2.html").write_text(
-            "<h3>Requests Subdir Page 2</h3>"
-        )
+        # Determine if docset files should be created on disk
+        create_disk_files = default_docset_status == "available"
+
+        if create_disk_files:
+            docset_names_versions = {
+                "requests": "2.25.1",
+                "flask": "2.0.0",
+                "django": "3.2.0",
+                "numpy": "1.20.0",
+                "pandas": "1.3.0",
+            }
+            for name, version in docset_names_versions.items():
+                docset_path = temp_docset_path / name / version
+                docset_path.mkdir(parents=True, exist_ok=True)
+                (docset_path / "index.html").write_text(f"<h1>{name} {version} Index</h1>")
+
 
         core_instance = DevilDexCore(
             database_url=db_url, docset_base_output_path=temp_docset_path
@@ -152,16 +166,16 @@ def populated_db_session(
         docset_requests = Docset(
             package_name="requests",
             package_version="2.25.1",
-            status="available",
-            index_file_name="index.html",
+            status=default_docset_status,
+            index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_requests,
         )
         pkg_info_flask = PackageInfo(package_name="flask", summary="Web framework.")
         docset_flask = Docset(
             package_name="flask",
             package_version="2.0.0",
-            status="available",
-            index_file_name="index.html",
+            status=default_docset_status,
+            index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_flask,
         )
         pkg_info_django = PackageInfo(
@@ -170,8 +184,8 @@ def populated_db_session(
         docset_django = Docset(
             package_name="django",
             package_version="3.2.0",
-            status="available",
-            index_file_name="index.html",
+            status=default_docset_status,
+            index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_django,
         )
         pkg_info_numpy = PackageInfo(
@@ -180,8 +194,8 @@ def populated_db_session(
         docset_numpy = Docset(
             package_name="numpy",
             package_version="1.20.0",
-            status="available",
-            index_file_name="index.html",
+            status=default_docset_status,
+            index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_numpy,
         )
         pkg_info_pandas = PackageInfo(
@@ -190,8 +204,8 @@ def populated_db_session(
         docset_pandas = Docset(
             package_name="pandas",
             package_version="1.3.0",
-            status="available",
-            index_file_name="index.html",
+            status=default_docset_status,
+            index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_pandas,
         )
 
@@ -221,4 +235,10 @@ def populated_db_session(
             project1.docsets.append(docset_flask)
             session.commit()
 
-        yield db_url, SessionLocal, project_name, temp_docset_path, core_instance
+        yield db_url, SessionLocal, project_name, temp_docset_path, core_instance, [
+            PackageDetails(name="requests", version="2.25.1", status=default_docset_status),
+            PackageDetails(name="flask", version="2.0.0", status=default_docset_status),
+            PackageDetails(name="django", version="3.2.0", status=default_docset_status),
+            PackageDetails(name="numpy", version="1.20.0", status=default_docset_status),
+            PackageDetails(name="pandas", version="1.3.0", status=default_docset_status),
+        ]
