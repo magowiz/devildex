@@ -33,7 +33,7 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any, None]:
     """Fixture to set up an in-memory SQLite database, populate it."""
     temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
