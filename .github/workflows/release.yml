@@ -74,6 +74,8 @@ jobs:
       run: |
         git push origin master
         git push origin v${{ steps.new_version.outputs.VERSION }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} # Use your PAT here
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
