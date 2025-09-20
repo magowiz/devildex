@@ -25,3 +25,4 @@ tools/
 .env
 git_push_all.sh
 github.log
+.pytest_temp_logs/

@@ -345,9 +345,37 @@ class DevilDexCore:
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
 
-    def get_docset_path(self, package_name: str, version: str) -> Path:
-        """Constructs and returns the path to a specific docset."""
-        return self.docset_base_output_path / package_name / version
+    def get_docset_path(self, package_name: str, version: Optional[str] = None) -> Optional[Path]:
+        """Constructs and returns the path to a specific docset.
+
+        If version is not provided, it attempts to find the docset by
+        checking the package directory and its immediate subdirectories
+        for an 'index.html' file.
+        """
+        base_path = self.docset_base_output_path / package_name
+
+        if version:
+            # If version is explicitly provided, construct the path directly
+            docset_path = base_path / version
+            if docset_path.is_dir():
+                return docset_path
+            else:
+                logger.warning(f"Docset path for {package_name} version {version} not found at {docset_path}")
+                return None
+
+        # If no version is provided, try to auto-detect
+        # 1. Check directly in the package directory
+        if (base_path / "index.html").is_file():
+            return base_path
+
+        # 2. Check one level deep in subdirectories
+        for subdir in base_path.iterdir():
+            if subdir.is_dir() and (subdir / "index.html").is_file():
+                logger.info(f"Auto-detected docset in subdirectory: {subdir.name} for package {package_name}")
+                return subdir
+
+        logger.warning(f"No docset found for package {package_name} at {base_path} or its immediate subdirectories.")
+        return None
 
     def get_all_docsets_info(self) -> list[dict[str, Any]]:
         """Retrieve information for all docsets from the database."""

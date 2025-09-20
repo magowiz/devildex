@@ -130,7 +130,22 @@ def _read_and_convert_content(
 def get_page_content(
     package: str, page: str = "index.html", version: str | None = None
 ) -> str | dict[str, str]:
-    """Get the content of a specific page within a docset."""
+    """Get the content of a specific page within a docset.
+
+    Args:
+        package (str): The name of the package for which to retrieve docset content (e.g., "black").
+        page (str, optional): The name of the page to retrieve within the docset (e.g., "index.html", "getting_started.html").
+                              Defaults to "index.html".
+        version (str | None, optional): The specific version of the package's docset to retrieve (e.g., "main", "24.4.2").
+                                        If not provided, the system will attempt to automatically detect the version
+                                        by scanning the package's docset directory and its immediate subdirectories
+                                        for an 'index.html' file.
+
+    Returns:
+        str | dict[str, str]: The content of the requested page as a string, or a dictionary
+                              containing an "error" key with a descriptive error message if the
+                              page or docset could not be found or accessed.
+    """
     docset_root_path_obj, error_message = _get_docset_root_path(package, version)
     if error_message:
         return {"error": error_message}

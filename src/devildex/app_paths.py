@@ -69,7 +69,12 @@ class AppPaths:
 
         Usually si found inside della user_data_dir.
         """
-        path = self.user_data_dir / "docsets"
+        if os.getenv("DEVILDEX_DEV_MODE") == "1":
+            # In dev mode, use 'docset' directory in the project root
+            path = Path("docset")
+        else:
+            # Otherwise, use the user's data directory
+            path = self.user_data_dir / "docsets"
         path.mkdir(parents=True, exist_ok=True)
         return path
 
