@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "devildex": {
+      "description": "DevilDex MCP Server - Provides tools to interact with the DevilDex database and functionalities.",
+      "httpUrl": "http://127.0.0.1:8001/mcp",
+      "timeout": 15000,
+      "trust": false
+    }
+  }
+}
