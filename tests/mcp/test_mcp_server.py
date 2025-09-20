@@ -174,9 +174,7 @@ async def test_get_docsets_list_all_projects(
             )
             assert isinstance(docsets_list.data, list)
             expected_names = ["requests", "flask", "django", "numpy", "pandas"]
-            assert sorted(docsets_list.data) == sorted(
-                expected_names
-            )
+            assert sorted(docsets_list.data) == sorted(expected_names)
             logger.info(f"Docsets list (all_projects): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
@@ -203,9 +201,7 @@ async def test_get_docsets_list_by_project(
             )
             expected_names = ["requests", "flask"]
             assert isinstance(docsets_list.data, list)
-            assert sorted(docsets_list.data) == sorted(
-                expected_names
-            )
+            assert sorted(docsets_list.data) == sorted(expected_names)
             logger.info(f"Docsets list (by project): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
