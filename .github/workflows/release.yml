@@ -1,0 +1,93 @@
+name: Release Workflow
+
+on:
+  push:
+    branches:
+      - master # O main, a seconda del tuo branch principale
+    paths:
+      - 'pyproject.toml' # Trigger solo se pyproject.toml cambia
+      - '.github/workflows/release.yml' # O se cambia il workflow stesso
+  workflow_dispatch: # Permette di attivare il workflow manualmente
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Necessario per recuperare tutta la cronologia per i tag
+        token: ${{ secrets.GITHUB_TOKEN }} # Token fornito automaticamente da GitHub
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' # Usa la versione di Python specificata in pyproject.toml
+
+    - name: Install Poetry
+      run: pip install poetry
+
+    - name: Configure Git
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "actions@github.com"
+
+    - name: Get latest commit message
+      id: commit_message
+      run: echo "MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
+    - name: Determine version increment
+      id: version_increment
+      run: |
+        COMMIT_MESSAGE="${{ steps.commit_message.outputs.MESSAGE }}"
+        INCREMENT_TYPE=""
+        if [[ "$COMMIT_MESSAGE" == "release(patch):"* ]]; then
+          INCREMENT_TYPE="patch"
+        elif [[ "$COMMIT_MESSAGE" == "release(minor):"* ]]; then
+          INCREMENT_TYPE="minor"
+        elif [[ "$COMMIT_MESSAGE" == "release(major):"* ]]; then
+          INCREMENT_TYPE="major"
+        fi
+        echo "INCREMENT_TYPE=$INCREMENT_TYPE" >> $GITHUB_OUTPUT
+        echo "Found increment type: $INCREMENT_TYPE"
+
+    - name: Fail if no increment type found
+      if: steps.version_increment.outputs.INCREMENT_TYPE == ''
+      run: |
+        echo "Error: Commit message does not contain a valid release type (e.g., 'release(patch):', 'release(minor):', 'release(major):')."
+        exit 1
+
+    - name: Increment version with Poetry
+      run: poetry version ${{ steps.version_increment.outputs.INCREMENT_TYPE }}
+
+    - name: Get new version
+      id: new_version
+      run: echo "VERSION=$(poetry version --short)" >> $GITHUB_OUTPUT
+
+    - name: Commit version bump
+      run: |
+        git add pyproject.toml
+        git commit -m "chore: Release v${{ steps.new_version.outputs.VERSION }}"
+
+    - name: Create Git tag
+      run: git tag v${{ steps.new_version.outputs.VERSION }}
+
+    - name: Push changes and tag
+      run: |
+        git push origin master
+        git push origin v${{ steps.new_version.outputs.VERSION }}
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.new_version.outputs.VERSION }}
+        name: Release v${{ steps.new_version.outputs.VERSION }}
+        body: |
+          Automated release for version v${{ steps.new_version.outputs.VERSION }}
+          
+          ${{ steps.commit_message.outputs.MESSAGE }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token fornito automaticamente da GitHub
