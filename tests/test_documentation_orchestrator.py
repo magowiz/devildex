@@ -179,7 +179,9 @@ def test_fetch_repo_no_initial_path_fetch_fails(
 
 
 def test_fetch_repo_fetch_raises_os_error(
-    mock_package_details: PackageDetails, mock_orchestrator: Orchestrator, mocker: MockerFixture
+    mock_package_details: PackageDetails,
+    mock_orchestrator: Orchestrator,
+    mocker: MockerFixture,
 ) -> None:
     """Test fetch repo fetch raises OSError."""
     mock_package_details.initial_source_path = None
@@ -196,7 +198,9 @@ def test_fetch_repo_fetch_raises_os_error(
 
 
 def test_fetch_repo_fetch_raises_runtime_error(
-    mock_package_details: PackageDetails, mock_orchestrator: Orchestrator, mocker: MockerFixture
+    mock_package_details: PackageDetails,
+    mock_orchestrator: Orchestrator,
+    mocker: MockerFixture,
 ) -> None:
     """Test fetch repo fetch raises RuntimeError."""
     mock_package_details.initial_source_path = None
@@ -599,7 +603,9 @@ def test_grab_build_doc_readthedocs(
     "devildex.orchestrator.documentation_orchestrator.DocStringsSrc.generate_docs_from_folder"
 )
 def test_grab_build_doc_docstrings(
-    mock_generate_docs_from_folder: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
+    mock_generate_docs_from_folder: MagicMock,
+    mock_orchestrator: Orchestrator,
+    tmp_path: Path,
 ) -> None:
     """Test grab build doc docstrings."""
     mock_orchestrator.detected_doc_type = "docstrings"
