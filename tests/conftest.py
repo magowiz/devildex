@@ -4,14 +4,20 @@ import logging
 import os
 import re
 import socket
+import tempfile
+import uuid
 from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 import wx
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 
+from devildex.core import DevilDexCore
 from devildex.database import db_manager
+from devildex.database.models import Base, Docset, PackageInfo, RegisteredProject
 
 logger = logging.getLogger(__name__)
 
@@ -103,31 +109,116 @@ def wx_app() -> wx.App:
     return wx._WX_APP_INSTANCE
 
 
-@pytest.fixture
-def populated_db_session() -> Generator[Session, None, None]:
-    """Fixture to set up an in-memory SQLite database and populate it with test data."""
-    db_url = "sqlite:///:memory:"
-    db_manager.init_db(db_url)
-    try:
-        with db_manager.get_session() as session:
-            db_manager.ensure_package_entities_exist(
-                package_name="requests",
-                package_version="2.25.1",
-                summary="HTTP for Humans.",
-                project_urls={"Homepage": "https://requests.readthedocs.io"},
-                project_name="TestProject",
-                project_path="/tmp/test_project",
-                python_executable="/usr/bin/python3",
+@pytest.fixture(scope="function")
+def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
+    """Fixture to set up a temporary SQLite database and create tables."""
+    with tempfile.TemporaryDirectory() as temp_db_dir:
+        db_path = Path(temp_db_dir) / "test_db.sqlite"
+        db_url = f"sqlite:///{db_path}"
+        engine = create_engine(db_url)
+        Base.metadata.create_all(engine)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        try:
+            yield db_url, engine, SessionLocal
+        finally:
+            engine.dispose()
+
+
+@pytest.fixture(scope="function")
+def populated_db_session(
+    db_connection_and_tables: tuple[str, Any, Any],
+) -> Generator[tuple[str, Any, str, Path, DevilDexCore], Any, None]:
+    """Fixture to populate the database with test data."""
+    db_url, engine, SessionLocal = db_connection_and_tables
+
+    with tempfile.TemporaryDirectory() as temp_docset_dir:
+        temp_docset_path = Path(temp_docset_dir)
+        requests_docset_path = temp_docset_path / "requests" / "2.25.1"
+        requests_docset_path.mkdir(parents=True, exist_ok=True)
+        (requests_docset_path / "index.html").write_text("<h1>Requests Index</h1>")
+        (requests_docset_path / "page1.html").write_text("<h2>Requests Page 1</h2>")
+        (requests_docset_path / "subdir").mkdir(exist_ok=True)
+        (requests_docset_path / "subdir" / "page2.html").write_text(
+            "<h3>Requests Subdir Page 2</h3>"
+        )
+
+        core_instance = DevilDexCore(
+            database_url=db_url, docset_base_output_path=temp_docset_path
+        )
+
+        pkg_info_requests = PackageInfo(
+            package_name="requests", summary="HTTP for Humans."
+        )
+        docset_requests = Docset(
+            package_name="requests",
+            package_version="2.25.1",
+            status="available",
+            index_file_name="index.html",
+            package_info=pkg_info_requests,
+        )
+        pkg_info_flask = PackageInfo(package_name="flask", summary="Web framework.")
+        docset_flask = Docset(
+            package_name="flask",
+            package_version="2.0.0",
+            status="available",
+            index_file_name="index.html",
+            package_info=pkg_info_flask,
+        )
+        pkg_info_django = PackageInfo(
+            package_name="django", summary="Web framework."
+        )
+        docset_django = Docset(
+            package_name="django",
+            package_version="3.2.0",
+            status="available",
+            index_file_name="index.html",
+            package_info=pkg_info_django,
+        )
+        pkg_info_numpy = PackageInfo(
+            package_name="numpy", summary="Numerical computing."
+        )
+        docset_numpy = Docset(
+            package_name="numpy",
+            package_version="1.20.0",
+            status="available",
+            index_file_name="index.html",
+            package_info=pkg_info_numpy,
+        )
+        pkg_info_pandas = PackageInfo(
+            package_name="pandas", summary="Data analysis."
+        )
+        docset_pandas = Docset(
+            package_name="pandas",
+            package_version="1.3.0",
+            status="available",
+            index_file_name="index.html",
+            package_info=pkg_info_pandas,
+        )
+
+        with SessionLocal() as session:
+            project_name = f"TestProject_{uuid.uuid4()}"
+            project1 = RegisteredProject(
+                project_name=project_name,
+                project_path=str(temp_docset_path),
+                python_executable="/path/to/python",
             )
-            db_manager.ensure_package_entities_exist(
-                package_name="pytest",
-                package_version="7.0.0",
-                summary="A better summary.",
-                project_urls={"Homepage": "https://pytest.org"},
-                project_name="TestProject",
-                project_path="/tmp/test_project",
-                python_executable="/usr/bin/python3",
+            session.add(project1)
+            session.add_all(
+                [
+                    pkg_info_requests,
+                    docset_requests,
+                    pkg_info_flask,
+                    docset_flask,
+                    pkg_info_django,
+                    docset_django,
+                    pkg_info_numpy,
+                    docset_numpy,
+                    pkg_info_pandas,
+                    docset_pandas,
+                ]
             )
-            yield session
-    finally:
-        db_manager.DatabaseManager.close_db()
+            project1.docsets.append(docset_requests)
+            project1.docsets.append(docset_flask)
+            session.commit()
+
+        yield db_url, SessionLocal, project_name, temp_docset_path, core_instance

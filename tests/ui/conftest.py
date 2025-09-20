@@ -4,6 +4,8 @@ from collections.abc import Generator
 
 import pytest
 import wx
+from typing import Any
+from pathlib import Path
 
 from devildex.core import DevilDexCore
 from devildex.main import DevilDexApp
@@ -18,9 +20,13 @@ def wx_app() -> Generator[wx.App, None, None]:
 
 
 @pytest.fixture
-def core(populated_db_session: str) -> DevilDexCore:
+def core(populated_db_session: tuple[str, Any, str, Path, DevilDexCore]) -> DevilDexCore:
     """Fixture to provide a DevilDexCore instance with a populated database."""
-    return DevilDexCore(database_url="sqlite:///:memory:")
+    db_url, SessionLocal, project_name, temp_docset_path, _ = populated_db_session
+    core_instance = DevilDexCore(database_url=db_url, docset_base_output_path=temp_docset_path)
+    # Manually bootstrap the database and load data for the UI tests
+    core_instance.bootstrap_database_and_load_data(initial_package_source=[], is_fallback_data=False)
+    return core_instance
 
 
 @pytest.fixture

@@ -7,23 +7,14 @@ import socket
 import subprocess
 import tempfile
 import time
-import uuid
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
 import pytest
 from fastmcp import Client
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from devildex.core import DevilDexCore
-from devildex.database import (
-    Base,
-    Docset,
-    PackageInfo,
-    RegisteredProject,
-)
 from devildex.local_data_parse import registered_project_parser
 from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
 
@@ -38,128 +29,14 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
-
-@pytest.fixture(scope="function")
-def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
-    """Fixture to set up a temporary SQLite database and create tables."""
-    with tempfile.TemporaryDirectory() as temp_db_dir:
-        db_path = Path(temp_db_dir) / "test_db.sqlite"
-        db_url = f"sqlite:///{db_path}"
-        engine = create_engine(db_url)
-        Base.metadata.create_all(engine)
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        try:
-            yield db_url, engine, SessionLocal
-        finally:
-            engine.dispose()
-
-
-@pytest.fixture(scope="function")
-def populated_db_session(
-    db_connection_and_tables: tuple[str, Any, Any],
-) -> Generator[tuple[str, Any, str, Path, DevilDexCore], Any, None]:
-    """Fixture to populate the database with test data."""
-    db_url, engine, SessionLocal = db_connection_and_tables
-
-    with tempfile.TemporaryDirectory() as temp_docset_dir:
-        temp_docset_path = Path(temp_docset_dir)
-        requests_docset_path = temp_docset_path / "requests" / "2.25.1"
-        requests_docset_path.mkdir(parents=True, exist_ok=True)
-        (requests_docset_path / "index.html").write_text("<h1>Requests Index</h1>")
-        (requests_docset_path / "page1.html").write_text("<h2>Requests Page 1</h2>")
-        (requests_docset_path / "subdir").mkdir(exist_ok=True)
-        (requests_docset_path / "subdir" / "page2.html").write_text(
-            "<h3>Requests Subdir Page 2</h3>"
-        )
-
-        core_instance = DevilDexCore(
-            database_url=db_url, docset_base_output_path=temp_docset_path
-        )
-
-        pkg_info_requests = PackageInfo(
-            package_name="requests", summary="HTTP for Humans."
-        )
-        docset_requests = Docset(
-            package_name="requests",
-            package_version="2.25.1",
-            status="available",
-            index_file_name="index.html",
-            package_info=pkg_info_requests,
-        )
-        pkg_info_flask = PackageInfo(package_name="flask", summary="Web framework.")
-        docset_flask = Docset(
-            package_name="flask",
-            package_version="2.0.0",
-            status="available",
-            index_file_name="index.html",
-            package_info=pkg_info_flask,
-        )
-        pkg_info_django = PackageInfo(
-            package_name="django", summary="Web framework."
-        )
-        docset_django = Docset(
-            package_name="django",
-            package_version="3.2.0",
-            status="available",
-            index_file_name="index.html",
-            package_info=pkg_info_django,
-        )
-        pkg_info_numpy = PackageInfo(
-            package_name="numpy", summary="Numerical computing."
-        )
-        docset_numpy = Docset(
-            package_name="numpy",
-            package_version="1.20.0",
-            status="available",
-            index_file_name="index.html",
-            package_info=pkg_info_numpy,
-        )
-        pkg_info_pandas = PackageInfo(
-            package_name="pandas", summary="Data analysis."
-        )
-        docset_pandas = Docset(
-            package_name="pandas",
-            package_version="1.3.0",
-            status="available",
-            index_file_name="index.html",
-            package_info=pkg_info_pandas,
-        )
-
-        with SessionLocal() as session:
-            project_name = f"TestProject_{uuid.uuid4()}"
-            project1 = RegisteredProject(
-                project_name=project_name,
-                project_path=str(temp_docset_path),
-                python_executable="/path/to/python",
-            )
-            session.add(project1)
-            session.add_all(
-                [
-                    pkg_info_requests,
-                    docset_requests,
-                    pkg_info_flask,
-                    docset_flask,
-                    pkg_info_django,
-                    docset_django,
-                    pkg_info_numpy,
-                    docset_numpy,
-                    pkg_info_pandas,
-                    docset_pandas,
-                ]
-            )
-            project1.docsets.append(docset_requests)
-            project1.docsets.append(docset_flask)
-            session.commit()
-
-        yield db_url, SessionLocal, project_name, temp_docset_path, core_instance
-
-
 @pytest.fixture(scope="function")
 def mcp_server_process(
     free_port: int, populated_db_session: tuple[str, Any, str, Path, DevilDexCore]
 ) -> Generator[tuple[int, str], Any, None]:
     """Fixture to start the MCP server as a subprocess."""
-    db_url, SessionLocal, project_name, temp_docset_path, core_instance = populated_db_session
+    db_url, SessionLocal, project_name, temp_docset_path, core_instance = (
+        populated_db_session
+    )
 
     project_data_to_save: RegisteredProjectData = {
         "project_name": project_name,
@@ -206,7 +83,7 @@ def mcp_server_process(
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_get_docsets_list_all_projects(
-    mcp_server_process: tuple[int, str]
+    mcp_server_process: tuple[int, str],
 ) -> None:
     """Tests the 'get_docsets_list' tool with all_projects=True."""
     free_port, _ = mcp_server_process
@@ -234,9 +111,7 @@ async def test_get_docsets_list_all_projects(
 
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
-async def test_get_docsets_list_by_project(
-    mcp_server_process: tuple[int, str]
-) -> None:
+async def test_get_docsets_list_by_project(mcp_server_process: tuple[int, str]) -> None:
     """Tests the 'get_docsets_list' tool with a specific project."""
     free_port, project_name = mcp_server_process
     config = {
@@ -264,7 +139,7 @@ async def test_get_docsets_list_by_project(
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_get_docsets_list_invalid_params(
-    mcp_server_process: tuple[int, str]
+    mcp_server_process: tuple[int, str],
 ) -> None:
     """Tests the 'get_docsets_list' tool with invalid parameters."""
     free_port, _ = mcp_server_process
@@ -290,9 +165,7 @@ async def test_get_docsets_list_invalid_params(
 
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
-async def test_get_page_content_success(
-    mcp_server_process: tuple[int, str]
-) -> None:
+async def test_get_page_content_success(mcp_server_process: tuple[int, str]) -> None:
     """Tests the 'get_page_content' tool for successful retrieval."""
     free_port, _ = mcp_server_process
     config = {
@@ -318,7 +191,7 @@ async def test_get_page_content_success(
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_get_page_content_default_page(
-    mcp_server_process: tuple[int, str]
+    mcp_server_process: tuple[int, str],
 ) -> None:
     """Tests the 'get_page_content' tool for default page retrieval."""
     free_port, _ = mcp_server_process
@@ -345,7 +218,7 @@ async def test_get_page_content_default_page(
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_get_page_content_non_existent_page(
-    mcp_server_process: tuple[int, str]
+    mcp_server_process: tuple[int, str],
 ) -> None:
     """Tests the 'get_page_content' tool for a non-existent page."""
     free_port, _ = mcp_server_process
@@ -380,7 +253,7 @@ async def test_get_page_content_non_existent_page(
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_get_page_content_non_existent_package_version(
-    mcp_server_process: tuple[int, str]
+    mcp_server_process: tuple[int, str],
 ) -> None:
     """Tests the 'get_page_content' tool for a non-existent package/version."""
     free_port, _ = mcp_server_process
@@ -411,7 +284,7 @@ async def test_get_page_content_non_existent_package_version(
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_get_page_content_path_traversal_attempt(
-    mcp_server_process: tuple[int, str]
+    mcp_server_process: tuple[int, str],
 ) -> None:
     """Tests the 'get_page_content' tool for path traversal attempts."""
     free_port, _ = mcp_server_process
