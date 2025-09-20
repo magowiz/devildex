@@ -8,6 +8,10 @@ from pytest_mock import MockerFixture
 from devildex.core import DevilDexCore
 from devildex.database.models import PackageDetails
 
+EXPECTED_SCANNED_PACKAGES_NO_EXPLICIT = 3
+EXPECTED_RMTEE_CALL_COUNT = 2
+EXPECTED_SCANNED_PACKAGES_EXPLICIT = 2
+
 
 @pytest.fixture
 def mock_installed_packages() -> list[PackageDetails]:
@@ -137,15 +141,15 @@ def test_delete_docset_build_success_and_removes_empty_parent(
     # Assert
     assert success is True
     assert "Successfully deleted" in msg
-    assert mock_rmtree.call_count == 2
+    assert mock_rmtree.call_count == EXPECTED_RMTEE_CALL_COUNT
     mock_rmtree.assert_any_call(docset_version_path)
     mock_rmtree.assert_any_call(docset_version_path.parent)
 
 
-def test_delete_docset_build_path_not_exist(core: DevilDexCore) -> None:
+def test_delete_docset_build_path_not_exist(core: DevilDexCore, tmp_path: Path) -> None:
     """Verify deletion fails if the target path does not exist."""
     # Arrange
-    non_existent_path = "/tmp/non/existent/path"
+    non_existent_path = tmp_path / "non" / "existent" / "path"
 
     # Act
     success, msg = core.delete_docset_build(non_existent_path)
@@ -280,7 +284,7 @@ def test_scan_project_with_explicit_dependencies(
 
     # Assert
     assert result is not None
-    assert len(result) == 2
+    assert len(result) == EXPECTED_SCANNED_PACKAGES_EXPLICIT
     package_names = {pkg.name for pkg in result}
     assert package_names == {"requests", "numpy"}
 
@@ -305,7 +309,7 @@ def test_scan_project_no_explicit_dependencies(
 
     # Assert
     assert result is not None
-    assert len(result) == 3
+    assert len(result) == EXPECTED_SCANNED_PACKAGES_NO_EXPLICIT
 
 
 def test_scan_project_no_project_active(core: DevilDexCore) -> None:
