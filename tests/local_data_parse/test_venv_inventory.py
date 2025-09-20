@@ -86,9 +86,12 @@ def test_get_installed_packages_with_explicit_filter(
     assert package_names == {"requests", "pytest"}
 
 
+import pytest
+
+
 @patch("devildex.local_data_parse.venv_inventory.importlib.metadata.distributions")
 def test_handle_project_urls_malformed_entry(
-    mock_distributions: MagicMock, caplog
+    mock_distributions: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that a malformed Project-URL entry is skipped and a warning is logged."""
     # Arrange

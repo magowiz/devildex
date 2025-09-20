@@ -16,7 +16,7 @@ FAKE_FILE_CONTENT = b"some-binary-zip-content"
 class MockStreamResponse:
     """A mock class to simulate a streaming requests.Response for testing."""
 
-    def __init__(self, content, status_code: int = 200) -> None:
+    def __init__(self, content: bytes, status_code: int = 200) -> None:
         """Initialize the mock stream response."""
         self.status_code = status_code
         self._content_iterator = iter([content])

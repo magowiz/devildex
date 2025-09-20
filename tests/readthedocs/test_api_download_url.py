@@ -56,7 +56,7 @@ def test_get_download_url_returns_none_for_empty_or_none_details() -> None:
     assert _get_download_url(None, "htmlzip") is None
 
 
-def test_get_download_url_handles_non_standard_extension_url(caplog) -> None:
+def test_get_download_url_handles_non_standard_extension_url(caplog: pytest.LogCaptureFixture) -> None:
     """Verify it logs a warning for URLs without a standard archive extension."""
     details = {
         "slug": "stable",

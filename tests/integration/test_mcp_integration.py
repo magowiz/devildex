@@ -33,7 +33,7 @@ def free_port() -> int:
 
 
 @pytest.fixture
-def mock_config_manager(mocker: MagicMock, free_port: int):
+def mock_config_manager(mocker: MagicMock, free_port: int) -> None:
     """Fixture to mock the ConfigManager singleton for test control."""
     ConfigManager._instance = None
     mocker.patch("devildex.config_manager.ConfigManager._initialize", return_value=None)
@@ -111,7 +111,7 @@ def populated_db_session(tmp_path: Path) -> Generator[str, Any, None]:
 
 @pytest.fixture
 def devildex_app_fixture(
-    wx_app, mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
+    wx_app: wx.App, mock_config_manager: MagicMock, populated_db_session: str, mocker: MagicMock
 ) -> Generator[DevilDexApp, Any, None]:
     """Fixture to create the main DevilDexApp instance for UI tests."""
     mocker.patch(
@@ -145,7 +145,7 @@ def test_gui_only_no_mcp_starts(
 
 
 @pytest.mark.asyncio
-async def test_mcp_only_no_gui(free_port, tmp_path):
+async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
     test_name = "single_instance"
     mcp_port = free_port
 

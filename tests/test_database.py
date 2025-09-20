@@ -124,7 +124,7 @@ def test_package_info_project_urls_setter_none_or_empty(db_session: Session) -> 
     assert pkg_info._project_urls_json is None
 
 
-def test_database_manager_init_db_called_twice(caplog, mocker) -> None:
+def test_database_manager_init_db_called_twice(caplog: pytest.LogCaptureFixture, mocker: MockerFixture) -> None:
     """Verify calling init_db twice logs a debug message and doesn't re-initialize."""
     # Arrange
     database.DatabaseManager._engine = None  # Ensure clean state
@@ -146,7 +146,7 @@ def test_database_manager_init_db_called_twice(caplog, mocker) -> None:
     database.logger.info.assert_not_called()
 
 
-def test_get_docsets_for_project_view_sqlalchemy_error(mocker, caplog) -> None:
+def test_get_docsets_for_project_view_sqlalchemy_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify get_docsets_for_project_view handles SQLAlchemyError."""
     # Arrange
     mocker.patch(
@@ -166,7 +166,7 @@ def test_get_docsets_for_project_view_sqlalchemy_error(mocker, caplog) -> None:
     assert "Error retrieving docsets for the view" in caplog.text
 
 
-def test_get_all_registered_projects_details_sqlalchemy_error(mocker, caplog) -> None:
+def test_get_all_registered_projects_details_sqlalchemy_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify get_all_registered_projects_details handles SQLAlchemyError."""
     # Arrange
     mocker.patch(
@@ -185,7 +185,7 @@ def test_get_all_registered_projects_details_sqlalchemy_error(mocker, caplog) ->
     assert "Error retrieving all registered projects" in caplog.text
 
 
-def test_get_project_details_by_name_not_found(db_session: Session, caplog) -> None:
+def test_get_project_details_by_name_not_found(db_session: Session, caplog: pytest.LogCaptureFixture) -> None:
     """Verify get_project_details_by_name returns None, logs warning for no proj."""
     # Arrange
     non_existent_project = "NonExistentProject"
@@ -203,7 +203,7 @@ def test_get_project_details_by_name_not_found(db_session: Session, caplog) -> N
     )
 
 
-def test_get_project_details_by_name_sqlalchemy_error(mocker, caplog) -> None:
+def test_get_project_details_by_name_sqlalchemy_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify get_project_details_by_name handles SQLAlchemyError."""
     # Arrange
     mocker.patch(
@@ -222,7 +222,7 @@ def test_get_project_details_by_name_sqlalchemy_error(mocker, caplog) -> None:
     assert "Error retrieving details for project 'AnyProject'" in caplog.text
 
 
-def test_get_session_raises_database_not_initialized_error(mocker, caplog) -> None:
+def test_get_session_raises_database_not_initialized_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify get_session raises DatabaseNotInitializedError if init_db fails."""
     # Arrange
     database.DatabaseManager._session_local = None  # Ensure it's not initialized
@@ -242,7 +242,7 @@ def test_get_session_raises_database_not_initialized_error(mocker, caplog) -> No
     )
 
 
-def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
+def test_get_session_logs_warning_if_not_initialized(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify get_session logs a warning if init_db was not called."""
     database.DatabaseManager._session_local = None
     mocker.patch(
@@ -262,7 +262,7 @@ def test_get_session_logs_warning_if_not_initialized(mocker, caplog) -> None:
 
 
 def test_ensure_registered_project_and_association_value_error(
-    db_session: Session, caplog
+    db_session: Session, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Check _ensure_registered_project_and_association raise ValueError if no proj details."""
     pkg_info = database.PackageInfo(package_name="test_pkg")
@@ -287,7 +287,7 @@ def test_ensure_registered_project_and_association_value_error(
     )
 
 
-def test_ensure_package_entities_exist_commit_exception(mocker, caplog) -> None:
+def test_ensure_package_entities_exist_commit_exception(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify ensure_package_entities_exist handles commit exceptions."""
     # Arrange
     package_data = {
@@ -426,7 +426,7 @@ def test_database_not_initialized_error_custom_message() -> None:
 
 
 def test_package_info_project_urls_json_decode_error(
-    db_session: Session, caplog
+    db_session: Session, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that a JSONDecodeError is handled when accessing project_urls."""
     # Arrange
@@ -555,7 +555,7 @@ def test_get_docsets_for_project_view_no_summary_or_urls(db_session: Session) ->
     assert view_data[0]["project_name"] is None
 
 
-def test_get_db_path(mocker):
+def test_get_db_path(mocker: MockerFixture) -> str:
     """Verify that the get_db_path method returns the correct path."""
     # Arrange
     mock_app_paths = mocker.patch("devildex.database.db_manager.AppPaths").return_value
@@ -592,7 +592,7 @@ def test_ensure_docset_creates_new(db_session: Session) -> None:
 
 def test_ensure_registered_project_and_association_associates_existing_project(
     db_session: Session,
-):
+) -> None:
     """Verify that an existing project is correctly associated with a docset."""
     # Arrange
     project = RegisteredProject(
@@ -623,7 +623,7 @@ def test_ensure_registered_project_and_association_associates_existing_project(
     assert docset in project.docsets
 
 
-def test_ensure_package_entities_exist_no_project_name(db_session: Session):
+def test_ensure_package_entities_exist_no_project_name(db_session: Session) -> None:
     """Verify that no RegisteredProject is created when project_name is None."""
     # Arrange
     package_data = {

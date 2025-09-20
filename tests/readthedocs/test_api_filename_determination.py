@@ -69,7 +69,7 @@ def test_determine_local_filename(
     project_slug: str,
     version_slug: str,
     download_url: str,
-    download_format,
+    download_format: str,
     expected_filename: str,
 ) -> None:
     """Verify local filename is determined correctly across various scenarios."""

@@ -141,7 +141,7 @@ def test_documentation_generation_for_package(
         logger.error(f"Found entry point html expected:{entry_point_file}")
 
 
-def test_build_pdoc_command_no_modules(tmp_path: Path, caplog) -> None:
+def test_build_pdoc_command_no_modules(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     """Verify _build_pdoc_command handles no modules to document."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
@@ -157,7 +157,7 @@ def test_build_pdoc_command_no_modules(tmp_path: Path, caplog) -> None:
 
 
 def test_generate_docs_from_folder_non_existent_input_folder(
-    tmp_path: Path, caplog
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify generate_docs_from_folder handles non-existent input folder."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
@@ -178,7 +178,7 @@ def test_generate_docs_from_folder_non_existent_input_folder(
     )
 
 
-def test_build_pdoc_command_with_template_dir(tmp_path: Path, caplog) -> None:
+def test_build_pdoc_command_with_template_dir(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     """Verify _build_pdoc_command includes template_dir when provided."""
     template_dir = tmp_path / "my_template"
     template_dir.mkdir()
@@ -197,7 +197,7 @@ def test_build_pdoc_command_with_template_dir(tmp_path: Path, caplog) -> None:
 
 
 def test_handle_successful_doc_move_existing_destination(
-    tmp_path: Path, mocker
+    tmp_path: Path, mocker: MockerFixture
 ) -> None:
     """Verify _handle_successful_doc_move cleans up existing destination."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
@@ -221,7 +221,7 @@ def test_handle_successful_doc_move_existing_destination(
     mock_shutil_move.assert_called_once()
 
 
-def test_cleanup_pdoc_output_on_failure(tmp_path: Path, mocker) -> None:
+def test_cleanup_pdoc_output_on_failure(tmp_path: Path, mocker: MockerFixture) -> None:
     """Verify that _cleanup_pdoc_output_on_failure removes the correct directories."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
@@ -266,7 +266,7 @@ def test_find_and_report_non_package_folders(tmp_path: Path) -> None:
         assert "- non_package" in content
 
 
-def test_process_reported_folders(tmp_path: Path, mocker) -> None:
+def test_process_reported_folders(tmp_path: Path, mocker: MockerFixture) -> None:
     """Verify that _process_reported_folders removes reported folders and links."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
@@ -297,7 +297,7 @@ def test_process_reported_folders(tmp_path: Path, mocker) -> None:
     mock_clean_html.assert_called_once()
 
 
-def test_attempt_install_missing_dependency(mocker) -> None:
+def test_attempt_install_missing_dependency(mocker: MockerFixture) -> None:
     """Verify that _attempt_install_missing_dependency correctly calls pip."""
     doc_generator = DocStringsSrc()
     mock_execute = mocker.patch(
@@ -321,7 +321,7 @@ def test_attempt_install_missing_dependency(mocker) -> None:
     )
 
 
-def test_is_pdoc_dummy_module(mocker) -> None:
+def test_is_pdoc_dummy_module(mocker: MockerFixture) -> None:
     """Verify _is_pdoc_dummy_module correctly identifies dummy modules."""
     doc_generator = DocStringsSrc()
 
@@ -362,7 +362,7 @@ def test_is_pdoc_dummy_module(mocker) -> None:
     )
 
 
-def test_log_traceback(mocker, caplog) -> None:
+def test_log_traceback(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
     """Verify _log_traceback logs a debug message with exc_info."""
     doc_generator = DocStringsSrc()
     mock_logger_debug = mocker.patch("devildex.docstrings.docstrings_src.logger.debug")
