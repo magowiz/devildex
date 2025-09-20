@@ -221,6 +221,14 @@ def test_execute_helper_script_with_stdout(
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
         args=[], returncode=0, stdout="Some output"
     )
+    # Mock the constructor's checks
+    mocker.patch("pathlib.Path.is_file", return_value=True)
+    mocker.patch("os.access", return_value=True)
+    # Mock the helper script content loading
+    mocker.patch(
+        "devildex.local_data_parse.external_venv_scanner.ExternalVenvScanner._load_helper_script_content",
+        return_value="dummy script content",
+    )
     scanner = ExternalVenvScanner(python_executable_path="/usr/bin/python3")
 
     # Act
