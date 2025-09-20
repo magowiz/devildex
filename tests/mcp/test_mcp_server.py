@@ -2,7 +2,7 @@
 
 import logging
 import os
-import re
+import uuid
 import socket
 import subprocess
 import tempfile
@@ -16,7 +16,11 @@ from fastmcp import Client
 
 from devildex import database
 from devildex.core import DevilDexCore
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from devildex.database import (
+    Base,
     Docset,
     PackageInfo,
     RegisteredProject,
@@ -36,7 +40,11 @@ def free_port() -> int:
 @pytest.fixture(scope="function")
 def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any, None]:
     """Fixture to set up an in-memory SQLite database, populate it."""
-    db_url = "sqlite:///:memory:"
+    db_url = f"sqlite:///:memory:?cache=shared&uri=true"
+    engine = create_engine(db_url)
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
     with tempfile.TemporaryDirectory() as temp_docset_dir:
         temp_docset_path = Path(temp_docset_dir)
         requests_docset_path = temp_docset_path / "requests" / "2.25.1"
@@ -48,13 +56,13 @@ def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any,
             "<h3>Requests Subdir Page 2</h3>"
         )
 
-        database.init_db(db_url)
         core_instance = DevilDexCore(
             database_url=db_url, docset_base_output_path=temp_docset_path
         )
-        with database.get_session() as session:
+        with SessionLocal() as session:
+            project_name = f"TestProject_{uuid.uuid4()}"
             project1 = RegisteredProject(
-                project_name="TestProject",
+                project_name=project_name,
                 project_path=str(temp_docset_path),
                 python_executable="/path/to/python",
             )
@@ -150,7 +158,7 @@ def mcp_server_with_populated_db(free_port: int) -> Generator[DevilDexCore, Any,
                     logger.info(f"\nServer STDOUT:\n{stdout.decode()}")
                 if stderr:
                     logger.error(f"\nServer STDERR:\n{stderr.decode()}")
-        database.DatabaseManager.close_db()
+            engine.dispose()
         
 
 
