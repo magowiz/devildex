@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master # O main, a seconda del tuo branch principale
+    tags:
+      - 'v*' # Trigger on tags starting with v
     paths:
       - 'pyproject.toml' # Trigger solo se pyproject.toml cambia
       - '.github/workflows/release.yml' # O se cambia il workflow stesso
