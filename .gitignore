@@ -26,3 +26,4 @@ tools/
 git_push_all.sh
 github.log
 .pytest_temp_logs/
+job_*.zip

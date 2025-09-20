@@ -2,9 +2,9 @@
 name: Build Python Wheel
 
 on:
-  workflow_run:
-    workflows: ["Python Tests"]
-    types: [completed]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
