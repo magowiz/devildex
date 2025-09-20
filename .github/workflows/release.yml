@@ -1,10 +1,10 @@
 name: Release Workflow
 
 on:
-  create:
+  push:
     tags:
       - 'v*' # Trigger on tags starting with v
-  workflow_dispatch: # Permette di attivare il workflow manualmente
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   release:
