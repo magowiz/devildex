@@ -116,7 +116,8 @@ def populated_db_session() -> Generator[Session, None, None]:
                 summary="HTTP for Humans.",
                 project_urls={"Homepage": "https://requests.readthedocs.io"},
                 project_name="TestProject",
-                python_executable="/path/to/python",
+                project_path="/tmp/test_project",
+                python_executable="/usr/bin/python3",
             )
             db_manager.ensure_package_entities_exist(
                 package_name="pytest",
@@ -124,7 +125,8 @@ def populated_db_session() -> Generator[Session, None, None]:
                 summary="A better summary.",
                 project_urls={"Homepage": "https://pytest.org"},
                 project_name="TestProject",
-                python_executable="/path/to/python",
+                project_path="/tmp/test_project",
+                python_executable="/usr/bin/python3",
             )
             yield session
     finally:

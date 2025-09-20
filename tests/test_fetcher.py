@@ -341,9 +341,10 @@ def test_fetch_from_pypi_success(
     expected_urls = {"Homepage": "http://example.com"}
     mock_response = mocker.Mock()
     mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {"info": {"project_urls": expected_urls}}
-    mocker.patch("requests.get", return_value=mock_response)
-
+    mock_json_data = mocker.Mock()
+    mock_json_data.get.return_value = {"project_urls": expected_urls}
+    mock_response.json.return_value = mock_json_data
+    mocker.patch("devildex.fetcher.requests.get", return_value=mock_response)
     result = fetcher_instance._fetch_project_urls_from_pypi()
 
     assert result == expected_urls

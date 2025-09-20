@@ -166,7 +166,7 @@ async def test_mcp_only_no_gui(free_port, tmp_path):
         "hide_gui_when_enabled": "true",
         "port": str(mcp_port),
     }
-    async with aiofiles.open(temp_ini_path, mode="w") as f:
+    with open(temp_ini_path, mode="w") as f:
         config.write(f)
 
     assert temp_ini_path.exists()

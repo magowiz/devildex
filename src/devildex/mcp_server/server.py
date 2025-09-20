@@ -77,6 +77,8 @@ def _get_docset_root_path(
     server_logger.info(
         f"MCP Server: Attempting to access docset path: {docset_path_obj}"
     ) # Added logging
+    if docset_path_obj is None:
+        return None, f"Docset for package '{package}' version '{version}' not found."
     server_logger.info(
         f"MCP Server: Does docset path exist? {docset_path_obj.exists()}"
     ) # Added logging
