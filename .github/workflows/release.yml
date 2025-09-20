@@ -4,10 +4,15 @@ on:
   push:
     tags:
       - 'v*' # Trigger on tags starting with v
+    branches: # Added branches trigger
+      - master # Trigger on push to master
+    branches: # Added branches trigger
+      - master # Trigger on push to master
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   release:
+    if: contains(github.event.head_commit.message, 'release(') # Added condition
     runs-on: ubuntu-latest
     permissions:
       contents: write
