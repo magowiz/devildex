@@ -30,9 +30,7 @@ def free_port():
 
 @pytest.fixture(scope="module")
 def mcp_server_with_populated_db(free_port):
-    """Fixture to set up an in-memory SQLite database, populate it,
-    and yield a DevilDexCore instance initialized with it.
-    """
+    """Fixture to set up an in-memory SQLite database, populate it."""
     temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
     temp_db_file.close()
     db_url = f"sqlite:///{temp_db_file.name}"
@@ -73,11 +71,8 @@ def mcp_server_with_populated_db(free_port):
                 package_info=pkg_info_requests,
             )
             session.add_all([pkg_info_requests, docset_requests])
-            # Associate docset with project
             project1.docsets.append(docset_requests)
             session.commit()
-
-            # Add PackageInfo and Docset for "flask"
             pkg_info_flask = PackageInfo(package_name="flask", summary="Web framework.")
             docset_flask = Docset(
                 package_name="flask",
@@ -113,8 +108,6 @@ def mcp_server_with_populated_db(free_port):
             )
             session.add_all([pkg_info_numpy, docset_numpy])
             session.commit()
-
-            # Add PackageInfo and Docset for "pandas"
             pkg_info_pandas = PackageInfo(
                 package_name="pandas", summary="Data analysis."
             )
@@ -127,19 +120,13 @@ def mcp_server_with_populated_db(free_port):
             session.add_all([pkg_info_pandas, docset_pandas])
             session.commit()
 
-        # Start the MCP server as a subprocess
         server_process = None
         try:
-            # Set the environment variable for the subprocess
             env = os.environ.copy()
             env["DEVILDEX_MCP_DB_URL"] = db_url
             env["DEVILDEX_MCP_SERVER_PORT"] = str(free_port)
             env["DEVILDEX_DEV_MODE"] = "1"  # Ensure dev mode is enabled
-            env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = str(
-                temp_docset_path
-            )  # Pass docset path to subprocess
-
-            # Command to run the server
+            env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = str(temp_docset_path)
             server_command = [
                 "poetry",
                 "run",
