@@ -69,7 +69,7 @@ jobs:
           poetry install # Install the main project and its regular dependencies
 
       - name: Install Project
-        run: poetry install --no-dev
+        run: poetry install
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
