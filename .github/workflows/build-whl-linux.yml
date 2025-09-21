@@ -1,5 +1,5 @@
 # .github/workflows/build-wheel.yml
-name: Build Python Wheel
+name: Build Linux Python Wheel
 
 on:
   push:
