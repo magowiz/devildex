@@ -148,7 +148,11 @@ def test_gui_only_no_mcp_starts(
 
 
 @pytest.mark.asyncio
-async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
+async def test_mcp_only_no_gui(
+    free_port: int,
+    tmp_path: Path,
+    mcp_config_manager_for_test: ConfigManager, # Inject the new fixture
+) -> None:
     """Test mcp only no gui."""
     test_name = "single_instance"
     mcp_port = free_port
@@ -156,27 +160,10 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
     assert isinstance(mcp_port, int)
     assert MIN_PORT_NUMBER <= mcp_port <= MAX_PORT_NUMBER
 
-    temp_config_dir = tmp_path / "temp_config"
-    temp_config_dir.mkdir()
-    temp_ini_path = temp_config_dir / "devildex.ini"
-
-    os.environ["DEVILDEX_INI_PATH_OVERRIDE"] = str(temp_ini_path)
-
-    config = configparser.ConfigParser()
-    config["mcp_server_dev"] = {
-        "enabled": "true",
-        "hide_gui_when_enabled": "true",
-        "port": str(mcp_port),
-    }
-    with open(temp_ini_path, mode="w") as f:
-        config.write(f)
-
-    assert temp_ini_path.exists()
-    read_config = configparser.ConfigParser()
-    read_config.read(temp_ini_path)
-    assert read_config["mcp_server_dev"]["enabled"] == "true"
-    assert read_config["mcp_server_dev"]["hide_gui_when_enabled"] == "true"
-    assert read_config["mcp_server_dev"]["port"] == str(mcp_port)
+    # Configure the mocked ConfigManager for this test
+    mcp_config_manager_for_test.get_mcp_server_enabled.return_value = True
+    mcp_config_manager_for_test.get_mcp_server_hide_gui_when_enabled.return_value = True
+    mcp_config_manager_for_test.get_mcp_server_port.return_value = mcp_port
 
     # --- Step 3: Start the main application (DevilDexApp) ---
     app = wx.App(redirect=False)
@@ -184,7 +171,7 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
 
     core_instance = (
         DevilDexCore()
-    )  # Core will use ConfigManager, which uses AppPaths, which uses our ENV var
+    )  # Core will use ConfigManager, which uses ConfigManager, which uses our ENV var
 
     db_url_for_mcp = core_instance.database_url
     server_started = core_instance.start_mcp_server_if_enabled(db_url_for_mcp)
@@ -203,18 +190,23 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
     ), "MCP server manager should be initialized."
 
     app_config = ConfigManager()
+
     assert (
         app_config.get_mcp_server_port() == mcp_port
     ), "App's ConfigManager should reflect the correct MCP port."
+
     assert (
         app_config.get_mcp_server_enabled() is True
     ), "App's ConfigManager should show MCP enabled."
+
     assert (
         app_config.get_mcp_server_hide_gui_when_enabled() is True
     ), "App's ConfigManager should show GUI hidden."
 
     # Assertion 3.4: Verify the GUI is hidden
+
     assert main_app.main_frame is not None, "Main frame should be created."
+
     assert not main_app.main_frame.IsShown(), "Main frame should be hidden."
 
     # --- Step 4: Test MCP client ---
@@ -227,14 +219,21 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
     client = Client(client_config, timeout=10)
 
     start_time = time.time()
+
     max_wait = 10  # seconds
+
     connected = False
+
     last_exception = None
+
     response = None
 
     while time.time() - start_time < max_wait:
+
         try:
+
             async with client:
+
                 response = await client.call_tool(
                     "get_docsets_list", {"all_projects": True}
                 )
@@ -245,23 +244,27 @@ async def test_mcp_only_no_gui(free_port: int, tmp_path: Path) -> None:
             await asyncio.sleep(0.5)
 
     if not connected:
+
         raise AssertionError(
             f"Client could not connect to server within {max_wait} seconds. "
             f"Last exception: {last_exception}"
         )
 
     assert response is not None
+
     assert isinstance(response.data, list)
 
     # Sleep for a short time to ensure server is stable
+
     await asyncio.sleep(1)
 
     # --- Cleanup (will be moved to a finally block later) ---
-    del os.environ["DEVILDEX_INI_PATH_OVERRIDE"]
-    if main_app.main_frame:
-        wx.CallAfter(main_app.main_frame.Destroy)
-    main_app.OnExit()
 
+    if main_app.main_frame:
+
+        wx.CallAfter(main_app.main_frame.Destroy)
+
+    main_app.OnExit()
 
 @pytest.mark.mcp_config(enabled=True, hide_gui=False)
 @pytest.mark.integration

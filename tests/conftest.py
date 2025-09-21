@@ -64,6 +64,26 @@ def mock_config_manager(mocker: MockerFixture, free_port: int) -> None:
 
 
 @pytest.fixture
+def mcp_config_manager_for_test(mocker: MockerFixture) -> ConfigManager:
+    """Fixture to provide a configurable ConfigManager for MCP tests."""
+    # Ensure a fresh ConfigManager instance is created
+    ConfigManager._instance = None
+    # Prevent automatic loading of the default config file
+    mocker.patch("devildex.config_manager.ConfigManager._load_config", return_value=None)
+
+    # Create a new ConfigManager instance
+    config_manager = ConfigManager()
+
+    # Mock the methods that would normally read from the config file
+    # These can be overridden by the test if needed
+    config_manager.get_mcp_server_enabled = mocker.Mock(return_value=False)
+    config_manager.get_mcp_server_hide_gui_when_enabled = mocker.Mock(return_value=False)
+    config_manager.get_mcp_server_port = mocker.Mock(return_value=8001)
+
+    return config_manager
+
+
+@pytest.fixture
 def devildex_app_fixture(
     wx_app: wx.App,
     mock_config_manager: MagicMock,
