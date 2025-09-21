@@ -9,7 +9,7 @@ on:
 jobs:
   test-package:
     runs-on: ${{ matrix.os }}
-    needs: build-package # This needs to be the job name from the "Package Desktop Application" workflow
+
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
