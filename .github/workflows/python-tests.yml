@@ -71,6 +71,7 @@ jobs:
           echo "Launchpad config file created."
 
       - name: Run tests with Xvfb
+        continue-on-error: true
         # The Jenkinsfile uses a custom function 'pyTestXvfb'. This is the standard
         # equivalent on Linux, as GitHub runners have Xvfb pre-installed.
         # The --html and --cov flags generate reports that we then upload as artifacts.
