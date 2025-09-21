@@ -25,7 +25,7 @@ jobs:
 
       - name: Test Built Application (Windows)
         run: |
-          Start-Process -FilePath ".\build\devildex_windows.exe" -NoNewWindow -PassThru | Wait-Process -Timeout 5
+          Start-Process -FilePath ".\build\devildex_windows\devildex_windows.exe" -NoNewWindow -PassThru | Wait-Process -Timeout 5
           Stop-Process -Name "devildex_windows.exe" -ErrorAction SilentlyContinue
 
   test-macos-package:
