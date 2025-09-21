@@ -1,0 +1,41 @@
+name: Test Packaged Application
+
+on:
+  workflow_run:
+    workflows: ["Package Desktop Application"]
+    types:
+      - completed
+
+jobs:
+  test-package:
+    runs-on: ${{ matrix.os }}
+    needs: build-package # This needs to be the job name from the "Package Desktop Application" workflow
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Download all workflow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-${{ matrix.os }}-build # Assuming artifact names are devildex-windows-build, devildex-macos-build, devildex-linux-build
+          path: build/
+
+      - name: Test Built Application
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            ./build/exe.win-amd64-3.13/devildex.exe &
+            sleep 5
+            kill %1
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            # Find the exact macOS build directory
+            MACOS_BUILD_DIR=$(find build -maxdepth 1 -type d -name "exe.macosx-*")
+            "$MACOS_BUILD_DIR/devildex" &
+            sleep 5
+            kill %1
+          elif [ "${{ runner.os }}" == "Linux" ]; then
+            ./build/exe.linux-x86_64-3.13/devildex &
+            sleep 5
+            kill %1
+          fi
