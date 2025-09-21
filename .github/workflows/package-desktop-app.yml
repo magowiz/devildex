@@ -60,7 +60,7 @@ jobs:
         run: poetry export -f requirements.txt --output requirements.txt --without-hashes
 
       - name: Install Project Dependencies
-        run: poetry install
+        run: poetry install --no-root --sync
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
