@@ -9,9 +9,15 @@ on:
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
+  check_trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Trigger
+        run: echo "Release workflow triggered."
+
   release:
-    needs: [build-whl-windows, build-whl-macos, build-whl-linux, package-desktop-app, publish-docs]
-    if: contains(github.event.head_commit.message, 'release(') # Added condition
+    needs: check_trigger
+    if: contains(github.event.head_commit.message, 'release(')
     runs-on: ubuntu-latest # Start with ubuntu-latest for initial setup
 
     steps:
