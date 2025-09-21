@@ -11,9 +11,11 @@ on:
 jobs:
   release:
     if: contains(github.event.head_commit.message, 'release(') # Added condition
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    runs-on: ubuntu-latest # Start with ubuntu-latest for initial setup
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
     - name: Checkout code
@@ -22,13 +24,45 @@ jobs:
         fetch-depth: 0 # Necessario per recuperare tutta la cronologia per i tag
         token: ${{ secrets.GITHUB_TOKEN }} # Token fornito automaticamente da GitHub
 
-    - name: Set up Python
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11' # Usa la versione di Python specificata in pyproject.toml
+        python-version: '3.13' # Use Python 3.13 for consistency
 
-    - name: Install Poetry
-      run: pip install poetry
+    - name: Install Poetry and Packaging Dependencies
+      run: |
+        pip install poetry
+        poetry self add poetry-plugin-export
+        poetry install --only packaging --no-root
+
+    - name: Install OS-specific dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libnotify-dev \
+          libgtk-3-dev \
+          libsdl2-dev \
+          libwebkit2gtk-4.1-dev \
+          libxtst-dev \
+          xvfb \
+          bzr \
+          python3-gi \
+          python3-gi-cairo \
+          python3-wxgtk4.0 \
+          python3-wxgtk-webview4.0
+
+    - name: Build Package (Windows)
+      if: runner.os == 'Windows'
+      run: poetry run python packaging/setup_windows.py build
+
+    - name: Build Package (macOS)
+      if: runner.os == 'macOS'
+      run: poetry run python packaging/setup_macos.py build
+
+    - name: Build Package (Linux)
+      if: runner.os == 'Linux'
+      run: poetry run python packaging/setup_linux.py build
 
     - name: Configure Git
       run: |
@@ -93,5 +127,10 @@ jobs:
           ${{ steps.commit_message.outputs.MESSAGE }}
         draft: false
         prerelease: false
+        files: |
+          build/exe.win-amd64-3.13/*
+          build/exe.macosx-*/*
+          build/exe.linux-x86_64-3.13/*
+          dist/*.whl # Include wheels as well
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token fornito automaticamente da GitHub
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
