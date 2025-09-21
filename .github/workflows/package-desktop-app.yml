@@ -30,7 +30,8 @@ jobs:
         run: |
           pip install poetry
           poetry self add poetry-plugin-export
-          poetry install --only packaging --no-root
+          poetry install --only packaging # Install packaging dependencies
+          poetry install # Install the main project and its regular dependencies
 
       - name: Install Project
         run: poetry install --no-dev
