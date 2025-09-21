@@ -72,7 +72,9 @@ jobs:
 
 
       - name: Update poetry.lock
-        run: poetry lock
+        run: |
+          poetry cache clear --all pypi
+          poetry lock
 
       - name: Install Project Dependencies
         run: poetry install
