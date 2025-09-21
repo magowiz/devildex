@@ -1,0 +1,83 @@
+name: Package Desktop Application
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-package:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry and Packaging Dependencies
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
+          poetry install --only packaging --no-root
+
+      - name: Install OS-specific dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnotify-dev \
+            libgtk-3-dev \
+            libsdl2-dev \
+            libwebkit2gtk-4.1-dev \
+            libxtst-dev \
+            xvfb \
+            bzr \
+            python3-gi \
+            python3-gi-cairo \
+            python3-wxgtk4.0 \
+            python3-wxgtk-webview4.0
+
+      - name: Build Package (Windows)
+        if: runner.os == 'Windows'
+        run: poetry run python packaging/setup_windows.py build
+
+      - name: Build Package (macOS)
+        if: runner.os == 'macOS'
+        run: poetry run python packaging/setup_macos.py build
+
+      - name: Build Package (Linux)
+        if: runner.os == 'Linux'
+        run: poetry run python packaging/setup_linux.py build
+
+      - name: Upload Windows Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-windows-build
+          path: build/exe.win-amd64-3.13/
+
+      - name: Upload macOS Artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-macos-build
+          path: build/exe.macosx-*/
+
+      - name: Upload Linux Artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-linux-build
+          path: build/exe.linux-x86_64-3.13/
