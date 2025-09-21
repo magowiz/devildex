@@ -53,6 +53,9 @@ jobs:
         if: runner.os == 'Linux'
         run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/wxPython-4.2.2-cp311-cp311-linux_x86_64.whl"
 
+      - name: Copy pyproject.toml.wx to pyproject.toml
+        run: cp pyproject.toml.wx pyproject.toml
+
       - name: Install Poetry and Packaging Dependencies
         run: |
           pip install poetry

@@ -1,0 +1,66 @@
+[project]
+name = "devildex"
+version = "0.2.0"
+description = "A desktop application for discovering, generating, and viewing Python package documentation (docsets). It scans your projects for dependencies, builds their documentation, and provides a unified interface to browse it all locally."
+authors = [
+    {name = "magowiz",email = "magowiz@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "toml (>=0.10.2,<0.11.0)",
+    "pip-requirements-parser (>=32.0.1,<33.0.0)",
+    "pdoc3 (>=0.11.6,<0.12.0)",
+    "requests (>=2.32.4,<3.0.0)",
+    "platformdirs (>=3.0.0,<5.0.0)",
+    "poetry-core (>=2.0.0,<3.0.0)",
+    "sqlalchemy (>=2.0.41,<3.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)",
+    "pydoctor (>=25.4.0,<26.0.0)",
+    "fastmcp (>=2.12.2,<3.0.0)",
+    "fastapi (>=0.116.1,<0.117.0)",
+    "uvicorn (>=0.35.0,<0.36.0)",
+    "markdownify (>=1.2.0,<2.0.0)",
+]
+
+[tool.poetry]
+packages = [
+    { include = "devildex", from = "src" }
+]
+
+[tool.poetry.group.packaging.dependencies]
+cx-freeze = "^8.4.0"
+nuitka = "^2.7.14"
+pyoxidizer = "^0.24.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.4.1"
+pytest-cov = "^7.0.0"
+pytest-rerunfailures = "^16.0"
+pytest-html = "^4.1.1"
+pytest-xdist = "^3.8.0"
+pytest-anyio = "^0.0.0"
+typeguard = "^4.4.4"
+requests = "^2.32.5"
+pytest-mock = "^3.14.1"
+pytest-asyncio = "^1.2.0"
+aiofiles = "^24.1.0"
+
+[tool.poetry.group.doc.dependencies]
+sphinx = "^8.2.3"
+myst-parser = "^4.0.1"
+sphinxcontrib-programoutput = "^0.18"
+sphinx-copybutton = "^0.5.2"
+
+[tool.poetry.group.lint.dependencies]
+ruff = "^0.13.1"
+black = "^25.1.0"
+
+[project.scripts]
+devildex = "devildex.main:main"
+devildex-register-project = "devildex.utils.companion:main"
+devildex-gemini-setup = "devildex.setup.gemini_cli:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
