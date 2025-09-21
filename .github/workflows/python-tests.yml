@@ -76,7 +76,7 @@ jobs:
         # The --html and --cov flags generate reports that we then upload as artifacts.
         run:
           | # We don't need `poetry run` as dependencies are in the global site-packages.
-          xvfb-run pytest --verbose --reruns 3 \
+          xvfb-run pytest --verbose -n 1 \
             --cov=src \
             --cov-report=xml \
             --cov-report=html:coverage_report \
