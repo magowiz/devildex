@@ -82,9 +82,10 @@ class AppPaths:
     def database_path(self) -> Path:
         """Path per il file del database dell application.
 
-                 May be un file SQLite, ad example.
-                 """
-                return self.user_data_dir / "devildex.db"
+        May be un file SQLite, ad example.
+        """
+        return self.user_data_dir / "devildex.db"
+
     @property
     def settings_file_path(self) -> Path:
         """Path per il file delle settings del application."""
