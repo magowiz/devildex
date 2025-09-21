@@ -22,6 +22,7 @@ jobs:
           name: devildex-${{ matrix.os }}-build
           path: build/
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: List downloaded files
         run: ls -R build/
