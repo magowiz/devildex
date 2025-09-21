@@ -83,9 +83,13 @@ jobs:
         if: runner.os == 'macOS'
         run: poetry run pyinstaller pyinstaller_specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
 
-      - name: Build Package (Other OS)
-        if: runner.os != 'macOS'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_${{ matrix.os }}.spec --distpath dist/${{ matrix.os }}
+      - name: Build Package (Windows)
+        if: runner.os == 'Windows'
+        run: poetry run pyinstaller pyinstaller_specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
+
+      - name: Build Package (Linux)
+        if: runner.os == 'Linux'
+        run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
