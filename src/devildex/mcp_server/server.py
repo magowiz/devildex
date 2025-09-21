@@ -44,7 +44,9 @@ def get_docsets_list(
 
     if project:
         docsets = _core_instance.get_docsets_info_for_project(project_name=project)
-        server_logger.info(f"MCP Server: Docsets for project '{project}': {docsets}") # Added logging
+        server_logger.info(
+            f"MCP Server: Docsets for project '{project}': {docsets}"
+        ) # Added logging
         return [d["name"] for d in docsets]
 
     if all_projects:

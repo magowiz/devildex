@@ -1178,7 +1178,10 @@ def main() -> None:
         app_paths = AppPaths()
         custom_db_path = os.getenv("DEVILDEX_CUSTOM_DB_PATH")
         if custom_db_path:
-            core = DevilDexCore(database_url=f"sqlite:///{custom_db_path}", docset_base_output_path=app_paths.docsets_base_dir)
+            core = DevilDexCore(
+                database_url=f"sqlite:///{custom_db_path}",
+                docset_base_output_path=app_paths.docsets_base_dir,
+            )
         else:
             core = DevilDexCore(docset_base_output_path=app_paths.docsets_base_dir)
 

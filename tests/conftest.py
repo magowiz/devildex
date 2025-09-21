@@ -117,7 +117,7 @@ def wx_app() -> wx.App:
     return wx._WX_APP_INSTANCE
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
     """Fixture to set up a temporary SQLite database and create tables."""
     with tempfile.TemporaryDirectory() as temp_db_dir:
@@ -125,22 +125,25 @@ def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
         db_url = f"sqlite:///{db_path}"
         engine = create_engine(db_url)
         Base.metadata.create_all(engine)
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         try:
-            yield db_url, engine, SessionLocal
+            yield db_url, engine, session_local
         finally:
             engine.dispose()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def populated_db_session(
     db_connection_and_tables: tuple[str, Any, Any],
     default_docset_status: str = AVAILABLE_BTN_LABEL, # Changed to constant
-) -> Generator[tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]], Any, None]:
+) -> Generator[
+    tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]], Any, None
+]:
     """Fixture to populate the database with test data."""
-    db_url, engine, SessionLocal = db_connection_and_tables
+    db_url, _engine, session_local = db_connection_and_tables
 
-    # Set the environment variable here, before any DevilDexCore instance might be created
+    # Set the environment variable here, before any DevilDexCore
+    # instance might be created
     # that relies on it.
     os.environ["DEVILDEX_CUSTOM_DB_PATH"] = db_url.replace("sqlite:///", "")
 
@@ -160,7 +163,9 @@ def populated_db_session(
             for name, version in docset_names_versions.items():
                 docset_path = temp_docset_path / name / version
                 docset_path.mkdir(parents=True, exist_ok=True)
-                (docset_path / "index.html").write_text(f"<h1>{name} {version} Index</h1>")
+                (docset_path / "index.html").write_text(
+                    f"<h1>{name} {version} Index</h1>"
+                )
 
 
         core_instance = DevilDexCore(
@@ -216,7 +221,7 @@ def populated_db_session(
             package_info=pkg_info_pandas,
         )
 
-        with SessionLocal() as session:
+        with session_local() as session:
             project_name = f"TestProject_{uuid.uuid4()}"
             project1 = RegisteredProject(
                 project_name=project_name,
@@ -242,10 +247,18 @@ def populated_db_session(
             project1.docsets.append(docset_flask)
             session.commit()
 
-        yield db_url, SessionLocal, project_name, temp_docset_path, core_instance, [
-            PackageDetails(name="requests", version="2.25.1", status=default_docset_status),
+        yield db_url, session_local, project_name, temp_docset_path, core_instance, [
+            PackageDetails(
+                name="requests", version="2.25.1", status=default_docset_status
+            ),
             PackageDetails(name="flask", version="2.0.0", status=default_docset_status),
-            PackageDetails(name="django", version="3.2.0", status=default_docset_status),
-            PackageDetails(name="numpy", version="1.20.0", status=default_docset_status),
-            PackageDetails(name="pandas", version="1.3.0", status=default_docset_status),
+            PackageDetails(
+                name="django", version="3.2.0", status=default_docset_status
+            ),
+            PackageDetails(
+                name="numpy", version="1.20.0", status=default_docset_status
+            ),
+            PackageDetails(
+                name="pandas", version="1.3.0", status=default_docset_status
+            ),
         ]
