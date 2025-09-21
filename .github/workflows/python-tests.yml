@@ -32,7 +32,7 @@ jobs:
           poetry self add poetry-plugin-export
 
       - name: Generate poetry.lock
-        run: poetry lock --no-update
+        run: poetry lock
 
       - name: Install system dependencies
         run: |
