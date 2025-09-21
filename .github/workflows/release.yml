@@ -249,13 +249,13 @@ jobs:
       with:
         tag_name: v${{ steps.new_version.outputs.VERSION }}
         name: Release v${{ steps.new_version.outputs.VERSION }}
-        body: |\
+        body: |
           Automated release for version v${{ steps.new_version.outputs.VERSION }}
           
           ${{ github.event.workflow_run.head_commit.message }}
         draft: false
         prerelease: false
-        files: |\
+        files: |
           artifacts/wheels/windows/*.whl
           artifacts/wheels/macos/*.whl
           artifacts/wheels/linux/*.whl
