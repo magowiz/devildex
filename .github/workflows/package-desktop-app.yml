@@ -92,6 +92,7 @@ jobs:
         run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
 
       - name: Upload Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: devildex-${{ matrix.os }}-build

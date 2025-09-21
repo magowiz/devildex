@@ -21,6 +21,7 @@ jobs:
         with:
           name: devildex-${{ matrix.os }}-build
           path: build/
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: List downloaded files
         run: ls -R build/
@@ -28,17 +29,17 @@ jobs:
       - name: Test Built Application
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            ./build/devildex.exe &
+            ./build/devildex_windows.exe &
             sleep 5
             kill %1
           elif [ "${{ runner.os }}" == "macOS" ]; then
-            chmod +x ./build/devildex
-            ./build/devildex &
+            chmod +x ./build/devildex_macos
+            ./build/devildex_macos &
             sleep 5
             kill %1
           elif [ "${{ runner.os }}" == "Linux" ]; then
-            chmod +x ./build/devildex
-            ./build/devildex &
+            chmod +x ./build/devildex_linux
+            ./build/devildex_linux &
             sleep 5
             kill %1
           fi
