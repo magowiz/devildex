@@ -1,4 +1,4 @@
-name: Release Workflow
+name: Release Workflow # Added a comment to trigger a new run
 
 on:
   push:
