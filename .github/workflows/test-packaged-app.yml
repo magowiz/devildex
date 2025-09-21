@@ -7,40 +7,69 @@ on:
       - completed
 
 jobs:
-  test-package:
-    runs-on: ${{ matrix.os }}
-
+  test-windows-package:
+    runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
     steps:
-      - name: Download all workflow artifacts
+      - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: devildex-${{ matrix.os }}-build
+          name: devildex-windows-latest-build
           path: build/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
 
-      - name: List downloaded files
+      - name: List downloaded files (Windows)
         run: ls -R build/
 
-      - name: Test Built Application
+      - name: Test Built Application (Windows)
         run: |
-          if ("${{ runner.os }}" -eq "Windows") {
-            Start-Process -FilePath ".\build\devildex_windows.exe" -NoNewWindow -PassThru | Wait-Process -Timeout 5
-            Stop-Process -Name "devildex_windows.exe" -ErrorAction SilentlyContinue
-          } elseif ("${{ runner.os }}" -eq "macOS") {
-            chmod +x ./build/devildex_macos
-            ./build/devildex_macos &
-            sleep 5
-            kill %1
-          } elseif ("${{ runner.os }}" -eq "Linux") {
-            chmod +x ./build/devildex_linux
-            ./build/devildex_linux &
-            sleep 5
-            kill %1
-          }
+          Start-Process -FilePath ".\build\devildex_windows.exe" -NoNewWindow -PassThru | Wait-Process -Timeout 5
+          Stop-Process -Name "devildex_windows.exe" -ErrorAction SilentlyContinue
+
+  test-macos-package:
+    runs-on: macos-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-macos-latest-build
+          path: build/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+
+      - name: List downloaded files (macOS)
+        run: ls -R build/
+
+      - name: Test Built Application (macOS)
+        run: |
+          chmod +x ./build/devildex_macos
+          ./build/devildex_macos &
+          sleep 5
+          kill %1
+
+  test-linux-package:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-ubuntu-latest-build
+          path: build/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+
+      - name: List downloaded files (Linux)
+        run: ls -R build/
+
+      - name: Test Built Application (Linux)
+        run: |
+          chmod +x ./build/devildex_linux
+          ./build/devildex_linux &
+          sleep 5
+          kill %1
