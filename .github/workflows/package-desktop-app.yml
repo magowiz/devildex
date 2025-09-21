@@ -21,10 +21,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+
+
+      - name: Set up Python (Windows)
+        if: runner.os == 'Windows'
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Set up Python (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up Python (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # Using 3.11 for Linux due to wxPython issues with 3.13
+
+      - name: Install wxPython (Windows)
+        if: runner.os == 'Windows'
+        run: pip install "wxpython==4.2.3"
+
+      - name: Install wxPython (macOS)
+        if: runner.os == 'macOS'
+        run: pip install "wxpython==4.2.3"
+
+      - name: Install wxPython (Linux)
+        if: runner.os == 'Linux'
+        run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/wxPython-4.2.2-cp311-cp311-linux_x86_64.whl"
 
       - name: Install Poetry and Packaging Dependencies
         run: |
