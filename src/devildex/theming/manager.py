@@ -168,7 +168,8 @@ class ThemeManager:
                 f"sys.path.insert(0, r'{self.project_path.resolve()!s}')",
                 f"sys.path.insert(0, r'{path!s}')",
                 "html_theme = 'devildex_sphinx_theme'",
-                "html_theme_path = [os.path.abspath(os.path.dirname('devildex_sphinx_theme'))]",
+                "html_theme_path = [os.path.abspath(os.path.dirname("
+                "'devildex_sphinx_theme'))]",
                 "templates_path = ['_templates']",
                 "html_js_files = ['live_reload.js']",
                 "# --- End DevilDex Theme Configuration ---\n",

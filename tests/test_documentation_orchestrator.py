@@ -321,6 +321,33 @@ def test_internal_fetch_repo_fetch_raises_runtime_error(
     mock_fetcher_instance.fetch.assert_called_once()
 
 
+@pytest.fixture
+def mock_scan_dependencies(mocker: MockerFixture) -> dict[str, MagicMock]:
+    """Fixture to provide mocked scan dependencies."""
+    mock_fetch_repo = mocker.patch(
+        "devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo",
+        return_value=True,
+    )
+    mock_is_sphinx_project = mocker.patch(
+        "devildex.orchestrator.documentation_orchestrator.is_sphinx_project",
+        return_value=False,
+    )
+    mock_is_mkdocs_project = mocker.patch(
+        "devildex.orchestrator.documentation_orchestrator.is_mkdocs_project",
+        return_value=False,
+    )
+    mock_has_docstrings = mocker.patch(
+        "devildex.orchestrator.documentation_orchestrator.has_docstrings",
+        return_value=False,
+    )
+    return {
+        "fetch_repo": mock_fetch_repo,
+        "is_sphinx_project": mock_is_sphinx_project,
+        "is_mkdocs_project": mock_is_mkdocs_project,
+        "has_docstrings": mock_has_docstrings,
+    }
+
+
 # Tests for start_scan method
 @patch("devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo")
 def test_start_scan_fetch_repo_fails(
@@ -333,167 +360,104 @@ def test_start_scan_fetch_repo_fails(
     mock_fetch_repo.assert_called_once()
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_sphinx_project",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_mkdocs_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.has_docstrings",
-    return_value=False,
-)
 def test_start_scan_detects_sphinx(
-    mock_has_docstrings: MagicMock,
-    mock_is_mkdocs_project: MagicMock,
-    mock_is_sphinx_project: MagicMock,
-    mock_fetch_repo: MagicMock,
+    mock_scan_dependencies: dict[str, MagicMock],
     mock_orchestrator: Orchestrator,
     tmp_path: Path,
 ) -> None:
     """Test start_scan detects sphinx."""
+    mock_scan_dependencies["fetch_repo"].return_value = True
+    mock_scan_dependencies["is_sphinx_project"].return_value = True
+    mock_scan_dependencies["is_mkdocs_project"].return_value = False
+    mock_scan_dependencies["has_docstrings"].return_value = False
+
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "sphinx"
-    mock_is_sphinx_project.assert_called_once_with(str(tmp_path / "source"))
-    mock_is_mkdocs_project.assert_not_called()
-    mock_has_docstrings.assert_not_called()
+    mock_scan_dependencies["is_sphinx_project"].assert_called_once_with(
+        str(tmp_path / "source")
+    )
+    mock_scan_dependencies["is_mkdocs_project"].assert_not_called()
+    mock_scan_dependencies["has_docstrings"].assert_not_called()
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_sphinx_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_mkdocs_project",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.has_docstrings",
-    return_value=False,
-)
 def test_start_scan_detects_mkdocs(
-    mock_has_docstrings: MagicMock,
-    mock_is_mkdocs_project: MagicMock,
-    mock_is_sphinx_project: MagicMock,
-    mock_fetch_repo: MagicMock,
+    mock_scan_dependencies: dict[str, MagicMock],
     mock_orchestrator: Orchestrator,
     tmp_path: Path,
 ) -> None:
     """Test start_scan detects mkdocs."""
+    mock_scan_dependencies["fetch_repo"].return_value = True
+    mock_scan_dependencies["is_sphinx_project"].return_value = False
+    mock_scan_dependencies["is_mkdocs_project"].return_value = True
+    mock_scan_dependencies["has_docstrings"].return_value = False
+
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "mkdocs"
-    mock_is_sphinx_project.assert_called_once()
-    mock_is_mkdocs_project.assert_called_once_with(str(tmp_path / "source"))
-    mock_has_docstrings.assert_not_called()
+    mock_scan_dependencies["is_sphinx_project"].assert_called_once()
+    mock_scan_dependencies["is_mkdocs_project"].assert_called_once_with(
+        str(tmp_path / "source")
+    )
+    mock_scan_dependencies["has_docstrings"].assert_not_called()
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_sphinx_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_mkdocs_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.has_docstrings", return_value=True
-)
 def test_start_scan_detects_docstrings(
-    mock_has_docstrings: MagicMock,
-    mock_is_mkdocs_project: MagicMock,
-    mock_is_sphinx_project: MagicMock,
-    mock_fetch_repo: MagicMock,
+    mock_scan_dependencies: dict[str, MagicMock],
     mock_orchestrator: Orchestrator,
     tmp_path: Path,
 ) -> None:
     """Test start_scan detects docstrings."""
+    mock_scan_dependencies["fetch_repo"].return_value = True
+    mock_scan_dependencies["is_sphinx_project"].return_value = False
+    mock_scan_dependencies["is_mkdocs_project"].return_value = False
+    mock_scan_dependencies["has_docstrings"].return_value = True
+
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "docstrings"
-    mock_is_sphinx_project.assert_called_once()
-    mock_is_mkdocs_project.assert_called_once()
-    mock_has_docstrings.assert_called_once_with(str(tmp_path / "source"))
+    mock_scan_dependencies["is_sphinx_project"].assert_called_once()
+    mock_scan_dependencies["is_mkdocs_project"].assert_called_once()
+    mock_scan_dependencies["has_docstrings"].assert_called_once_with(
+        str(tmp_path / "source")
+    )
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_sphinx_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_mkdocs_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.has_docstrings",
-    return_value=False,
-)
 def test_start_scan_detects_unknown(
-    mock_has_docstrings: MagicMock,
-    mock_is_mkdocs_project: MagicMock,
-    mock_is_sphinx_project: MagicMock,
-    mock_fetch_repo: MagicMock,
+    mock_scan_dependencies: dict[str, MagicMock],
     mock_orchestrator: Orchestrator,
     tmp_path: Path,
 ) -> None:
     """Test start_scan detects unknown."""
+    mock_scan_dependencies["fetch_repo"].return_value = True
+    mock_scan_dependencies["is_sphinx_project"].return_value = False
+    mock_scan_dependencies["is_mkdocs_project"].return_value = False
+    mock_scan_dependencies["has_docstrings"].return_value = False
+
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "unknown"
-    mock_is_sphinx_project.assert_called_once()
-    mock_is_mkdocs_project.assert_called_once()
-    mock_has_docstrings.assert_called_once()
+    mock_scan_dependencies["is_sphinx_project"].assert_called_once()
+    mock_scan_dependencies["is_mkdocs_project"].assert_called_once()
+    mock_scan_dependencies["has_docstrings"].assert_called_once()
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo",
-    return_value=True,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_sphinx_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.is_mkdocs_project",
-    return_value=False,
-)
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.has_docstrings",
-    return_value=False,
-)
 def test_start_scan_effective_source_path_none(
-    mock_has_docstrings: MagicMock,
-    mock_is_mkdocs_project: MagicMock,
-    mock_is_sphinx_project: MagicMock,
-    mock_fetch_repo: MagicMock,
+    mock_scan_dependencies: dict[str, MagicMock],
     mock_orchestrator: Orchestrator,
 ) -> None:
     """Test start_scan with no effective source path."""
+    mock_scan_dependencies["fetch_repo"].return_value = True
+    mock_scan_dependencies["is_sphinx_project"].return_value = False
+    mock_scan_dependencies["is_mkdocs_project"].return_value = False
+    mock_scan_dependencies["has_docstrings"].return_value = False
+
     mock_orchestrator._effective_source_path = None
     mock_orchestrator.start_scan()
     assert mock_orchestrator.detected_doc_type == "unknown"
-    mock_is_sphinx_project.assert_not_called()
-    mock_is_mkdocs_project.assert_not_called()
-    mock_has_docstrings.assert_not_called()
+    mock_scan_dependencies["is_sphinx_project"].assert_not_called()
+    mock_scan_dependencies["is_mkdocs_project"].assert_not_called()
+    mock_scan_dependencies["has_docstrings"].assert_not_called()
 
 
 def test_grab_build_doc_no_scan_result(mock_orchestrator: Orchestrator) -> None:

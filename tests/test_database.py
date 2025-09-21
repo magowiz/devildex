@@ -242,9 +242,9 @@ def test_get_session_raises_database_not_initialized_error(
     )
 
     # Act & Assert
-    with pytest.raises(database.DatabaseNotInitializedError) as excinfo:
-        with database.DatabaseManager.get_session():
-            pass
+    with pytest.raises(database.DatabaseNotInitializedError) as excinfo, \
+         database.DatabaseManager.get_session():
+        pass
     assert (
         "Failed to initialize SessionLocal even after attempting default init."
         in str(excinfo.value)
@@ -282,7 +282,10 @@ def test_ensure_registered_project_and_association_value_error(
     db_session.add_all([pkg_info, docset])
     db_session.commit()
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(
+        ValueError,
+        match=r"project_path and python_executable must be provided.",
+    ) as excinfo:
         database._ensure_registered_project_and_association(
             db_session,
             project_name="NewProject",
@@ -324,9 +327,9 @@ def test_ensure_package_entities_exist_commit_exception(
     mocker.patch(
         "devildex.database.db_manager.get_session", return_value=mock_context_manager
     )
-    with pytest.raises(database.SQLAlchemyError) as excinfo:
-        with caplog.at_level(logging.ERROR):
-            database.ensure_package_entities_exist(**package_data)
+    with pytest.raises(database.SQLAlchemyError) as excinfo, \
+         caplog.at_level(logging.ERROR):
+        database.ensure_package_entities_exist(**package_data)
 
     assert "Commit failed" in str(excinfo.value)
     assert "Error during final commit while ensuring package entities." in caplog.text

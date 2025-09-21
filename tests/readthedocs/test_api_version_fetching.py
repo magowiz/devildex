@@ -31,12 +31,12 @@ class MockResponse:
         """Mock the json method."""
         if self._json_data is not None:
             return self._json_data
-        raise json.JSONDecodeError("Expecting value", self._text_data, 0)
+        raise json.JSONDecodeError("JSON Decode Error", self._text_data, 0)
 
     def raise_for_status(self) -> None:
         """Mock the raise_for_status method."""
         if self.status_code >= HTTP_BAD_REQUEST_STATUS:
-            raise requests.exceptions.HTTPError(f"Error {self.status_code}")
+            raise requests.exceptions.HTTPError("HTTP Error")
 
 
 def test_fetch_available_versions_single_page(mocker: MockerFixture) -> None:

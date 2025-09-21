@@ -133,7 +133,7 @@ def test_get_explicit_package_names_from_requirements_none_filepath() -> None:
 @patch("builtins.open", new_callable=mock_open)
 @patch("os.path.exists", return_value=True)
 def test_get_explicit_package_names_from_requirements_os_error(
-    mock_exists, mock_open, mock_logger_exception
+    mock_exists: MagicMock, mock_open: MagicMock, mock_logger_exception: MagicMock
 ) -> None:
     """Verify get_explicit_package_names_from_requirements handles OSError."""
     mock_open.side_effect = OSError("Permission denied")
@@ -150,7 +150,7 @@ def test_get_explicit_package_names_from_requirements_os_error(
 @patch("builtins.open", new_callable=mock_open)
 @patch("os.path.exists", return_value=True)
 def test_get_explicit_package_names_from_requirements_unicode_error(
-    mock_exists, mock_open, mock_logger_exception
+    mock_exists: MagicMock, mock_open: MagicMock, mock_logger_exception: MagicMock
 ) -> None:
     """Verify get_explicit_package_names_from_requirements handle UnicodeDecodeError."""
     mock_open.side_effect = UnicodeDecodeError("utf-8", b"\x80", 0, 1, "invalid byte")

@@ -9,9 +9,11 @@ import uuid
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 import wx
+from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -26,6 +28,8 @@ from devildex.database.models import (
     PackageInfo,
     RegisteredProject,
 )
+from devildex.main import DevilDexApp
+from devildex.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,49 @@ def free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
+
+
+@pytest.fixture
+def mock_config_manager(mocker: MockerFixture, free_port: int) -> None:
+    """Fixture to mock the ConfigManager singleton for test control."""
+    ConfigManager._instance = None
+    mocker.patch("devildex.config_manager.ConfigManager._initialize", return_value=None)
+    mocker.patch(
+        "devildex.config_manager.ConfigManager._load_config", return_value=None
+    )
+    mocker.patch("devildex.config_manager.ConfigManager.save_config", return_value=None)
+
+    mock_instance = ConfigManager()
+    mocker.patch("devildex.config_manager.ConfigManager", return_value=mock_instance)
+    mocker.patch("devildex.config_manager.ConfigManager._instance", new=mock_instance)
+
+    mock_instance.get_mcp_server_enabled = mocker.Mock(return_value=False)
+    mock_instance.get_mcp_server_hide_gui_when_enabled = mocker.Mock(return_value=False)
+    mock_instance.get_mcp_server_port = mocker.Mock(return_value=free_port)
+
+    return mock_instance
+
+
+@pytest.fixture
+def devildex_app_fixture(
+    wx_app: wx.App,
+    mock_config_manager: MagicMock,
+    populated_db_session: tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]],
+    mocker: MockerFixture,
+) -> Generator[DevilDexApp, Any, None]:
+    """Fixture to create the main DevilDexApp instance for UI tests."""
+    mocker.patch(
+        "devildex.main.DevilDexCore.bootstrap_database_and_load_data", return_value=[]
+    )
+    mocker.patch("devildex.main.DevilDexCore.shutdown", return_value=None)
+
+    core_instance = DevilDexCore(database_url=populated_db_session[0])
+
+    main_app = DevilDexApp(core=core_instance)
+    yield main_app
+    if main_app.main_frame:
+        wx.CallAfter(main_app.main_frame.Destroy)
+    wx.Yield()
 
 
 @pytest.fixture(scope="session", autouse=True)

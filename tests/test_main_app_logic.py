@@ -435,50 +435,60 @@ def test_on_view_mode_changed_core_setting_fails(
 
 
 @pytest.mark.parametrize(
-    (
-        "package_data",
-        "task_active",
-        "core_exists",
-        "expected_result",
-        "expected_msg_part",
-    ),
+    "test_case",
     [
-        (
-            {"id": "pkg-123", "name": "p", "docset_status": "Not Available"},
-            False,
-            True,
-            True,
-            None,
-        ),
+        {
+            "package_data": {
+                "id": "pkg-123",
+                "name": "p",
+                "docset_status": "Not Available",
+            },
+            "task_active": False,
+            "core_exists": True,
+            "expected_result": True,
+            "expected_msg_part": None,
+        },
         # Failure cases
-        (
-            {"name": "p", "docset_status": "Not Available"},  # No ID
-            False,
-            True,
-            False,
-            "Package ID missing",
-        ),
-        (
-            {"id": "pkg-123", "name": "p", "docset_status": "Not Available"},
-            True,  # Task is active
-            True,
-            False,
-            "already in progress",
-        ),
-        (
-            {"id": "pkg-123", "name": "p", "docset_status": AVAILABLE_BTN_LABEL},
-            False,
-            True,
-            False,
-            "already available",
-        ),
-        (
-            {"id": "pkg-123", "name": "p", "docset_status": "Not Available"},
-            False,
-            False,  # Core is missing
-            False,
-            "Core component non è initialized",
-        ),
+        {
+            "package_data": {"name": "p", "docset_status": "Not Available"},  # No ID
+            "task_active": False,
+            "core_exists": True,
+            "expected_result": False,
+            "expected_msg_part": "Package ID missing",
+        },
+        {
+            "package_data": {
+                "id": "pkg-123",
+                "name": "p",
+                "docset_status": "Not Available",
+            },
+            "task_active": True,  # Task is active
+            "core_exists": True,
+            "expected_result": False,
+            "expected_msg_part": "already in progress",
+        },
+        {
+            "package_data": {
+                "id": "pkg-123",
+                "name": "p",
+                "docset_status": AVAILABLE_BTN_LABEL,
+            },
+            "task_active": False,
+            "core_exists": True,
+            "expected_result": False,
+            "expected_msg_part": "already available",
+        },
+        {
+            "package_data": {
+                "id": "pkg-123",
+                "name": "p",
+                "docset_status": "Not Available",
+            },
+            "task_active": False,
+            "core_exists": False,  # Core is missing
+            "expected_result": False,
+            "expected_msg_part": "Core component non è initialized",
+        },
     ],
     ids=[
         "success",
@@ -491,14 +501,16 @@ def test_on_view_mode_changed_core_setting_fails(
 def test_validate_can_generate_scenarios(
     app: DevilDexApp,
     mocker: MockerFixture,
-    package_data: dict,
-    task_active: bool,
-    core_exists: bool,
-    expected_result: bool,
-    expected_msg_part: str | None,
+    test_case: dict,
 ) -> None:
     """Verify _validate_can_generate handles various scenarios correctly."""
     # Arrange
+    package_data = test_case["package_data"]
+    task_active = test_case["task_active"]
+    core_exists = test_case["core_exists"]
+    expected_result = test_case["expected_result"]
+    expected_msg_part = test_case["expected_msg_part"]
+
     if not core_exists:
         app.core = None
 

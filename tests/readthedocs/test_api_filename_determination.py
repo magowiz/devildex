@@ -62,7 +62,13 @@ test_cases = [
 
 
 @pytest.mark.parametrize(
-    "project_slug, version_slug, download_url, download_format, expected_filename",
+    (
+        "project_slug",
+        "version_slug",
+        "download_url",
+        "download_format",
+        "expected_filename",
+    ),
     test_cases,
 )
 def test_determine_local_filename(

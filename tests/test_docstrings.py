@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -372,9 +372,12 @@ def test_log_traceback(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) 
     doc_generator = DocStringsSrc()
     mock_logger_debug = mocker.patch("devildex.docstrings.docstrings_src.logger.debug")
 
+    def _raise_error() -> NoReturn:
+        raise ValueError("Error")
+
     with caplog.at_level(logging.DEBUG):
         try:
-            raise ValueError("Test exception")
+            _raise_error()
         except ValueError:
             doc_generator._log_traceback()
 

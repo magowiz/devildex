@@ -24,7 +24,7 @@ class MockStreamResponse:
     def raise_for_status(self) -> None:
         """Mock raise_for_status to raise on bad status codes."""
         if self.status_code >= HTTP_BAD_REQUEST_STATUS:
-            raise requests.exceptions.HTTPError(f"Error {self.status_code}")
+            raise requests.exceptions.HTTPError("HTTP Error")
 
     def iter_content(self, chunk_size: int = 8192) -> collections.abc:
         """Mock iter_content to return our fake content."""

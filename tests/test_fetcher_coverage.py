@@ -167,22 +167,50 @@ class TestPackageSourceFetcherCoverage:
         )
 
     # Test for _download_and_extract_archive (lines 300, 309, 313, 320, 321)
-    @patch("src.devildex.fetcher.PackageSourceFetcher._download_file")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._extract_archive")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._determine_content_source_dir")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._cleanup_target_dir_content")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._move_extracted_content")
+    @pytest.fixture
+    def mock_download_extract_dependencies(
+        self, mocker: MagicMock
+    ) -> dict[str, MagicMock]:
+        """Fixture to provide mocked download and extract dependencies."""
+        mock_download_file = mocker.patch(
+            "src.devildex.fetcher.PackageSourceFetcher._download_file"
+        )
+        mock_extract_archive = mocker.patch(
+            "src.devildex.fetcher.PackageSourceFetcher._extract_archive"
+        )
+        mock_determine_content_source_dir = mocker.patch(
+            "src.devildex.fetcher.PackageSourceFetcher._determine_content_source_dir"
+        )
+        mock_cleanup_target_dir = mocker.patch(
+            "src.devildex.fetcher.PackageSourceFetcher._cleanup_target_dir_content"
+        )
+        mock_ensure_target_dir = mocker.patch(
+            "src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists"
+        )
+        mock_move = mocker.patch(
+            "src.devildex.fetcher.PackageSourceFetcher._move_extracted_content"
+        )
+        return {
+            "download_file": mock_download_file,
+            "extract_archive": mock_extract_archive,
+            "determine_content_source_dir": mock_determine_content_source_dir,
+            "cleanup_target_dir": mock_cleanup_target_dir,
+            "ensure_target_dir": mock_ensure_target_dir,
+            "move": mock_move,
+        }
+
     def test_download_and_extract_archive_temp_base_dir_exists(
         self,
-        mock_move: MagicMock,
-        mock_ensure_target_dir: MagicMock,
-        mock_cleanup_target_dir: MagicMock,
-        mock_determine_content_source_dir: MagicMock,
-        mock_extract_archive: MagicMock,
-        mock_download_file: MagicMock,
+        mock_download_extract_dependencies: dict[str, MagicMock],
     ) -> None:
         """Test download and extract archive temp base dir exists."""
+        mock_move = mock_download_extract_dependencies["move"]
+        mock_ensure_target_dir = mock_download_extract_dependencies["ensure_target_dir"]
+        mock_determine_content_source_dir = mock_download_extract_dependencies[
+            "determine_content_source_dir"
+        ]
+        mock_extract_archive = mock_download_extract_dependencies["extract_archive"]
+
         temp_base_dir = self.BASE_SAVE_PATH / "temp_base_dir_exists"
         temp_base_dir.mkdir()  # Ensure it exists for this test
         (temp_base_dir / "some_file.txt").touch()  # Add some content
