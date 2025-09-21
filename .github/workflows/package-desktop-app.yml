@@ -23,6 +23,18 @@ jobs:
 
 
 
+      - name: Copy pyproject.toml for Windows
+        if: runner.os == 'Windows'
+        run: cp pyproject.toml.win pyproject.toml
+
+      - name: Copy pyproject.toml for macOS
+        if: runner.os == 'macOS'
+        run: cp pyproject.toml.mac pyproject.toml
+
+      - name: Copy pyproject.toml for Linux
+        if: runner.os == 'Linux'
+        run: cp pyproject.toml.linux pyproject.toml
+
       - name: Set up Python (Windows)
         if: runner.os == 'Windows'
         uses: actions/setup-python@v5
@@ -58,17 +70,17 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Install Poetry and Packaging Dependencies
-        run: |
-          poetry self add poetry-plugin-export
+
       - name: Update poetry.lock
         run: poetry lock
+
+      - name: Install Project Dependencies
+        run: poetry install
       - run: |
           poetry install --only packaging # Install packaging dependencies
           poetry install # Install the main project and its regular dependencies
 
-      - name: Install Project
-        run: poetry install
+
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'

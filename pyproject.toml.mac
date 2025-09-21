@@ -17,7 +17,6 @@ dependencies = [
     "sqlalchemy (>=2.0.41,<3.0.0)",
     "pyyaml (>=6.0.2,<7.0.0)",
     "pydoctor (>=25.4.0,<26.0.0)",
-    "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl",
     "fastmcp (>=2.12.2,<3.0.0)",
     "fastapi (>=0.116.1,<0.117.0)",
     "uvicorn (>=0.35.0,<0.36.0)",
@@ -32,8 +31,6 @@ packages = [
 
 [tool.poetry.group.packaging.dependencies]
 
-nuitka = "^2.7.14"
-pyoxidizer = "^0.24.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.4.1"
