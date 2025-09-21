@@ -1,25 +1,20 @@
-name: Release Workflow # Added a comment to trigger a new run
+name: Release Workflow
 
 on:
-  push:
-    tags:
-      - 'v*' # Trigger on tags starting with v
-    branches: # Added branches trigger
-      - master # Trigger on push to master
-  workflow_dispatch: # Allows manual triggering of the workflow
+  workflow_run:
+    workflows:
+      - "Build Linux Python Wheel"
+      - "Build macOS Wheel"
+      - "Build Windows Wheel"
+      - "Package Desktop Application"
+      - "Publish Documentation"
+      - "Python Tests"
+    types:
+      - completed
 
 jobs:
-  check_trigger:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Trigger
-        run: echo "Release workflow triggered."
-
   release:
-    needs: [check_trigger, build, build-macos-wheel, build-windows-wheel, build-package, build-docs]
-    if: contains(github.event.head_commit.message, 'release(')
     runs-on: ubuntu-latest # Start with ubuntu-latest for initial setup
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -39,7 +34,7 @@ jobs:
     - name: Determine version increment
       id: version_increment
       run: |
-        COMMIT_MESSAGE="${{ steps.commit_message.outputs.MESSAGE }}"
+        COMMIT_MESSAGE="${{ github.event.workflow_run.head_commit.message }}"
         INCREMENT_TYPE=""
         if [[ "$COMMIT_MESSAGE" == "release(patch):"* ]]; then
           INCREMENT_TYPE="patch"
@@ -92,42 +87,56 @@ jobs:
       with:
         name: devildex-windows-wheel
         path: artifacts/wheels/windows
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download macOS Wheel artifact
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-wheel
         path: artifacts/wheels/macos
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download Linux Wheel artifact
       uses: actions/download-artifact@v4
       with:
         name: devildex-linux-wheel
         path: artifacts/wheels/linux
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download Windows PyInstaller bundle
       uses: actions/download-artifact@v4
       with:
         name: devildex-windows-latest-build
         path: artifacts/bundles/windows
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download macOS PyInstaller bundle
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-latest-build
         path: artifacts/bundles/macos
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download Linux PyInstaller bundle
       uses: actions/download-artifact@v4
       with:
         name: devildex-ubuntu-latest-build
         path: artifacts/bundles/linux
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download documentation artifact
       uses: actions/download-artifact@v4
       with:
         name: documentation-html
         path: artifacts/docs
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -137,7 +146,7 @@ jobs:
         body: |
           Automated release for version v${{ steps.new_version.outputs.VERSION }}
           
-          ${{ github.event.head_commit.message }}
+          ${{ github.event.workflow_run.head_commit.message }}
         draft: false
         prerelease: false
         files: |
