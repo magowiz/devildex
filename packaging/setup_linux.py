@@ -2,7 +2,7 @@ from cx_Freeze import setup, Executable
 
 build_exe_options = {
     "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex"],
-    "includes": ["devildex.database.db_manager"],
+    "includes": ["devildex", "devildex.database", "devildex.database.db_manager"],
     "include_files": [
         ("imgs", "imgs"),
         ("devildex_config.ini", "devildex_config.ini"),
