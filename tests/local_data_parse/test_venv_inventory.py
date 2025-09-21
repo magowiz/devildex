@@ -3,6 +3,8 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from devildex.database.models import PackageDetails
 from devildex.local_data_parse.venv_inventory import (
     get_installed_packages_with_project_urls,
@@ -75,7 +77,7 @@ def test_get_installed_packages_with_explicit_filter(
     assert package_names == {"requests", "pytest"}
 
 
-import pytest
+
 
 
 @patch("devildex.local_data_parse.venv_inventory.importlib.metadata.distributions")

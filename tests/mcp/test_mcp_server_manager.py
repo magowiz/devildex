@@ -1,4 +1,8 @@
-from unittest.mock import MagicMock, patch
+"""Test the McpServerManager class."""
+
+from collections.abc import Generator
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -8,12 +12,12 @@ MOCK_MCP_PORT = 12345
 
 
 @pytest.fixture
-def mock_config_manager() -> MagicMock:
+def mock_config_manager() -> Generator[MagicMock | AsyncMock, Any, None]:
     """Create a mock ConfigManager instance for testing."""
-    with patch("devildex.mcp_server.mcp_server_manager.ConfigManager") as MockConfig:
-        mock_instance = MockConfig.return_value
+    with patch("devildex.mcp_server.mcp_server_manager.ConfigManager") as mock_config:
+        mock_instance = mock_config.return_value
         mock_instance.get_mcp_server_port.return_value = MOCK_MCP_PORT
-        yield MockConfig
+        yield mock_config
 
 
 @pytest.fixture

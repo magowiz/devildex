@@ -28,7 +28,7 @@ class MockResponse:
         raise json.JSONDecodeError("Expecting value", self._text_data, 0)
 
     def raise_for_status(self) -> None:
-        """Mock the raise_for_status() method."""
+        """Mock the raise_for_status method."""
         if self.status_code >= HTTP_BAD_REQUEST_STATUS:
             raise requests.exceptions.HTTPError(f"Error {self.status_code}")
 

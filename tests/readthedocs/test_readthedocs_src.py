@@ -3,7 +3,6 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -99,7 +98,7 @@ def test_attempt_single_branch_clone_failed_retryable(
     mocker: MockerFixture, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify failed clone attempt (retryable)."""
-    mock_subprocess_run = mocker.patch(
+    _ = mocker.patch(
         "subprocess.run",
         return_value=MagicMock(returncode=1, stdout="", stderr="clone failed"),
     )
@@ -672,10 +671,11 @@ def test_handle_repository_cloning_new_clone_success(
     if clone_dir_path_for_test.exists():
         shutil.rmtree(clone_dir_path_for_test)
 
-    def mock_clone_and_process_success(*args: Any, **kwargs: Any) -> tuple[bool, str]:
-        # args: repo_url, branch_to_try, clone_dir_path, bzr, project_slug
+    def mock_clone_and_process_success(
+        *args: tuple, **kwargs: dict
+    ) -> tuple[bool, str]:
         mock_clone_dir_path = args[2]
-        mock_clone_dir_path.mkdir(parents=True)  # Create the directory
+        mock_clone_dir_path.mkdir(parents=True)
         return True, "dev"
 
     mock_attempt_clone_and_process_result = mocker.patch(
@@ -706,11 +706,12 @@ def test_handle_repository_cloning_new_clone_failure(
 ) -> None:
     """Verify _handle_repository_cloning handles failed new clone."""
     clone_dir_path_for_test = tmp_path / "test_project_repo_main"
-    # Ensure it does not exist before the test
     if clone_dir_path_for_test.exists():
         shutil.rmtree(clone_dir_path_for_test)
 
-    def mock_clone_and_process_failure(*args: Any, **kwargs: Any) -> tuple[bool, str]:
+    def mock_clone_and_process_failure(
+        *args: tuple, **kwargs: dict
+    ) -> tuple[bool, str]:
         return False, "main"
 
     mock_attempt_clone_and_process_result = mocker.patch(

@@ -11,7 +11,9 @@ EXPECTED_PACKAGE_COUNT = 2
 @patch("devildex.local_data_parse._external_scanner_script.sys.exit")
 @patch("devildex.local_data_parse._external_scanner_script._main_write_json")
 @patch("importlib.metadata.distributions")
-def test_main_success(mock_distributions: MagicMock, mock_write_json: MagicMock, mock_exit: MagicMock) -> None:
+def test_main_success(
+    mock_distributions: MagicMock, mock_write_json: MagicMock, mock_exit: MagicMock
+) -> None:
     """Verify that the main function generates correct JSON and exits cleanly."""
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):
         mock_dist1 = MagicMock()
@@ -75,7 +77,9 @@ def test_main_discovery_exception(
 
 @patch("devildex.local_data_parse._external_scanner_script.sys.exit")
 @patch("devildex.local_data_parse._external_scanner_script.logger.debug")
-def test_args_checker_insufficient_args(mock_logger_debug: MagicMock, mock_exit: MagicMock) -> None:
+def test_args_checker_insufficient_args(
+    mock_logger_debug: MagicMock, mock_exit: MagicMock
+) -> None:
     """Verify _args_checker exits if not enough arguments are provided."""
     with patch("sys.argv", ["_external_scanner_script.py"]):  # Only one arg
         scanner_script._args_checker()
@@ -88,7 +92,9 @@ def test_args_checker_insufficient_args(mock_logger_debug: MagicMock, mock_exit:
 @patch("devildex.local_data_parse._external_scanner_script.sys.exit")
 @patch("devildex.local_data_parse._external_scanner_script.logger.debug")
 @patch("builtins.open", side_effect=OSError("Disk full"))
-def test_main_write_json_os_error(mock_open: MagicMock, mock_logger_debug: MagicMock, mock_exit: MagicMock) -> None:
+def test_main_write_json_os_error(
+    mock_open: MagicMock, mock_logger_debug: MagicMock, mock_exit: MagicMock
+) -> None:
     """Verify _main_write_json handles OSError during file writing."""
     scanner_script._main_write_json("/fake/output.json", [{"name": "test"}])
     mock_logger_debug.assert_called_once()
@@ -101,7 +107,10 @@ def test_main_write_json_os_error(mock_open: MagicMock, mock_logger_debug: Magic
 @patch("json.dump", side_effect=TypeError("Object not serializable"))
 @patch("builtins.open", new_callable=mock_open)
 def test_main_write_json_json_error(
-    mock_open: MagicMock, mock_json_dump: MagicMock, mock_logger_debug: MagicMock, mock_exit: MagicMock
+    mock_open: MagicMock,
+    mock_json_dump: MagicMock,
+    mock_logger_debug: MagicMock,
+    mock_exit: MagicMock,
 ) -> None:
     """Verify _main_write_json handles JSON serialization errors."""
     scanner_script._main_write_json("/fake/output.json", [object()])
@@ -118,7 +127,10 @@ def test_main_write_json_json_error(
 @patch("builtins.open", new_callable=mock_open)
 @patch("json.dump")
 def test_main_write_json_success(
-    mock_json_dump: MagicMock, mock_open: MagicMock, mock_logger_debug: MagicMock, mock_exit: MagicMock
+    mock_json_dump: MagicMock,
+    mock_open: MagicMock,
+    mock_logger_debug: MagicMock,
+    mock_exit: MagicMock,
 ) -> None:
     """Verify _main_write_json successfully writes JSON and exits."""
     output_file_path = "/fake/output.json"
@@ -137,7 +149,10 @@ def test_main_write_json_success(
 @patch("devildex.local_data_parse._external_scanner_script._main_write_json")
 @patch("importlib.metadata.distributions")
 def test_main_project_url_attribute_error(
-    mock_distributions: MagicMock, mock_write_json: MagicMock, mock_log_exception: MagicMock, mock_exit: MagicMock
+    mock_distributions: MagicMock,
+    mock_write_json: MagicMock,
+    mock_log_exception: MagicMock,
+    mock_exit: MagicMock,
 ) -> None:
     """Verify main handles AttributeError in project_urls parsing."""
     with patch("sys.argv", ["_external_scanner_script.py", "/fake/output.json"]):

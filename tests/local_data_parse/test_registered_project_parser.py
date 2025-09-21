@@ -57,7 +57,9 @@ def test_load_active_project_file_not_found(mock_app_paths: Path) -> None:
     assert loaded_data is None
 
 
-def test_load_active_project_invalid_json(mock_app_paths: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_active_project_invalid_json(
+    mock_app_paths: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that loading returns None and logs an error for a corrupt JSON file."""
     mock_app_paths.write_text("this is not valid json {")
     assert mock_app_paths.is_file()
@@ -97,7 +99,9 @@ def test_clear_active_registered_project_file_not_exist(mock_app_paths: Path) ->
         )
 
 
-def test_save_active_project_missing_required_keys(caplog: pytest.LogCaptureFixture) -> None:
+def test_save_active_project_missing_required_keys(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Verify that saving fails if the input data is missing required keys."""
     invalid_data: RegisteredProjectData = {  # type: ignore
         "project_name": "Invalid",
@@ -108,7 +112,9 @@ def test_save_active_project_missing_required_keys(caplog: pytest.LogCaptureFixt
     assert "required key 'project_path' missing or None" in caplog.text
 
 
-def test_load_active_project_invalid_path_in_json(mock_app_paths: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_active_project_invalid_path_in_json(
+    mock_app_paths: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that loading handles an invalid path in the JSON file."""
     invalid_path_data = {
         "project_name": "InvalidPathProject",
@@ -132,7 +138,9 @@ def test_load_active_project_os_error_on_open(
     assert "Unexpected error while parsing file" in caplog.text
 
 
-def test_save_active_project_mkdir_os_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_save_active_project_mkdir_os_error(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that saving handles an OSError during directory creation."""
     mocker.patch.object(Path, "mkdir", side_effect=OSError("Test mkdir OSError"))
     result = registered_project_parser.save_active_registered_project(TEST_PROJECT_DATA)
@@ -160,7 +168,9 @@ def test_save_active_project_json_type_error(
     assert "Type error during JSON serialization" in caplog.text
 
 
-def test_clear_active_project_app_paths_os_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_clear_active_project_app_paths_os_error(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that clearing handles an OSError when initializing AppPaths."""
     # Arrange
     mocker.patch(
@@ -181,7 +191,9 @@ def test_clear_active_project_unlink_os_error(
     assert "Error while removing the active project file" in caplog.text
 
 
-def test_load_active_project_app_paths_os_error(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_active_project_app_paths_os_error(
+    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verify that loading handles an OSError when initializing AppPaths."""
     # Arrange
     mocker.patch(
