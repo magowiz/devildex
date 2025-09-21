@@ -25,17 +25,17 @@ jobs:
       - name: Test Built Application
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            ./build/exe.win-amd64-3.13/devildex.exe &
+            ./build/devildex.exe &
             sleep 5
             kill %1
           elif [ "${{ runner.os }}" == "macOS" ]; then
-            # Find the exact macOS build directory
-            MACOS_BUILD_DIR=$(find build -maxdepth 1 -type d -name "exe.macosx-*")
-            "$MACOS_BUILD_DIR/devildex" &
+            chmod +x ./build/devildex
+            ./build/devildex &
             sleep 5
             kill %1
           elif [ "${{ runner.os }}" == "Linux" ]; then
-            ./build/exe.linux-x86_64-3.13/devildex &
+            chmod +x ./build/devildex
+            ./build/devildex &
             sleep 5
             kill %1
           fi
