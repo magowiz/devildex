@@ -42,6 +42,9 @@ jobs:
       - name: Update poetry.lock
         run: poetry lock
 
+      - name: Update poetry.lock
+        run: poetry lock
+
       - name: Install Project Dependencies
         run: poetry install
 
