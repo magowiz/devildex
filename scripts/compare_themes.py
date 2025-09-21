@@ -750,7 +750,7 @@ def setup_environment(args: Namespace) -> BuildContext | None:
         return None
 
     (
-        doc_type_to_build,
+        _doc_type_to_build,
         build_outputs_base_dir_from_guard,
         cloned_repo_path,
         run_temp_dir,
@@ -880,7 +880,7 @@ def _guards(args: Namespace, project_config: dict) -> tuple | None:
         logger.error(f"Project '{args.project_name}' not found in KNOWN_PROJECTS.")
         return None
 
-    doc_type_to_build = args.doc_type or project_config["doc_type"]
+    _doc_type_to_build = args.doc_type or project_config["doc_type"]
     repo_url = project_config["repo_url"]
     branch_to_clone = args.branch or project_config.get("default_branch", "main")
 
@@ -899,7 +899,7 @@ def _guards(args: Namespace, project_config: dict) -> tuple | None:
             shutil.rmtree(run_temp_dir)
         return None
     return (
-        doc_type_to_build,
+        _doc_type_to_build,
         build_outputs_base_dir,
         cloned_repo_path,
         run_temp_dir,

@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock, patch
 
-MOCK_MCP_PORT = 12345
-
 import pytest
 
 from devildex.mcp_server.mcp_server_manager import McpServerManager
+
+MOCK_MCP_PORT = 12345
 
 
 @pytest.fixture
