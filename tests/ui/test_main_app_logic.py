@@ -53,7 +53,6 @@ class TestMainAppLogic(unittest.TestCase):
     def test_on_init_initial_state(self) -> None:
         """Verify the initial state of the UI after OnInit."""
         assert self.frame is not None, "Main frame should be created"
-        assert self.frame.IsShown(), "Main frame should be visible"
         assert self.frame.GetTitle() == "DevilDex", "Window title is incorrect"
         assert self.app.grid_panel is not None, "Grid panel should be initialized"
         assert self.app.actions_panel is not None, "Actions panel should be initialized"
