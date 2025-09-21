@@ -19,7 +19,7 @@ jobs:
       - name: Download all workflow artifacts
         uses: actions/download-artifact@v4
         with:
-          name: devildex-${{ matrix.os }}-build # Assuming artifact names are devildex-windows-build, devildex-macos-build, devildex-linux-build
+          name: devildex-${{ matrix.os }}-build
           path: build/
 
       - name: Test Built Application
