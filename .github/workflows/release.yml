@@ -53,29 +53,36 @@ jobs:
         exit 0
 
     - name: Set up Python 3.13
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
 
     - name: Install Poetry
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: pip install poetry
 
     - name: Increment version with Poetry
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: poetry version ${{ steps.version_increment.outputs.INCREMENT_TYPE }}
 
     - name: Get new version
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       id: new_version
       run: echo "VERSION=$(poetry version --short)" >> $GITHUB_OUTPUT
 
     - name: Commit version bump
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
         git add pyproject.toml
         git commit -m "chore: Release v${{ steps.new_version.outputs.VERSION }}"
 
     - name: Create Git tag
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: git tag v${{ steps.new_version.outputs.VERSION }}
 
     - name: Push changes and tag
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
         git push origin master
         git push origin v${{ steps.new_version.outputs.VERSION }}
@@ -83,6 +90,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
     - name: Download Windows Wheel artifact
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-windows-wheel
@@ -91,6 +99,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download macOS Wheel artifact
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-wheel
@@ -99,6 +108,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download Linux Wheel artifact
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-linux-wheel
@@ -107,6 +117,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download Windows PyInstaller bundle
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-windows-latest-build
@@ -115,6 +126,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download macOS PyInstaller bundle
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-latest-build
@@ -123,6 +135,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download Linux PyInstaller bundle
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-ubuntu-latest-build
@@ -131,6 +144,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download documentation artifact
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: documentation-html
@@ -139,6 +153,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Create GitHub Release
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.new_version.outputs.VERSION }}
