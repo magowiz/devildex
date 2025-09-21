@@ -209,9 +209,9 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: devildex-windows-latest-build
-        path: artifacts/bundles/windows
-        github-token: ${{ secrets.GITHUB_TOKEN }}\n        run-id: ${{ steps.desktop_app_run.outputs.run_id }}\n        repository: ${{ github.repository }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ steps.desktop_app_run.outputs.run_id }}
+        repository: ${{ github.repository }}
 
     - name: Download macOS PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
@@ -219,7 +219,9 @@ jobs:
       with:
         name: devildex-macos-latest-build
         path: artifacts/bundles/macos
-        github-token: ${{ secrets.GITHUB_TOKEN }}\n        run-id: ${{ steps.desktop_app_run.outputs.run_id }}\n        repository: ${{ github.repository }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ steps.desktop_app_run.outputs.run_id }}
+        repository: ${{ github.repository }}
 
     - name: Download Linux PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
@@ -227,7 +229,9 @@ jobs:
       with:
         name: devildex-ubuntu-latest-build
         path: artifacts/bundles/linux
-        github-token: ${{ secrets.GITHUB_TOKEN }}\n        run-id: ${{ steps.desktop_app_run.outputs.run_id }}\n        repository: ${{ github.repository }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ steps.desktop_app_run.outputs.run_id }}
+        repository: ${{ github.repository }}
 
     - name: Download documentation artifact
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.docs_run.outputs.run_id != '' }}
@@ -235,7 +239,9 @@ jobs:
       with:
         name: documentation-html
         path: artifacts/docs
-        github-token: ${{ secrets.GITHUB_TOKEN }}\n        run-id: ${{ steps.docs_run.outputs.run_id }}\n        repository: ${{ github.repository }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ steps.docs_run.outputs.run_id }}
+        repository: ${{ github.repository }}
 
     - name: Create GitHub Release
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
