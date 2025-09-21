@@ -1,6 +1,6 @@
 [project]
 name = "devildex"
-version = "0.3.3"
+version = "0.2.0"
 description = "A desktop application for discovering, generating, and viewing Python package documentation (docsets). It scans your projects for dependencies, builds their documentation, and provides a unified interface to browse it all locally."
 authors = [
     {name = "magowiz",email = "magowiz@gmail.com"}
