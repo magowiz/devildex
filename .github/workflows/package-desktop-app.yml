@@ -32,6 +32,9 @@ jobs:
           poetry self add poetry-plugin-export
           poetry install --only packaging --no-root
 
+      - name: Install Project
+        run: poetry install --no-dev
+
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
