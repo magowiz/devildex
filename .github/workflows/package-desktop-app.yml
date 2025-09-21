@@ -78,6 +78,9 @@ jobs:
 
       - name: Install Project Dependencies
         run: poetry install
+
+      - name: Generate requirements.txt
+        run: poetry export -f requirements.txt --output requirements.txt --without-hashes
       - run: |
           poetry install --only packaging # Install packaging dependencies
           poetry install # Install the main project and its regular dependencies
