@@ -47,6 +47,7 @@ jobs:
         run: |
           # Export dependencies from poetry.lock to use pip for installation.
           # This is more reliable for wxPython than `poetry install`.
+          poetry lock
           poetry export -f requirements.txt --output requirements.txt --without-hashes
           pip install -r requirements.txt
 
