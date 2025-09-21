@@ -1,9 +1,10 @@
 from cx_Freeze import setup, Executable
 
 build_exe_options = {
-    "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex"],
+    "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex", "sqlalchemy.dialects", "sqlalchemy.dialects.sqlite", "pkg_resources", "sqlalchemy.orm"],
     "path": ["src"],
-    "includes": ["devildex", "devildex.database", "devildex.database.db_manager"],
+    "includes": ["sqlalchemy.orm", "sqlalchemy.ext.declarative", "devildex.database.db_manager"],
+    "zip_include_packages": ["sqlalchemy", "sqlalchemy.orm"],
     "include_files": [
         ("imgs", "imgs"),
         ("devildex_config.ini", "devildex_config.ini"),

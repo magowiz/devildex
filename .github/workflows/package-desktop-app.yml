@@ -53,8 +53,7 @@ jobs:
         if: runner.os == 'Linux'
         run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/wxPython-4.2.2-cp311-cp311-linux_x86_64.whl"
 
-      - name: Copy pyproject.toml.wx to pyproject.toml
-        run: cp pyproject.toml.wx pyproject.toml
+
 
       - name: Install Poetry
         run: pip install poetry
@@ -90,33 +89,33 @@ jobs:
 
       - name: Build Package (Windows)
         if: runner.os == 'Windows'
-        run: poetry run python packaging/setup_windows.py build
+        run: poetry run pyinstaller pyinstaller_specs/devildex_windows.spec --distpath dist/windows
 
       - name: Build Package (macOS)
         if: runner.os == 'macOS'
-        run: poetry run python packaging/setup_macos.py build
+        run: poetry run pyinstaller pyinstaller_specs/devildex_macos.spec --distpath dist/macos
 
       - name: Build Package (Linux)
         if: runner.os == 'Linux'
-        run: poetry run python packaging/setup_linux.py build
+        run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/linux
 
       - name: Upload Windows Artifact
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: devildex-windows-build
-          path: build/exe.win-amd64-3.13/
+          path: dist/windows/
 
       - name: Upload macOS Artifact
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: devildex-macos-build
-          path: build/exe.macosx-*/
+          path: dist/macos/
 
       - name: Upload Linux Artifact
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: devildex-linux-build
-          path: build/exe.linux-x86_64-3.13/
+          path: dist/linux/
