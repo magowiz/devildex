@@ -45,6 +45,9 @@ jobs:
           python3-wxgtk4.0 \
           python3-wxgtk-webview4.0
 
+      - name: Update poetry.lock
+        run: poetry lock
+
       - name: Install dependencies and project
         env:
           # Use the exact find-links URL from Jenkinsfile to get pre-compiled wxPython wheels
