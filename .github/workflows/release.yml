@@ -97,15 +97,15 @@ jobs:
         path: artifacts/wheels/windows
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Download macOS Wheel artifact
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-wheel
-        path: artifacts/wheels/macos
-        github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Download Linux Wheel artifact
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
@@ -115,24 +115,25 @@ jobs:
         path: artifacts/wheels/linux
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Download Windows PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-windows-latest-build
-        path: artifacts/bundles/windows
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Download macOS PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-latest-build
-        path: artifacts/bundles/macos
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Download Linux PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
@@ -142,15 +143,16 @@ jobs:
         path: artifacts/bundles/linux
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Download documentation artifact
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: documentation-html
-        path: artifacts/docs
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
+        repository: ${{ github.repository }}
 
     - name: Create GitHub Release
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
