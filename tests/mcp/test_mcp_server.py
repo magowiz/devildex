@@ -45,12 +45,8 @@ def create_mcp_docset_files(
         docset_path = temp_docset_path / name / version
         docset_path.mkdir(parents=True, exist_ok=True)
         if name == "requests":
-            (docset_path / "index.html").write_text(
-                "Requests Index\n============="
-            )
-            (docset_path / "page1.html").write_text(
-                "Requests Page 1\n---------------"
-            )
+            (docset_path / "index.html").write_text("Requests Index\n=============")
+            (docset_path / "page1.html").write_text("Requests Page 1\n---------------")
 
 
 @pytest.fixture
