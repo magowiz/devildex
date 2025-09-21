@@ -56,13 +56,13 @@ jobs:
       - name: Copy pyproject.toml.wx to pyproject.toml
         run: cp pyproject.toml.wx pyproject.toml
 
-      - name: Update poetry.lock
-        run: poetry lock --no-update
-
       - name: Install Poetry and Packaging Dependencies
         run: |
           pip install poetry
           poetry self add poetry-plugin-export
+      - name: Update poetry.lock
+        run: poetry lock --no-update
+      - run: |
           poetry install --only packaging # Install packaging dependencies
           poetry install # Install the main project and its regular dependencies
 
