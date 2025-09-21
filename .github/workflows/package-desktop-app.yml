@@ -56,6 +56,9 @@ jobs:
       - name: Copy pyproject.toml.wx to pyproject.toml
         run: cp pyproject.toml.wx pyproject.toml
 
+      - name: Update poetry.lock
+        run: poetry lock --no-update
+
       - name: Install Poetry and Packaging Dependencies
         run: |
           pip install poetry
