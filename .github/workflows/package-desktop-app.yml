@@ -21,71 +21,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-
-
-      - name: Copy pyproject.toml for Windows
-        if: runner.os == 'Windows'
-        run: cp pyproject.toml.win pyproject.toml
-
-      - name: Copy pyproject.toml for macOS
-        if: runner.os == 'macOS'
-        run: cp pyproject.toml.mac pyproject.toml
-
-      - name: Copy pyproject.toml for Linux
-        if: runner.os == 'Linux'
-        run: cp pyproject.toml.linux pyproject.toml
-
-      - name: Set up Python (Windows)
-        if: runner.os == 'Windows'
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-
-      - name: Set up Python (macOS)
-        if: runner.os == 'macOS'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Set up Python (Linux)
-        if: runner.os == 'Linux'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11" # Using 3.11 for Linux due to wxPython issues with 3.13
-
-      - name: Install wxPython (Windows)
-        if: runner.os == 'Windows'
-        run: pip install "wxpython==4.2.3"
-
-      - name: Install wxPython (macOS)
-        if: runner.os == 'macOS'
-        run: pip install "wxpython==4.2.3"
-
-      - name: Install wxPython (Linux)
-        if: runner.os == 'Linux'
-        run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/wxPython-4.2.2-cp311-cp311-linux_x86_64.whl"
-
-
+          python-version: "3.11" # Use a consistent Python version
 
       - name: Install Poetry
         run: pip install poetry
 
-
-      - name: Update poetry.lock
-        run: |
-          poetry cache clear --all pypi
-          poetry lock
+      - name: Install wxPython
+        if: runner.os == 'Windows'
+        run: pip install "wxpython==4.2.3"
+      - name: Install wxPython
+        if: runner.os == 'macOS'
+        run: pip install "wxpython==4.2.3"
+      - name: Install wxPython
+        if: runner.os == 'Linux'
+        run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/wxPython-4.2.2-cp311-cp311-linux_x86_64.whl"
 
       - name: Install Project Dependencies
         run: poetry install
-
-      - name: Generate requirements.txt
-        run: poetry self add poetry-plugin-export && poetry export -f requirements.txt --output requirements.txt --without-hashes
-      - run: |
-          poetry install --only packaging # Install packaging dependencies
-          poetry install # Install the main project and its regular dependencies
-
-
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
@@ -104,35 +59,11 @@ jobs:
             python3-wxgtk4.0 \
             python3-wxgtk-webview4.0
 
-      - name: Build Package (Windows)
-        if: runner.os == 'Windows'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_windows.spec --distpath dist/windows
+      - name: Build Package
+        run: poetry run pyinstaller pyinstaller_specs/devildex_${{ matrix.os }}.spec --distpath dist/${{ matrix.os }}
 
-      - name: Build Package (macOS)
-        if: runner.os == 'macOS'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_macos.spec --distpath dist/macos
-
-      - name: Build Package (Linux)
-        if: runner.os == 'Linux'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/linux
-
-      - name: Upload Windows Artifact
-        if: runner.os == 'Windows'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: devildex-${{ matrix.os }}-build
-          path: dist/windows/
-
-      - name: Upload macOS Artifact
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-${{ matrix.os }}-build
-          path: dist/macos/
-
-      - name: Upload Linux Artifact
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-${{ matrix.os }}-build
-          path: dist/linux/
+          path: dist/${{ matrix.os }}/
