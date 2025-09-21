@@ -30,18 +30,17 @@ jobs:
 
       - name: Test Built Application
         run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            ./build/devildex_windows.exe &
-            sleep 5
-            kill %1
-          elif [ "${{ runner.os }}" == "macOS" ]; then
+          if ("${{ runner.os }}" -eq "Windows") {
+            Start-Process -FilePath ".\build\devildex_windows.exe" -NoNewWindow -PassThru | Wait-Process -Timeout 5
+            Stop-Process -Name "devildex_windows.exe" -ErrorAction SilentlyContinue
+          } elseif ("${{ runner.os }}" -eq "macOS") {
             chmod +x ./build/devildex_macos
             ./build/devildex_macos &
             sleep 5
             kill %1
-          elif [ "${{ runner.os }}" == "Linux" ]; then
+          } elseif ("${{ runner.os }}" -eq "Linux") {
             chmod +x ./build/devildex_linux
             ./build/devildex_linux &
             sleep 5
             kill %1
-          fi
+          }
