@@ -216,3 +216,4 @@ Se preferisci non eseguire lo script, puoi aggiungere la configurazione manualme
 ```bash
 gemini mcp add devildex --transport http http://127.0.0.1:8001/mcp --description "DevilDex MCP Server"
 ```
+Triggering documentation build at dom 21 set 2025, 02:53:47, CEST
