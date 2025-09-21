@@ -39,7 +39,9 @@ jobs:
         run: cp pyproject.toml.linux pyproject.toml
 
       - name: Install Poetry
-        run: pip install poetry
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
 
       - name: Update poetry.lock
         run: poetry lock
