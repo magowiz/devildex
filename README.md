@@ -28,8 +28,8 @@ And have you seen the friendly little devil in the logo? Isn't it cute?
 
 ![Main Application View](imgs/main.png)
 
-## Release v0.2.0 is now available!
-Check out the [releases page](https://github.com/magowiz/devildex/releases) for downloads and more information.
+## Upcoming Release v0.2.0
+This release will include improved CI/CD pipelines and comprehensive testing across Windows, macOS, and Linux.
 
 ## Installation 🛠️
 
