@@ -22,7 +22,7 @@ class MockResponse:
         self.status_code = status_code
 
     def json(self) -> dict:
-        """Mock the json() method."""
+        """Mock the json method."""
         if self._json_data is not None:
             return self._json_data
         raise json.JSONDecodeError("Expecting value", self._text_data, 0)

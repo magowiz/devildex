@@ -263,9 +263,8 @@ def test_get_session_logs_warning_if_not_initialized(
         ),
     )
 
-    with caplog.at_level(logging.WARNING):
-        with database.DatabaseManager.get_session():
-            pass
+    with caplog.at_level(logging.WARNING), database.DatabaseManager.get_session():
+        pass
 
     assert (
         "Attempting to get a DB session, but init_db() was not called." in caplog.text

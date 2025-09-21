@@ -37,24 +37,16 @@ def test_fetch_succeeds_if_already_exists(
     # Arrange
     # Override the mock from the fixture to simulate an existing, non-empty directory.
     mocker.patch("pathlib.Path.exists", return_value=True)
-    # Mock iterdir to make `any()` return True for the check.
     mocker.patch("pathlib.Path.iterdir", return_value=[Path("a_file.txt")])
-
-    # Mock the helper functions that are called in this specific branch
     mock_cleanup_git = mocker.patch.object(
         fetcher_instance, "_cleanup_git_dir_from_path"
     )
     mock_fetch_pypi = mocker.patch.object(fetcher_instance, "_fetch_from_pypi")
     mock_get_vcs = mocker.patch.object(fetcher_instance, "_get_vcs_url")
-
-    # Act
-    success, is_master, path = fetcher_instance.fetch()
-
-    # Assert
+    success, _, path = fetcher_instance.fetch()
     assert success is True
     assert path == str(fetcher_instance.download_target_path)
     mock_cleanup_git.assert_called_once_with(fetcher_instance.download_target_path)
-    # No fetching methods should be called
     mock_fetch_pypi.assert_not_called()
     mock_get_vcs.assert_not_called()
 

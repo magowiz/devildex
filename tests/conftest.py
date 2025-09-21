@@ -13,12 +13,19 @@ from typing import Any
 import pytest
 import wx
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 
+from devildex.constants import (  # Added AVAILABLE_BTN_LABEL
+    AVAILABLE_BTN_LABEL,
+)
 from devildex.core import DevilDexCore
-from devildex.database import db_manager
-from devildex.database.models import Base, Docset, PackageInfo, RegisteredProject, PackageDetails
-from devildex.constants import NOT_AVAILABLE_BTN_LABEL, AVAILABLE_BTN_LABEL # Added AVAILABLE_BTN_LABEL
+from devildex.database.models import (
+    Base,
+    Docset,
+    PackageDetails,
+    PackageInfo,
+    RegisteredProject,
+)
 
 logger = logging.getLogger(__name__)
 

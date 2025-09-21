@@ -1,16 +1,16 @@
 """Fixtures for UI tests."""
 
+import os
 from collections.abc import Generator
+from pathlib import Path
+from typing import Any
 
 import pytest
 import wx
-from typing import Any
-from pathlib import Path
-import os
 
 from devildex.core import DevilDexCore
-from devildex.main import DevilDexApp
 from devildex.database.models import PackageDetails
+from devildex.main import DevilDexApp
 
 
 @pytest.fixture
@@ -22,10 +22,16 @@ def wx_app() -> Generator[wx.App, None, None]:
 
 
 @pytest.fixture
-def core(populated_db_session: tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]]) -> DevilDexCore:
+def core(
+    populated_db_session: tuple[
+        str, Any, str, Path, DevilDexCore, list[PackageDetails]
+    ],
+) -> DevilDexCore:
     """Fixture to provide a DevilDexCore instance with a populated database."""
-    db_url, SessionLocal, project_name, temp_docset_path, core_instance, initial_package_source = populated_db_session
-    core_instance.bootstrap_database_and_load_data(initial_package_source=initial_package_source, is_fallback_data=False)
+    _, _, _, _, core_instance, initial_package_source = populated_db_session
+    core_instance.bootstrap_database_and_load_data(
+        initial_package_source=initial_package_source, is_fallback_data=False
+    )
     return core_instance
 
 
@@ -33,9 +39,9 @@ def core(populated_db_session: tuple[str, Any, str, Path, DevilDexCore, list[Pac
 def devildex_app(wx_app: wx.App, core: DevilDexCore) -> DevilDexApp:
     """Fixture to create the main DevilDexApp instance."""
     main_app = DevilDexApp(core=core)
-    os.environ["DEVILDEX_DB_PATH_OVERRIDE"] = core.database_url # Set env var for app
+    os.environ["DEVILDEX_DB_PATH_OVERRIDE"] = core.database_url  # Set env var for app
     main_app._initialize_data_and_managers()
-    main_app.update_grid_data() # Explicitly update grid after initialization
+    main_app.update_grid_data()  # Explicitly update grid after initialization
     wx.Yield()  # Allow the UI to initialize
     try:
         yield main_app
@@ -43,4 +49,4 @@ def devildex_app(wx_app: wx.App, core: DevilDexCore) -> DevilDexApp:
         if main_app.main_frame:
             wx.CallAfter(main_app.main_frame.Destroy)
         wx.Yield()
-        del os.environ["DEVILDEX_DB_PATH_OVERRIDE"] # Clean up env var
+        del os.environ["DEVILDEX_DB_PATH_OVERRIDE"]  # Clean up env var
