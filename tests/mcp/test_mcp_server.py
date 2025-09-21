@@ -1,4 +1,4 @@
-"""module that tests mcp server."""
+"""Module that tests mcp server."""
 
 import logging
 import os
@@ -15,6 +15,7 @@ import pytest
 from fastmcp import Client
 
 from devildex.core import DevilDexCore
+from devildex.database.models import PackageDetails
 from devildex.local_data_parse import registered_project_parser
 from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
 
@@ -30,11 +31,36 @@ def free_port() -> int:
 
 
 @pytest.fixture
+def create_mcp_docset_files(
+    populated_db_session: tuple[
+        str, Any, str, Path, DevilDexCore, list[PackageDetails]
+    ],
+) -> None:
+    """Create the docset files needed for the MCP tests."""
+    _, _, _, temp_docset_path, _, _ = populated_db_session
+    docset_names_versions = {
+        "requests": "2.25.1",
+    }
+    for name, version in docset_names_versions.items():
+        docset_path = temp_docset_path / name / version
+        docset_path.mkdir(parents=True, exist_ok=True)
+        if name == "requests":
+            (docset_path / "index.html").write_text(
+                "Requests Index\n============="
+            )
+            (docset_path / "page1.html").write_text(
+                "Requests Page 1\n---------------"
+            )
+
+
+@pytest.fixture
 def mcp_server_process(
-    free_port: int, populated_db_session: tuple[str, Any, str, Path, DevilDexCore]
+    free_port: int,
+    populated_db_session: tuple[str, Any, str, Path, DevilDexCore, list[Any]],
+    create_mcp_docset_files: None,
 ) -> Generator[tuple[int, str], Any, None]:
     """Fixture to start the MCP server as a subprocess."""
-    db_url, _, project_name, temp_docset_path, _ = populated_db_session
+    db_url, _, project_name, temp_docset_path, _, _ = populated_db_session
 
     project_data_to_save: RegisteredProjectData = {
         "project_name": project_name,
@@ -102,8 +128,8 @@ async def test_get_docsets_list_all_projects(
             logger.info(f"Docsets list (all_projects): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
-                "An error occurred during 'get_docsets_list' "
-                f"(all_projects) tool communication: {e}"
+                "An error occurred during 'get_docsets_list' (all_projects) tool "
+                f"communication: {e}"
             )
 
 
@@ -129,8 +155,8 @@ async def test_get_docsets_list_by_project(mcp_server_process: tuple[int, str]) 
             logger.info(f"Docsets list (by project): {docsets_list.data}")
         except Exception as e:
             pytest.fail(
-                "An error occurred during 'get_docsets_list' "
-                f"(by project) tool communication: {e}"
+                "An error occurred during 'get_docsets_list' (by project) tool "
+                f"communication: {e}"
             )
 
 
@@ -156,8 +182,8 @@ async def test_get_docsets_list_invalid_params(
             logger.info(f"Docsets list (invalid params): {response.data}")
         except Exception as e:
             pytest.fail(
-                "An error occurred during 'get_docsets_list' (invalid params)"
-                f" tool communication: {e}"
+                "An error occurred during 'get_docsets_list' (invalid params) "
+                f"tool communication: {e}"
             )
 
 
@@ -182,7 +208,8 @@ async def test_get_page_content_success(mcp_server_process: tuple[int, str]) -> 
             assert response.data == "Requests Page 1\n---------------"
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_page_content' tool communication: {e}"
+                "An error occurred during 'get_page_content' tool communication: "
+                f"{e}"
             )
 
 
@@ -195,7 +222,7 @@ async def test_get_page_content_default_page(
     free_port, _ = mcp_server_process
     config = {
         "mcpServers": {
-            "my_server": {"url": f"http://127.00.1:{free_port}/mcp"},
+            "my_server": {"url": f"http://127.0.0.1:{free_port}/mcp"},
         }
     }
     client = Client(config, timeout=5)
@@ -206,10 +233,11 @@ async def test_get_page_content_default_page(
                 {"package": "requests", "version": "2.25.1"},
                 timeout=5,
             )
-            assert response.data == "Requests Index\n=============="
+            assert response.data == "Requests Index\n============="
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_page_content' tool communication: {e}"
+                "An error occurred during 'get_page_content' tool communication: "
+                f"{e}"
             )
 
 
@@ -244,7 +272,8 @@ async def test_get_page_content_non_existent_page(
             )
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_page_content' tool communication: {e}"
+                "An error occurred during 'get_page_content' tool communication: "
+                f"{e}"
             )
 
 
@@ -275,7 +304,8 @@ async def test_get_page_content_non_existent_package_version(
             )
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_page_content' tool communication: {e}"
+                "An error occurred during 'get_page_content' tool communication: "
+                f"{e}"
             )
 
 
@@ -307,5 +337,6 @@ async def test_get_page_content_path_traversal_attempt(
             assert "Invalid page path" in response.data["error"]
         except Exception as e:
             pytest.fail(
-                f"An error occurred during 'get_page_content' tool communication: {e}"
+                "An error occurred during 'get_page_content' tool communication: "
+                f"{e}"
             )
