@@ -38,7 +38,7 @@ jobs:
       id: commit_message
       run: |
         COMMIT_MSG=$(git log -1 --pretty=%B)
-        echo "MESSAGE=$COMMIT_MSG" >> $GITHUB_OUTPUT
+        echo "MESSAGE=\"$COMMIT_MSG\"" >> $GITHUB_OUTPUT
 
     - name: Determine version increment
       id: version_increment
@@ -52,8 +52,8 @@ jobs:
         elif [[ "$COMMIT_MESSAGE" == "release(major):"* ]]; then
           INCREMENT_TYPE="major"
         fi
-        echo "INCREMENT_TYPE=$INCREMENT_TYPE" >> $GITHUB_OUTPUT
-        echo "Found increment type: $INCREMENT_TYPE"
+        echo "INCREMENT_TYPE=\"$INCREMENT_TYPE\"" >> $GITHUB_OUTPUT
+        echo "Found increment type: \"$INCREMENT_TYPE\""
 
     - name: Fail if no increment type found
       if: steps.version_increment.outputs.INCREMENT_TYPE == ''
@@ -103,7 +103,7 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
         git add pyproject.toml
-        git commit -m "chore: Release v${{ steps.new_version.outputs.VERSION }}"
+        git commit -m "chore: Release v\"${{ steps.new_version.outputs.VERSION }}\""
 
     - name: Create Git tag
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
