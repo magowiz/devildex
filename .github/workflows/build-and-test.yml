@@ -69,6 +69,10 @@ jobs:
       - name: Build Wheel
         run: poetry build --format wheel
 
+      - name: Upload Wheel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-macos-wheel
           path: dist/*.whl
 
   build-windows-wheel:
@@ -365,4 +369,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-          path: dist/*.whl
