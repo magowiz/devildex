@@ -75,17 +75,15 @@ jobs:
         echo "Current Poetry version: $(poetry version --short)"
         echo "Increment type: ${{ steps.version_increment.outputs.INCREMENT_TYPE }}"
 
-    - name: Increment version with Poetry
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: poetry version 0.2.0 # Imposta esplicitamente la versione a 0.2.0
 
 
 
-    - name: Debug: Current Poetry Version
+
+    - name: Current Poetry Version
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: poetry version --short
 
-    - name: Debug: List Artifacts Directory
+    - name: List Artifacts Directory
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: ls -R artifacts/
 
