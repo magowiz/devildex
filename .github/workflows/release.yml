@@ -207,6 +207,14 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
+    - name: Zip documentation
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: |
+        cd artifacts/docs
+        zip -r devildex_documentation.zip ./*
+        mv devildex_documentation.zip ../
+        cd ../..
+
     - name: List Artifacts Directory (after download)
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: ls -R artifacts/
@@ -230,6 +238,6 @@ jobs:
           artifacts/bundles/windows/devildex_windows/*
           artifacts/bundles/macos/devildex_macos/*
           artifacts/bundles/linux/devildex_linux/*
-          artifacts/docs/*
+          artifacts/devildex_documentation.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
