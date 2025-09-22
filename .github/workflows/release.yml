@@ -73,15 +73,7 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: poetry version ${{ steps.version_increment.outputs.INCREMENT_TYPE }}
 
-    - name: Get new version
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      id: new_version
-      run: echo "VERSION=$(poetry version --short)" >> $GITHUB_OUTPUT
 
-    - name: Get new version
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      id: new_version
-      run: echo "VERSION=$(poetry version --short)" >> $GITHUB_OUTPUT
 
     - name: Debug: Current Poetry Version
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
