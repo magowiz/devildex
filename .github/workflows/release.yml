@@ -106,90 +106,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
 
-    - name: Find Build Windows Wheel run ID
-      id: windows_wheel_run
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'build-whl-windows.yml',
-            branch: 'master',
-            status: 'success',
-            per_page: 1
-          });
-          if (runs.data.workflow_runs.length > 0) {
-            core.setOutput('run_id', runs.data.workflow_runs[0].id);
-          }
 
-    - name: Find Build macOS Wheel run ID
-      id: macos_wheel_run
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'build-whl-macos.yml',
-            branch: 'master',
-            status: 'success',
-            per_page: 1
-          });
-          if (runs.data.workflow_runs.length > 0) {
-            core.setOutput('run_id', runs.data.workflow_runs[0].id);
-          }
-
-    - name: Find Build Linux Python Wheel run ID
-      id: linux_wheel_run
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'build-whl-linux.yml',
-            branch: 'master',
-            status: 'success',
-            per_page: 1
-          });
-          if (runs.data.workflow_runs.length > 0) {
-            core.setOutput('run_id', runs.data.workflow_runs[0].id);
-          }
-
-    - name: Find Package Desktop Application run ID
-      id: desktop_app_run
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'package-desktop-app.yml',
-            branch: 'master',
-            status: 'success',
-            per_page: 1
-          });
-          if (runs.data.workflow_runs.length > 0) {
-            core.setOutput('run_id', runs.data.workflow_runs[0].id);
-          }
-
-    - name: Find Publish Documentation run ID
-      id: docs_run
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'publish-docs.yml',
-            branch: 'master',
-            status: 'success',
-            per_page: 1
-          });
-          if (runs.data.workflow_runs.length > 0) {
-            core.setOutput('run_id', runs.data.workflow_runs[0].id);
-          }
 
     - name: Download Windows Wheel artifact
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.windows_wheel_run.outputs.run_id != '' }}
@@ -198,7 +115,7 @@ jobs:
         name: devildex-windows-wheel
         path: artifacts/wheels/windows
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.windows_wheel_run.outputs.run_id }}
+        run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
     - name: Download macOS Wheel artifact
@@ -208,7 +125,7 @@ jobs:
         name: devildex-macos-wheel
         path: artifacts/wheels/macos
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.macos_wheel_run.outputs.run_id }}
+        run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
     - name: Download Linux Wheel artifact
@@ -218,25 +135,19 @@ jobs:
         name: devildex-linux-wheel
         path: artifacts/wheels/linux
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.linux_wheel_run.outputs.run_id }}
+        run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
     - name: Download Windows PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
       uses: actions/download-artifact@v4
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.desktop_app_run.outputs.run_id }}
-        repository: ${{ github.repository }}
+        run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download macOS PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: devildex-macos-latest-build
-        path: artifacts/bundles/macos
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.desktop_app_run.outputs.run_id }}
+        run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
     - name: Download Linux PyInstaller bundle
@@ -246,7 +157,7 @@ jobs:
         name: devildex-ubuntu-latest-build
         path: artifacts/bundles/linux
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.desktop_app_run.outputs.run_id }}
+        run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
     - name: Download documentation artifact
@@ -256,7 +167,7 @@ jobs:
         name: documentation-html
         path: artifacts/docs
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.docs_run.outputs.run_id }}
+        run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
     - name: Create GitHub Release
