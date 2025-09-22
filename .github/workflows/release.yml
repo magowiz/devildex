@@ -69,6 +69,12 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: pip install poetry
 
+    - name: Debug Poetry Version
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: |
+        echo "Current Poetry version: $(poetry version --short)"
+        echo "Increment type: ${{ steps.version_increment.outputs.INCREMENT_TYPE }}"
+
     - name: Increment version with Poetry
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: poetry version 0.2.0 # Imposta esplicitamente la versione a 0.2.0
