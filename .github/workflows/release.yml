@@ -188,28 +188,28 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
-    - name: Create GitHub Release
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ steps.new_version.outputs.VERSION }}
-        name: Release v${{ steps.new_version.outputs.VERSION }}
-        body: |
-          Automated release for version v${{ steps.new_version.outputs.VERSION }}
-          
-          ${{ github.event.workflow_run.head_commit.message }}
-        draft: false
-        prerelease: false
-        files: |
-          artifacts/wheels/windows/*.whl
-          artifacts/wheels/macos/*.whl
-          artifacts/wheels/linux/*.whl
-          artifacts/bundles/windows/devildex_windows/*
-          artifacts/bundles/macos/devildex_macos/*
-          artifacts/bundles/linux/devildex_linux/*
-          artifacts/docs/*
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release
+        if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.new_version.outputs.VERSION }}
+          name: Release v${{ steps.new_version.outputs.VERSION }}
+          body: |
+            Automated release for version v${{ steps.new_version.outputs.VERSION }}
+            
+            ${{ github.event.workflow_run.head_commit.message }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/wheels/windows/*.whl
+            artifacts/wheels/macos/*.whl
+            artifacts/wheels/linux/*.whl
+            artifacts/bundles/windows/devildex_windows/*
+            artifacts/bundles/macos/devildex_macos/*
+            artifacts/bundles/linux/devildex_linux/*
+            artifacts/docs/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: List Artifacts Directory (after download)
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
