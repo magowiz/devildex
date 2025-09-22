@@ -44,13 +44,17 @@ jobs:
       id: version_increment
       run: |
         COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+        echo "Debug: COMMIT_MESSAGE is '$COMMIT_MESSAGE'"
         INCREMENT_TYPE=""
         if [[ "$COMMIT_MESSAGE" == "release(patch):"* ]]; then
           INCREMENT_TYPE="patch"
+          echo "Debug: Matched patch. INCREMENT_TYPE is '$INCREMENT_TYPE'"
         elif [[ "$COMMIT_MESSAGE" == "release(minor):"* ]]; then
           INCREMENT_TYPE="minor"
+          echo "Debug: Matched minor. INCREMENT_TYPE is '$INCREMENT_TYPE'"
         elif [[ "$COMMIT_MESSAGE" == "release(major):"* ]]; then
           INCREMENT_TYPE="major"
+          echo "Debug: Matched major. INCREMENT_TYPE is '$INCREMENT_TYPE'"
         fi
         echo "INCREMENT_TYPE=\"$INCREMENT_TYPE\"" >> $GITHUB_OUTPUT
         echo "Found increment type: \"$INCREMENT_TYPE\""
@@ -103,7 +107,7 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
         git add pyproject.toml
-        git commit -m "chore: Release v\"${{ steps.new_version.outputs.VERSION }}\""
+        git commit -m "chore: Release v\"${{ steps.new_version.outputs.VERSION }}\"" || true
 
     - name: Delete existing GitHub Release (if any)
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
