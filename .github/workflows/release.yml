@@ -75,6 +75,19 @@ jobs:
         echo "Current Poetry version: $(poetry version --short)"
         echo "Increment type: ${{ steps.version_increment.outputs.INCREMENT_TYPE }}"
 
+    - name: Bump version with Poetry
+      id: new_version
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: |
+        poetry version ${{ steps.version_increment.outputs.INCREMENT_TYPE }}
+        NEW_VERSION=$(poetry version --short)
+        echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "New version set to: $NEW_VERSION"
+
+    - name: Create artifacts directory
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: mkdir -p artifacts/wheels artifacts/bundles artifacts/docs
+
 
 
 
@@ -83,9 +96,6 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: poetry version --short
 
-    - name: List Artifacts Directory
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: ls -R artifacts/
 
     - name: Commit version bump
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
@@ -103,13 +113,13 @@ jobs:
         git push origin master
         git push origin v${{ steps.new_version.outputs.VERSION }}
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
 
 
     - name: Download Windows Wheel artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.windows_wheel_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-windows-wheel
@@ -119,7 +129,7 @@ jobs:
         repository: ${{ github.repository }}
 
     - name: Download macOS Wheel artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.macos_wheel_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-wheel
@@ -129,7 +139,7 @@ jobs:
         repository: ${{ github.repository }}
 
     - name: Download Linux Wheel artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.linux_wheel_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-linux-wheel
@@ -139,7 +149,7 @@ jobs:
         repository: ${{ github.repository }}
 
     - name: Download Windows PyInstaller bundle
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-windows-latest-build
@@ -149,7 +159,7 @@ jobs:
         repository: ${{ github.repository }}
 
     - name: Download macOS PyInstaller bundle
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-macos-latest-build
@@ -159,7 +169,7 @@ jobs:
         repository: ${{ github.repository }}
 
     - name: Download Linux PyInstaller bundle
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: devildex-ubuntu-latest-build
@@ -169,7 +179,7 @@ jobs:
         repository: ${{ github.repository }}
 
     - name: Download documentation artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.docs_run.outputs.run_id != '' }}
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
         name: documentation-html
@@ -200,3 +210,9 @@ jobs:
           artifacts/docs/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: List Artifacts Directory (after download)
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: ls -R artifacts/
+
+    - name: Create GitHub Release
