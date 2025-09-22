@@ -140,6 +140,7 @@ jobs:
 
     - name: Download Windows PyInstaller bundle
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
+      uses: actions/download-artifact@v4
       with:
         name: devildex-windows-latest-build
         path: artifacts/bundles/windows
