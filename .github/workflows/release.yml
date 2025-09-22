@@ -117,8 +117,19 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Delete existing GitHub Release (if any)
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: |
+        export GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+        gh release delete v${{ steps.new_version.outputs.VERSION }} --yes || true
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure GH_TOKEN is available for gh CLI
 
-
+    - name: Delete existing Git tag (if any)
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: |
+        git push --delete origin v${{ steps.new_version.outputs.VERSION }} || true
+        git push --delete github v${{ steps.new_version.outputs.VERSION }} || true
 
     - name: Download Windows Wheel artifact
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
