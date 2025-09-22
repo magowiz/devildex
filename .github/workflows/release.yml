@@ -151,6 +151,9 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' && steps.desktop_app_run.outputs.run_id != '' }}
       uses: actions/download-artifact@v4
       with:
+        name: devildex-macos-latest-build
+        path: artifacts/bundles/macos
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
         repository: ${{ github.repository }}
 
