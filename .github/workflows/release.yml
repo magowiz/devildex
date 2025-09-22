@@ -58,27 +58,24 @@ jobs:
       id: commit_message
       run: |
         COMMIT_MSG=$(git log -1 --pretty=%B)
-        echo "MESSAGE=\"$COMMIT_MSG\"" >> $GITHUB_OUTPUT
+        echo "MESSAGE=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
     - name: Determine version increment
       id: version_increment
+      env:
+        HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
       run: |
-        COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-        echo "Debug: COMMIT_MESSAGE is '$COMMIT_MESSAGE'"
+        COMMIT_MESSAGE="${{ env.HEAD_COMMIT_MESSAGE }}"
         INCREMENT_TYPE=""
         if [[ "$COMMIT_MESSAGE" == "release(patch):"* ]]; then
           INCREMENT_TYPE="patch"
-          echo "Debug: Matched patch. INCREMENT_TYPE is '$INCREMENT_TYPE'"
         elif [[ "$COMMIT_MESSAGE" == "release(minor):"* ]]; then
           INCREMENT_TYPE="minor"
-          echo "Debug: Matched minor. INCREMENT_TYPE is '$INCREMENT_TYPE'"
         elif [[ "$COMMIT_MESSAGE" == "release(major):"* ]]; then
           INCREMENT_TYPE="major"
-          echo "Debug: Matched major. INCREMENT_TYPE is '$INCREMENT_TYPE'"
         fi
-        echo "INCREMENT_TYPE=\"$INCREMENT_TYPE\"" >> $GITHUB_OUTPUT
-        echo "Found increment type: \"$INCREMENT_TYPE\""
-
+        echo "INCREMENT_TYPE=$INCREMENT_TYPE" >> "$GITHUB_OUTPUT"
+        echo "Found increment type: $INCREMENT_TYPE"
     - name: Fail if no increment type found
       if: steps.version_increment.outputs.INCREMENT_TYPE == ''
       run: |
@@ -164,11 +161,9 @@ jobs:
 
 
 
-
     - name: Current Poetry Version
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: poetry version --short
-
 
 
 
@@ -279,14 +274,17 @@ jobs:
 
     - name: Create GitHub Release
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      env:
+        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure GH_TOKEN is available for gh CLI
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ steps.new_version.outputs.VERSION }}
-        name: Release v${{ steps.new_version.outputs.VERSION }}
         body: |
           Automated release for version v${{ steps.new_version.outputs.VERSION }}
           
-          ${{ github.event.workflow_run.head_commit.message }}
+          ${{ env.COMMIT_MESSAGE }}
+        tag_name: v${{ steps.new_version.outputs.VERSION }}
+        name: Release v${{ steps.new_version.outputs.VERSION }}
         draft: false
         prerelease: false
         files: |
@@ -297,5 +295,3 @@ jobs:
           artifacts/bundles/macos/devildex_macos/*
           artifacts/bundles/linux/devildex_linux/*
           artifacts/devildex_documentation.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
