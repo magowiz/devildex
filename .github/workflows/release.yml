@@ -126,7 +126,7 @@ jobs:
     - name: Push changes and tag
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
-        git push origin master
+        git push origin master -f
         git push origin v${{ steps.new_version.outputs.VERSION }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
