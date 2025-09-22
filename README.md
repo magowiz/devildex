@@ -196,30 +196,30 @@ xvfb-run poetry run pytest
 This project is licensed under the GPL-3.0 License. See the `LICENSE` file for more details.
 .
 
-## Integrazione con Gemini CLI
+## Gemini CLI Integration
 
-Per permettere a `gemini-cli` di interagire con `devildex`, è necessario registrare il server MCP (Model Context Protocol) integrato.
+To allow `gemini-cli` to interact with `devildex`, it is necessary to register the integrated MCP (Model Context Protocol) server.
 
-Assicurati che il server `devildex` sia in esecuzione prima di usare gli strumenti in `gemini-cli`.
+Make sure the `devildex` server is running before using the tools in `gemini-cli`.
 
-### Metodo Raccomandato (Script Automatico)
+### Recommended Method (Automatic Script)
 
-Questo metodo rileva automaticamente il tuo sistema operativo e aggiorna la configurazione di `gemini-cli` in modo sicuro.
+This method automatically detects your operating system and securely updates the `gemini-cli` configuration.
 
-1.  Assicurati di avere Python installato.
-2.  Dalla cartella principale del progetto, esegui lo script:
+1.  Make sure you have Python installed.
+2.  From the project's main folder, run the script:
 
     ```bash
     python setup_gemini_cli.py
     ```
 
-Lo script configurerà tutto il necessario.
+The script will configure everything necessary.
 
-### Metodo Alternativo (Comando Manuale)
+### Alternative Method (Manual Command)
 
-Se preferisci non eseguire lo script, puoi aggiungere la configurazione manualmente con questo comando:
+If you prefer not to run the script, you can add the configuration manually with this command:
 
 ```bash
 gemini mcp add devildex --transport http http://127.0.0.1:8001/mcp --description "DevilDex MCP Server"
 ```
-Triggering documentation build at dom 21 set 2025, 02:53:47, CEST
+Triggering documentation build at Sun 21 Sep 2025, 02:53:47, CEST
