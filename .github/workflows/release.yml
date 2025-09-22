@@ -27,6 +27,13 @@ jobs:
         git config user.name "GitHub Actions Bot"
         git config user.email "actions@github.com"
 
+    - name: Debug pyproject.toml files
+      run: |
+        echo "Listing pyproject.toml files:"
+        find . -name "pyproject.toml*"
+        echo "Content of main pyproject.toml:"
+        cat pyproject.toml
+
     - name: Get latest commit message
       id: commit_message
       run: echo "MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
