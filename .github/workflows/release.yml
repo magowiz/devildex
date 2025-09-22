@@ -71,7 +71,7 @@ jobs:
 
     - name: Increment version with Poetry
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: poetry version ${{ steps.version_increment.outputs.INCREMENT_TYPE }}
+      run: poetry version 0.2.0 # Imposta esplicitamente la versione a 0.2.0
 
 
 
