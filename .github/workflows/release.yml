@@ -78,6 +78,19 @@ jobs:
       id: new_version
       run: echo "VERSION=$(poetry version --short)" >> $GITHUB_OUTPUT
 
+    - name: Get new version
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      id: new_version
+      run: echo "VERSION=$(poetry version --short)" >> $GITHUB_OUTPUT
+
+    - name: Debug: Current Poetry Version
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: poetry version --short
+
+    - name: Debug: List Artifacts Directory
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: ls -R artifacts/
+
     - name: Commit version bump
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
