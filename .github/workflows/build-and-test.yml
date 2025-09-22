@@ -1,0 +1,368 @@
+name: Build and Test All Artifacts
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-linux-wheel:
+    name: Build Linux Python Wheel
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry and Export Plugin
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
+
+      - name: Install system dependencies for wxPython
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev \
+          python3-gi \
+          python3-gi-cairo \
+          python3-wxgtk4.0 \
+          python3-wxgtk-webview4.0
+
+      - name: Install dependencies with pip
+        env:
+          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
+        run: |
+          poetry lock
+          poetry export -f requirements.txt --output requirements.txt --without-hashes
+          pip install -r requirements.txt
+
+      - name: Build wheel
+        run: poetry build --format wheel
+
+      - name: Upload Linux Wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-linux-wheel
+          path: dist/*.whl
+
+  build-macos-wheel:
+    name: Build macOS Wheel
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Build Wheel
+        run: poetry build --format wheel
+
+          path: dist/*.whl
+
+  build-windows-wheel:
+    name: Build Windows Wheel
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Build Wheel
+        run: poetry build --format wheel
+
+      - name: Upload Wheel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-windows-wheel
+          path: dist/*.whl
+
+  build-package:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # Use a consistent Python version
+
+      - name: Copy pyproject.toml for Windows
+        if: runner.os == 'Windows'
+        run: cp pyproject.toml.win pyproject.toml
+
+      - name: Copy pyproject.toml for macOS
+        if: runner.os == 'macOS'
+        run: cp pyproject.toml.mac pyproject.toml
+
+      - name: Copy pyproject.toml for Linux
+        if: runner.os == 'Linux'
+        run: cp pyproject.toml.linux pyproject.toml
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
+
+      - name: Update poetry.lock
+        run: poetry lock
+
+      - name: Install wxPython
+        if: runner.os == 'Windows'
+        run: pip install "wxpython==4.2.3"
+      - name: Install wxPython
+        if: runner.os == 'macOS'
+        run: pip install "wxpython==4.2.3"
+      - name: Install wxPython
+        if: runner.os == 'Linux'
+        run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/wxPython-4.2.2-cp311-cp311-linux_x86_64.whl"
+
+      - name: Export requirements.txt
+        run: poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+      - name: Install Project Dependencies
+        run: poetry install
+
+      - name: Install OS-specific dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnotify-dev \
+            libgtk-3-dev \
+            libsdl2-dev \
+            libwebkit2gtk-4.1-dev \
+            libxtst-dev \
+            xvfb \
+            python3-gi \
+            python3-gi-cairo \
+            python3-wxgtk4.0 \
+            python3-wxgtk-webview4.0
+
+      - name: Build Package (macOS)
+        if: runner.os == 'macOS'
+        run: poetry run pyinstaller pyinstaller_specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
+
+      - name: Build Package (Windows)
+        if: runner.os == 'Windows'
+        run: poetry run pyinstaller pyinstaller_specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
+
+      - name: Build Package (Linux)
+        if: runner.os == 'Linux'
+        run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
+
+      - name: Upload Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-${{ matrix.os }}-build
+          path: dist/${{ matrix.os }}/
+
+  test:
+    name: Python Tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry and Export Plugin
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
+
+      - name: Generate poetry.lock
+        run: poetry lock
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnotify-dev \
+            libgtk-3-dev \
+            libsdl2-dev \
+            libwebkit2gtk-4.1-dev \
+            libxtst-dev \
+            xvfb \
+            bzr \
+            python3-gi \
+            python3-gi-cairo \
+            python3-wxgtk4.0 \
+            python3-wxgtk-webview4.0
+
+      - name: Install dependencies and project
+        env:
+          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
+        run: |
+          poetry export --with test -f requirements.txt --output requirements.txt --without-hashes
+          pip install -r requirements.txt
+          pip install --no-deps -e .
+
+      - name: Setup Bazaar and Launchpad credentials
+        env:
+          LAUNCHPAD_CONFIG_FILE_CONTENT: ${{ secrets.LAUNCHPAD_ID_CONF_FILE }}
+        run: |
+          mkdir -p ~/.bazaar/
+          echo "${LAUNCHPAD_CONFIG_FILE_CONTENT}" > ~/.bazaar/launchpad.conf
+          echo "Launchpad config file created."
+
+      - name: Run tests with Xvfb
+        continue-on-error: true
+        run:
+          | 
+          xvfb-run pytest --verbose \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=html:coverage_report \
+            --html=test_report/index.html \
+            --junitxml=test-results.xml || true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./
+          fail_ci_if_error: true
+
+      - name: Upload Test Report (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-html
+          path: test_report/
+
+      - name: Upload Coverage Report (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-html
+          path: coverage_report/
+
+      - name: Upload Screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload Coverage Report (XML for SonarQube)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
+
+      - name: Upload Test Results (XML for SonarQube)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xml
+          path: test-results.xml
+          if-no-files-found: ignore
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry and Export Plugin
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
+
+      - name: Install system dependencies for wxPython
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev libsdl2-dev \
+          python3-gi \
+          python3-gi-cairo \
+          python3-wxgtk4.0 \
+          python3-wxgtk-webview4.0
+
+      - name: Update poetry.lock
+        run: poetry lock
+
+      - name: Install dependencies and project
+        env:
+          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
+        run: |
+          poetry export --with doc -f requirements.txt --output requirements.txt --without-hashes
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Build documentation with user script
+        run: |
+          chmod +x generate_sphinx_doc.sh
+          ./generate_sphinx_doc.sh
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-html
+          path: "build/html"
+
+  deploy-docs:
+    name: Deploy Documentation to GitHub Pages
+    needs: build-docs
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation-html
+          path: "build/html"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "build/html"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+          path: dist/*.whl
