@@ -32,7 +32,7 @@ packages = [
 
 [tool.poetry.group.packaging.dependencies]
 
-nuitka = "^2.7.14"
+nuitka = "^2.7.16"
 pyoxidizer = "^0.24.0"
 
 [tool.poetry.group.test.dependencies]
