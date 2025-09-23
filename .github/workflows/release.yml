@@ -104,6 +104,7 @@ jobs:
         REPO_NAME="${{ github.event.repository.name }}"
         COMMIT_SHA="${{ github.sha }}" # Use github.sha for push-triggered workflow
         WORKFLOW_NAME="Build and Test All Artifacts" # Name of the new workflow
+  BUILD_AND_TEST_WORKFLOW_FILE_NAME=".github/workflows/build-and-test.yml"
 
         echo "Searching for '${WORKFLOW_NAME}' workflow run for commit SHA: ${COMMIT_SHA}"
 
@@ -111,7 +112,7 @@ jobs:
         WORKFLOW_ID_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                                     -H "Accept: application/vnd.github.v3+json" \
                                     "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows")
-        WORKFLOW_ID=$(echo "${WORKFLOW_ID_RESPONSE}" | jq -r ".workflows[] | select(.name == \"${WORKFLOW_NAME}\") | .id")
+        WORKFLOW_ID=$(echo "${WORKFLOW_ID_RESPONSE}" | jq -r ".workflows[] | select(.path == \"${BUILD_AND_TEST_WORKFLOW_FILE_NAME}\") | .id")
 
         if [ "${WORKFLOW_ID}" == "null" ]; then
           echo "Error: Workflow '${WORKFLOW_NAME}' not found."
