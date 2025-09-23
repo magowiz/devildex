@@ -153,6 +153,22 @@ jobs:
         echo "VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
         echo "New version set to: $NEW_VERSION"
 
+    - name: Create GitHub Release
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.new_version.outputs.VERSION }}
+        name: Release v${{ steps.new_version.outputs.VERSION }}
+        body: ${{ steps.commit_message.outputs.MESSAGE }}
+        draft: false
+        prerelease: false
+        files: |
+          artifacts/wheels/*.whl
+          artifacts/bundles/*.zip
+          artifacts/docs/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
     - name: Create artifacts directory
@@ -164,17 +180,7 @@ jobs:
 
 
 
-    - name: Current Poetry Version
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: poetry version --short
 
-
-
-    - name: Commit version bump
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        git add pyproject.toml
-        git commit -m "chore: Release v\"${{ steps.new_version.outputs.VERSION }}\"" || true
 
     - name: Add github remote
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
@@ -182,31 +188,9 @@ jobs:
         git remote add github https://github.com/${{ github.repository }}
 
 
-    - name: Delete existing GitHub Release (if any)
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        export GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-        gh release delete v${{ steps.new_version.outputs.VERSION }} --yes || true
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure GH_TOKEN is available for gh CLI
 
-    - name: Delete existing Git tag (if any)
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        git push --delete origin v${{ steps.new_version.outputs.VERSION }} || true
-        git push --delete github v${{ steps.new_version.outputs.VERSION }} || true
 
-    - name: Create Git tag
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: git tag v${{ steps.new_version.outputs.VERSION }}
 
-    - name: Push changes and tag
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        git push origin master -f
-        git push origin v${{ steps.new_version.outputs.VERSION }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
 
@@ -280,27 +264,3 @@ jobs:
     - name: List Artifacts Directory (after download)
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: ls -R artifacts/
-
-    - name: Create GitHub Release
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      env:
-        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure GH_TOKEN is available for gh CLI
-      uses: softprops/action-gh-release@v2
-      with:
-        body: |
-          Automated release for version v${{ steps.new_version.outputs.VERSION }}
-          
-          ${{ env.COMMIT_MESSAGE }}
-        tag_name: v${{ steps.new_version.outputs.VERSION }}
-        name: Release v${{ steps.new_version.outputs.VERSION }}
-        draft: false
-        prerelease: false
-        files: |
-          artifacts/wheels/windows/*.whl
-          artifacts/wheels/macos/*.whl
-          artifacts/wheels/linux/*.whl
-          artifacts/bundles/windows/devildex_windows/*
-          artifacts/bundles/macos/devildex_macos/*
-          artifacts/bundles/linux/devildex_linux/*
-          artifacts/devildex_documentation.zip
