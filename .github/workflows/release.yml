@@ -33,6 +33,7 @@ on:
 
 jobs:
   release:
+    needs: build-and-test
     runs-on: ubuntu-latest # Start with ubuntu-latest for initial setup
     steps:
     - name: Checkout code
