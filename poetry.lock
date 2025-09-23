@@ -1526,13 +1526,13 @@ testing-docutils = ["pygments", "pytest (>=8,<9)", "pytest-param-files (>=0.6.0,
 
 [[package]]
 name = "nuitka"
-version = "2.7.14"
+version = "2.7.16"
 description = "Python compiler with full language support and CPython compatibility"
 optional = false
 python-versions = "*"
 groups = ["packaging"]
 files = [
-    {file = "Nuitka-2.7.14.tar.gz", hash = "sha256:88233ed175d6d2abb2e1d5fa3c2e28b2fac604764ddc319c614325ff87c77117"},
+    {file = "Nuitka-2.7.16.tar.gz", hash = "sha256:768909faf365b21ae4777727fc4ae88efc29239c664bd177061fc907e263e0fa"},
 ]
 
 [package.dependencies]
@@ -3508,4 +3508,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "43960756c09b15b4346101801a073cb0384d18c5ca75b5ce731becef485c81c8"
+content-hash = "f42772e29c2426b39cfcea7c1601bd66f6c1d9747021da2bd5390f634d824c0d"
