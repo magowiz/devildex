@@ -173,6 +173,12 @@ jobs:
         git add pyproject.toml
         git commit -m "chore: Release v\"${{ steps.new_version.outputs.VERSION }}\"" || true
 
+    - name: Add github remote
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+      run: |
+        git remote add github https://github.com/${{ github.repository }}
+
+
     - name: Delete existing GitHub Release (if any)
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: |
