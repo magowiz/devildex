@@ -23,6 +23,7 @@ And have you seen the friendly little devil in the logo? Isn't it cute?
 - **Uniform Theming**: Applies a consistent and professional DevilDex theme across different documentation generators (Sphinx, pdoc3, pydoctor, MkDocs) for a unified viewing experience.
 - **Integrated Viewer**: A built-in browser view to read and navigate the generated docsets without leaving the application. ![Docset View](imgs/docset.png)
 - **Database Management**: Uses SQLAlchemy to keep track of your packages, projects, and available docsets.
+- **Release Trigger Test**: This line is added to trigger a release workflow.
 
 - **Cross-Platform GUI**: Built with the wxPython framework to run on multiple operating systems.
 
