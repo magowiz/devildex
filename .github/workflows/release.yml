@@ -210,8 +210,6 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: devildex-windows-wheel
-        path: artifacts/wheels/windows
         run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
         repository: ${{ github.repository }}
 
@@ -225,10 +223,10 @@ jobs:
         run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
         repository: ${{ github.repository }}
 
+    - name: Download Linux Wheel artifact
+      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: devildex-linux-wheel
-        path: artifacts/wheels/linux
         run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
         repository: ${{ github.repository }}
 
@@ -246,8 +244,6 @@ jobs:
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: devildex-macos-latest-build
-        path: artifacts/bundles/macos
         run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
         repository: ${{ github.repository }}
 
