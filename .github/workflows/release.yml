@@ -1,35 +1,10 @@
 name: Release Workflow
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - '**.txt'
-      - '**.ini'
-      - '**.lock'
-      - '**.sh'
-      - '**.bat'
-      - '**.bzl'
-      - '**.png'
-      - '**.xml'
-      - '**.json'
-      - '**.yaml'
-      - '**.yml'
-      - '**.gitignore'
-      - '**.idea/**'
-      - 'ci_dockerfiles/**'
-      - 'ci_scripts/**'
-      - 'imgs/**'
-      - 'packaging/**'
-      - 'pyinstaller_specs/**'
-      - 'runner/**'
-      - 'scripts/**'
-      - 'source/**'
-      - 'tests/**'
-    tags-ignore:
-      - '**'
+  workflow_run:
+    workflows: ["Build and Test All Artifacts"]
+    types: [completed]
+    branches: [master]
 
 jobs:
   release:
@@ -60,7 +35,11 @@ jobs:
       id: commit_message
       run: |
         COMMIT_MSG=$(git log -1 --pretty=%B)
-        echo "MESSAGE=$(echo "$COMMIT_MSG" | jq -Rs .)" >> "$GITHUB_OUTPUT"
+        { 
+          echo "MESSAGE<<EOF"
+          echo "$COMMIT_MSG"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
 
     - name: Determine version increment
       id: version_increment
