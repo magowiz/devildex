@@ -35,7 +35,10 @@ jobs:
       id: commit_message
       run: |
         COMMIT_MSG=$(git log -1 --pretty=%B)
-                echo "MESSAGE=$(echo "$COMMIT_MSG" | jq -Rs .)" >> "$GITHUB_OUTPUT"
+                DELIMITER=$(uuidgen)
+        echo "MESSAGE<<$DELIMITER" >> "$GITHUB_OUTPUT"
+        echo "$COMMIT_MSG" >> "$GITHUB_OUTPUT"
+        echo "$DELIMITER" >> "$GITHUB_OUTPUT"
     - name: Determine version increment
       id: version_increment
       env:
