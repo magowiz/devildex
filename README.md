@@ -224,4 +224,5 @@ If you prefer not to run the script, you can add the configuration manually with
 gemini mcp add devildex --transport http http://127.0.0.1:8001/mcp --description "DevilDex MCP Server"
 ```
 Triggering documentation build at Sun 21 Sep 2025, 02:53:47, CEST
-<!-- Dummy change to trigger release workflow -->
+<!-- Another dummy change to trigger release workflow -->
+
