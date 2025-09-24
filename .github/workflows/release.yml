@@ -55,8 +55,7 @@ jobs:
     - name: Fail if no increment type found
       if: steps.version_increment.outputs.INCREMENT_TYPE == ''
       run: |
-        echo "Commit message does not contain a valid release type (e.g., 'release(patch):', 'release(minor):', 'release(major):')."
-        exit 1
+        exit 0
 
     - name: Set up Python 3.13
       if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
