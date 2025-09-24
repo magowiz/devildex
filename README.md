@@ -23,7 +23,7 @@ And have you seen the friendly little devil in the logo? Isn't it cute?
 - **Uniform Theming**: Applies a consistent and professional DevilDex theme across different documentation generators (Sphinx, pdoc3, pydoctor, MkDocs) for a unified viewing experience.
 - **Integrated Viewer**: A built-in browser view to read and navigate the generated docsets without leaving the application. ![Docset View](imgs/docset.png)
 - **Database Management**: Uses SQLAlchemy to keep track of your packages, projects, and available docsets.
-- **Release Trigger Test**: This line is added to trigger a release workflow.
+
 
 - **Cross-Platform GUI**: Built with the wxPython framework to run on multiple operating systems.
 
@@ -224,3 +224,4 @@ If you prefer not to run the script, you can add the configuration manually with
 gemini mcp add devildex --transport http http://127.0.0.1:8001/mcp --description "DevilDex MCP Server"
 ```
 Triggering documentation build at Sun 21 Sep 2025, 02:53:47, CEST
+<!-- Dummy change to trigger release workflow -->
