@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-    tags:
-      - 'v*.*.*'
 
 permissions:
   contents: write # Required to create releases and upload assets
@@ -379,48 +377,68 @@ jobs:
   create-and-upload-release:
     runs-on: ubuntu-latest
     needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-package, build-docs]
-    if: startsWith(github.ref, 'refs/tags/v')
+    outputs:
+      release_version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Get version from commit message
+        id: get_version
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP 'release\((\d+\.\d+\.\d+)\):' | sed -E 's/release\((.*)\):/\1/')
+          echo "Extracted version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "No version found in commit message. Skipping release."
+            echo "version=null" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download Linux Wheel
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-linux-wheel
           path: dist/linux-wheel
 
       - name: Download Linux Bundle
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-linux-bundle
           path: dist/linux-bundle
 
       - name: Download macOS Wheel
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-macos-wheel
           path: dist/macos-wheel
 
       - name: Download macOS Bundle
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-macos-bundle
           path: dist/macos-bundle
 
       - name: Download Windows Wheel
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-windows-wheel
           path: dist/windows-wheel
 
       - name: Download Windows Bundle
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-windows-bundle
           path: dist/windows-bundle
 
       - name: Download Documentation
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: documentation-html
@@ -428,82 +446,90 @@ jobs:
 
       - name: Create Release
         id: create_release
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: "Release ${{ github.ref }}"
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          body: "Release v${{ steps.get_version.outputs.version }}"
           draft: false
           prerelease: false
 
       - name: Upload Linux Wheel asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/linux-wheel/*.whl
-          asset_name: devildex-linux-wheel-${{ github.ref_name }}.whl
+          asset_name: devildex-linux-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
       - name: Upload Linux Bundle asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/linux-bundle/*.zip
-          asset_name: devildex-linux-bundle-${{ github.ref_name }}.zip
+          asset_name: devildex-linux-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
       - name: Upload macOS Wheel asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/macos-wheel/*.whl
-          asset_name: devildex-macos-wheel-${{ github.ref_name }}.whl
+          asset_name: devildex-macos-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
       - name: Upload macOS Bundle asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/macos-bundle/*.zip
-          asset_name: devildex-macos-bundle-${{ github.ref_name }}.zip
+          asset_name: devildex-macos-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
       - name: Upload Windows Wheel asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/windows-wheel/*.whl
-          asset_name: devildex-windows-wheel-${{ github.ref_name }}.whl
+          asset_name: devildex-windows-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
       - name: Upload Windows Bundle asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/windows-bundle/*.zip
-          asset_name: devildex-windows-bundle-${{ github.ref_name }}.zip
+          asset_name: devildex-windows-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation asset
+        if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/documentation/*.zip
-          asset_name: devildex-documentation-${{ github.ref_name }}.zip
+          asset_name: devildex-documentation-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
