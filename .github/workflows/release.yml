@@ -11,232 +11,64 @@ jobs:
     permissions:
       contents: write
       packages: write
-    runs-on: ubuntu-latest # Start with ubuntu-latest for initial setup
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Necessary to fetch all history for tags
-        token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided GitHub token
-
-    - name: Configure Git
-      run: |
-        git config user.name "GitHub Actions Bot"
-        git config user.email "actions@github.com"
-
-    - name: Debug pyproject.toml files
-      run: |
-        echo "Listing pyproject.toml files:"
-        find . -name "pyproject.toml*"
-        echo "Content of main pyproject.toml:"
-        cat pyproject.toml
-
-    - name: Get latest commit message
-      id: commit_message
-      run: |
-        COMMIT_MSG=$(git log -1 --pretty=%B)
-                DELIMITER=$(uuidgen)
-        echo "MESSAGE<<$DELIMITER" >> "$GITHUB_OUTPUT"
-        echo "$COMMIT_MSG" >> "$GITHUB_OUTPUT"
-        echo "$DELIMITER" >> "$GITHUB_OUTPUT"
-    - name: Determine version increment
-      id: version_increment
-      env:
-        HEAD_COMMIT_MESSAGE: ${{ steps.commit_message.outputs.MESSAGE }}
-      run: |
-        COMMIT_MESSAGE="${{ env.HEAD_COMMIT_MESSAGE }}"
-        INCREMENT_TYPE=""
-        if [[ "$COMMIT_MESSAGE" == "release(patch):"* ]]; then
-          INCREMENT_TYPE="patch"
-        elif [[ "$COMMIT_MESSAGE" == "release(minor):"* ]]; then
-          INCREMENT_TYPE="minor"
-        elif [[ "$COMMIT_MESSAGE" == "release(major):"* ]]; then
-          INCREMENT_TYPE="major"
-        fi
-        echo "INCREMENT_TYPE=$INCREMENT_TYPE" >> "$GITHUB_OUTPUT"
-        echo "Found increment type: $INCREMENT_TYPE"
-    - name: Fail if no increment type found
-      if: steps.version_increment.outputs.INCREMENT_TYPE == ''
-      run: |
-        exit 0
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python 3.13
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
 
-    - name: Install jq
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: sudo apt-get update && sudo apt-get install -y jq
-
     - name: Install Poetry
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       run: pip install poetry
 
-    - name: Get Build and Test Workflow Run ID
-      id: get_build_and_test_run_id
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+    - name: Get version from pyproject.toml
+      id: get_version
       run: |
-        REPO_OWNER="${{ github.repository_owner }}"
-        REPO_NAME="${{ github.event.repository.name }}"
-        COMMIT_SHA="${{ github.event.workflow_run.head_sha }}" # Use github.event.workflow_run.head_sha for workflow_run triggered workflow
-        WORKFLOW_NAME="Build and Test All Artifacts" # Name of the new workflow
-            BUILD_AND_TEST_WORKFLOW_FILE_NAME=".github/workflows/build-and-test.yml"
+        VERSION=$(poetry version --short)
+        echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
-        echo "Searching for '${WORKFLOW_NAME}' workflow run for commit SHA: ${COMMIT_SHA}"
+    - name: Create artifacts directory
+      run: mkdir -p artifacts
 
-        # Get workflow ID by name
-        WORKFLOW_ID_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                                    -H "Accept: application/vnd.github.v3+json" \
-                                    "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows")
-        WORKFLOW_ID=$(echo "${WORKFLOW_ID_RESPONSE}" | jq -r ".workflows[] | select(.path == \"${BUILD_AND_TEST_WORKFLOW_FILE_NAME}\") | .id")
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+        path: artifacts
 
-        if [ "${WORKFLOW_ID}" == "null" ]; then
-          echo "Error: Workflow '${WORKFLOW_NAME}' not found."
-          exit 1
-        fi
+    - name: List downloaded artifacts
+      run: ls -R artifacts
 
-        RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                        -H "Accept: application/vnd.github.v3+json" \
-                        "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs?workflow_id=${WORKFLOW_ID}&head_sha=${COMMIT_SHA}&status=success&per_page=1")
-
-        RUN_ID=$(echo "${RESPONSE}" | jq -r '.workflow_runs[0].id')
-
-        if [ "${RUN_ID}" != "null" ]; then
-          echo "Found '${WORKFLOW_NAME}' workflow run ID: ${RUN_ID}"
-          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
-        else
-          echo "No successful '${WORKFLOW_NAME}' workflow run found for commit SHA: ${COMMIT_SHA}"
-          echo "run_id=" >> "$GITHUB_OUTPUT"
-          exit 1
-        fi
-
-    - name: Debug Poetry Version
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
+    - name: Zip documentation
       run: |
-        echo "Current Poetry version: $(poetry version --short)"
-        echo "Increment type: ${{ steps.version_increment.outputs.INCREMENT_TYPE }}"
-
-
-
-    - name: Bump version with Poetry
-      id: new_version
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        poetry version "${{ steps.version_increment.outputs.INCREMENT_TYPE }}"
-        NEW_VERSION=$(poetry version --short)
-        echo "VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-        echo "New version set to: $NEW_VERSION"
+        cd artifacts/documentation-html
+        zip -r devildex_documentation.zip ./*
+        mv devildex_documentation.zip ../../
+        cd ../..
 
     - name: Create GitHub Release
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ steps.new_version.outputs.VERSION }}
-        name: Release v${{ steps.new_version.outputs.VERSION }}
-        body: ${{ steps.commit_message.outputs.MESSAGE }}
+        tag_name: v${{ steps.get_version.outputs.VERSION }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
+        body: "Release v${{ steps.get_version.outputs.VERSION }}"
         draft: false
         prerelease: false
         files: |
-          artifacts/wheels/*.whl
-          artifacts/bundles/*.zip
-          artifacts/docs/*.zip
+          artifacts/devildex-linux-wheel/*.whl
+          artifacts/devildex-macos-wheel/*.whl
+          artifacts/devildex-windows-wheel/*.whl
+          artifacts/devildex-ubuntu-latest-build/*
+          artifacts/devildex-macos-latest-build/*
+          artifacts/devildex-windows-latest-build/*
+          devildex_documentation.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-
-    - name: Create artifacts directory
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: mkdir -p artifacts/wheels artifacts/bundles artifacts/docs
-
-
-
-
-
-
-
-
-    - name: Add github remote
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        git remote add github https://github.com/${{ github.repository }}
-
-
-
-
-
-
-
-
-    - name: Download Windows Wheel artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Download macOS Wheel artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: devildex-macos-wheel
-        path: artifacts/wheels/macos
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Download Linux Wheel artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Download Windows PyInstaller bundle
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: devildex-windows-latest-build
-        path: artifacts/bundles/windows
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Download macOS PyInstaller bundle
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Download Linux PyInstaller bundle
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: devildex-ubuntu-latest-build
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Download documentation artifact
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: documentation-html
-        path: artifacts/docs
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.get_build_and_test_run_id.outputs.run_id }}
-        repository: ${{ github.repository }}
-
-    - name: Zip documentation
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: |
-        cd artifacts/docs
-        zip -r devildex_documentation.zip ./*
-        mv devildex_documentation.zip ../
-        cd ../..
-
-    - name: List Artifacts Directory (after download)
-      if: ${{ steps.version_increment.outputs.INCREMENT_TYPE != '' }}
-      run: ls -R artifacts/
