@@ -445,9 +445,11 @@ jobs:
           name: devildex-linux-bundle
           path: dist/linux-bundle
 
-      - name: Unzip Linux Bundle artifact
-        if: steps.get_version.outputs.version != 'null'
-        run: unzip dist/linux-bundle/*.zip -d dist/linux-bundle
+      - name: Unzip linux bundle artifact
+        run: |
+          pwd
+          ls -R artifacts
+          find artifacts -name "*linux-bundle*"
 
       - name: Download macOS Wheel
         if: steps.get_version.outputs.version != 'null'
