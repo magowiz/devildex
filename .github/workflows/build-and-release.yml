@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-linux-wheel:
-    name: Build Linux Python Wheel
+    name: Build Linux Wheel
     runs-on: ubuntu-24.04
 
     steps:
@@ -408,6 +408,24 @@ jobs:
           else
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Delete existing GitHub Release (if any)
+        if: steps.get_version.outputs.version != 'null'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          gh release delete v${{ steps.get_version.outputs.version }} --yes
+          set -e
+
+      - name: Delete existing Git Tag (if any)
+        if: steps.get_version.outputs.version != 'null'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          git push origin --delete v${{ steps.get_version.outputs.version }}
+          set -e
 
       - name: Download Linux Wheel
         if: steps.get_version.outputs.version != 'null'
