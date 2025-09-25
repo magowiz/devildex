@@ -478,7 +478,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-wheel/devildex-*.whl
+          asset_path: ./dist/linux-wheel/*.whl
           asset_name: devildex-linux-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -489,7 +489,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-bundle/devildex-linux-bundle-*.zip
+          asset_path: ./dist/linux-bundle/*.zip
           asset_name: devildex-linux-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
@@ -500,7 +500,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-wheel/devildex-*.whl
+          asset_path: ./dist/macos-wheel/*.whl
           asset_name: devildex-macos-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -511,7 +511,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-bundle/devildex-macos-bundle-*.zip
+          asset_path: ./dist/macos-bundle/*.zip
           asset_name: devildex-macos-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
@@ -522,7 +522,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-wheel/devildex-*.whl
+          asset_path: ./dist/windows-wheel/*.whl
           asset_name: devildex-windows-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -533,7 +533,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-bundle/devildex-windows-bundle-*.zip
+          asset_path: ./dist/windows-bundle/*.zip
           asset_name: devildex-windows-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
@@ -544,6 +544,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/documentation/devildex_documentation.zip
+          asset_path: ./dist/documentation/*
           asset_name: devildex-documentation-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
