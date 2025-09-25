@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write # Required to create releases and upload assets
   pull-requests: write # Good practice to include, though not strictly needed for this simple flow
@@ -434,6 +438,14 @@ jobs:
           name: devildex-linux-wheel-artifact
           path: dist/linux-wheel
 
+      - name: Debug Linux Wheel artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/linux-wheel:"
+          ls -R dist/linux-wheel
+          find dist/linux-wheel -name "*.whl"
+
       - name: Unzip Linux Wheel artifact
         if: steps.get_version.outputs.version != 'null'
         run: unzip dist/linux-wheel/*.zip -d dist/linux-wheel
@@ -444,6 +456,14 @@ jobs:
         with:
           name: devildex-linux-bundle
           path: dist/linux-bundle
+
+      - name: Debug Linux Bundle artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/linux-bundle:"
+          ls -R dist/linux-bundle
+          find dist/linux-bundle -name "*.zip"
 
       - name: Unzip Linux Bundle artifact
         if: steps.get_version.outputs.version != 'null'
@@ -456,6 +476,14 @@ jobs:
           name: devildex-macos-wheel-artifact
           path: dist/macos-wheel
 
+      - name: Debug macOS Wheel artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/macos-wheel:"
+          ls -R dist/macos-wheel
+          find dist/macos-wheel -name "*.whl"
+
       - name: Unzip macOS Wheel artifact
         if: steps.get_version.outputs.version != 'null'
         run: unzip dist/macos-wheel/*.zip -d dist/macos-wheel
@@ -466,6 +494,14 @@ jobs:
         with:
           name: devildex-macos-bundle
           path: dist/macos-bundle
+
+      - name: Debug macOS Bundle artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/macos-bundle:"
+          ls -R dist/macos-bundle
+          find dist/macos-bundle -name "*.zip"
 
       - name: Unzip macOS Bundle artifact
         if: steps.get_version.outputs.version != 'null'
@@ -478,6 +514,14 @@ jobs:
           name: devildex-windows-wheel-artifact
           path: dist/windows-wheel
 
+      - name: Debug Windows Wheel artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/windows-wheel:"
+          ls -R dist/windows-wheel
+          find dist/windows-wheel -name "*.whl"
+
       - name: Unzip Windows Wheel artifact
         if: steps.get_version.outputs.version != 'null'
         run: unzip dist/windows-wheel/*.zip -d dist/windows-wheel
@@ -489,6 +533,14 @@ jobs:
           name: devildex-windows-bundle
           path: dist/windows-bundle
 
+      - name: Debug Windows Bundle artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/windows-bundle:"
+          ls -R dist/windows-bundle
+          find dist/windows-bundle -name "*.zip"
+
       - name: Unzip Windows Bundle artifact
         if: steps.get_version.outputs.version != 'null'
         run: unzip dist/windows-bundle/*.zip -d dist/windows-bundle
@@ -499,6 +551,14 @@ jobs:
         with:
           name: devildex-documentation-artifact
           path: dist/documentation
+
+      - name: Debug Documentation artifact download
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of dist/documentation:"
+          ls -R dist/documentation
+          find dist/documentation -name "*"
 
       - name: Unzip Documentation artifact
         if: steps.get_version.outputs.version != 'null'
