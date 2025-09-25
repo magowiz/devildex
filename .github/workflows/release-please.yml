@@ -18,5 +18,3 @@ jobs:
         with:
           release-type: python
           token: ${{ secrets.PAT_TOKEN }} # Use the correct PAT secret name
-          skip-github-pull-request: true # Skip creating pull requests
-          version-file: pyproject.toml # Specify pyproject.toml as the version file
