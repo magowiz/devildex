@@ -184,11 +184,25 @@ jobs:
         if: runner.os == 'Linux'
         run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
 
-      - name: Upload Artifact
-        if: always()
+      - name: Upload macOS Bundle Artifact
+        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-${{ matrix.os }}-bundle
+          name: devildex-macos-bundle
+          path: dist/${{ matrix.os }}/
+
+      - name: Upload Windows Bundle Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-windows-bundle
+          path: dist/${{ matrix.os }}/
+
+      - name: Upload Linux Bundle Artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-linux-bundle
           path: dist/${{ matrix.os }}/
 
   test:
