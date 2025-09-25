@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write # Required to create releases and upload assets
+  pull-requests: write # Good practice to include, though not strictly needed for this simple flow
 
 jobs:
   build-linux-wheel:
@@ -102,7 +108,7 @@ jobs:
 
   build-package:
     strategy:
-      matrix:
+      matrix: 
         os: [windows-latest, macos-latest, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
@@ -316,7 +322,7 @@ jobs:
       - name: Install system dependencies for wxPython
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev libsdl2-dev \
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev \
           python3-gi \
           python3-gi-cairo \
           python3-wxgtk4.0 \
@@ -369,3 +375,135 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  create-and-upload-release:
+    runs-on: ubuntu-latest
+    needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-package, build-docs]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Linux Wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-linux-wheel
+          path: dist/linux-wheel
+
+      - name: Download Linux Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-linux-bundle
+          path: dist/linux-bundle
+
+      - name: Download macOS Wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-macos-wheel
+          path: dist/macos-wheel
+
+      - name: Download macOS Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-macos-bundle
+          path: dist/macos-bundle
+
+      - name: Download Windows Wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-windows-wheel
+          path: dist/windows-wheel
+
+      - name: Download Windows Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-windows-bundle
+          path: dist/windows-bundle
+
+      - name: Download Documentation
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation-html
+          path: dist/documentation
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: "Release ${{ github.ref }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux Wheel asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/linux-wheel/*.whl
+          asset_name: devildex-linux-wheel-${{ github.ref_name }}.whl
+          asset_content_type: application/zip
+
+      - name: Upload Linux Bundle asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/linux-bundle/*.zip
+          asset_name: devildex-linux-bundle-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload macOS Wheel asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/macos-wheel/*.whl
+          asset_name: devildex-macos-wheel-${{ github.ref_name }}.whl
+          asset_content_type: application/zip
+
+      - name: Upload macOS Bundle asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/macos-bundle/*.zip
+          asset_name: devildex-macos-bundle-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload Windows Wheel asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/windows-wheel/*.whl
+          asset_name: devildex-windows-wheel-${{ github.ref_name }}.whl
+          asset_content_type: application/zip
+
+      - name: Upload Windows Bundle asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/windows-bundle/*.zip
+          asset_name: devildex-windows-bundle-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload Documentation asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/documentation/*.zip
+          asset_name: devildex-documentation-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
