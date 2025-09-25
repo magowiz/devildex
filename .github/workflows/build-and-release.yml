@@ -434,12 +434,20 @@ jobs:
           name: devildex-linux-wheel-artifact
           path: dist/linux-wheel
 
+      - name: Unzip Linux Wheel artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/linux-wheel/*.zip -d dist/linux-wheel
+
       - name: Download Linux Bundle
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-linux-bundle
           path: dist/linux-bundle
+
+      - name: Unzip Linux Bundle artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/linux-bundle/*.zip -d dist/linux-bundle
 
       - name: Download macOS Wheel
         if: steps.get_version.outputs.version != 'null'
@@ -448,12 +456,20 @@ jobs:
           name: devildex-macos-wheel-artifact
           path: dist/macos-wheel
 
+      - name: Unzip macOS Wheel artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/macos-wheel/*.zip -d dist/macos-wheel
+
       - name: Download macOS Bundle
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-macos-bundle
           path: dist/macos-bundle
+
+      - name: Unzip macOS Bundle artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/macos-bundle/*.zip -d dist/macos-bundle
 
       - name: Download Windows Wheel
         if: steps.get_version.outputs.version != 'null'
@@ -462,6 +478,10 @@ jobs:
           name: devildex-windows-wheel-artifact
           path: dist/windows-wheel
 
+      - name: Unzip Windows Wheel artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/windows-wheel/*.zip -d dist/windows-wheel
+
       - name: Download Windows Bundle
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
@@ -469,12 +489,20 @@ jobs:
           name: devildex-windows-bundle
           path: dist/windows-bundle
 
+      - name: Unzip Windows Bundle artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/windows-bundle/*.zip -d dist/windows-bundle
+
       - name: Download Documentation
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
           name: devildex-documentation-artifact
           path: dist/documentation
+
+      - name: Unzip Documentation artifact
+        if: steps.get_version.outputs.version != 'null'
+        run: unzip dist/documentation/*.zip -d dist/documentation
 
       - name: Create Release
         id: create_release
