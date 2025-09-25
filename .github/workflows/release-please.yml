@@ -5,13 +5,16 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write # Added issues:write permission
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: googleapis/release-please-action@v4
         with:
           release-type: python
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }} # Use the new PAT secret
