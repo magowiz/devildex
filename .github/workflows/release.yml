@@ -42,7 +42,7 @@ jobs:
     - name: Determine version increment
       id: version_increment
       env:
-        HEAD_COMMIT_MESSAGE: ${{ steps.commit_message.outputs.MESSAGE }}
+        HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
       run: |
         COMMIT_MESSAGE="${{ env.HEAD_COMMIT_MESSAGE }}"
         INCREMENT_TYPE=""
