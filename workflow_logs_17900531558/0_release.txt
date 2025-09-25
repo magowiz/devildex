@@ -1,0 +1,168 @@
+﻿2025-09-21T23:44:46.2011052Z Current runner version: '2.328.0'
+2025-09-21T23:44:46.2035335Z ##[group]Runner Image Provisioner
+2025-09-21T23:44:46.2036231Z Hosted Compute Agent
+2025-09-21T23:44:46.2036807Z Version: 20250829.383
+2025-09-21T23:44:46.2037439Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-21T23:44:46.2038253Z Build Date: 2025-08-29T13:48:48Z
+2025-09-21T23:44:46.2038861Z ##[endgroup]
+2025-09-21T23:44:46.2039404Z ##[group]Operating System
+2025-09-21T23:44:46.2040367Z Ubuntu
+2025-09-21T23:44:46.2040864Z 24.04.3
+2025-09-21T23:44:46.2041344Z LTS
+2025-09-21T23:44:46.2041803Z ##[endgroup]
+2025-09-21T23:44:46.2042385Z ##[group]Runner Image
+2025-09-21T23:44:46.2042942Z Image: ubuntu-24.04
+2025-09-21T23:44:46.2043468Z Version: 20250907.24.1
+2025-09-21T23:44:46.2044503Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250907.24/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-21T23:44:46.2046038Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250907.24
+2025-09-21T23:44:46.2047085Z ##[endgroup]
+2025-09-21T23:44:46.2049561Z ##[group]GITHUB_TOKEN Permissions
+2025-09-21T23:44:46.2051874Z Actions: write
+2025-09-21T23:44:46.2052521Z Attestations: write
+2025-09-21T23:44:46.2053109Z Checks: write
+2025-09-21T23:44:46.2053659Z Contents: write
+2025-09-21T23:44:46.2054161Z Deployments: write
+2025-09-21T23:44:46.2054750Z Discussions: write
+2025-09-21T23:44:46.2055291Z Issues: write
+2025-09-21T23:44:46.2055797Z Metadata: read
+2025-09-21T23:44:46.2056337Z Models: read
+2025-09-21T23:44:46.2056817Z Packages: write
+2025-09-21T23:44:46.2057340Z Pages: write
+2025-09-21T23:44:46.2057894Z PullRequests: write
+2025-09-21T23:44:46.2058426Z RepositoryProjects: write
+2025-09-21T23:44:46.2059044Z SecurityEvents: write
+2025-09-21T23:44:46.2059983Z Statuses: write
+2025-09-21T23:44:46.2060547Z ##[endgroup]
+2025-09-21T23:44:46.2063433Z Secret source: Actions
+2025-09-21T23:44:46.2064449Z Prepare workflow directory
+2025-09-21T23:44:46.2401509Z Prepare all required actions
+2025-09-21T23:44:46.2439287Z Getting action download info
+2025-09-21T23:44:46.5997148Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-21T23:44:46.6819298Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2025-09-21T23:44:46.8028308Z Download action repository 'actions/download-artifact@v4' (SHA:d3f86a106a0bac45b974a628896c90dbdf5c8093)
+2025-09-21T23:44:47.0940675Z Download action repository 'softprops/action-gh-release@v1' (SHA:de2c0eb89ae2a093876385947365aca7b0e5f844)
+2025-09-21T23:44:47.5306483Z Complete job name: release
+2025-09-21T23:44:47.6236991Z ##[group]Run actions/checkout@v4
+2025-09-21T23:44:47.6304752Z with:
+2025-09-21T23:44:47.6305713Z   fetch-depth: 0
+2025-09-21T23:44:47.6307183Z   token: ***
+2025-09-21T23:44:47.6308013Z   repository: magowiz/devildex
+2025-09-21T23:44:47.6308917Z   ssh-strict: true
+2025-09-21T23:44:47.6309645Z   ssh-user: git
+2025-09-21T23:44:47.6310614Z   persist-credentials: true
+2025-09-21T23:44:47.6311485Z   clean: true
+2025-09-21T23:44:47.6312250Z   sparse-checkout-cone-mode: true
+2025-09-21T23:44:47.6313175Z   fetch-tags: false
+2025-09-21T23:44:47.6313925Z   show-progress: true
+2025-09-21T23:44:47.6314687Z   lfs: false
+2025-09-21T23:44:47.6315375Z   submodules: false
+2025-09-21T23:44:47.6316133Z   set-safe-directory: true
+2025-09-21T23:44:47.6317999Z ##[endgroup]
+2025-09-21T23:44:47.7438865Z Syncing repository: magowiz/devildex
+2025-09-21T23:44:47.7441779Z ##[group]Getting Git version info
+2025-09-21T23:44:47.7443040Z Working directory is '/home/runner/work/devildex/devildex'
+2025-09-21T23:44:47.7444845Z [command]/usr/bin/git version
+2025-09-21T23:44:47.7514237Z git version 2.51.0
+2025-09-21T23:44:47.7542524Z ##[endgroup]
+2025-09-21T23:44:47.7559649Z Temporarily overriding HOME='/home/runner/work/_temp/bcec4ab4-dfa8-4c9c-a350-cbf13e697179' before making global git config changes
+2025-09-21T23:44:47.7562670Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-21T23:44:47.7565607Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/devildex/devildex
+2025-09-21T23:44:47.7605201Z Deleting the contents of '/home/runner/work/devildex/devildex'
+2025-09-21T23:44:47.7608985Z ##[group]Initializing the repository
+2025-09-21T23:44:47.7614257Z [command]/usr/bin/git init /home/runner/work/devildex/devildex
+2025-09-21T23:44:47.7704383Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-21T23:44:47.7706336Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-21T23:44:47.7708113Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-21T23:44:47.7710551Z hint:
+2025-09-21T23:44:47.7712171Z hint: 	git config --global init.defaultBranch <name>
+2025-09-21T23:44:47.7714121Z hint:
+2025-09-21T23:44:47.7715967Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-21T23:44:47.7719007Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-21T23:44:47.7721572Z hint:
+2025-09-21T23:44:47.7722864Z hint: 	git branch -m <name>
+2025-09-21T23:44:47.7724378Z hint:
+2025-09-21T23:44:47.7726377Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-21T23:44:47.7729482Z Initialized empty Git repository in /home/runner/work/devildex/devildex/.git/
+2025-09-21T23:44:47.7733057Z [command]/usr/bin/git remote add origin https://github.com/magowiz/devildex
+2025-09-21T23:44:47.7764868Z ##[endgroup]
+2025-09-21T23:44:47.7767233Z ##[group]Disabling automatic garbage collection
+2025-09-21T23:44:47.7769428Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-21T23:44:47.7799600Z ##[endgroup]
+2025-09-21T23:44:47.7802032Z ##[group]Setting up auth
+2025-09-21T23:44:47.7807576Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-21T23:44:47.7841352Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-21T23:44:47.8151950Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-21T23:44:47.8186735Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-21T23:44:47.8414160Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-21T23:44:47.8453073Z ##[endgroup]
+2025-09-21T23:44:47.8455487Z ##[group]Fetching the repository
+2025-09-21T23:44:47.8464278Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2025-09-21T23:44:48.3359097Z From https://github.com/magowiz/devildex
+2025-09-21T23:44:48.3361356Z  * [new branch]      gh-pages   -> origin/gh-pages
+2025-09-21T23:44:48.3363367Z  * [new branch]      master     -> origin/master
+2025-09-21T23:44:48.3365093Z  * [new tag]         v0.1.0     -> v0.1.0
+2025-09-21T23:44:48.3366821Z  * [new tag]         v0.3.0     -> v0.3.0
+2025-09-21T23:44:48.3368552Z  * [new tag]         v0.3.1     -> v0.3.1
+2025-09-21T23:44:48.3370408Z  * [new tag]         v0.3.2     -> v0.3.2
+2025-09-21T23:44:48.3372052Z  * [new tag]         v0.3.3     -> v0.3.3
+2025-09-21T23:44:48.3373488Z  * [new tag]         v0.3.4     -> v0.3.4
+2025-09-21T23:44:48.3374487Z  * [new tag]         v0.3.5     -> v0.3.5
+2025-09-21T23:44:48.3410671Z [command]/usr/bin/git branch --list --remote origin/master
+2025-09-21T23:44:48.3436169Z   origin/master
+2025-09-21T23:44:48.3445231Z [command]/usr/bin/git rev-parse refs/remotes/origin/master
+2025-09-21T23:44:48.3466410Z 573116e4f189fa2afb9ddae7c5490ce48d75a5d6
+2025-09-21T23:44:48.3472851Z ##[endgroup]
+2025-09-21T23:44:48.3474183Z ##[group]Determining the checkout info
+2025-09-21T23:44:48.3475673Z ##[endgroup]
+2025-09-21T23:44:48.3477977Z [command]/usr/bin/git sparse-checkout disable
+2025-09-21T23:44:48.3518403Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-21T23:44:48.3545826Z ##[group]Checking out the ref
+2025-09-21T23:44:48.3549152Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2025-09-21T23:44:48.4283408Z Reset branch 'master'
+2025-09-21T23:44:48.4285094Z branch 'master' set up to track 'origin/master'.
+2025-09-21T23:44:48.4299486Z ##[endgroup]
+2025-09-21T23:44:48.4337627Z [command]/usr/bin/git log -1 --format=%H
+2025-09-21T23:44:48.4361249Z 573116e4f189fa2afb9ddae7c5490ce48d75a5d6
+2025-09-21T23:44:48.4565011Z ##[group]Run git config user.name "GitHub Actions Bot"
+2025-09-21T23:44:48.4566351Z [36;1mgit config user.name "GitHub Actions Bot"[0m
+2025-09-21T23:44:48.4567550Z [36;1mgit config user.email "actions@github.com"[0m
+2025-09-21T23:44:48.4626222Z shell: /usr/bin/bash -e {0}
+2025-09-21T23:44:48.4627131Z ##[endgroup]
+2025-09-21T23:44:48.4804478Z ##[group]Run echo "MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+2025-09-21T23:44:48.4806111Z [36;1mecho "MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT[0m
+2025-09-21T23:44:48.4839249Z shell: /usr/bin/bash -e {0}
+2025-09-21T23:44:48.4840201Z ##[endgroup]
+2025-09-21T23:44:48.5012508Z ##[group]Run COMMIT_MESSAGE="chore: Set version to 0.2.0 for re-release"
+2025-09-21T23:44:48.5014150Z [36;1mCOMMIT_MESSAGE="chore: Set version to 0.2.0 for re-release"[0m
+2025-09-21T23:44:48.5015382Z [36;1mINCREMENT_TYPE=""[0m
+2025-09-21T23:44:48.5016412Z [36;1mif [[ "$COMMIT_MESSAGE" == "release(patch):"* ]]; then[0m
+2025-09-21T23:44:48.5017551Z [36;1m  INCREMENT_TYPE="patch"[0m
+2025-09-21T23:44:48.5018661Z [36;1melif [[ "$COMMIT_MESSAGE" == "release(minor):"* ]]; then[0m
+2025-09-21T23:44:48.5020020Z [36;1m  INCREMENT_TYPE="minor"[0m
+2025-09-21T23:44:48.5021138Z [36;1melif [[ "$COMMIT_MESSAGE" == "release(major):"* ]]; then[0m
+2025-09-21T23:44:48.5022288Z [36;1m  INCREMENT_TYPE="major"[0m
+2025-09-21T23:44:48.5023188Z [36;1mfi[0m
+2025-09-21T23:44:48.5024125Z [36;1mecho "INCREMENT_TYPE=$INCREMENT_TYPE" >> $GITHUB_OUTPUT[0m
+2025-09-21T23:44:48.5025448Z [36;1mecho "Found increment type: $INCREMENT_TYPE"[0m
+2025-09-21T23:44:48.5059460Z shell: /usr/bin/bash -e {0}
+2025-09-21T23:44:48.5060425Z ##[endgroup]
+2025-09-21T23:44:48.5119475Z Found increment type: 
+2025-09-21T23:44:48.5198921Z ##[group]Run echo "Commit message does not contain a valid release type (e.g., 'release(patch):', 'release(minor):', 'release(major):')."
+2025-09-21T23:44:48.5201930Z [36;1mecho "Commit message does not contain a valid release type (e.g., 'release(patch):', 'release(minor):', 'release(major):')."[0m
+2025-09-21T23:44:48.5203706Z [36;1mexit 0[0m
+2025-09-21T23:44:48.5236288Z shell: /usr/bin/bash -e {0}
+2025-09-21T23:44:48.5237120Z ##[endgroup]
+2025-09-21T23:44:48.5298158Z Commit message does not contain a valid release type (e.g., 'release(patch):', 'release(minor):', 'release(major):').
+2025-09-21T23:44:48.5704303Z Post job cleanup.
+2025-09-21T23:44:48.6676996Z [command]/usr/bin/git version
+2025-09-21T23:44:48.6714544Z git version 2.51.0
+2025-09-21T23:44:48.6764670Z Temporarily overriding HOME='/home/runner/work/_temp/e4a2ef3f-885e-4078-af26-851ff2d20383' before making global git config changes
+2025-09-21T23:44:48.6769002Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-21T23:44:48.6781311Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/devildex/devildex
+2025-09-21T23:44:48.6825652Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-21T23:44:48.6862361Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-21T23:44:48.7098593Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-21T23:44:48.7122098Z http.https://github.com/.extraheader
+2025-09-21T23:44:48.7136356Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-09-21T23:44:48.7173450Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-21T23:44:48.7529137Z Cleaning up orphan processes
