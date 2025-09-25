@@ -1,9 +1,8 @@
 name: Build and Test All Artifacts
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [created]
 
 jobs:
   build-linux-wheel:
