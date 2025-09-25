@@ -51,7 +51,7 @@ jobs:
       - name: Upload Linux Wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-linux-wheel
+          name: devildex-linux-wheel-artifact
           path: dist/*.whl
 
   build-macos-wheel:
@@ -76,7 +76,7 @@ jobs:
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-macos-wheel
+          name: devildex-macos-wheel-artifact
           path: dist/*.whl
 
   build-windows-wheel:
@@ -101,7 +101,7 @@ jobs:
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-windows-wheel
+          name: devildex-windows-wheel-artifact
           path: dist/*.whl
 
   build-package:
@@ -188,7 +188,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-${{ matrix.os }}-build
+          name: devildex-${{ matrix.os }}-bundle
           path: dist/${{ matrix.os }}/
 
   test:
@@ -345,7 +345,7 @@ jobs:
       - name: Upload documentation artifact
         uses: actions/upload-artifact@v4
         with:
-          name: documentation-html
+          name: devildex-documentation-artifact
           path: "build/html"
 
   deploy-docs:
@@ -399,7 +399,7 @@ jobs:
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
-          name: devildex-linux-wheel
+          name: devildex-linux-wheel-artifact
           path: dist/linux-wheel
 
       - name: Download Linux Bundle
@@ -413,7 +413,7 @@ jobs:
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
-          name: devildex-macos-wheel
+          name: devildex-macos-wheel-artifact
           path: dist/macos-wheel
 
       - name: Download macOS Bundle
@@ -427,7 +427,7 @@ jobs:
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
-          name: devildex-windows-wheel
+          name: devildex-windows-wheel-artifact
           path: dist/windows-wheel
 
       - name: Download Windows Bundle
@@ -441,7 +441,7 @@ jobs:
         if: steps.get_version.outputs.version != 'null'
         uses: actions/download-artifact@v4
         with:
-          name: documentation-html
+          name: devildex-documentation-artifact
           path: dist/documentation
 
       - name: Create Release
@@ -464,7 +464,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-wheel/*.whl
+          asset_path: ./dist/linux-wheel/devildex-*.whl
           asset_name: devildex-linux-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -475,7 +475,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-bundle/*.zip
+          asset_path: ./dist/linux-bundle/devildex-linux-bundle-*.zip
           asset_name: devildex-linux-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
@@ -486,7 +486,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-wheel/*.whl
+          asset_path: ./dist/macos-wheel/devildex-*.whl
           asset_name: devildex-macos-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -497,7 +497,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-bundle/*.zip
+          asset_path: ./dist/macos-bundle/devildex-macos-bundle-*.zip
           asset_name: devildex-macos-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
@@ -508,7 +508,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-wheel/*.whl
+          asset_path: ./dist/windows-wheel/devildex-*.whl
           asset_name: devildex-windows-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -519,7 +519,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-bundle/*.zip
+          asset_path: ./dist/windows-bundle/devildex-windows-bundle-*.zip
           asset_name: devildex-windows-bundle-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
 
@@ -530,6 +530,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/documentation/*.zip
+          asset_path: ./dist/documentation/devildex_documentation.zip
           asset_name: devildex-documentation-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
