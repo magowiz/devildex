@@ -17,5 +17,6 @@ jobs:
       - uses: googleapis/release-please-action@v4
         with:
           release-type: python
-          token: ${{ secrets.PAT_TOKEN }} # Use the correct PAT secret name
-          skip-github-pull-request: true # Skip creating pull requests
+          token: ${{ secrets.PAT_TOKEN }}
+          skip-github-pull-request: true
+          version-file: pyproject.toml
