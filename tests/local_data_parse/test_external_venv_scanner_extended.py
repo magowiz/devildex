@@ -214,7 +214,6 @@ def test_scan_packages_unlink_os_error(
     assert "Could not delete temporary output file" in caplog.text
 
 
-@pytest.mark.skip(reason="Temporarily disabled to unblock release pipeline")
 def test_execute_helper_script_with_stdout(
     mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -279,7 +278,6 @@ def test_read_and_process_output_file_empty_file(
     assert "No JSON content" in caplog.text
 
 
-@pytest.mark.skip(reason="Temporarily disabled to unblock release pipeline")
 def test_scan_packages_logs_completion(
     mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
