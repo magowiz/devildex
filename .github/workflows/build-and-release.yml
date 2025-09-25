@@ -362,7 +362,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: documentation-html
+          name: devildex-documentation-artifact
           path: "build/html"
 
       - name: Upload Pages artifact
