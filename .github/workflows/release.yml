@@ -1,0 +1,74 @@
+name: Release Workflow
+
+on:
+  workflow_run:
+    workflows: ["Build and Test All Artifacts"]
+    types: [completed]
+    branches: [master]
+
+jobs:
+  release:
+    permissions:
+      contents: write
+      packages: write
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install Poetry
+      run: pip install poetry
+
+    - name: Get version from pyproject.toml
+      id: get_version
+      run: |
+        VERSION=$(poetry version --short)
+        echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Create artifacts directory
+      run: mkdir -p artifacts
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+        path: artifacts
+
+    - name: List downloaded artifacts
+      run: ls -R artifacts
+
+    - name: Zip documentation
+      run: |
+        cd artifacts/documentation-html
+        zip -r devildex_documentation.zip ./*
+        mv devildex_documentation.zip ../../
+        cd ../..
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.get_version.outputs.VERSION }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
+        body: "Release v${{ steps.get_version.outputs.VERSION }}"
+        draft: false
+        prerelease: false
+        files: |
+          artifacts/devildex-linux-wheel/*.whl
+          artifacts/devildex-macos-wheel/*.whl
+          artifacts/devildex-windows-wheel/*.whl
+          artifacts/devildex-ubuntu-latest-build/*
+          artifacts/devildex-macos-latest-build/*
+          artifacts/devildex-windows-latest-build/*
+          devildex_documentation.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
