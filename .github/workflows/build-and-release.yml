@@ -448,8 +448,8 @@ jobs:
       - name: Unzip linux bundle artifact
         run: |
           pwd
-          ls -R artifacts
-          find artifacts -name "*linux-bundle*"
+          ls -R .
+          find . -name "*linux-bundle*"
 
       - name: Download macOS Wheel
         if: steps.get_version.outputs.version != 'null'
@@ -458,9 +458,7 @@ jobs:
           name: devildex-macos-wheel-artifact
           path: dist/macos-wheel
 
-      - name: Unzip macOS Wheel artifact
-        if: steps.get_version.outputs.version != 'null'
-        run: unzip dist/macos-wheel/*.zip -d dist/macos-wheel
+
 
       - name: Download macOS Bundle
         if: steps.get_version.outputs.version != 'null'
@@ -471,7 +469,10 @@ jobs:
 
       - name: Unzip macOS Bundle artifact
         if: steps.get_version.outputs.version != 'null'
-        run: unzip dist/macos-bundle/*.zip -d dist/macos-bundle
+        run: |
+          pwd
+          ls -R .
+          find . -name "*macos-bundle*"
 
       - name: Download Windows Wheel
         if: steps.get_version.outputs.version != 'null'
@@ -480,9 +481,7 @@ jobs:
           name: devildex-windows-wheel-artifact
           path: dist/windows-wheel
 
-      - name: Unzip Windows Wheel artifact
-        if: steps.get_version.outputs.version != 'null'
-        run: unzip dist/windows-wheel/*.zip -d dist/windows-wheel
+
 
       - name: Download Windows Bundle
         if: steps.get_version.outputs.version != 'null'
@@ -493,7 +492,10 @@ jobs:
 
       - name: Unzip Windows Bundle artifact
         if: steps.get_version.outputs.version != 'null'
-        run: unzip dist/windows-bundle/*.zip -d dist/windows-bundle
+        run: |
+          pwd
+          ls -R .
+          find . -name "*windows-bundle*"
 
       - name: Download Documentation
         if: steps.get_version.outputs.version != 'null'
@@ -504,7 +506,10 @@ jobs:
 
       - name: Unzip Documentation artifact
         if: steps.get_version.outputs.version != 'null'
-        run: unzip dist/documentation/*.zip -d dist/documentation
+        run: |
+          pwd
+          ls -R .
+          find . -name "*documentation*"
 
       - name: Create Release
         id: create_release
@@ -519,6 +524,11 @@ jobs:
           draft: false
           prerelease: false
 
+      - name: Find Linux Wheel path
+        id: find_linux_wheel
+        if: steps.get_version.outputs.version != 'null'
+        run: echo "LINUX_WHEEL_PATH=$(find dist/linux-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
+
       - name: Upload Linux Wheel asset
         if: steps.get_version.outputs.version != 'null'
         uses: actions/upload-release-asset@v1
@@ -526,7 +536,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-wheel/devildex-*-py3-none-any.whl
+          asset_path: ${{ steps.find_linux_wheel.outputs.LINUX_WHEEL_PATH }}
           asset_name: devildex-linux-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -537,9 +547,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-bundle/*.zip
-          asset_name: devildex-linux-bundle-v${{ steps.get_version.outputs.version }}.zip
-          asset_content_type: application/zip
+          asset_path: ./dist/linux-bundle/devildex_linux
+          asset_name: devildex-linux-bundle-v${{ steps.get_version.outputs.version }}
+          asset_content_type: application/octet-stream
+
+      - name: Find macOS Wheel path
+        id: find_macos_wheel
+        if: steps.get_version.outputs.version != 'null'
+        run: echo "MACOS_WHEEL_PATH=$(find dist/macos-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload macOS Wheel asset
         if: steps.get_version.outputs.version != 'null'
@@ -548,7 +563,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-wheel/devildex-*-py3-none-any.whl
+          asset_path: ${{ steps.find_macos_wheel.outputs.MACOS_WHEEL_PATH }}
           asset_name: devildex-macos-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -559,9 +574,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-bundle/*.zip
-          asset_name: devildex-macos-bundle-v${{ steps.get_version.outputs.version }}.zip
-          asset_content_type: application/zip
+          asset_path: ./dist/macos-bundle/devildex_macos
+          asset_name: devildex-macos-bundle-v${{ steps.get_version.outputs.version }}
+          asset_content_type: application/octet-stream
+
+      - name: Find Windows Wheel path
+        id: find_windows_wheel
+        if: steps.get_version.outputs.version != 'null'
+        run: echo "WINDOWS_WHEEL_PATH=$(find dist/windows-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload Windows Wheel asset
         if: steps.get_version.outputs.version != 'null'
@@ -570,7 +590,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-wheel/devildex-*-py3-none-any.whl
+          asset_path: ${{ steps.find_windows_wheel.outputs.WINDOWS_WHEEL_PATH }}
           asset_name: devildex-windows-wheel-v${{ steps.get_version.outputs.version }}.whl
           asset_content_type: application/zip
 
@@ -581,9 +601,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-bundle/*.zip
-          asset_name: devildex-windows-bundle-v${{ steps.get_version.outputs.version }}.zip
-          asset_content_type: application/zip
+          asset_path: ./dist/windows-bundle/devildex_windows.exe
+          asset_name: devildex-windows-bundle-v${{ steps.get_version.outputs.version }}.exe
+          asset_content_type: application/octet-stream
+
+      - name: Zip Documentation
+        if: steps.get_version.outputs.version != 'null'
+        run: |
+          cd dist/documentation
+          zip -r devildex-documentation-v${{ steps.get_version.outputs.version }}.zip .
+          cd ../..
 
       - name: Upload Documentation asset
         if: steps.get_version.outputs.version != 'null'
@@ -592,6 +619,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/documentation/*.zip
+          asset_path: ./dist/documentation/devildex-documentation-v${{ steps.get_version.outputs.version }}.zip
           asset_name: devildex-documentation-v${{ steps.get_version.outputs.version }}.zip
           asset_content_type: application/zip
