@@ -145,13 +145,11 @@ class Orchestrator:
             str(self._effective_source_path) if self._effective_source_path else None
         )
 
-        existing_clone_path_for_sphinx: Path | None = None
-        if (
-            self._effective_source_path
-            and self._effective_source_path.exists()
-            and self._effective_source_path.is_dir()
-        ):
-            existing_clone_path_for_sphinx = self._effective_source_path
+        # --- MODIFICATION START ---
+        # existing_clone_path_for_sphinx should be effective_source_path_str
+        # if it exists, otherwise None.
+        existing_clone_path_for_sphinx = effective_source_path_str
+        # --- MODIFICATION END ---
 
         return {
             "sphinx": {
@@ -162,6 +160,9 @@ class Orchestrator:
                     "output_dir": self.base_output_dir,
                     "clone_base_dir_override": self.base_output_dir / "temp_clones",
                     "existing_clone_path": existing_clone_path_for_sphinx,
+                    # --- MODIFICATION START ---
+                    "version_identifier": self.package_details.version,
+                    # --- MODIFICATION END ---
                 },
             },
             "mkdocs": {

@@ -522,34 +522,32 @@ class PackageSourceFetcher:
         self, repo_url: str, tag_variations: list[str]
     ) -> bool:
         """Attempt to fetch a tag by doing a full clone then checking out the tag."""
-        temp_clone_dir = (
-            self.base_save_path
-            / f"{self._sanitize_path_component(self.package_name)}_temp_dl"
-            / "full_clone"
-        )
+        self._cleanup_target_dir_content()
+        if not self._ensure_target_dir_exists():
+            return False
 
-        cloned_successfully = False
+        # 1. Clone the repo directly into the target directory
+        if not self._run_git_command(
+            ["git", "clone", repo_url, str(self.download_target_path)]
+        ):
+            return False
 
-        try:
-            if temp_clone_dir.exists():
-                shutil.rmtree(temp_clone_dir)
-
-            if not self._run_git_command(
-                ["git", "clone", repo_url, str(temp_clone_dir)]
-            ):
-                return False
-            cloned_successfully = True
-
-            tag_checkout_and_copy_successful = self._try_fetch_tag_variations(
-                tag_variations=tag_variations, temp_clone_dir=temp_clone_dir
+        # 2. Try to checkout a tag
+        for tag in tag_variations:
+            checkout_process = self._run_git_command(
+                ["git", "checkout", tag],
+                cwd=self.download_target_path,
+                check_errors=False,
             )
+            if checkout_process and checkout_process.returncode == 0:
+                # 3. Success! Cleanup and return.
+                logger.info(f"Checkout of tag '{tag}' successful.")
+                self._cleanup_git_dir_from_path(self.download_target_path)
+                return True
 
-            return tag_checkout_and_copy_successful
-        finally:
-            if (cloned_successfully and temp_clone_dir.exists()) or (
-                not cloned_successfully and temp_clone_dir.exists()
-            ):
-                shutil.rmtree(temp_clone_dir)
+        # 4. If all tags failed, cleanup and return False
+        self._cleanup_target_dir_content()
+        return False
 
     def _fetch_from_vcs_tag(self, repo_url: str) -> bool:
         logger.info(

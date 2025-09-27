@@ -89,4 +89,22 @@ def populate_with_sample_data(main_session: SQLAlchemySession) -> None:
     project2.docsets.append(docset_pandas_v1)
     main_session.commit()
 
+    # Add black package
+    pkg_info_black = PackageInfo(
+        package_name="black",
+        summary="The uncompromising Python code formatter.",
+    )
+    main_session.add(pkg_info_black)
+    main_session.commit()
+
+    docset_black = Docset(
+        package_info=pkg_info_black,
+        package_name="black",
+        package_version="25.9.0",
+        status="not_available",
+    )
+    main_session.add(docset_black)
+    project1.docsets.append(docset_black)
+    main_session.commit()
+
     logger.info("Sample data population complete.")

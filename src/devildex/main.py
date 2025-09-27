@@ -1127,7 +1127,7 @@ class DevilDexApp(wx.App):
         self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
         self.generation_task_manager = GenerationTaskManager(
             core_instance=self.core,
-            owner_for_timer=self.main_frame,
+            owner_for_timer=self,  # Pass the app instance itself
             update_grid_cell_callback=self._update_grid_cell_from_manager,
             on_task_complete_callback=self._on_generation_complete_from_manager,
             update_action_buttons_callback=self._update_action_buttons_state,
@@ -1242,8 +1242,19 @@ def main() -> None:
                 )
                 # First, process the data (e.g. scan for existing docsets and update statuses)
                 app._perform_startup_docset_scan()
-                app._update_action_buttons_state()
+
+                # Initialize the task manager, which was skipped before
+                app.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
+                app.generation_task_manager = GenerationTaskManager(
+                    core_instance=app.core,
+                    owner_for_timer=app,  # Pass the app instance itself
+                    update_grid_cell_callback=app._update_grid_cell_from_manager,
+                    on_task_complete_callback=app._on_generation_complete_from_manager,
+                    update_action_buttons_callback=app._update_action_buttons_state,
+                )
+
                 # THEN, update the grid with the processed data
+                app._update_action_buttons_state()
                 app.update_grid_data()
             else:
                 app._initialize_data_and_managers()

@@ -258,8 +258,14 @@ def find_doc_source_in_clone(repo_path: Path) -> str | None:
         logger.error(
             "No documentation source directory with conf.py found in the clone."
         )
+        # --- Start Logging ---
+        logger.info(f"find_doc_source_in_clone: Returning None for repo_path: {repo_path}")
+        # --- End Logging ---
         return None
     logger.info(f"Documentation source directory identified at: {doc_source_path}")
+    # --- Start Logging ---
+    logger.info(f"find_doc_source_in_clone: Returning doc_source_path: {doc_source_path}")
+    # --- End Logging ---
     return doc_source_path
 
 
@@ -278,14 +284,23 @@ def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str | Non
              or None if not found.
 
     """
+    # --- Start Logging ---
+    logger.info(f"_find_doc_dir_in_repo: Searching in repo_path: {repo_path} with potential_doc_dirs: {potential_doc_dirs}")
+    # --- End Logging ---
     for doc_dir_name in potential_doc_dirs:
         current_path = os.path.join(repo_path, doc_dir_name)
+        # --- Start Logging ---
+        logger.info(f"_find_doc_dir_in_repo: Checking potential doc dir: {current_path}")
+        # --- End Logging ---
         if os.path.isdir(current_path) and os.path.exists(
             os.path.join(current_path, CONF_SPHINX_FILE)
         ):
             logger.info(
                 "Found documentation source directory with conf.py: " f"{current_path}"
             )
+            # --- Start Logging ---
+            logger.info(f"_find_doc_dir_in_repo: Found conf.py in {current_path}. Returning.")
+            # --- End Logging ---
             return current_path
         if os.path.isdir(current_path):
             logger.warning(
@@ -294,6 +309,9 @@ def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str | Non
             )
     if os.path.exists(os.path.join(repo_path, CONF_SPHINX_FILE)):
         logger.info(f"Found conf.py in the repository root: {repo_path}")
+        # --- Start Logging ---
+        logger.info(f"_find_doc_dir_in_repo: Found conf.py in repo root: {repo_path}. Returning.")
+        # --- End Logging ---
         return repo_path
 
     logger.info(
@@ -327,7 +345,13 @@ def _find_doc_dir_in_repo(repo_path: str, potential_doc_dirs: list) -> str | Non
                 "Found conf.py via full recursive search at: "
                 f"{conf_file_path} (source directory: {doc_source_dir})"
             )
+            # --- Start Logging ---
+            logger.info(f"_find_doc_dir_in_repo: Found conf.py via recursive search in {doc_source_dir}. Returning.")
+            # --- End Logging ---
             return doc_source_dir
+    # --- Start Logging ---
+    logger.info(f"_find_doc_dir_in_repo: No conf.py found after all searches in {repo_path}. Returning None.")
+    # --- End Logging ---
     return None
 
 
@@ -724,38 +748,13 @@ def _prepare_rtd_build_environment(
     )
 
 
-def _obtain_rtd_source_code(
-    existing_clone_path: str | None,
-    cloning_config: RtdCloningConfig,
-) -> tuple[Path | None, str]:
-    """Obtain the source code, either from existing path or by cloning."""
-    clone_dir_path: Path | None
-    effective_branch: str = cloning_config.initial_default_branch
-
-    if existing_clone_path:
-        existing_clone_path_obj = Path(existing_clone_path)
-        if existing_clone_path_obj.exists() and existing_clone_path_obj.is_dir():
-            logger.info("Using existing clone path: %s", existing_clone_path)
-            clone_dir_path = existing_clone_path_obj
-        else:
-            logger.warning(
-                f"Provided existing_clone_path '{existing_clone_path}'"
-                " not found or not a dir. Attempting clone."
-            )
-            clone_dir_path, effective_branch = _handle_repository_cloning(
-                cloning_config
-            )
-    else:
-        clone_dir_path, effective_branch = _handle_repository_cloning(cloning_config)
-    return clone_dir_path, effective_branch
-
-
 def download_readthedocs_source_and_build(
     project_name: str,
     project_url: str,
     existing_clone_path: str | None = None,
     output_dir: Path | None = None,
     clone_base_dir_override: Path | None = None,
+    version_identifier: str | None = None, # Add this parameter
 ) -> str | bool:
     """Download sources from RTD, clones, isolates doc sources, execute Sphinx."""
     logger.info(
@@ -780,9 +779,13 @@ def download_readthedocs_source_and_build(
         project_slug=project_slug,
         bzr=bzr,
     )
+    
+    # --- MODIFICATION START ---
+    # Pass existing_clone_path to _obtain_rtd_source_code
     clone_dir_path, effective_branch = _obtain_rtd_source_code(
         existing_clone_path, cloning_conf
     )
+    # --- MODIFICATION END ---
 
     if not clone_dir_path:
         logger.error(
@@ -796,7 +799,8 @@ def download_readthedocs_source_and_build(
             _cleanup(actual_clone_base_dir)
         return False
 
-    project_context = ProjectContext(slug=project_slug, version=effective_branch)
+    # Pass version_identifier to ProjectContext
+    project_context = ProjectContext(slug=project_slug, version=version_identifier or effective_branch)
     finalize_conf = RtdFinalizeConfig(
         output_dir_param=output_dir,
         existing_clone_path=existing_clone_path,
@@ -808,6 +812,38 @@ def download_readthedocs_source_and_build(
         project_context,
         finalize_conf,
     )
+
+
+def _obtain_rtd_source_code(
+    existing_clone_path: str | None,
+    cloning_config: RtdCloningConfig,
+) -> tuple[Path | None, str]:
+    """Obtain the source code, either from existing path or by cloning."""
+    clone_dir_path: Path | None
+    effective_branch: str = cloning_config.initial_default_branch
+
+    # --- MODIFICATION START ---
+    if existing_clone_path:
+        existing_clone_path_obj = Path(existing_clone_path)
+        if existing_clone_path_obj.exists() and existing_clone_path_obj.is_dir():
+            logger.info("Using existing clone path: %s", existing_clone_path)
+            clone_dir_path = existing_clone_path_obj
+            # No need to clone, so we just return the existing path
+            return clone_dir_path, effective_branch
+        else:
+            logger.warning(
+                f"Provided existing_clone_path '{existing_clone_path}'"
+                " not found or not a dir. Attempting clone."
+            )
+            # Fallback to cloning if existing_clone_path is invalid
+            clone_dir_path, effective_branch = _handle_repository_cloning(
+                cloning_config
+            )
+    else:
+        clone_dir_path, effective_branch = _handle_repository_cloning(cloning_config)
+    # --- MODIFICATION END ---
+
+    return clone_dir_path, effective_branch
 
 
 def _finalize_rtd_build_and_cleanup(
