@@ -217,11 +217,19 @@ class DevilDexApp(wx.App):
                 return found_specific_docset_subdir
         return None
 
-    @staticmethod
     def _docset_scan_set_status(
+        self,
         found_specific_docset_subdir: Path | None,
         pkg_data: dict,
     ) -> None:
+        current_status = pkg_data.get("docset_status")
+        if current_status in ("generating", "error"):
+            if current_status == "generating":
+                pkg_data["docset_status"] = "⣾ Generating..."
+            elif current_status == "error":
+                pkg_data["docset_status"] = ERROR_BTN_LABEL
+            return
+
         if found_specific_docset_subdir:
             pkg_data["docset_status"] = AVAILABLE_BTN_LABEL
             pkg_data["docset_path"] = str(found_specific_docset_subdir.resolve())
@@ -235,6 +243,14 @@ class DevilDexApp(wx.App):
             self.current_grid_source_data
         )
         for pkg_data in self.current_grid_source_data:
+            current_status = pkg_data.get("status")  # Use the raw status
+            if current_status in ("generating", "error"):
+                if current_status == "generating":
+                    pkg_data["docset_status"] = "⣾ Generating..."
+                elif current_status == "error":
+                    pkg_data["docset_status"] = ERROR_BTN_LABEL
+                continue  # Skip filesystem check for these states
+
             pkg_name = pkg_data.get("name")
             pkg_version = pkg_data.get("version")
             if pkg_name in matched_top_level_dir_names:
@@ -1185,7 +1201,19 @@ def main() -> None:
         else:
             core = DevilDexCore(docset_base_output_path=app_paths.docsets_base_dir)
 
-        db_url_for_mcp = core.database_url # Get database_url from core
+        # DEV MODE: If active, first clear any registered project, then populate with sample data.
+        if os.getenv("DEVILDEX_DEV_MODE") == "1":
+            logger.info("DEV MODE: Clearing any active project for a clean slate.")
+            core.set_active_project(None)
+
+            from devildex.database import db_manager
+            from devildex.database.sample_data import populate_with_sample_data
+
+            logger.info("DEV MODE: Populating database with sample data.")
+            with db_manager.get_session() as session:
+                populate_with_sample_data(session)
+
+        db_url_for_mcp = core.database_url  # Get database_url from core
 
         if mcp_enabled:
             server_started = core.start_mcp_server_if_enabled(db_url_for_mcp)
@@ -1199,16 +1227,27 @@ def main() -> None:
                 time.sleep(1)
         else:
             # GUI mode
-            # Determine if GUI warning callback should be passed
-
-
-            app = DevilDexApp(core=core) # No mcp_server_manager parameter here
+            app = DevilDexApp(core=core)
 
             # If MCP is enabled and GUI not hidden, update core with app's callback
             if mcp_enabled and not hide_gui:
                 core.gui_warning_callback = app._display_mcp_warning_in_gui
 
-            app._initialize_data_and_managers() # Call the initialization method
+            # In DEV MODE, we load data directly after populating.
+            # In normal mode, we scan for projects.
+            if os.getenv("DEVILDEX_DEV_MODE") == "1":
+                # In dev mode, we just load all data from the DB for the global view
+                app.current_grid_source_data = core.bootstrap_database_and_load_data(
+                    initial_package_source=[], is_fallback_data=False
+                )
+                # First, process the data (e.g. scan for existing docsets and update statuses)
+                app._perform_startup_docset_scan()
+                app._update_action_buttons_state()
+                # THEN, update the grid with the processed data
+                app.update_grid_data()
+            else:
+                app._initialize_data_and_managers()
+
             app.MainLoop()
     except KeyboardInterrupt:
         logger.info("\nShutting down application...")

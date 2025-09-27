@@ -80,10 +80,11 @@ class AppPaths:
 
     @property
     def database_path(self) -> Path:
-        """Path per il file del database dell application.
-
-        May be un file SQLite, ad example.
-        """
+        """Path for the application's database file."""
+        if os.getenv("DEVILDEX_DEV_MODE") == "1":
+            # In dev mode, use a local file in the project root
+            return Path("devildex_dev.db")
+        # Otherwise, use the user's data directory
         return self.user_data_dir / "devildex.db"
 
     @property

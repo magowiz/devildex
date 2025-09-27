@@ -322,7 +322,8 @@ class DevilDexCore:
                 "name": db_docset.package_name,
                 "version": db_docset.package_version,
                 "description": pkg_info.summary if pkg_info else "N/A",
-                "docset_status": db_docset.status,
+                "status": db_docset.status,  # Raw status from DB
+                "docset_status": db_docset.status,  # UI-managed status, initialized from DB
             }
             if pkg_info and pkg_info.project_urls:
                 grid_row["project_urls"] = pkg_info.project_urls
