@@ -512,7 +512,8 @@ def test_grab_build_doc_sphinx_with_existing_source_path(
         project_name=mock_orchestrator.package_details.name,
         output_dir=mock_orchestrator.base_output_dir,
         clone_base_dir_override=mock_orchestrator.base_output_dir / "temp_clones",
-        existing_clone_path=existing_source_path,
+        existing_clone_path=str(existing_source_path),
+        version_identifier=mock_orchestrator.package_details.version,
     )
 
 

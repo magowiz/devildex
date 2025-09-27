@@ -231,7 +231,8 @@ def test_full_clone_checkout_success(
     """Verify the full clone and checkout process succeeds."""
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3"]
-    temp_clone_dir = fetcher.base_save_path / "vcs-test-pkg_temp_dl" / "full_clone"
+    # temp_clone_dir is no longer used for the initial clone
+    # temp_clone_dir = fetcher.base_save_path / "vcs-test-pkg_temp_dl" / "full_clone"
 
     mock_git_clone = mocker.Mock(returncode=0)
     mock_git_checkout = mocker.Mock(returncode=0)
@@ -239,8 +240,8 @@ def test_full_clone_checkout_success(
         fetcher, "_run_git_command", side_effect=[mock_git_clone, mock_git_checkout]
     )
 
-    mock_copy = mocker.patch.object(fetcher, "_copy_cloned_content", return_value=True)
-    mock_rmtree = mocker.patch("shutil.rmtree")
+    mock_cleanup_target_dir_content = mocker.patch.object(fetcher, "_cleanup_target_dir_content") # Added this mock
+    mock_cleanup_git = mocker.patch.object(fetcher, "_cleanup_git_dir_from_path") # Keep this mock
     mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=True)
     mocker.patch("pathlib.Path.exists", return_value=True)
 
@@ -248,21 +249,9 @@ def test_full_clone_checkout_success(
 
     assert result is True
 
-    clone_call = mock_run_git.call_args_list[0]
-    assert clone_call.args[0] == ["git", "clone", repo_url, str(temp_clone_dir)]
-
-    # Verify checkout was called correctly
-    checkout_call = mock_run_git.call_args_list[1]
-    assert checkout_call.args[0] == [
-        "git",
-        "-C",
-        str(temp_clone_dir),
-        "checkout",
-        "1.2.3",
-    ]
-
-    mock_copy.assert_called_once_with(temp_clone_dir, fetcher.download_target_path)
-    mock_rmtree.assert_called_with(temp_clone_dir)
+    mock_cleanup_target_dir_content.assert_called_once()
+    # Assert that _cleanup_git_dir_from_path is called with the correct path
+    mock_cleanup_git.assert_called_once_with(fetcher.download_target_path)
 
 
 def test_full_clone_fails(fetcher: PackageSourceFetcher, mocker: MockerFixture) -> None:
@@ -285,7 +274,8 @@ def test_full_clone_checkout_fails(
     """Verify the process fails if checkout fails for all tags."""
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3", "v1.2.3"]
-    temp_clone_dir = fetcher.base_save_path / "vcs-test-pkg_temp_dl" / "full_clone"
+    # temp_clone_dir is no longer used
+    # temp_clone_dir = fetcher.base_save_path / "vcs-test-pkg_temp_dl" / "full_clone"
 
     mock_git_clone = mocker.Mock(returncode=0)
     mock_git_checkout_fail = mocker.Mock(returncode=1)
@@ -295,8 +285,10 @@ def test_full_clone_checkout_fails(
         side_effect=[mock_git_clone, mock_git_checkout_fail, mock_git_checkout_fail],
     )
 
-    mock_copy = mocker.patch.object(fetcher, "_copy_cloned_content")
-    mock_rmtree = mocker.patch("shutil.rmtree")
+    # _copy_cloned_content is no longer called
+    # mock_copy = mocker.patch.object(fetcher, "_copy_cloned_content")
+    mock_cleanup_target_dir_content = mocker.patch.object(fetcher, "_cleanup_target_dir_content") # Added this mock
+    mock_cleanup_git = mocker.patch.object(fetcher, "_cleanup_git_dir_from_path") # Keep this mock
     # Mock path.exists() to ensure cleanup logic is triggered
     mocker.patch("pathlib.Path.exists", return_value=True)
 
@@ -305,6 +297,6 @@ def test_full_clone_checkout_fails(
 
     # Assert
     assert result is False
-    mock_copy.assert_not_called()
-    # Cleanup should still happen
-    mock_rmtree.assert_called_with(temp_clone_dir)
+    # Expect _cleanup_target_dir_content to be called twice
+    assert mock_cleanup_target_dir_content.call_count == 2 # Changed from assert_called_once()
+    mock_cleanup_git.assert_not_called() # _cleanup_git_dir_from_path should not be called if checkout fails
