@@ -484,6 +484,7 @@ def test_grab_build_doc_sphinx(
 ) -> None:
     """Test grab build doc sphinx."""
     mock_orchestrator.detected_doc_type = "sphinx"
+    (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_download_sphinx.return_value = "sphinx_output_path"
     result = mock_orchestrator.grab_build_doc()
@@ -524,6 +525,7 @@ def test_grab_build_doc_sphinx_raises_exception(
 ) -> None:
     """Test grab build doc sphinx raises exception."""
     mock_orchestrator.detected_doc_type = "sphinx"
+    (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_download_sphinx.side_effect = Exception("Sphinx build failed")
     result = mock_orchestrator.grab_build_doc()
@@ -540,6 +542,7 @@ def test_grab_build_doc_mkdocs(
 ) -> None:
     """Test grab build doc mkdocs."""
     mock_orchestrator.detected_doc_type = "mkdocs"
+    (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_process_mkdocs.return_value = "mkdocs_output_path"
     result = mock_orchestrator.grab_build_doc()
@@ -573,6 +576,7 @@ def test_grab_build_doc_docstrings(
 ) -> None:
     """Test grab build doc docstrings."""
     mock_orchestrator.detected_doc_type = "docstrings"
+    (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
     mock_generate_docs_from_folder.return_value = "docstrings_output_path"
     result = mock_orchestrator.grab_build_doc()

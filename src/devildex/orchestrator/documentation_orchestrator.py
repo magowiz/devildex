@@ -11,7 +11,9 @@ from devildex.info import PROJECT_ROOT
 from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
+from devildex.orchestrator.context import BuildContext
 from devildex.scanner.scanner import (
+    _find_python_package_root,
     has_docstrings,
     is_mkdocs_project,
     is_sphinx_project,
@@ -181,11 +183,15 @@ class Orchestrator:
                 },
             },
             "docstrings": {
-                "function": self.doc_strings.generate_docs_from_folder,
+                "function": self._generate_docstrings_with_fallback,
                 "args": {
-                    "input_folder": effective_source_path_str,
-                    "project_name": self.package_details.name,
-                    "output_folder": self.base_output_dir,
+                    "context": BuildContext(
+                        project_name=self.package_details.name,
+                        project_version=self.package_details.version,
+                        base_output_dir=self.base_output_dir,
+                        source_root=Path(self._get_docstrings_input_folder()),
+                        vcs_url=self.package_details.vcs_url,
+                    )
                 },
             },
         }
@@ -226,6 +232,54 @@ class Orchestrator:
             self.last_operation_result = False
             logger.error("scan cannot detect any doc, unable to grab")
         return self.last_operation_result
+
+    def _get_docstrings_input_folder(self) -> str:
+        """Determines the correct input folder for docstrings generation.
+        It tries to find the Python package root within the effective source path.
+        """
+        if not self._effective_source_path:
+            logger.error(
+                "Orchestrator: _effective_source_path is not set, "
+                "cannot determine docstrings input folder."
+            )
+            return ""
+
+        python_package_root = _find_python_package_root(self._effective_source_path)
+
+        if python_package_root:
+            logger.info(
+                "Orchestrator: Found Python package root for docstrings: "
+                f"{python_package_root}"
+            )
+            return str(python_package_root)
+        else:
+            logger.warning(
+                "Orchestrator: Could not find a specific Python package root. "
+                "Falling back to effective source path for docstrings: "
+                f"{self._effective_source_path}"
+            )
+            return str(self._effective_source_path)
+
+    def _generate_docstrings_with_fallback(self, context: BuildContext) -> str | bool:
+        logger.info("Orchestrator: Attempting pdoc3 generation...")
+        pdoc3_result = self.doc_strings.generate_docs_from_folder(context)
+
+        if pdoc3_result:
+            logger.info("Orchestrator: pdoc3 generation successful.")
+            return pdoc3_result
+        else:
+            logger.warning(
+                "Orchestrator: pdoc3 generation failed. Attempting Pydoctor generation..."
+            )
+            # PydoctorSrc is not yet integrated, so this will fail for now.
+            # This will be integrated in a later step.
+            # pydoctor_result = self.pydoctor_src.generate_docs_from_folder(context)
+            # if pydoctor_result:
+            #     logger.info("Orchestrator: Pydoctor generation successful.")
+            #     return pydoctor_result
+            # else:
+            logger.error("Orchestrator: Pydoctor generation also failed (or not yet integrated).")
+            return False
 
     def start_scan(self) -> None:
         """Start the scanning process."""

@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from typing import Optional
 
 from devildex.constants import CONF_FILENAME
 from devildex.scanner_utils.scanner_utils import (
@@ -255,3 +256,38 @@ def has_docstrings(project_path: str) -> bool:
                 if _check_file_for_docstrings(file_path):
                     return True
     return False
+
+def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
+    """
+    Attempts to find the root of the main Python package within a given base path.
+    This is crucial for tools like pdoc or pydoctor that need to be pointed
+    at an importable package or module.
+    """
+    logger.debug("Searching for Python package root in: %s", scan_base_path)
+
+    # Strategy 1: Look for a direct subdirectory with __init__.py
+    for item in scan_base_path.iterdir():
+        if item.is_dir() and (item / "__init__.py").exists():
+            logger.debug("Found Python package root directly under project root: %s", item)
+            return item
+
+    # Strategy 2: Look for a 'src' directory containing a package
+    src_dir = scan_base_path / "src"
+    if src_dir.is_dir():
+        for item in src_dir.iterdir():
+            if item.is_dir() and (item / "__init__.py").exists():
+                logger.debug("Found Python package root in src/: %s", item)
+                return item
+
+    # Strategy 3: Check if the base path itself is a package (contains __init__.py)
+    if (scan_base_path / "__init__.py").exists():
+        logger.debug("Project root itself is a Python package: %s", scan_base_path)
+        return scan_base_path
+
+    # Strategy 4: Look for setup.py or pyproject.toml, assuming project root is package root
+    if (scan_base_path / "setup.py").is_file() or (scan_base_path / "pyproject.toml").is_file():
+        logger.debug("Found setup.py or pyproject.toml, assuming project root is package root: %s", scan_base_path)
+        return scan_base_path
+
+    logger.warning("Could not find a clear Python package root in %s", scan_base_path)
+    return None
