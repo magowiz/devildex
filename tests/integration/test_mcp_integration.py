@@ -1,8 +1,6 @@
 """test mcp integration."""
 
 import asyncio
-import configparser
-import os
 import socket
 import time
 from collections.abc import Generator

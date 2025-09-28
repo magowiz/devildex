@@ -1,6 +1,4 @@
 from pathlib import Path
-import shutil
-from unittest.mock import MagicMock, patch
 
 import pytest
 

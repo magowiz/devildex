@@ -1,17 +1,48 @@
-from cx_Freeze import setup, Executable
+from cx_Freeze import Executable, setup
 
 build_exe_options = {
-    "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex", "sqlalchemy.dialects", "sqlalchemy.dialects.sqlite", "pkg_resources", "sqlalchemy.orm"],
+    "packages": [
+        "wx",
+        "sqlalchemy",
+        "requests",
+        "fastmcp",
+        "devildex",
+        "sqlalchemy.dialects",
+        "sqlalchemy.dialects.sqlite",
+        "pkg_resources",
+        "sqlalchemy.orm",
+    ],
     "path": ["src"],
-    "includes": ["sqlalchemy.orm", "sqlalchemy.ext.declarative", "devildex.database.db_manager"],
+    "includes": [
+        "sqlalchemy.orm",
+        "sqlalchemy.ext.declarative",
+        "devildex.database.db_manager",
+    ],
     "zip_include_packages": ["sqlalchemy", "sqlalchemy.orm"],
     "include_files": [
         ("imgs", "imgs"),
         ("devildex_config.ini", "devildex_config.ini"),
     ],
-    "excludes": ["tkinter", "unittest", "pydoc", "email", "html", "http", "xml",
-                 "test", "distutils", "setuptools", "lib2to3", "concurrent",
-                 "asyncio", "json", "urllib", "xmlrpc", "logging", "multiprocessing"],
+    "excludes": [
+        "tkinter",
+        "unittest",
+        "pydoc",
+        "email",
+        "html",
+        "http",
+        "xml",
+        "test",
+        "distutils",
+        "setuptools",
+        "lib2to3",
+        "concurrent",
+        "asyncio",
+        "json",
+        "urllib",
+        "xmlrpc",
+        "logging",
+        "multiprocessing",
+    ],
 }
 
 setup(
@@ -22,8 +53,8 @@ setup(
     executables=[
         Executable(
             "src/devildex/main.py",
-            base=None, # For Linux, often no specific base is needed for GUI apps
-            target_name="devildex", # No extension
+            base=None,
+            target_name="devildex",
         )
     ],
 )

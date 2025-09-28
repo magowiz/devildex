@@ -1,5 +1,6 @@
 """Module that tests mcp server."""
 
+import asyncio
 import logging
 import os
 import re
@@ -7,7 +8,6 @@ import socket
 import subprocess
 import tempfile
 import time
-import asyncio
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -374,7 +374,7 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
             )
             if status_response.data["status"] in ["COMPLETED", "FAILED"]:
                 break
-        
+
         assert status_response is not None
         assert status_response.data["status"] == "COMPLETED", f"Task failed with result: {status_response.data.get('result')}"
         assert status_response.data["result"][0] is True

@@ -17,6 +17,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from devildex.config_manager import ConfigManager
 from devildex.constants import (  # Added AVAILABLE_BTN_LABEL
     AVAILABLE_BTN_LABEL,
 )
@@ -29,7 +30,6 @@ from devildex.database.models import (
     RegisteredProject,
 )
 from devildex.main import DevilDexApp
-from devildex.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 

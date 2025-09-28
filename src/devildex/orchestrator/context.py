@@ -1,9 +1,9 @@
 """Module for the build context."""
 import logging
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
 from devildex.scanner.scanner import _find_python_package_root
 
 logger = logging.getLogger(__name__)
@@ -51,8 +51,7 @@ class BuildContext:
             dir_path.mkdir(parents=True, exist_ok=True)
 
     def resolve_package_source_path(self, project_name: str) -> Optional[Path]:
-        """
-        Resolves the actual path to the main Python package/module within the source_root.
+        """Resolves the actual path to the main Python package/module within the source_root.
         This is crucial for docstrings-based documentation tools like pdoc.
         """
         if not self.source_root or not self.source_root.is_dir():

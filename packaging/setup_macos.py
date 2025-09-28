@@ -1,4 +1,4 @@
-from cx_Freeze import setup, Executable
+from cx_Freeze import Executable, setup
 
 build_exe_options = {
     "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex"],
@@ -7,9 +7,26 @@ build_exe_options = {
         ("imgs", "imgs"),
         ("devildex_config.ini", "devildex_config.ini"),
     ],
-    "excludes": ["tkinter", "unittest", "pydoc", "email", "html", "http", "xml",
-                 "test", "distutils", "setuptools", "lib2to3", "concurrent",
-                 "asyncio", "json", "urllib", "xmlrpc", "logging", "multiprocessing"],
+    "excludes": [
+        "tkinter",
+        "unittest",
+        "pydoc",
+        "email",
+        "html",
+        "http",
+        "xml",
+        "test",
+        "distutils",
+        "setuptools",
+        "lib2to3",
+        "concurrent",
+        "asyncio",
+        "json",
+        "urllib",
+        "xmlrpc",
+        "logging",
+        "multiprocessing",
+    ],
 }
 
 setup(
@@ -20,9 +37,9 @@ setup(
     executables=[
         Executable(
             "src/devildex/main.py",
-            base=None, # For macOS, often no specific base is needed for .app bundles
-            target_name="devildex", # No .exe extension
-            icon="devildex.icns" # You'll need to provide a .icns file
+            base=None,
+            target_name="devildex",
+            icon="devildex.icns",
         )
     ],
 )

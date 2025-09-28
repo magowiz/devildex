@@ -258,8 +258,7 @@ def has_docstrings(project_path: str) -> bool:
     return False
 
 def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
-    """
-    Attempts to find the root of the main Python package within a given base path.
+    """Attempts to find the root of the main Python package within a given base path.
     This is crucial for tools like pdoc or pydoctor that need to be pointed
     at an importable package or module.
     """

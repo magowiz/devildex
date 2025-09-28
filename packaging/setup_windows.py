@@ -1,4 +1,4 @@
-from cx_Freeze import setup, Executable
+from cx_Freeze import Executable, setup
 
 build_exe_options = {
     "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex"],
@@ -7,10 +7,27 @@ build_exe_options = {
         ("imgs", "imgs"),
         ("devildex_config.ini", "devildex_config.ini"),
     ],
-    "excludes": ["tkinter", "unittest", "pydoc", "email", "html", "http", "xml",
-                 "test", "distutils", "setuptools", "lib2to3", "concurrent",
-                 "asyncio", "json", "urllib", "xmlrpc", "logging", "multiprocessing"],
-    "include_msvcr": True, # Important for Windows
+    "excludes": [
+        "tkinter",
+        "unittest",
+        "pydoc",
+        "email",
+        "html",
+        "http",
+        "xml",
+        "test",
+        "distutils",
+        "setuptools",
+        "lib2to3",
+        "concurrent",
+        "asyncio",
+        "json",
+        "urllib",
+        "xmlrpc",
+        "logging",
+        "multiprocessing",
+    ],
+    "include_msvcr": True,
 }
 
 setup(
@@ -21,9 +38,9 @@ setup(
     executables=[
         Executable(
             "src/devildex/main.py",
-            base="Win32GUI", # Specifically for Windows GUI
+            base="Win32GUI",
             target_name="devildex.exe",
-            icon="devildex.ico" # You'll need to provide a .ico file
+            icon="devildex.ico",
         )
     ],
 )
