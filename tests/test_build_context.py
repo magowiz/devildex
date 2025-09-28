@@ -1,3 +1,5 @@
+"""test orchestrator context."""
+
 from pathlib import Path
 
 import pytest
@@ -7,7 +9,6 @@ from devildex.orchestrator.context import BuildContext
 
 @pytest.fixture
 def mock_build_context(tmp_path: Path) -> BuildContext:
-    """Fixture for a BuildContext instance."""
     """Fixture for a BuildContext instance."""
     return BuildContext(
         project_name="test_project",
@@ -148,7 +149,7 @@ def test_resolve_package_source_path_project_name_variations(tmp_path: Path) -> 
     """Test resolve_package_source_path with project name variations."""
     project_root = tmp_path / "my-project-dash-src"
     project_root.mkdir()
-    (project_root / "my_project_dash.py").touch() # Matches my-project-dash -> my_project_dash
+    (project_root / "my_project_dash.py").touch()
 
     context = BuildContext(
         project_name="my-project-dash",

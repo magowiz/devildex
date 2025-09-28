@@ -602,8 +602,8 @@ def test_grab_build_doc_pdoc3_fails_pydoctor_succeeds(
     (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
 
-    mock_pdoc3_generate_docs.return_value = False  # Simulate pdoc3 failure
-    mock_pydoctor_generate_docs.return_value = "pydoctor_output_path"  # Simulate pydoctor success
+    mock_pdoc3_generate_docs.return_value = False
+    mock_pydoctor_generate_docs.return_value = "pydoctor_output_path"
 
     result = mock_orchestrator.grab_build_doc()
 

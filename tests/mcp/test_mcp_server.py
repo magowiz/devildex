@@ -379,7 +379,6 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
         assert status_response.data["status"] == "COMPLETED", f"Task failed with result: {status_response.data.get('result')}"
         assert status_response.data["result"][0] is True
 
-        # 3. Delete Docset
         delete_response = await client.call_tool(
             "delete_docset",
             {"package": package_name, "version": package_version},
@@ -388,7 +387,6 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
         assert "info" in delete_response.data
         assert f"Docset '{package_name}' deleted successfully." in delete_response.data["info"]
 
-        # 4. Verify Deletion
         delete_again_response = await client.call_tool(
             "delete_docset",
             {"package": package_name, "version": package_version},
