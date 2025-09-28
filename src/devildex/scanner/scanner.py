@@ -289,5 +289,10 @@ def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
         logger.debug("Found setup.py or pyproject.toml, assuming project root is package root: %s", scan_base_path)
         return scan_base_path
 
+    # Strategy 5: If scan_base_path itself contains Python files, consider it the module root
+    if any(f.suffix == ".py" for f in scan_base_path.iterdir() if f.is_file()):
+        logger.debug("No specific package/setup file found, using base path as implicit module root: %s", scan_base_path)
+        return scan_base_path
+
     logger.warning("Could not find a clear Python package root in %s", scan_base_path)
     return None

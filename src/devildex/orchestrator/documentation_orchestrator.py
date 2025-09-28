@@ -12,6 +12,7 @@ from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
 from devildex.orchestrator.context import BuildContext
+from devildex.pydoctor.pydoctor_src import PydoctorSrc
 from devildex.scanner.scanner import (
     _find_python_package_root,
     has_docstrings,
@@ -37,6 +38,10 @@ class Orchestrator:
             PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
         )
         self.doc_strings = DocStringsSrc(template_dir=pdoc3_theme_path)
+        pydoctor_theme_path = (
+            PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
+        )
+        self.pydoctor_src = PydoctorSrc(template_dir=pydoctor_theme_path)
         self.last_operation_result = None
         if base_output_dir:
             self.base_output_dir = Path(base_output_dir).resolve()
@@ -271,15 +276,13 @@ class Orchestrator:
             logger.warning(
                 "Orchestrator: pdoc3 generation failed. Attempting Pydoctor generation..."
             )
-            # PydoctorSrc is not yet integrated, so this will fail for now.
-            # This will be integrated in a later step.
-            # pydoctor_result = self.pydoctor_src.generate_docs_from_folder(context)
-            # if pydoctor_result:
-            #     logger.info("Orchestrator: Pydoctor generation successful.")
-            #     return pydoctor_result
-            # else:
-            logger.error("Orchestrator: Pydoctor generation also failed (or not yet integrated).")
-            return False
+            pydoctor_result = self.pydoctor_src.generate_docs_from_folder(context)
+            if pydoctor_result:
+                logger.info("Orchestrator: Pydoctor generation successful.")
+                return pydoctor_result
+            else:
+                logger.error("Orchestrator: Pydoctor generation also failed.")
+                return False
 
     def start_scan(self) -> None:
         """Start the scanning process."""

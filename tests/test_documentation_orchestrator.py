@@ -585,6 +585,34 @@ def test_grab_build_doc_docstrings(
     mock_generate_docs_from_folder.assert_called_once()
 
 
+@patch(
+    "devildex.orchestrator.documentation_orchestrator.DocStringsSrc.generate_docs_from_folder"
+)
+@patch(
+    "devildex.orchestrator.documentation_orchestrator.PydoctorSrc.generate_docs_from_folder"
+)
+def test_grab_build_doc_pdoc3_fails_pydoctor_succeeds(
+    mock_pydoctor_generate_docs: MagicMock,
+    mock_pdoc3_generate_docs: MagicMock,
+    mock_orchestrator: Orchestrator,
+    tmp_path: Path,
+) -> None:
+    """Test pydoctor fallback when pdoc3 fails and pydoctor succeeds."""
+    mock_orchestrator.detected_doc_type = "docstrings"
+    (tmp_path / "source").mkdir()
+    mock_orchestrator._effective_source_path = tmp_path / "source"
+
+    mock_pdoc3_generate_docs.return_value = False  # Simulate pdoc3 failure
+    mock_pydoctor_generate_docs.return_value = "pydoctor_output_path"  # Simulate pydoctor success
+
+    result = mock_orchestrator.grab_build_doc()
+
+    assert result == "pydoctor_output_path"
+    assert mock_orchestrator.last_operation_result == "pydoctor_output_path"
+    mock_pdoc3_generate_docs.assert_called_once()
+    mock_pydoctor_generate_docs.assert_called_once()
+
+
 def test_grab_build_doc_key_error(mock_orchestrator: Orchestrator) -> None:
     """Test grab build doc key error."""
     mock_orchestrator.detected_doc_type = "non_existent_type"
