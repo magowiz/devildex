@@ -7,6 +7,7 @@ import socket
 import subprocess
 import tempfile
 import time
+import asyncio
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -336,3 +337,62 @@ async def test_get_page_content_path_traversal_attempt(
                 "An error occurred during 'get_page_content' tool communication: "
                 f"{e}"
             )
+
+@pytest.mark.xdist_group(name="mcp_server_tests")
+@pytest.mark.asyncio
+async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -> None:
+    """Tests the 'generate_docset', 'get_task_status', and 'delete_docset' tools."""
+    free_port, _ = mcp_server_process
+    config = {
+        "mcpServers": {
+            "my_server": {"url": f"http://127.0.0.1:{free_port}/mcp"},
+        }
+    }
+    client = Client(config, timeout=45)
+    package_name = "six"
+    package_version = "1.16.0"
+
+    async with client:
+        # 1. Generate Docset
+        generation_response = await client.call_tool(
+            "generate_docset",
+            {
+                "package": package_name,
+                "version": package_version,
+            },
+            timeout=30,
+        )
+        assert "task_id" in generation_response.data
+        task_id = generation_response.data["task_id"]
+
+        # 2. Poll Task Status
+        status_response = None
+        for _ in range(20):  # Poll for 40 seconds max
+            await asyncio.sleep(2)
+            status_response = await client.call_tool(
+                "get_task_status", {"task_id": task_id}, timeout=5
+            )
+            if status_response.data["status"] in ["COMPLETED", "FAILED"]:
+                break
+        
+        assert status_response is not None
+        assert status_response.data["status"] == "COMPLETED", f"Task failed with result: {status_response.data.get('result')}"
+        assert status_response.data["result"][0] is True
+
+        # 3. Delete Docset
+        delete_response = await client.call_tool(
+            "delete_docset",
+            {"package": package_name, "version": package_version},
+            timeout=10,
+        )
+        assert "info" in delete_response.data
+        assert f"Docset '{package_name}' deleted successfully." in delete_response.data["info"]
+
+        # 4. Verify Deletion
+        delete_again_response = await client.call_tool(
+            "delete_docset",
+            {"package": package_name, "version": package_version},
+            timeout=10,
+        )
+        assert "error" in delete_again_response.data
+        assert "No docset found" in delete_again_response.data["error"]

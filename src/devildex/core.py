@@ -2,6 +2,9 @@
 
 import logging
 import shutil
+import threading
+import uuid
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
@@ -26,6 +29,15 @@ from devildex.orchestrator.documentation_orchestrator import Orchestrator
 logger = logging.getLogger(__name__)
 
 
+class TaskStatus(Enum):
+    """Task status enumeration."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class DevilDexCore:
     """DevilDex Core."""
 
@@ -43,6 +55,7 @@ class DevilDexCore:
         self.registered_project_path: Optional[str] = None
         self.registered_project_python_executable: Optional[str] = None
         self.mcp_server_manager: Optional[McpServerManager] = None
+        self._tasks: dict[str, dict[str, Any]] = {}
         # Added MCP server manager attribute
         self.gui_warning_callback = gui_warning_callback
 
@@ -60,12 +73,121 @@ class DevilDexCore:
         self.registered_project_name = None
         self.registered_project_path = None
         self.registered_project_python_executable = None
-        self._setup_registered_project() # Re-run setup after path is known
+        self._setup_registered_project()  # Re-run setup after path is known
 
     def shutdown(self) -> None:
         """Shut down the core services."""
-        self.stop_mcp_server() # Call the new method
-        pass # No other action needed here for MCP server shutdown
+        self.stop_mcp_server()  # Call the new method
+        pass  # No other action needed here for MCP server shutdown
+
+    def _run_generation_task(
+        self, task_id: str, package_data: dict, force: bool
+    ) -> None:
+        """Internal method to run docset generation in a separate thread."""
+        self._tasks[task_id]["status"] = TaskStatus.RUNNING
+        package_name = package_data.get("name")
+        package_version = package_data.get("version")
+        project_urls = package_data.get("project_urls")
+
+        try:
+            if not package_name or not package_version:
+                error_msg = "missing package name or version nei dati di input."
+                self._tasks[task_id]["result"] = (False, error_msg)
+                self._tasks[task_id]["status"] = TaskStatus.FAILED
+                return
+
+            # Check if docset already exists
+            existing_docsets = self.search_for_docset(package_name, package_version)
+            if existing_docsets and not force:
+                self._tasks[task_id]["result"] = (
+                    False,
+                    f"Docset for {package_name} v{package_version} already exists. Use force=True to regenerate.",
+                )
+                self._tasks[task_id][
+                    "status"
+                ] = TaskStatus.COMPLETED  # Not a failure, just not generated
+                return
+
+            details = PackageDetails(
+                name=str(package_name),
+                version=str(package_version),
+                project_urls=project_urls if isinstance(project_urls, dict) else {},
+            )
+            orchestrator = Orchestrator(
+                package_details=details, base_output_dir=self.docset_base_output_path
+            )
+            orchestrator.start_scan()
+            detected_type = orchestrator.get_detected_doc_type()
+            if detected_type == "unknown":
+                last_op_msg = orchestrator.get_last_operation_result()
+                msg = (
+                    f"unable to determine il tipo di documentation per {details.name}."
+                )
+                if isinstance(last_op_msg, str) and last_op_msg:
+                    msg += f" Detail: {last_op_msg}"
+                self._tasks[task_id]["result"] = (False, msg)
+                self._tasks[task_id]["status"] = TaskStatus.FAILED
+                return
+            generation_result = orchestrator.grab_build_doc()
+            if isinstance(generation_result, str):
+                self._tasks[task_id]["result"] = (True, generation_result)
+                self._tasks[task_id]["status"] = TaskStatus.COMPLETED
+
+                # Update database with the new docset information
+                with database.get_session() as session:
+                    docset = (
+                        session.query(database.Docset)
+                        .filter_by(
+                            package_name=package_name, package_version=package_version
+                        )
+                        .first()
+                    )
+                    if docset:
+                        docset.status = "Completed"
+                    else:
+                        package_info = (
+                            session.query(database.PackageInfo)
+                            .filter_by(package_name=package_name)
+                            .first()
+                        )
+                        if not package_info:
+                            package_info = database.PackageInfo(
+                                package_name=package_name,
+                                summary="",
+                                project_urls=project_urls,
+                            )
+                            session.add(package_info)
+
+                        docset = database.Docset(
+                            package_name=package_name,
+                            package_version=package_version,
+                            status="Completed",
+                            package_info=package_info,
+                        )
+                        session.add(docset)
+                    session.commit()
+            elif not generation_result:
+                last_op_detail = orchestrator.get_last_operation_result()
+                error_msg = f"Failure nella generation del docset per {details.name}."
+                if isinstance(last_op_detail, str) and last_op_detail:
+                    error_msg += f" Details: {last_op_detail}"
+                elif last_op_detail is False:
+                    error_msg += " Specified operation is failed."
+                self._tasks[task_id]["result"] = (False, error_msg)
+                self._tasks[task_id]["status"] = TaskStatus.FAILED
+            else:
+                unexpected_msg = (
+                    f"Unexpected result ({type(generation_result)}) "
+                    f"dalla generation del docset per {details.name}."
+                )
+                self._tasks[task_id]["result"] = (False, unexpected_msg)
+                self._tasks[task_id]["status"] = TaskStatus.FAILED
+        except Exception as e:
+            logger.exception(
+                f"Core: An unexpected error occurred during docset generation for {package_name}."
+            )
+            self._tasks[task_id]["result"] = (False, f"Unexpected error: {e!s}")
+            self._tasks[task_id]["status"] = TaskStatus.FAILED
 
     @staticmethod
     def query_project_names() -> list[str]:
@@ -408,51 +530,117 @@ class DevilDexCore:
                 for d in docsets
             ]
 
-    def generate_docset(self, package_data: dict) -> tuple[bool, str]:
-        """Generate a docset using Orchestrator."""
-        package_name = package_data.get("name")
-        package_version = package_data.get("version")
-        project_urls = package_data.get("project_urls")
-        if not package_name or not package_version:
-            error_msg = "missing package name or version nei dati di input."
-            return False, error_msg
-        details = PackageDetails(
-            name=str(package_name),
-            version=str(package_version),
-            project_urls=project_urls if isinstance(project_urls, dict) else {},
-        )
-        orchestrator = Orchestrator(
-            package_details=details, base_output_dir=self.docset_base_output_path
-        )
-        orchestrator.start_scan()
-        detected_type = orchestrator.get_detected_doc_type()
-        if detected_type == "unknown":
-            last_op_msg = orchestrator.get_last_operation_result()
-            msg = f"unable to determine il tipo di documentation per {details.name}."
-            if isinstance(last_op_msg, str) and last_op_msg:
-                msg += f" Detail: {last_op_msg}"
-            return False, msg
-        generation_result = orchestrator.grab_build_doc()
-        if isinstance(generation_result, str):
-            return True, generation_result
-        elif not generation_result:
-            last_op_detail = orchestrator.get_last_operation_result()
-            error_msg = f"Failure nella generation del docset per {details.name}."
-            if isinstance(last_op_detail, str) and last_op_detail:
-                error_msg += f" Details: {last_op_detail}"
-            elif last_op_detail is False:
-                error_msg += " Specified operation is failed."
-            return False, error_msg
-        else:
-            unexpected_msg = (
-                f"Unexpected result ({type(generation_result)}) "
-                f"dalla generation del docset per {details.name}."
+    def search_for_docset(
+        self, package_name: str, version: Optional[str] = None
+    ) -> list[dict[str, Any]]:
+        """Search for docsets matching the given package name and optional version."""
+        with database.get_session() as session:
+            query = select(database.Docset).where(
+                database.Docset.package_name == package_name
             )
-            return False, unexpected_msg
+            if version:
+                query = query.where(database.Docset.package_version == version)
+            docsets = session.scalars(query).all()
+            return [
+                {
+                    "name": d.package_name,
+                    "version": d.package_version,
+                    "path": str(
+                        self.get_docset_path(d.package_name, d.package_version)
+                    ),
+                    "status": d.status,
+                }
+                for d in docsets
+            ]
+
+    def delete_docset(self, package_name: str, version: Optional[str] = None) -> bool:
+        """Delete a docset from the database and its corresponding files."""
+        with database.get_session() as session:
+            query = select(database.Docset).where(
+                database.Docset.package_name == package_name
+            )
+            if version:
+                query = query.where(database.Docset.package_version == version)
+            docsets_to_delete = session.scalars(query).all()
+
+            if not docsets_to_delete:
+                logger.warning(
+                    f"Core: No docset found for deletion for package '{package_name}' "
+                    f"version '{version or 'any'}'."
+                )
+                return False
+
+            for docset in docsets_to_delete:
+                # Delete files from filesystem
+                path_to_delete = self.get_docset_path(
+                    docset.package_name, docset.package_version
+                )
+                if path_to_delete and path_to_delete.exists():
+                    success, msg = self.delete_docset_build(str(path_to_delete))
+                    if not success:
+                        logger.error(
+                            f"Core: Failed to delete files for docset '{docset.package_name}' "
+                            f"version '{docset.package_version}': {msg}"
+                        )
+                        # Continue to delete from DB even if files not deleted
+                else:
+                    logger.warning(
+                        f"Core: Docset path not found for '{docset.package_name}' "
+                        f"version '{docset.package_version}'. Deleting only from DB."
+                    )
+
+                # Delete from database
+                session.delete(docset)
+                logger.info(
+                    f"Core: Deleted docset '{docset.package_name}' version "
+                    f"'{docset.package_version}' from database."
+                )
+            session.commit()
+            return True
+
+    def generate_docset(self, package_data: dict, force: bool = False) -> str:
+        """Initiate asynchronous docset generation and return a task ID."""
+        task_id = str(uuid.uuid4())
+        self._tasks[task_id] = {
+            "status": TaskStatus.PENDING,
+            "result": None,
+            "thread": None,
+        }
+
+        thread = threading.Thread(
+            target=self._run_generation_task,
+            args=(task_id, package_data, force),
+        )
+        self._tasks[task_id]["thread"] = thread
+        thread.start()
+
+        return task_id
+
+    def get_task_status(self, task_id: str) -> dict[str, Any]:
+        """Get the status and result of a docset generation task."""
+        task_info = self._tasks.get(task_id)
+        if task_info is None:
+            return {"status": TaskStatus.FAILED.value, "result": "Task not found."}
+
+        thread = task_info.get("thread")
+        if (
+            thread
+            and not thread.is_alive()
+            and task_info["status"] == TaskStatus.RUNNING
+        ):
+            if task_info["result"] and task_info["result"][0]:
+                task_info["status"] = TaskStatus.COMPLETED
+            else:
+                task_info["status"] = TaskStatus.FAILED
+
+        return {
+            "status": task_info["status"].value,
+            "result": task_info["result"],
+        }
 
     def start_mcp_server_if_enabled(self, db_url: str) -> bool:
         """Start the MCP server if it is enabled in the configuration."""
-        config = ConfigManager() # Get the singleton instance
+        config = ConfigManager()  # Get the singleton instance
         if config.get_mcp_server_enabled():
             logger.info("Core: MCP server is enabled. Starting...")
             if not self.mcp_server_manager:
