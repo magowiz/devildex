@@ -147,19 +147,14 @@ def _get_explicit_dependencies_from_parsed_pyproject(
         logger.info("pyproject.toml data is empty, cannot extract dependencies.")
         return explicit_deps
 
-    # Attempt to parse PEP 621 dependencies
-    # .get() with a default {} ensures project_section is always a dict
     project_section = pyproject_data.get("project", {})
     _parse_pep621_dependencies(project_section, explicit_deps)
 
-    # Attempt to parse Poetry dependencies
-    # .get() with a default {} ensures tool_data and poetry_data are always dicts
     tool_data = pyproject_data.get("tool", {})
     poetry_data = tool_data.get("poetry", {})
     _parse_poetry_dependencies_sections(poetry_data, explicit_deps)
 
     if not explicit_deps:
-        # This log triggers if neither PEP 621 nor Poetry sections yielded dependencies.
         logger.info(
             "No explicit dependencies were successfully extracted from "
             "[project.dependencies] or [tool.poetry] sections in pyproject.toml."
@@ -243,7 +238,7 @@ def _parse_poetry_dependencies_sections(
         "Reading/adding dependencies from [tool.poetry.dependencies] and groups"
     )
     main_deps_data = poetry_data.get("dependencies")
-    if main_deps_data:  # This should be a dict for add_deps_from_poetry_section
+    if main_deps_data:
         add_deps_from_poetry_section(main_deps_data, explicit_deps)
 
     group_section_data = poetry_data.get("group", {})
@@ -251,7 +246,7 @@ def _parse_poetry_dependencies_sections(
         for _group_name, group_content in group_section_data.items():
             if isinstance(group_content, dict):
                 group_deps_data = group_content.get("dependencies")
-                if group_deps_data:  # This should be a dict
+                if group_deps_data:
                     add_deps_from_poetry_section(group_deps_data, explicit_deps)
 
 

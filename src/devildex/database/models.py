@@ -41,7 +41,7 @@ class PackageDetails:
     initial_source_path: Path | str | None = None
     vcs_url: str | None = None
     rtd_url: str | None = None
-    status: str = "unknown" # New attribute
+    status: str = "unknown"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PackageDetails":
@@ -136,7 +136,6 @@ class Docset(Base):  # type: ignore[valid-type,misc]
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
-    # package_name è ora una FK a PackageInfo.package_name
     package_name = Column(
         String, ForeignKey("package_info.package_name"), nullable=False, index=True
     )

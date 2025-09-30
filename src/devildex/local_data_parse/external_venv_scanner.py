@@ -86,7 +86,7 @@ class ExternalVenvScanner:
                 self.python_executable_path,
             )
             return None
-        except FileNotFoundError:  # Python executable itself not found at runtime
+        except FileNotFoundError:
             logger.exception(
                 "Python executable '%s' not found during the attempt "
                 "to execute helper script.",
@@ -159,7 +159,7 @@ class ExternalVenvScanner:
                     logger.error(
                         "Traceback from helper script:\n%s", data.get("traceback")
                     )
-                return None  # Script indicated an internal error
+                return None
 
             if not isinstance(data, list):
                 logger.error(
@@ -221,7 +221,7 @@ class ExternalVenvScanner:
                     "(No packages found or Venv empty?).",
                     output_file_path,
                 )
-                return []  # No packages or empty venv
+                return []
 
             return self._parse_and_convert_scan_data(
                 json_output_from_file, str(output_file_path)
@@ -261,7 +261,7 @@ class ExternalVenvScanner:
 
             process_result = self._execute_helper_script(temp_output_file_path_str)
 
-            if process_result is None:  # Critical failure during script execution
+            if process_result is None:
                 return None
 
             if process_result.returncode != 0:
@@ -271,9 +271,8 @@ class ExternalVenvScanner:
                     process_result.returncode,
                     self.python_executable_path,
                 )
-                return None  # Script itself indicated failure via return code
+                return None
 
-            # Script executed with return code 0, now process its output file.
             output_file_path_obj = Path(temp_output_file_path_str)
             packages = self._read_and_process_output_file(output_file_path_obj)
 

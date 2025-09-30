@@ -301,11 +301,9 @@ def _ensure_package_info(
         logger.info(f"New PackageInfo '{package_name}' added to session.")
     else:
         logger.debug(f"PackageInfo '{package_name}' found.")
-        # If a new summary is provided, update the existing one.
         if summary:
             pkg_info.summary = summary
             logger.info(f"Summary updated for PackageInfo '{package_name}'.")
-        # If new project_urls are provided, update the existing ones.
         if project_urls:
             pkg_info.project_urls = project_urls
             logger.info(f"Project URLs updated for PackageInfo '{package_name}'.")
@@ -335,7 +333,7 @@ def _ensure_docset(
             package_version=package_version,
             status=initial_docset_status,
             index_file_name=index_file_name,
-            package_info=pkg_info,  # Link to pkg_info
+            package_info=pkg_info,
         )
         session.add(docset)
         logger.info(f"New Docset '{package_name} v{package_version}' added and linked.")
