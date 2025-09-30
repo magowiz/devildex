@@ -257,8 +257,10 @@ def has_docstrings(project_path: str) -> bool:
                     return True
     return False
 
+
 def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
-    """Attempts to find the root of the main Python package within a given base path.
+    """Attempt to find the root of the main Python package within a given base path.
+
     This is crucial for tools like pdoc or pydoctor that need to be pointed
     at an importable package or module.
     """
@@ -267,7 +269,9 @@ def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
     # Strategy 1: Look for a direct subdirectory with __init__.py
     for item in scan_base_path.iterdir():
         if item.is_dir() and (item / "__init__.py").exists():
-            logger.debug("Found Python package root directly under project root: %s", item)
+            logger.debug(
+                "Found Python package root directly under project root: %s", item
+            )
             return item
 
     # Strategy 2: Look for a 'src' directory containing a package
@@ -283,14 +287,22 @@ def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
         logger.debug("Project root itself is a Python package: %s", scan_base_path)
         return scan_base_path
 
-    # Strategy 4: Look for setup.py or pyproject.toml, assuming project root is package root
-    if (scan_base_path / "setup.py").is_file() or (scan_base_path / "pyproject.toml").is_file():
-        logger.debug("Found setup.py or pyproject.toml, assuming project root is package root: %s", scan_base_path)
+    if (scan_base_path / "setup.py").is_file() or (
+        scan_base_path / "pyproject.toml"
+    ).is_file():
+        logger.debug(
+            "Found setup.py or pyproject.toml, assuming project root "
+            "is package root: %s",
+            scan_base_path,
+        )
         return scan_base_path
 
-    # Strategy 5: If scan_base_path itself contains Python files, consider it the module root
     if any(f.suffix == ".py" for f in scan_base_path.iterdir() if f.is_file()):
-        logger.debug("No specific package/setup file found, using base path as implicit module root: %s", scan_base_path)
+        logger.debug(
+            "No specific package/setup file found, "
+            "using base path as implicit module root: %s",
+            scan_base_path,
+        )
         return scan_base_path
 
     logger.warning("Could not find a clear Python package root in %s", scan_base_path)

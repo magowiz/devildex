@@ -1,3 +1,5 @@
+"""PydoctorSrc module."""
+
 import logging
 import shutil
 from pathlib import Path
@@ -21,9 +23,13 @@ class PydoctorSrc:
         logger.info("PydoctorSrc initialized.")
 
     def _build_pydoctor_command(
-        self, python_executable: str, context: BuildContext, output_path: Path, module_to_document_name: str
+        self,
+        python_executable: str,
+        context: BuildContext,
+        output_path: Path,
+        module_to_document_name: str,
     ) -> list[str]:
-        """Constructs the pydoctor command for documentation generation."""
+        """Construct the pydoctor command for documentation generation."""
         pydoctor_command = [
             python_executable,
             "-m",
@@ -43,15 +49,15 @@ class PydoctorSrc:
 
     def generate_docs_from_folder(self, context: BuildContext) -> str | bool:
         """Generate HTML documentation using Pydoctor in an isolated environment."""
-        logger.info("PydoctorSrc: Attempting to generate docs for %s", context.project_name)
+        logger.info(
+            "PydoctorSrc: Attempting to generate docs for %s", context.project_name
+        )
 
         # Define the output directory for pydoctor
         if self.output_dir:
             pydoctor_output_dir = Path(self.output_dir) / context.project_name
         else:
-            pydoctor_output_dir = (
-                context.base_output_dir / context.project_name
-            )
+            pydoctor_output_dir = context.base_output_dir / context.project_name
 
         # Clean up existing output directory if it exists
         if pydoctor_output_dir.exists():
@@ -87,9 +93,6 @@ class PydoctorSrc:
                 )
                 return False
 
-            # Construct the pydoctor command
-            # The cwd for pydoctor should be the parent of the package/module being documented.
-            # The argument to pydoctor should be the name of the package/module.
             pydoctor_cwd = context.project_install_root.parent
             module_to_document_name = context.project_install_root.name
 

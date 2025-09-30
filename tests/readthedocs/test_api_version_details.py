@@ -1,11 +1,10 @@
 """Tests for the version detail fetching logic in the ReadTheDocs API client."""
 
-import json
-
 import requests
 from pytest_mock import MockerFixture
 
 from devildex.readthedocs.readthedocs_api import _fetch_version_details
+from tests.custom_exceptions import CustomDecodeJsonError
 
 HTTP_BAD_REQUEST_STATUS = 400
 
@@ -25,12 +24,12 @@ class MockResponse:
         """Mock the json method."""
         if self._json_data is not None:
             return self._json_data
-        raise json.JSONDecodeError("JSON Decode Error", self._text_data, 0)
+        raise CustomDecodeJsonError(self._text_data, 0)
 
     def raise_for_status(self) -> None:
         """Mock the raise_for_status method."""
         if self.status_code >= HTTP_BAD_REQUEST_STATUS:
-            raise requests.exceptions.HTTPError("HTTP Error")
+            raise requests.exceptions.HTTPError()
 
 
 def test_fetch_version_details_success(mocker: MockerFixture) -> None:

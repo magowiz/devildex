@@ -205,7 +205,8 @@ async def delete_docset(package: str, version: str | None = None) -> dict[str, s
             f"and version '{version or 'NA'}'."
         }
     return {
-        "error": f"Multiple docsets found for package '{package}' try to specify the version."
+        "error": f"Multiple docsets found for package '{package}'"
+        " try to specify the version."
     }
 
 

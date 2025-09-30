@@ -338,6 +338,7 @@ async def test_get_page_content_path_traversal_attempt(
                 f"{e}"
             )
 
+
 @pytest.mark.xdist_group(name="mcp_server_tests")
 @pytest.mark.asyncio
 async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -> None:
@@ -376,7 +377,9 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
                 break
 
         assert status_response is not None
-        assert status_response.data["status"] == "COMPLETED", f"Task failed with result: {status_response.data.get('result')}"
+        assert (
+            status_response.data["status"] == "COMPLETED"
+        ), f"Task failed with result: {status_response.data.get('result')}"
         assert status_response.data["result"][0] is True
 
         delete_response = await client.call_tool(
@@ -385,7 +388,10 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
             timeout=10,
         )
         assert "info" in delete_response.data
-        assert f"Docset '{package_name}' deleted successfully." in delete_response.data["info"]
+        assert (
+            f"Docset '{package_name}' deleted successfully."
+            in delete_response.data["info"]
+        )
 
         delete_again_response = await client.call_tool(
             "delete_docset",

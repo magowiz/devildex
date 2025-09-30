@@ -17,6 +17,7 @@ from devildex.core import DevilDexCore
 from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageInfo, RegisteredProject
 from devildex.main import DevilDexApp
+from tests.custom_exceptions import CustomAssertionError
 
 MIN_PORT_NUMBER = 1024
 MAX_PORT_NUMBER = 65535
@@ -149,7 +150,7 @@ def test_gui_only_no_mcp_starts(
 async def test_mcp_only_no_gui(
     free_port: int,
     tmp_path: Path,
-    mcp_config_manager_for_test: ConfigManager, # Inject the new fixture
+    mcp_config_manager_for_test: ConfigManager,  # Inject the new fixture
 ) -> None:
     """Test mcp only no gui."""
     test_name = "single_instance"
@@ -243,9 +244,8 @@ async def test_mcp_only_no_gui(
 
     if not connected:
 
-        raise AssertionError(
-            f"Client could not connect to server within {max_wait} seconds. "
-            f"Last exception: {last_exception}"
+        raise CustomAssertionError(
+            "CANT_CONNECT", max_wait=max_wait, last_exception=last_exception
         )
 
     assert response is not None
@@ -263,6 +263,7 @@ async def test_mcp_only_no_gui(
         wx.CallAfter(main_app.main_frame.Destroy)
 
     main_app.OnExit()
+
 
 @pytest.mark.mcp_config(enabled=True, hide_gui=False)
 @pytest.mark.integration

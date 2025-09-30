@@ -1,3 +1,5 @@
+"""Cx_freeze module to setup linux."""
+
 from cx_Freeze import Executable, setup
 
 build_exe_options = {

@@ -239,7 +239,8 @@ class Orchestrator:
         return self.last_operation_result
 
     def _get_docstrings_input_folder(self) -> str:
-        """Determines the correct input folder for docstrings generation.
+        """Determine the correct input folder for docstrings generation.
+
         It tries to find the Python package root within the effective source path.
         """
         if not self._effective_source_path:
@@ -274,7 +275,8 @@ class Orchestrator:
             return pdoc3_result
         else:
             logger.warning(
-                "Orchestrator: pdoc3 generation failed. Attempting Pydoctor generation..."
+                "Orchestrator: pdoc3 generation failed. "
+                "Attempting Pydoctor generation..."
             )
             pydoctor_result = self.pydoctor_src.generate_docs_from_folder(context)
             if pydoctor_result:

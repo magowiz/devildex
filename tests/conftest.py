@@ -69,15 +69,16 @@ def mcp_config_manager_for_test(mocker: MockerFixture) -> ConfigManager:
     # Ensure a fresh ConfigManager instance is created
     ConfigManager._instance = None
     # Prevent automatic loading of the default config file
-    mocker.patch("devildex.config_manager.ConfigManager._load_config", return_value=None)
+    mocker.patch(
+        "devildex.config_manager.ConfigManager._load_config", return_value=None
+    )
 
-    # Create a new ConfigManager instance
     config_manager = ConfigManager()
 
-    # Mock the methods that would normally read from the config file
-    # These can be overridden by the test if needed
     config_manager.get_mcp_server_enabled = mocker.Mock(return_value=False)
-    config_manager.get_mcp_server_hide_gui_when_enabled = mocker.Mock(return_value=False)
+    config_manager.get_mcp_server_hide_gui_when_enabled = mocker.Mock(
+        return_value=False
+    )
     config_manager.get_mcp_server_port = mocker.Mock(return_value=8001)
 
     return config_manager
@@ -87,7 +88,9 @@ def mcp_config_manager_for_test(mocker: MockerFixture) -> ConfigManager:
 def devildex_app_fixture(
     wx_app: wx.App,
     mock_config_manager: MagicMock,
-    populated_db_session: tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]],
+    populated_db_session: tuple[
+        str, Any, str, Path, DevilDexCore, list[PackageDetails]
+    ],
     mocker: MockerFixture,
 ) -> Generator[DevilDexApp, Any, None]:
     """Fixture to create the main DevilDexApp instance for UI tests."""
@@ -178,7 +181,7 @@ def aggregate_port_logs(
 @pytest.fixture(scope="session")
 def wx_app() -> wx.App:
     """Fixture to create a wx.App instance for the entire test session."""
-    if not hasattr(wx, '_WX_APP_INSTANCE'):
+    if not hasattr(wx, "_WX_APP_INSTANCE"):
         wx._WX_APP_INSTANCE = wx.App(redirect=False)
         wx._WX_APP_INSTANCE.SetAppName("DevilDexTest")
     return wx._WX_APP_INSTANCE
@@ -202,7 +205,7 @@ def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
 @pytest.fixture
 def populated_db_session(
     db_connection_and_tables: tuple[str, Any, Any],
-    default_docset_status: str = AVAILABLE_BTN_LABEL, # Changed to constant
+    default_docset_status: str = AVAILABLE_BTN_LABEL,  # Changed to constant
 ) -> Generator[
     tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]], Any, None
 ]:
@@ -234,7 +237,6 @@ def populated_db_session(
                     f"<h1>{name} {version} Index</h1>"
                 )
 
-
         core_instance = DevilDexCore(
             database_url=db_url, docset_base_output_path=temp_docset_path
         )
@@ -257,9 +259,7 @@ def populated_db_session(
             index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_flask,
         )
-        pkg_info_django = PackageInfo(
-            package_name="django", summary="Web framework."
-        )
+        pkg_info_django = PackageInfo(package_name="django", summary="Web framework.")
         docset_django = Docset(
             package_name="django",
             package_version="3.2.0",
@@ -277,9 +277,7 @@ def populated_db_session(
             index_file_name="index.html" if create_disk_files else None,
             package_info=pkg_info_numpy,
         )
-        pkg_info_pandas = PackageInfo(
-            package_name="pandas", summary="Data analysis."
-        )
+        pkg_info_pandas = PackageInfo(package_name="pandas", summary="Data analysis.")
         docset_pandas = Docset(
             package_name="pandas",
             package_version="1.3.0",

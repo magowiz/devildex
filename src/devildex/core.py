@@ -83,7 +83,7 @@ class DevilDexCore:
     def _run_generation_task(
         self, task_id: str, package_data: dict, force: bool
     ) -> None:
-        """Internal method to run docset generation in a separate thread."""
+        """Run docset generation in a separate thread."""
         self._tasks[task_id]["status"] = TaskStatus.RUNNING
         package_name = package_data.get("name")
         package_version = package_data.get("version")
@@ -96,12 +96,12 @@ class DevilDexCore:
                 self._tasks[task_id]["status"] = TaskStatus.FAILED
                 return
 
-            # Check if docset already exists
             existing_docsets = self.search_for_docset(package_name, package_version)
             if existing_docsets and not force:
                 self._tasks[task_id]["result"] = (
                     False,
-                    f"Docset for {package_name} v{package_version} already exists. Use force=True to regenerate.",
+                    f"Docset for {package_name} v{package_version} already exists. "
+                    "Use force=True to regenerate.",
                 )
                 self._tasks[task_id][
                     "status"
@@ -133,7 +133,6 @@ class DevilDexCore:
                 self._tasks[task_id]["result"] = (True, generation_result)
                 self._tasks[task_id]["status"] = TaskStatus.COMPLETED
 
-                # Update database with the new docset information
                 with database.get_session() as session:
                     docset = (
                         session.query(database.Docset)
@@ -184,7 +183,8 @@ class DevilDexCore:
                 self._tasks[task_id]["status"] = TaskStatus.FAILED
         except Exception as e:
             logger.exception(
-                f"Core: An unexpected error occurred during docset generation for {package_name}."
+                "Core: An unexpected error occurred during docset generation"
+                f" for {package_name}."
             )
             self._tasks[task_id]["result"] = (False, f"Unexpected error: {e!s}")
             self._tasks[task_id]["status"] = TaskStatus.FAILED
@@ -579,7 +579,8 @@ class DevilDexCore:
                     success, msg = self.delete_docset_build(str(path_to_delete))
                     if not success:
                         logger.error(
-                            f"Core: Failed to delete files for docset '{docset.package_name}' "
+                            "Core: Failed to delete files for docset "
+                            f"'{docset.package_name}' "
                             f"version '{docset.package_version}': {msg}"
                         )
                         # Continue to delete from DB even if files not deleted

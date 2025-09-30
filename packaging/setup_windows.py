@@ -1,3 +1,5 @@
+"""Cx_freeze module to setup windows."""
+
 from cx_Freeze import Executable, setup
 
 build_exe_options = {
