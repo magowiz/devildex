@@ -48,7 +48,7 @@ class TestAppPaths:
         returned_path = self.app_paths.user_data_dir
         expected_path = self.tmp_path / "user_data"
         assert returned_path == expected_path
-        assert returned_path.is_dir()  # Check if directory was created
+        assert returned_path.is_dir()
 
     def test_user_config_dir(self) -> None:
         """Test the user_config_dir property."""

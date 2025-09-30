@@ -53,13 +53,11 @@ class PydoctorSrc:
             "PydoctorSrc: Attempting to generate docs for %s", context.project_name
         )
 
-        # Define the output directory for pydoctor
         if self.output_dir:
             pydoctor_output_dir = Path(self.output_dir) / context.project_name
         else:
             pydoctor_output_dir = context.base_output_dir / context.project_name
 
-        # Clean up existing output directory if it exists
         if pydoctor_output_dir.exists():
             shutil.rmtree(pydoctor_output_dir)
         pydoctor_output_dir.mkdir(parents=True, exist_ok=True)
@@ -69,12 +67,10 @@ class PydoctorSrc:
             pydoctor_output_dir,
         )
 
-        # Create a temporary virtual environment
         with venv_cm.create_venv(context.project_name) as venv_executables:
             python_executable = venv_executables.python_executable
             pip_executable = venv_executables.pip_executable
 
-            # Install pydoctor and sphinxarg (for pydoctor's own docs)
             base_packages = ["pydoctor", "sphinxarg"]
             install_config = venv_utils.InstallConfig(
                 project_root_for_install=context.project_install_root,
@@ -106,7 +102,6 @@ class PydoctorSrc:
                 pydoctor_cwd,
             )
 
-            # Execute the pydoctor command
             stdout, stderr, return_code = venv_utils.execute_command(
                 pydoctor_command,
                 f"Pydoctor build for {context.project_name}",

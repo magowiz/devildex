@@ -59,12 +59,9 @@ def test_fetch_github_archive_falls_back_on_urls(
     fetcher: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it tries multiple URL variations for a tag until one succeeds."""
-    # Arrange
     repo_url = "https://github.com/user/repo.git"
     repo_path_segment = "user/repo"
     tag_to_test = "1.2.3"
-
-    # These are the 4 URL formats the method will try for a single tag
     archive_urls_to_try = [
         f"https://github.com/{repo_path_segment}/archive/refs/tags/{tag_to_test}.tar.gz",
         f"https://github.com/{repo_path_segment}/archive/refs/tags/{tag_to_test}.zip",
@@ -77,11 +74,7 @@ def test_fetch_github_archive_falls_back_on_urls(
         "_download_and_extract_archive",
         side_effect=[False, False, False, True],
     )
-
-    # Act
     result = fetcher._try_fetch_tag_github_archive(repo_url, [tag_to_test])
-
-    # Assert
     assert result is True
     assert mock_download_extract.call_count == EXPECTED_GH_DOWNLOAD_EXTRACT_COUNT
     expected_calls = [
@@ -136,11 +129,7 @@ def test_shallow_clone_success(
     mock_ensure_dir = mocker.patch.object(
         fetcher, "_ensure_target_dir_exists", return_value=True
     )
-
-    # Act
     result = fetcher._try_fetch_tag_shallow_clone(repo_url, tag_variations)
-
-    # Assert
     assert result is True
     mock_ensure_dir.assert_called_once()
     mock_run_git.assert_called_once_with(
@@ -206,23 +195,14 @@ def test_shallow_clone_dir_creation_fails(
     fetcher: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it returns False if it cannot create the target directory."""
-    # Arrange
     repo_url = "https://github.com/user/repo.git"
     tag_variations = ["1.2.3"]
 
     mock_run_git = mocker.patch.object(fetcher, "_run_git_command")
-    # Simulate failure to create directory
     mocker.patch.object(fetcher, "_ensure_target_dir_exists", return_value=False)
-
-    # Act
     result = fetcher._try_fetch_tag_shallow_clone(repo_url, tag_variations)
-
-    # Assert
     assert result is False
     mock_run_git.assert_not_called()
-
-
-# --- Tests for _try_fetch_tag_full_clone_checkout ---
 
 
 def test_full_clone_checkout_success(
@@ -250,8 +230,6 @@ def test_full_clone_checkout_success(
 
     clone_call = mock_run_git.call_args_list[0]
     assert clone_call.args[0] == ["git", "clone", repo_url, str(temp_clone_dir)]
-
-    # Verify checkout was called correctly
     checkout_call = mock_run_git.call_args_list[1]
     assert checkout_call.args[0] == [
         "git",
@@ -297,14 +275,8 @@ def test_full_clone_checkout_fails(
 
     mock_copy = mocker.patch.object(fetcher, "_copy_cloned_content")
     mock_rmtree = mocker.patch("shutil.rmtree")
-    # Mock path.exists() to ensure cleanup logic is triggered
     mocker.patch("pathlib.Path.exists", return_value=True)
-
-    # Act
     result = fetcher._try_fetch_tag_full_clone_checkout(repo_url, tag_variations)
-
-    # Assert
     assert result is False
     mock_copy.assert_not_called()
-    # Cleanup should still happen
     mock_rmtree.assert_called_with(temp_clone_dir)

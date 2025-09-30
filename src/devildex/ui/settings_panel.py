@@ -33,26 +33,18 @@ class SettingsPanel(wx.Panel):
 
     def _init_ui(self) -> None:
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-
-        # Title
         title = wx.StaticText(self, label="MCP Server Settings")
         title_font = wx.Font(
             14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD
         )
         title.SetFont(title_font)
         main_sizer.Add(title, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
-
-        # Settings controls
         settings_box = wx.StaticBoxSizer(
             wx.StaticBox(self, label="MCP Server Configuration"), wx.VERTICAL
         )
-
-        # Warning Message (inside the settings box)
         warning_panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
-        warning_panel.SetBackgroundColour(wx.Colour(255, 255, 204))  # Light yellow
+        warning_panel.SetBackgroundColour(wx.Colour(255, 255, 204))
         warning_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        # Add a warning icon
         warning_icon = wx.StaticBitmap(
             warning_panel,
             wx.ID_ANY,
@@ -84,15 +76,11 @@ class SettingsPanel(wx.Panel):
 
         settings_grid_sizer = wx.FlexGridSizer(cols=2, hgap=10, vgap=10)
         settings_grid_sizer.AddGrowableCol(1)
-
-        # Enabled Checkbox
         settings_grid_sizer.Add(
             wx.StaticText(self, label="Enable MCP Server:"), 0, wx.ALIGN_CENTER_VERTICAL
         )
         self.enabled_checkbox = wx.CheckBox(self)
         settings_grid_sizer.Add(self.enabled_checkbox, 0, wx.EXPAND)
-
-        # Hide GUI Checkbox
         settings_grid_sizer.Add(
             wx.StaticText(self, label="Hide GUI when enabled:"),
             0,
@@ -100,8 +88,6 @@ class SettingsPanel(wx.Panel):
         )
         self.hide_gui_checkbox = wx.CheckBox(self)
         settings_grid_sizer.Add(self.hide_gui_checkbox, 0, wx.EXPAND)
-
-        # Port Text Control
         settings_grid_sizer.Add(
             wx.StaticText(self, label="Port:"), 0, wx.ALIGN_CENTER_VERTICAL
         )
@@ -110,8 +96,6 @@ class SettingsPanel(wx.Panel):
 
         settings_box.Add(settings_grid_sizer, 1, wx.EXPAND | wx.ALL, 10)
         main_sizer.Add(settings_box, 0, wx.ALL | wx.EXPAND, 10)
-
-        # Buttons
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         save_button = wx.Button(self, label="Save")
         cancel_button = wx.Button(self, label="Cancel")

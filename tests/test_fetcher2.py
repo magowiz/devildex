@@ -41,9 +41,7 @@ def test_cleanup_target_dir_content_not_exists(
     fetcher_instance: PackageSourceFetcher,
 ) -> None:
     """Verify cleanup does nothing if the target directory doesn't exist."""
-    # This test covers the `if not self.download_target_path.exists(): return` line
     assert not fetcher_instance.download_target_path.exists()
-    # Should execute without error
     fetcher_instance._cleanup_target_dir_content()
 
 
@@ -52,7 +50,6 @@ def test_fetch_from_pypi_success(
     mock_get: MagicMock, fetcher_instance: PackageSourceFetcher, mocker: MagicMock
 ) -> None:
     """Verify successful fetch from PyPI."""
-    # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "urls": [{"packagetype": "sdist", "url": "https://example.com/sdist.tar.gz"}]
@@ -61,11 +58,7 @@ def test_fetch_from_pypi_success(
     mocker.patch.object(
         fetcher_instance, "_download_and_extract_archive", return_value=True
     )
-
-    # Act
     result = fetcher_instance._fetch_from_pypi()
-
-    # Assert
     assert result is True
     fetcher_instance._download_and_extract_archive.assert_called_once_with(
         "https://example.com/sdist.tar.gz", mocker.ANY, from_vcs=False
@@ -77,15 +70,10 @@ def test_fetch_from_pypi_no_sdist(
     mock_get: MagicMock, fetcher_instance: PackageSourceFetcher
 ) -> None:
     """Verify fetch from PyPI fails if no sdist URL is found."""
-    # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {"urls": [{"packagetype": "wheel", "url": "..."}]}
     mock_get.return_value = mock_response
-
-    # Act
     result = fetcher_instance._fetch_from_pypi()
-
-    # Assert
     assert result is False
 
 
@@ -97,9 +85,7 @@ def test_fetch_from_pypi_network_error(
     mock_get: MagicMock, fetcher_instance: PackageSourceFetcher
 ) -> None:
     """Verify fetch from PyPI fails gracefully on a network error."""
-    # Act
     result = fetcher_instance._fetch_from_pypi()
-    # Assert
     assert result is False
 
 
@@ -118,32 +104,21 @@ def test_download_and_extract_zip_archive(
     fetcher_instance: PackageSourceFetcher, tmp_path: Path, mocker: MagicMock
 ) -> None:
     """Verify the full download and extract process for a zip file."""
-    # Arrange
-    # 1. Create a fake zip file to "download"
     test_zip_path = create_test_zip(tmp_path, "my-package-1.2.3", "main.py")
-
-    # 2. Mock the download to just copy our local fake zip
     mocker.patch(
         "devildex.fetcher.PackageSourceFetcher._download_file",
         side_effect=lambda filename, url, **kwargs: shutil.copy(
             test_zip_path, filename
         ),
     )
-
-    # 3. The temporary directory for the whole operation
     temp_base_dir = tmp_path / "temp_download"
-
-    # Act
     success = fetcher_instance._download_and_extract_archive(
         "https://example.com/test.zip", temp_base_dir, from_vcs=True
     )
-
-    # Assert
     assert success is True
     final_content_path = fetcher_instance.download_target_path / "main.py"
     assert final_content_path.exists()
     assert final_content_path.read_text() == "hello"
-    # Ensure temp dir was cleaned up
     assert not temp_base_dir.exists()
 
 
@@ -156,18 +131,13 @@ def test_try_fetch_tag_shallow_clone_success(
     mocker: MagicMock,
 ) -> None:
     """Verify a successful shallow clone of a tag."""
-    # Arrange
     mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
     mocker.patch.object(
         fetcher_instance, "_cleanup_git_dir_from_path", return_value=True
     )
     repo_url = "https://github.com/user/my-package.git"
     tag = "v1.2.3"
-
-    # Act
     result = fetcher_instance._try_fetch_tag_shallow_clone(repo_url, [tag])
-
-    # Assert
     assert result is True
     mock_run.assert_called_once_with(
         [
@@ -203,14 +173,9 @@ def test_fetch_main_flow_pypi_first(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
 ) -> None:
     """Test the main fetch() orchestration, succeeding with PyPI."""
-    # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=True)
-    mocker.patch.object(fetcher_instance, "_get_vcs_url")  # To ensure it's not called
-
-    # Act
+    mocker.patch.object(fetcher_instance, "_get_vcs_url")
     success, is_master, path = fetcher_instance.fetch()
-
-    # Assert
     assert success is True
     assert is_master is False
     assert path == str(fetcher_instance.download_target_path)
@@ -222,7 +187,6 @@ def test_fetch_main_flow_fallback_to_vcs_tag(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
 ) -> None:
     """Test the main fetch() orchestration, falling back to VCS tag."""
-    # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
     mocker.patch.object(
         fetcher_instance,
@@ -230,14 +194,8 @@ def test_fetch_main_flow_fallback_to_vcs_tag(
         return_value="https://github.com/user/my-package.git",
     )
     mocker.patch.object(fetcher_instance, "_fetch_from_vcs_tag", return_value=True)
-    mocker.patch.object(
-        fetcher_instance, "_fetch_from_vcs_main"
-    )  # To ensure it's not called
-
-    # Act
+    mocker.patch.object(fetcher_instance, "_fetch_from_vcs_main")
     success, is_master, path = fetcher_instance.fetch()
-
-    # Assert
     assert success is True
     assert is_master is False
     assert path == str(fetcher_instance.download_target_path)
@@ -251,7 +209,6 @@ def test_fetch_main_flow_fallback_to_vcs_main(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
 ) -> None:
     """Test the main fetch() orchestration, falling back to VCS main branch."""
-    # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
     mocker.patch.object(
         fetcher_instance,
@@ -260,11 +217,7 @@ def test_fetch_main_flow_fallback_to_vcs_main(
     )
     mocker.patch.object(fetcher_instance, "_fetch_from_vcs_tag", return_value=False)
     mocker.patch.object(fetcher_instance, "_fetch_from_vcs_main", return_value=True)
-
-    # Act
     success, is_master, path = fetcher_instance.fetch()
-
-    # Assert
     assert success is True
     assert is_master is True
     assert path == str(fetcher_instance.download_target_path)
@@ -275,7 +228,6 @@ def test_fetch_main_flow_all_fail(
     fetcher_instance: PackageSourceFetcher, mocker: MagicMock
 ) -> None:
     """Test the main fetch() orchestration where all methods fail."""
-    # Arrange
     mocker.patch.object(fetcher_instance, "_fetch_from_pypi", return_value=False)
     mocker.patch.object(
         fetcher_instance,
@@ -285,11 +237,7 @@ def test_fetch_main_flow_all_fail(
     mocker.patch.object(fetcher_instance, "_fetch_from_vcs_tag", return_value=False)
     mocker.patch.object(fetcher_instance, "_fetch_from_vcs_main", return_value=False)
     mocker.patch.object(fetcher_instance, "_cleanup_target_dir_content")
-
-    # Act
     success, is_master, path = fetcher_instance.fetch()
-
-    # Assert
     assert success is False
     assert is_master is False
     assert path is None

@@ -16,7 +16,6 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# --- Configuration ---
 DEVILDEX_CONFIG_FILE = "devildex.mcp.json"
 GEMINI_APP_NAME = "gemini"
 
@@ -33,33 +32,27 @@ def find_gemini_settings_path() -> Path:
     """
     home = Path.home()
 
-    # List of potential parent directories for the Gemini configuration.
-    # Ordered by likelihood.
     potential_dirs = []
 
-    # OS-specific paths
     system = platform.system()
     if system == "Windows":
         appdata = os.getenv("APPDATA")
         if appdata:
             potential_dirs.append(Path(appdata) / GEMINI_APP_NAME)
-    elif system == "Darwin": # macOS
+    elif system == "Darwin":
         potential_dirs.append(
             home / "Library" / "Application Support" / GEMINI_APP_NAME
         )
-    else: # Linux and other Unix-likes
-        potential_dirs.append(home / ".config" / GEMINI_APP_NAME) # XDG standard
+    else:
+        potential_dirs.append(home / ".config" / GEMINI_APP_NAME)
 
-    # The npm-style path is common across all OSes, so we check it first.
     potential_dirs.insert(0, home / f".{GEMINI_APP_NAME}")
 
-    # Check for the first existing directory
     for config_dir in potential_dirs:
         if config_dir.is_dir():
             logger.info(f"Found existing Gemini config directory: {config_dir}")
             return config_dir / "settings.json"
 
-    # If no directory is found, default to the most likely one (npm-style)
     logger.info("No existing Gemini config directory found. Defaulting to npm-style.")
     default_path = home / f".{GEMINI_APP_NAME}"
     return default_path / "settings.json"
@@ -69,7 +62,6 @@ def main() -> None:
     """Launch the main execution function."""
     logger.info("--- DevilDex MCP Server Setup for Gemini CLI ---")
 
-    # --- Step 1: Locate devildex.mcp.json ---
     try:
         devildex_config_path = resources.files("devildex.setup").joinpath(
             DEVILDEX_CONFIG_FILE
@@ -89,7 +81,6 @@ def main() -> None:
 
     logger.info(f"Found DevilDex config: {devildex_config_path}")
 
-    # --- Step 2: Intelligently find Gemini CLI settings.json path ---
     try:
         gemini_settings_path = find_gemini_settings_path()
     except Exception as e:
@@ -100,7 +91,6 @@ def main() -> None:
 
     logger.info(f"Targeting Gemini CLI settings file: {gemini_settings_path}")
 
-    # --- Step 3: Read existing settings or create new ones ---
     settings_data = {}
     if gemini_settings_path.is_file():
         logger.info("Found existing settings.json, reading...")
@@ -112,7 +102,6 @@ def main() -> None:
     else:
         logger.info("No existing settings.json found. A new one will be created.")
 
-    # --- Step 4: Read DevilDex config and merge safely ---
     with open(devildex_config_path, encoding="utf-8") as f:
         devildex_data = json.load(f)
 
@@ -123,7 +112,6 @@ def main() -> None:
         settings_data["mcpServers"].update(devildex_data["mcpServers"])
         logger.info("Merging DevilDex MCP server configuration...")
 
-    # --- Step 5: Write the updated configuration back ---
     try:
         gemini_settings_path.parent.mkdir(parents=True, exist_ok=True)
         with open(gemini_settings_path, "w", encoding="utf-8") as f:

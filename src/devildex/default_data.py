@@ -60,14 +60,8 @@ PACKAGES_DATA: list[dict[str, Any]] = [
 ]
 
 for item in PACKAGES_DATA:
-    item["docset_status"] = "Not Available"  # Default docset status
-
-    # Determine the version string to use with clear priority:
-    # 1. From 'versions' list (last entry's 'version_str')
-    # 2. From top-level 'version' key
-    # 3. Default to "N/A"
-    final_version_str = "N/A"  # Default
-
+    item["docset_status"] = "Not Available"
+    final_version_str = "N/A"
     versions_list = item.get("versions")
     if isinstance(versions_list, list) and versions_list:
         last_version_detail = versions_list[-1]

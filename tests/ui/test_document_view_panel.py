@@ -135,19 +135,13 @@ class TestDocumentViewPanel:
         ):
 
             mock_event = MagicMock(spec=wx.CommandEvent)
-
-            # Test case 1: Can go forward
             mock_can_go_forward.return_value = True
             panel._on_forward(mock_event)
             mock_go_forward.assert_called_once()
             mock_event.Skip.assert_called_once()
-
-            # Reset mocks
             mock_can_go_forward.reset_mock()
             mock_go_forward.reset_mock()
             mock_event.reset_mock()
-
-            # Test case 2: Cannot go forward
             mock_can_go_forward.return_value = False
             panel._on_forward(mock_event)
             mock_go_forward.assert_not_called()

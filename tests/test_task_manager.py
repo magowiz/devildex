@@ -195,7 +195,7 @@ def test_start_generation_task_missing_package_id(
     task_manager: GenerationTaskManager,
 ) -> None:
     """Verify that a task is not started if package_id is missing."""
-    package_data = {"name": "test-package"}  # Missing 'id'
+    package_data = {"name": "test-package"}
 
     result = task_manager.start_generation_task(package_data, 1, 5)
 
@@ -238,7 +238,7 @@ def test_handle_task_completion_missing_package_id(
 
     task_manager._handle_task_completion(True, "/path", "test-package", None, 1)
 
-    assert len(task_manager.active_tasks) == 1  # No task should be removed
+    assert len(task_manager.active_tasks) == 1
 
 
 def test_cleanup(task_manager: GenerationTaskManager) -> None:

@@ -11,14 +11,14 @@ import wx.grid
 import wx.html2
 from wx import Size
 
-from devildex.app_paths import AppPaths  # Import AppPaths
+from devildex.app_paths import AppPaths
 from devildex.config_manager import ConfigManager
 from devildex.constants import AVAILABLE_BTN_LABEL, COLUMNS_ORDER, ERROR_BTN_LABEL
 from devildex.core import DevilDexCore
 from devildex.database.models import PackageDetails
 from devildex.default_data import PACKAGES_DATA_AS_DETAILS
 from devildex.mcp_server.mcp_server_manager import (
-    McpServerManager,  # Import McpServerManager
+    McpServerManager,
 )
 from devildex.task_manager import GenerationTaskManager
 from devildex.ui import (
@@ -81,9 +81,7 @@ class DevilDexApp(wx.App):
     """Main Application."""
 
     def __init__(
-        self,
-        core: DevilDexCore | None = None,
-        initial_url: str | None = None
+        self, core: DevilDexCore | None = None, initial_url: str | None = None
     ) -> None:
         """Construct DevilDexApp class."""
         self.document_view_panel = None
@@ -92,7 +90,7 @@ class DevilDexApp(wx.App):
         self.core = core
         self.home_url = "https://www.google.com"
         self.initial_url = initial_url
-        self.mcp_server_manager: Optional[McpServerManager] = None # Initialize to None
+        self.mcp_server_manager: Optional[McpServerManager] = None
         self.main_frame: Optional[wx.Frame] = None
         self.panel: Optional[wx.Panel] = None
         self.main_content_panel: Optional[wx.Panel] = None
@@ -117,7 +115,7 @@ class DevilDexApp(wx.App):
         self.bottom_splitter_panel: Optional[wx.Panel] = None
         self.last_sash_position: int = -200
         self.generation_task_manager: Optional[GenerationTaskManager] = None
-        self.config_manager = ConfigManager() # Keep this line as it is
+        self.config_manager = ConfigManager()
         super().__init__(redirect=False)
 
     def scan_docset_dir(self, grid_pkg: list[dict]) -> set:
@@ -150,13 +148,11 @@ class DevilDexApp(wx.App):
         if self.selected_row_index is None:
             return
 
-        # Update the in-memory data source first
         self.current_grid_source_data[self.selected_row_index][
             "docset_status"
         ] = NOT_AVAILABLE_BTN_LABEL
         self.current_grid_source_data[self.selected_row_index].pop("docset_path", None)
 
-        # Then, update the visual grid component
         if self.grid_panel and self.grid_panel.grid:
             self.grid_panel.grid.SetCellValue(
                 self.selected_row_index,
@@ -343,10 +339,7 @@ class DevilDexApp(wx.App):
         self.panel.SetSizer(self.main_panel_sizer)
         self.main_frame.Centre()
         self.SetTopWindow(self.main_frame)
-
         self._init_buttons()
-
-        # Main content panel
         self.main_content_panel = wx.Panel(self.panel)
         main_content_sizer = wx.BoxSizer(wx.VERTICAL)
         self.main_content_panel.SetSizer(main_content_sizer)
@@ -368,8 +361,6 @@ class DevilDexApp(wx.App):
 
         bottom_bar_sizer = self._init_log_toggle_bar(self.main_content_panel)
         main_content_sizer.Add(bottom_bar_sizer, 0, wx.EXPAND | wx.ALL, 0)
-
-        # Settings panel
         self.settings_panel = SettingsPanel(
             self.panel, self.on_settings_saved, self.on_settings_cancelled
         )
@@ -447,21 +438,15 @@ class DevilDexApp(wx.App):
     def _setup_top_bar(self, parent: wx.Window) -> wx.Sizer:
         """Set up the top bar containing the view mode selector and settings button."""
         top_bar_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        # View Mode Selector
         view_mode_sizer = self._setup_view_mode_selector(parent)
-        top_bar_sizer.Add(
-            view_mode_sizer, 1, wx.EXPAND | wx.RIGHT, 5
-        )  # Removed wx.ALIGN_CENTER_VERTICAL
-
-        # Settings Button
+        top_bar_sizer.Add(view_mode_sizer, 1, wx.EXPAND | wx.RIGHT, 5)
         settings_button = wx.BitmapButton(
             parent,
             wx.ID_ANY,
             wx.ArtProvider.GetBitmap(
                 wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, Size(24, 24)
             ),
-        )  # Using ART_EXECUTABLE_FILE for settings
+        )
         settings_button.Bind(wx.EVT_BUTTON, self.on_show_settings)
         top_bar_sizer.Add(settings_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
 
@@ -649,8 +634,6 @@ class DevilDexApp(wx.App):
             if self.log_text_ctrl:
                 self.log_text_ctrl.Show(False)
 
-        # In /home/magowiz/MEGA/projects/devildex/src/devildex/main.py
-
     def _show_log_panel(self) -> None:
         """Handle the logic to make the log panel visible."""
         if (
@@ -686,8 +669,6 @@ class DevilDexApp(wx.App):
 
     def _set_log_panel_visibility(self, visible: bool) -> None:
         """Set the visibility of the log panel by dispatching to helper methods."""
-        # Guard clause: if the splitter isn't ready, just toggle the text control
-        # This handles a potential edge case if called before full UI initialization.
         if not self.splitter:
             if self.log_text_ctrl:
                 self.log_text_ctrl.Show(visible)
@@ -702,8 +683,6 @@ class DevilDexApp(wx.App):
             self._show_log_panel()
         else:
             self._hide_log_panel()
-
-        # Final UI updates, common to both actions
         if self.panel:
             self.panel.Layout()
         self._update_log_toggle_button_icon()
@@ -919,23 +898,14 @@ class DevilDexApp(wx.App):
                 event.Skip()
             return
 
-        # Log the user's intent
         selected_package = self.get_selected_row()
         if selected_package:
             package_name = selected_package.get("name", "N/D")
             log_msg = f"INFO: Regeneration requested for '{package_name}'.\n"
             if self.log_text_ctrl:
                 self.log_text_ctrl.AppendText(log_msg)
-
-        # 1. Call the delete handler. It will ask for confirmation and handle
-        #    all cases (e.g., if the docset doesn't even exist).
         self.on_delete_docset(event=None)
-
-        # 2. Call the generate handler. It will perform its own validation,
-        #    like checking if a task is already running or if the docset is
-        #    still available (if the user cancelled the deletion).
         self.on_generate_docset(event=None)
-
         if event:
             event.Skip()
 
@@ -959,15 +929,11 @@ class DevilDexApp(wx.App):
         """Handle when settings are saved. Re-initializes core services."""
         logger.info("Settings saved. Re-initializing core services...")
         if self.core:
-            self.core.shutdown()  # Shut down existing services
-            # Re-initialize core with potentially new settings
-            # This is a simplified re-initialization. A more robust solution
-            # might involve passing new config values directly or recreating the core.
-            # For now, we'll just recreate it.
+            self.core.shutdown()
             self.core = DevilDexCore(
                 gui_warning_callback=self._display_mcp_warning_in_gui
             )
-            self._initialize_data_and_managers()  # Re-load data based on new settings
+            self._initialize_data_and_managers()
         self.show_main_view()
 
     def on_settings_cancelled(self) -> None:
@@ -1116,7 +1082,7 @@ class DevilDexApp(wx.App):
             on_task_complete_callback=self._on_generation_complete_from_manager,
             update_action_buttons_callback=self._update_action_buttons_state,
         )
-        self.update_grid_data()  # Call update_grid_data here after data is loaded
+        self.update_grid_data()
 
         if scan_successful:
             active_project_file_path = self.core.app_paths.active_project_file
@@ -1170,11 +1136,8 @@ def main() -> None:
     config = ConfigManager()
     mcp_enabled = config.get_mcp_server_enabled()
     hide_gui = config.get_mcp_server_hide_gui_when_enabled()
-
-    core: Optional[DevilDexCore] = None # mcp_server_manager is now inside core
-
+    core: Optional[DevilDexCore] = None
     try:
-        # Create core instance early to get database_url
         app_paths = AppPaths()
         custom_db_path = os.getenv("DEVILDEX_CUSTOM_DB_PATH")
         if custom_db_path:
@@ -1184,38 +1147,30 @@ def main() -> None:
             )
         else:
             core = DevilDexCore(docset_base_output_path=app_paths.docsets_base_dir)
-
-        db_url_for_mcp = core.database_url # Get database_url from core
-
+        db_url_for_mcp = core.database_url
         if mcp_enabled:
             server_started = core.start_mcp_server_if_enabled(db_url_for_mcp)
             if not server_started:
                 logger.error("Failed to start MCP server. Exiting.")
-                return # Exit if server fails to start
+                return
 
         if mcp_enabled and hide_gui:
             logger.info("MCP server started in headless mode. Press Ctrl+C to exit.")
             while True:
                 time.sleep(1)
         else:
-            # GUI mode
-            # Determine if GUI warning callback should be passed
-
-
-            app = DevilDexApp(core=core) # No mcp_server_manager parameter here
-
-            # If MCP is enabled and GUI not hidden, update core with app's callback
+            app = DevilDexApp(core=core)
             if mcp_enabled and not hide_gui:
                 core.gui_warning_callback = app._display_mcp_warning_in_gui
-
-            app._initialize_data_and_managers() # Call the initialization method
+            app._initialize_data_and_managers()
             app.MainLoop()
     except KeyboardInterrupt:
         logger.info("\nShutting down application...")
     finally:
         if core:
-            core.shutdown() # This will now call core.stop_mcp_server()
+            core.shutdown()
         logger.info("Application shut down.")
+
 
 if __name__ == "__main__":
     main()

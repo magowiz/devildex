@@ -45,7 +45,7 @@ class GenerationTaskManager:
         self.on_task_complete_callback = on_task_complete_callback
         self.update_action_buttons_callback = update_action_buttons_callback
 
-        self.active_tasks: dict[str, int] = {}  # package_id -> row_index
+        self.active_tasks: dict[str, int] = {}
         self.animation_frames: list[str] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
         self.current_animation_frame_idx: int = 0
         self.animation_timer: wx.Timer = wx.Timer(owner_for_timer)
@@ -81,7 +81,6 @@ class GenerationTaskManager:
 
         if not package_id:
             logger_task_manager.error("Cannot start generation: package_id is missing.")
-            # Consider a way to notify UI, or let DevilDexApp handle this pre-check
             return False
 
         if self.is_task_active_for_package(package_id):
@@ -95,25 +94,20 @@ class GenerationTaskManager:
             f" at row {row_index}."
         )
         self.active_tasks[package_id] = row_index
-        self.update_action_buttons_callback()  # Update buttons immediately
-
-        # Initial animation frame
+        self.update_action_buttons_callback()
         if docset_status_col_idx != -1:
             first_animation_frame = self.animation_frames[0]
             self.update_grid_cell_callback(
                 row_index, docset_status_col_idx, first_animation_frame
             )
-            # DevilDexApp will also need to update its current_grid_source_data
 
         if not self.animation_timer.IsRunning():
             self.animation_timer.Start(150)
             logger_task_manager.debug("Animation timer started.")
-
-        # Prepare data for the thread to avoid issues with shared wx objects if any
         thread_package_data = package_data.copy()
         worker = threading.Thread(
             target=self._perform_generation_in_thread,
-            args=(thread_package_data, row_index),  # Pass row_index for the callback
+            args=(thread_package_data, row_index),
         )
         worker.daemon = True
         worker.start()
@@ -127,7 +121,7 @@ class GenerationTaskManager:
         package_name_for_msg = package_data.get("name", "N/D")
         package_id_for_completion = package_data.get("id")
 
-        if not package_id_for_completion:  # Should have been caught earlier
+        if not package_id_for_completion:
             logger_task_manager.error(
                 "Thread: package_id missing, aborting generation."
             )
@@ -169,7 +163,7 @@ class GenerationTaskManager:
                 f"Unexpected Exception during generation for "
                 f"'{package_name_for_msg}' in thread: {e}"
             )
-            logger_task_manager.exception(error_message)  # Log with traceback
+            logger_task_manager.exception(error_message)
             wx.CallAfter(
                 self._handle_task_completion,
                 False,
@@ -185,7 +179,7 @@ class GenerationTaskManager:
         message: str,
         package_name: Optional[str],
         package_id: Optional[str],
-        row_index: int,  # The original row index for this task
+        row_index: int,
     ) -> None:
         """Handle the completion of a generation task.
 
@@ -222,10 +216,7 @@ class GenerationTaskManager:
             self.animation_frames
         )
         current_frame_char = self.animation_frames[self.current_animation_frame_idx]
-
-        # Assuming DevilDexApp knows the docset_status_col_grid_idx
-        # This might need to be passed or stored if it can change
-        docset_status_col_idx = -1  # Placeholder, DevilDexApp will know this
+        docset_status_col_idx = -1
         if hasattr(self.owner_for_timer, "docset_status_col_grid_idx"):
             docset_status_col_idx = self.owner_for_timer.docset_status_col_grid_idx
 

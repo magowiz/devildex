@@ -70,10 +70,8 @@ class AppPaths:
         Usually si found inside della user_data_dir.
         """
         if os.getenv("DEVILDEX_DEV_MODE") == "1":
-            # In dev mode, use 'docset' directory in the project root
             path = Path("docset")
         else:
-            # Otherwise, use the user's data directory
             path = self.user_data_dir / "docsets"
         path.mkdir(parents=True, exist_ok=True)
         return path
@@ -110,15 +108,12 @@ class AppPaths:
     @property
     def devildex_ini_path(self) -> Path:
         """Path per il file del database dell application."""
-        # New: Check for an explicit override environment variable
         ini_path_override = os.getenv("DEVILDEX_INI_PATH_OVERRIDE")
         if ini_path_override:
             return Path(ini_path_override)
         elif os.getenv("DEVILDEX_DEV_MODE") == "1":
-            # In dev mode, look in the project root
             return Path("devildex.ini")
         else:
-            # Otherwise, use the user's config directory
             return self.user_config_dir / "devildex.ini"
 
 

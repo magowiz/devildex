@@ -48,9 +48,6 @@ def test_find_mkdocs_config_file_not_found(tmp_path: Path) -> None:
     assert _find_mkdocs_config_file(tmp_path) is None
 
 
-# --- Tests for _parse_mkdocs_config ---
-
-
 def test_parse_mkdocs_config_valid_yaml(tmp_path: Path) -> None:
     """Should parse a valid mkdocs.yml file."""
     config_content = {"site_name": "My Test Site", "nav": ["index.md"]}
@@ -62,7 +59,7 @@ def test_parse_mkdocs_config_valid_yaml(tmp_path: Path) -> None:
 def test_parse_mkdocs_config_invalid_yaml(tmp_path: Path) -> None:
     """Should return None for an invalid mkdocs.yml file."""
     config_path = tmp_path / "mkdocs.yml"
-    config_path.write_text("site_name: [invalid yaml")  # Malformed YAML
+    config_path.write_text("site_name: [invalid yaml")
     assert _parse_mkdocs_config(config_path) is None
 
 
@@ -70,9 +67,6 @@ def test_parse_mkdocs_config_file_not_found(tmp_path: Path) -> None:
     """Should return None if the config file does not exist."""
     config_path = tmp_path / "non_existent_mkdocs.yml"
     assert _parse_mkdocs_config(config_path) is None
-
-
-# --- Tests for _extract_callouts_from_markdown_extensions ---
 
 
 def test_extract_callouts_from_markdown_extensions_list_str(tmp_path: Path) -> None:
@@ -120,9 +114,6 @@ def test_extract_callouts_from_markdown_extensions_empty_or_none(
     assert _extract_callouts_from_markdown_extensions({}) == ({}, None, False)
 
 
-# --- Tests for _is_plugin_callouts ---
-
-
 def test_is_plugin_callouts_str() -> None:
     """Should return True for 'callouts' string."""
     assert _is_plugin_callouts("callouts") is True
@@ -141,9 +132,6 @@ def test_is_plugin_callouts_other_str() -> None:
 def test_is_plugin_callouts_other_dict() -> None:
     """Should return False for other dicts."""
     assert _is_plugin_callouts({"other_plugin": {}}) is False
-
-
-# --- Tests for _add_callouts_to_plugins_if_missing ---
 
 
 def test_add_callouts_to_plugins_if_missing_empty_list() -> None:
@@ -190,9 +178,6 @@ def test_add_callouts_to_plugins_if_missing_non_list_config() -> None:
     updated, added = _add_callouts_to_plugins_if_missing("invalid_type", "callouts")
     assert updated == ["callouts"]
     assert added is True
-
-
-# --- Tests for _preprocess_mkdocs_config ---
 
 
 def test_preprocess_mkdocs_config_moves_callouts(tmp_path: Path) -> None:
@@ -242,14 +227,9 @@ def test_preprocess_mkdocs_config_docs_dir_not_found(tmp_path: Path) -> None:
     original_config = {"site_name": "Test", "docs_dir": "non_existent_docs"}
     config_path = tmp_path / "mkdocs.yml"
     config_path.write_text(yaml.dump(original_config))
-
     processed_config, modified = _preprocess_mkdocs_config(original_config, config_path)
-
-    assert modified is False  # No change because dir not found
+    assert modified is False
     assert processed_config["docs_dir"] == "non_existent_docs"
-
-
-# --- Tests for _get_theme_packages_to_install ---
 
 
 def test_get_theme_packages_to_install_material() -> None:
@@ -279,9 +259,6 @@ def test_get_theme_packages_to_install_none() -> None:
     assert _get_theme_packages_to_install(None) == []
 
 
-# --- Tests for _prepare_mkdocs_output_directory ---
-
-
 def test_prepare_mkdocs_output_directory_creates_new(tmp_path: Path) -> None:
     """Should create the output directory if it doesn't exist."""
     base_output = tmp_path / "builds"
@@ -301,21 +278,17 @@ def test_prepare_mkdocs_output_directory_cleans_existing(tmp_path: Path) -> None
     output_dir = _prepare_mkdocs_output_directory(base_output, "my-project", "1.0")
     assert output_dir == existing_dir.resolve()
     assert output_dir.is_dir()
-    assert not (output_dir / "old_file.txt").exists()  # Should be cleaned
+    assert not (output_dir / "old_file.txt").exists()
 
 
 def test_prepare_mkdocs_output_directory_os_error(
     tmp_path: Path, mocker: MagicMock
 ) -> None:
     """Should return None if an OSError occurs during directory creation/cleaning."""
-    # Mock Path.mkdir to raise an OSError
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied"))
     base_output = tmp_path / "builds"
     output_dir = _prepare_mkdocs_output_directory(base_output, "my-project", "1.0")
     assert output_dir is None
-
-
-# --- Tests for _extract_names_from_config_list_or_dict ---
 
 
 def test_extract_names_from_config_list_of_strings() -> None:
@@ -360,9 +333,6 @@ def test_extract_names_from_config_pymdownx_plugins() -> None:
         "pymdownx.highlight",
         "pymdownx.superfences",
     ]
-
-
-# --- Tests for _get_plugin_packages_to_install ---
 
 
 def test_get_plugin_packages_to_install_basic() -> None:
@@ -410,17 +380,13 @@ def test_get_plugin_packages_to_install_none_configs() -> None:
 
 def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path) -> None:
     """Should successfully execute mkdocs build within a venv."""
-    # Use a fixed output directory for easier debugging
     fixed_output_dir = tmp_path / "mkdocs_test_output"
     fixed_output_dir.mkdir(parents=True, exist_ok=True)
-
-    # 1. Setup dummy mkdocs project
     project_root = tmp_path / "test_project"
     project_root.mkdir()
     docs_dir = project_root / "docs"
     docs_dir.mkdir()
     (docs_dir / "index.md").write_text("# Hello MkDocs")
-
     mkdocs_config_content = {
         "site_name": "Test Integration Site",
         "docs_dir": str(docs_dir.relative_to(project_root)),
@@ -428,8 +394,6 @@ def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path) -> Non
         "theme": "readthedocs",
     }
     (project_root / "mkdocs.yml").write_text(yaml.dump(mkdocs_config_content))
-
-    # 2. Prepare build context
     build_ctx = MkDocsBuildContext(
         config_content=mkdocs_config_content,
         project_root=project_root,
@@ -438,22 +402,12 @@ def test_execute_mkdocs_build_in_venv_integration_success(tmp_path: Path) -> Non
         version_identifier="1.0",
         source_config_path=project_root / "mkdocs.yml",
     )
-
-    # 3. Execute the real function
-    # This will create a real isolated venv and run mkdocs build inside it.
-    # It relies on mkdocs and its dependencies being installable via pip.
     success = _execute_mkdocs_build_in_venv(build_ctx)
-
-    # 4. Assertions
     assert success is True
     assert fixed_output_dir.is_dir()
     assert (fixed_output_dir / "index.html").is_file()
-    assert (
-        fixed_output_dir / "404.html"
-    ).is_file()  # Readthedocs theme usually generates this
-    assert any(
-        (fixed_output_dir / "js").glob("*.js")
-    )  # Check for any JS file in the js directory
+    assert (fixed_output_dir / "404.html").is_file()
+    assert any((fixed_output_dir / "js").glob("*.js"))
 
 
 def test_process_mkdocs_source_and_build_integration_success(tmp_path: Path) -> None:
@@ -486,9 +440,5 @@ def test_process_mkdocs_source_and_build_integration_success(tmp_path: Path) -> 
     output_dir = Path(output_path)
     assert output_dir.is_dir()
     assert (output_dir / "index.html").is_file()
-    assert (
-        output_dir / "404.html"
-    ).is_file()  # Readthedocs theme usually generates this
-    assert any(
-        (output_dir / "js").glob("*.js")
-    )  # Check for any JS file in the js directory
+    assert (output_dir / "404.html").is_file()
+    assert any((output_dir / "js").glob("*.js"))

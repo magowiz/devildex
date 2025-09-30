@@ -172,7 +172,6 @@ def test_clear_active_project_app_paths_os_error(
     mocker: MockerFixture, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that clearing handles an OSError when initializing AppPaths."""
-    # Arrange
     mocker.patch(
         "devildex.local_data_parse.registered_project_parser.AppPaths",
         side_effect=OSError("Test AppPaths OSError"),
@@ -195,7 +194,6 @@ def test_load_active_project_app_paths_os_error(
     mocker: MockerFixture, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that loading handles an OSError when initializing AppPaths."""
-    # Arrange
     mocker.patch(
         "devildex.local_data_parse.registered_project_parser.AppPaths",
         side_effect=OSError("Test AppPaths OSError"),

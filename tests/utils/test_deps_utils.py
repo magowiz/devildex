@@ -102,8 +102,6 @@ def test_filter_requirements_lines_success(
 
     assert result == ["requests"]
     mock_from_file.assert_called_once_with("/fake/path/reqs.txt")
-
-    # Assert both debug calls
     assert mock_logger_debug.call_count == EXPECTED_DEBUG_CALL_COUNT
     mock_logger_debug.assert_any_call(
         "Attempt to parse and filter: %s", Path("/fake/path/reqs.txt")

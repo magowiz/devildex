@@ -4,8 +4,6 @@ import pytest
 
 from devildex.readthedocs.readthedocs_api import _choose_best_version
 
-# --- Tests for _choose_best_version ---
-
 
 @pytest.fixture
 def sample_versions() -> list[dict]:
@@ -15,8 +13,8 @@ def sample_versions() -> list[dict]:
         {"slug": "latest", "active": True, "built": True},
         {"slug": "v2.0", "active": True, "built": True},
         {"slug": "v1.0", "active": True, "built": True},
-        {"slug": "dev", "active": False, "built": True},  # Not active
-        {"slug": "feature-branch", "active": True, "built": False},  # Not built
+        {"slug": "dev", "active": False, "built": True},
+        {"slug": "feature-branch", "active": True, "built": False},
     ]
 
 
@@ -33,7 +31,6 @@ def test_choose_best_version_finds_second_preference(
     sample_versions: list[dict],
 ) -> None:
     """Verify it selects the second preferred version if the first is not ideal."""
-    # Make 'stable' unavailable
     sample_versions[0]["active"] = False
     preferred = ["stable", "latest"]
     result = _choose_best_version(sample_versions, preferred)
@@ -46,7 +43,6 @@ def test_choose_best_version_falls_back_to_first_available(
     """Check it falls back to first active and built version if no preferences match."""
     preferred = ["nonexistent-v1", "nonexistent-v2"]
     result = _choose_best_version(sample_versions, preferred)
-    # It should skip inactive/unbuilt versions and pick the first valid one
     assert result == "stable"
 
 

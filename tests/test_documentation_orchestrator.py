@@ -46,8 +46,6 @@ def test_orchestrator_init(
     assert orchestrator.detected_doc_type is None
     assert orchestrator.last_operation_result is None
     assert orchestrator._effective_source_path is None
-
-    # Test with a temporary base_output_dir
     default_output_dir = tmp_path / "default_orchestrator_output"
     orchestrator_default = Orchestrator(
         package_details=mock_package_details, base_output_dir=default_output_dir
@@ -110,12 +108,8 @@ def test_fetch_repo_initial_path_not_a_directory(
     initial_source_path = tmp_path / "not_a_dir.txt"
     initial_source_path.touch()
     mock_package_details.initial_source_path = str(initial_source_path)
-
-    # Create the actual fetched directory
     actual_fetched_path = tmp_path / "fetched_source"
     actual_fetched_path.mkdir()
-
-    # Mock PackageSourceFetcher.fetch to return a successful fetch with a string path
     mock_fetcher_instance = mocker.patch(
         "devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher"
     )
@@ -142,8 +136,6 @@ def test_fetch_repo_no_initial_path_fetch_succeeds(
 
     actual_fetched_path = tmp_path / "fetched_source"
     actual_fetched_path.mkdir()
-
-    # Mock PackageSourceFetcher.fetch to return a successful fetch with a string path
     mock_fetcher_instance = mocker.patch(
         "devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher"
     )
@@ -204,20 +196,15 @@ def test_fetch_repo_fetch_raises_runtime_error(
 ) -> None:
     """Test fetch repo fetch raises RuntimeError."""
     mock_package_details.initial_source_path = None
-
-    # Mock PackageSourceFetcher.fetch to raise RuntimeError
     mock_fetcher_instance = mocker.patch(
         "devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher"
     )
     mock_fetcher_instance.return_value.fetch.side_effect = RuntimeError("Network error")
-
     result = mock_orchestrator.fetch_repo()
-
     assert result is False
     assert mock_orchestrator._effective_source_path is None
 
 
-# Tests for _fetch_repo_fetch method
 @patch("devildex.orchestrator.documentation_orchestrator.PackageSourceFetcher")
 def test_internal_fetch_repo_fetch_success(
     mock_fetcher_class: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
@@ -348,7 +335,6 @@ def mock_scan_dependencies(mocker: MockerFixture) -> dict[str, MagicMock]:
     }
 
 
-# Tests for start_scan method
 @patch("devildex.orchestrator.documentation_orchestrator.Orchestrator.fetch_repo")
 def test_start_scan_fetch_repo_fails(
     mock_fetch_repo: MagicMock, mock_orchestrator: Orchestrator

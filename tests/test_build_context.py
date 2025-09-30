@@ -46,8 +46,6 @@ def test_setup_directories(mock_build_context: BuildContext) -> None:
 
     assert mock_build_context.temp_dir.is_dir()
     assert mock_build_context.final_docs_dir.is_dir()
-
-    # Test cleaning existing directories
     (mock_build_context.temp_dir / "old_file.txt").touch()
     (mock_build_context.final_docs_dir / "old_doc.html").touch()
     mock_build_context.setup_directories()

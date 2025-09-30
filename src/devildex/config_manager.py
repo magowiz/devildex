@@ -39,21 +39,18 @@ class ConfigManager:
                 logger.exception(
                     f"Error reading configuration file {self._config_path}"
                 )
-                self._config = configparser.ConfigParser()  # Reset to empty config
+                self._config = configparser.ConfigParser()
         else:
             logger.info(
                 f"Configuration file not found at: {self._config_path}."
                 " Creating with default settings."
             )
-            # Create the file with default settings
             self._config.add_section("mcp_server_dev")
             self._config.set("mcp_server_dev", "enabled", "false")
             self._config.set("mcp_server_dev", "hide_gui_when_enabled", "false")
             if self._config_path:
                 try:
-                    self._config_path.parent.mkdir(
-                        parents=True, exist_ok=True
-                    )  # Ensure parent directory exists
+                    self._config_path.parent.mkdir(parents=True, exist_ok=True)
                     with open(self._config_path, "w") as configfile:
                         self._config.write(configfile)
                     logger.info(
@@ -110,4 +107,3 @@ class ConfigManager:
 if __name__ == "__main__":
 
     config = ConfigManager()
-

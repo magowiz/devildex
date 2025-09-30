@@ -24,7 +24,6 @@ class TestPackageSourceFetcherCoverage:
         self.BASE_SAVE_PATH = tmp_path / "devildex_test_output"
         self.BASE_SAVE_PATH.mkdir(parents=True, exist_ok=True)
 
-    # Test cases for _is_path_safe (line 161)
     @patch("src.devildex.fetcher.Path.resolve")
     def test_is_path_safe_raises_exception(self, mock_resolve: MagicMock) -> None:
         """Test is path safe raises exception."""
@@ -70,7 +69,7 @@ class TestPackageSourceFetcherCoverage:
         mock_zip_instance.extract.side_effect = OSError("Disk full")
 
         zip_path = self.BASE_SAVE_PATH / "dummy.zip"
-        zip_path.touch()  # Create a dummy file for the path check
+        zip_path.touch()
 
         assert not PackageSourceFetcher._extract_zip_safely(
             zip_path, self.BASE_SAVE_PATH / "extracted"
@@ -166,7 +165,6 @@ class TestPackageSourceFetcherCoverage:
             source_dir, destination_dir
         )
 
-    # Test for _download_and_extract_archive (lines 300, 309, 313, 320, 321)
     @pytest.fixture
     def mock_download_extract_dependencies(
         self, mocker: MagicMock
@@ -212,8 +210,8 @@ class TestPackageSourceFetcherCoverage:
         mock_extract_archive = mock_download_extract_dependencies["extract_archive"]
 
         temp_base_dir = self.BASE_SAVE_PATH / "temp_base_dir_exists"
-        temp_base_dir.mkdir()  # Ensure it exists for this test
-        (temp_base_dir / "some_file.txt").touch()  # Add some content
+        temp_base_dir.mkdir()
+        (temp_base_dir / "some_file.txt").touch()
 
         mock_extract_archive.return_value = True
         mock_determine_content_source_dir.return_value = (
@@ -367,9 +365,7 @@ class TestPackageSourceFetcherCoverage:
         """Test run git command stderr warning logged."""
         mock_process = MagicMock(stdout="", stderr="some error", returncode=1)
         mock_subprocess_run.return_value = mock_process
-        PackageSourceFetcher._run_git_command(
-            ["git", "pull"], check_errors=False
-        )  # check_errors=False to allow stderr without raising
+        PackageSourceFetcher._run_git_command(["git", "pull"], check_errors=False)
         mock_logger.warning.assert_any_call("Git stderr:\nsome error")
 
     @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
@@ -542,7 +538,6 @@ class TestPackageSourceFetcherCoverage:
         temp_clone_dir.mkdir()
         assert not fetcher._try_fetch_tag_variations(["v1.0.0"], temp_clone_dir)
 
-    # Test for _try_fetch_tag_full_clone_checkout (lines 525, 531, 534, 543)
     @patch("src.devildex.fetcher.PackageSourceFetcher._run_git_command")
     @patch(
         "src.devildex.fetcher.PackageSourceFetcher._try_fetch_tag_variations",
@@ -637,5 +632,3 @@ class TestPackageSourceFetcherCoverage:
         assert not is_master
         assert path_str is None
         mock_cleanup_target_dir_content.assert_called_once()
-
-

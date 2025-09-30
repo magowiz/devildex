@@ -33,7 +33,6 @@ def actions_panel(
 
     Mocks the Enable() method on each button to allow tracking calls.
     """
-    # A dummy frame is needed as a parent for the panel
     frame = wx.Frame(wx_app.GetTopWindow())
     panel = ActionsPanel(frame, mock_handler)
 
@@ -46,17 +45,13 @@ def actions_panel(
     ]:
         button = getattr(panel, button_attr)
         if button:
-            # Replace the real Enable method with a mock
             button.Enable = mocker.MagicMock(name=f"{button_attr}.Enable")
 
     frame.Destroy()
     return panel
 
 
-# --- Test Cases ---
-
 test_cases = [
-    # 1. No package selected
     (
         None,
         False,
@@ -69,10 +64,9 @@ test_cases = [
         },
         "no_selection",
     ),
-    # 2. Task is running for the selected row
     (
         {"docset_status": "Generating..."},
-        True,  # Task is running
+        True,
         {
             "open": False,
             "generate": False,
@@ -82,7 +76,6 @@ test_cases = [
         },
         "task_is_running",
     ),
-    # 3. Docset is 'Available'
     (
         {"docset_status": AVAILABLE_BTN_LABEL},
         False,
@@ -95,7 +88,6 @@ test_cases = [
         },
         "status_available",
     ),
-    # 4. Docset is 'Not Available'
     (
         {"docset_status": NOT_AVAILABLE_BTN_LABEL},
         False,
@@ -108,7 +100,6 @@ test_cases = [
         },
         "status_not_available",
     ),
-    # 5. Docset is in 'Error' state
     (
         {"docset_status": ERROR_BTN_LABEL},
         False,
@@ -135,17 +126,11 @@ def test_update_button_states(
     package_data: dict | None,
     is_task_running: bool,
     expected_states: dict[str, bool],
-    test_id: str,  # FIX: Add the missing parameter
+    test_id: str,
 ) -> None:
     """Verify that button states are updated correctly based on package status."""
-    # The 'test_id' parameter is intentionally unused in the function body.
-    # It's only here to match the parametrize signature.
     _ = test_id
-
-    # Act
     actions_panel.update_button_states(package_data, is_task_running)
-
-    # Assert
     actions_panel.open_action_button.Enable.assert_called_once_with(
         expected_states["open"]
     )

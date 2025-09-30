@@ -39,14 +39,14 @@ def core(
 def devildex_app(wx_app: wx.App, core: DevilDexCore) -> DevilDexApp:
     """Fixture to create the main DevilDexApp instance."""
     main_app = DevilDexApp(core=core)
-    os.environ["DEVILDEX_DB_PATH_OVERRIDE"] = core.database_url  # Set env var for app
+    os.environ["DEVILDEX_DB_PATH_OVERRIDE"] = core.database_url
     main_app._initialize_data_and_managers()
-    main_app.update_grid_data()  # Explicitly update grid after initialization
-    wx.Yield()  # Allow the UI to initialize
+    main_app.update_grid_data()
+    wx.Yield()
     try:
         yield main_app
     finally:
         if main_app.main_frame:
             wx.CallAfter(main_app.main_frame.Destroy)
         wx.Yield()
-        del os.environ["DEVILDEX_DB_PATH_OVERRIDE"]  # Clean up env var
+        del os.environ["DEVILDEX_DB_PATH_OVERRIDE"]

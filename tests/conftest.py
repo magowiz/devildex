@@ -18,7 +18,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from devildex.config_manager import ConfigManager
-from devildex.constants import (  # Added AVAILABLE_BTN_LABEL
+from devildex.constants import (
     AVAILABLE_BTN_LABEL,
 )
 from devildex.core import DevilDexCore
@@ -66,9 +66,7 @@ def mock_config_manager(mocker: MockerFixture, free_port: int) -> None:
 @pytest.fixture
 def mcp_config_manager_for_test(mocker: MockerFixture) -> ConfigManager:
     """Fixture to provide a configurable ConfigManager for MCP tests."""
-    # Ensure a fresh ConfigManager instance is created
     ConfigManager._instance = None
-    # Prevent automatic loading of the default config file
     mocker.patch(
         "devildex.config_manager.ConfigManager._load_config", return_value=None
     )
@@ -114,19 +112,13 @@ def aggregate_port_logs(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
     """Session-scoped fixture to aggregate and print port logs from all workers."""
-    # Create a truly shared temporary directory for all workers
     shared_tmp_dir = tmp_path_factory.mktemp("shared_port_logs")
-    # Store its path in an environment variable for workers to access
     os.environ["PYTEST_SHARED_PORT_LOGS_DIR"] = str(shared_tmp_dir)
-
     central_log_paths_file = shared_tmp_dir / "all_port_log_paths.txt"
-
-    yield  # Run tests first
+    yield
 
     all_log_entries = []
     log_pattern = re.compile(r"(\d+\.\d+): (instance_\d+) \(PID (\d+)\) - (.+)")
-
-    # Read all log file paths from the central file
     log_file_paths_to_read = []
     if central_log_paths_file.exists():
         with open(central_log_paths_file) as f:
@@ -154,9 +146,7 @@ def aggregate_port_logs(
         except Exception:
             logger.exception(f"Error reading log file {log_file_path}")
 
-    # Sort all entries by timestamp
     all_log_entries.sort(key=lambda x: x["timestamp"])
-
     project_temp_dir = Path(os.getcwd()) / ".pytest_temp_logs"
     project_temp_dir.mkdir(exist_ok=True)
     final_aggregated_log_path = project_temp_dir / "aggregated_port_log.txt"
@@ -173,8 +163,6 @@ def aggregate_port_logs(
     logger.info(
         f"\nAggregated port log written to: {final_aggregated_log_path.resolve()}\n"
     )
-
-    # Clean up the environment variable
     del os.environ["PYTEST_SHARED_PORT_LOGS_DIR"]
 
 
@@ -205,21 +193,16 @@ def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
 @pytest.fixture
 def populated_db_session(
     db_connection_and_tables: tuple[str, Any, Any],
-    default_docset_status: str = AVAILABLE_BTN_LABEL,  # Changed to constant
+    default_docset_status: str = AVAILABLE_BTN_LABEL,
 ) -> Generator[
     tuple[str, Any, str, Path, DevilDexCore, list[PackageDetails]], Any, None
 ]:
     """Fixture to populate the database with test data."""
     db_url, _engine, session_local = db_connection_and_tables
-
-    # Set the environment variable here, before any DevilDexCore
-    # instance might be created
-    # that relies on it.
     os.environ["DEVILDEX_CUSTOM_DB_PATH"] = db_url.replace("sqlite:///", "")
 
     with tempfile.TemporaryDirectory() as temp_docset_dir:
         temp_docset_path = Path(temp_docset_dir)
-        # Determine if docset files should be created on disk
         create_disk_files = default_docset_status == "available"
 
         if create_disk_files:

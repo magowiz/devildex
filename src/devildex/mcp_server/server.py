@@ -1,10 +1,5 @@
 """mcp server module."""
 
-# IMPORTANT: This MCP server is currently under active development and is INCOMPLETE.
-# Only the 'get_docsets_list' tool is fully functional.
-# Other functionalities are either placeholders or not yet implemented.
-# Use with caution and refer to the documentation for current capabilities.
-
 import logging
 import os
 import pathlib
@@ -13,13 +8,8 @@ from typing import Any
 from fastmcp import FastMCP
 from markdownify import markdownify
 
-from devildex.core import DevilDexCore  # Import DevilDexCore
+from devildex.core import DevilDexCore
 from devildex.database import db_manager as database
-
-# IMPORTANT: This MCP server is currently under active development and is INCOMPLETE.
-# Only the 'get_docsets_list' tool is fully functional.
-# Other functionalities are either placeholders or not yet implemented.
-# Use with caution and refer to the documentation for current capabilities.
 
 mcp = FastMCP("Demo 🚀")
 
@@ -50,7 +40,7 @@ async def get_docsets_list(
 
     if all_projects:
         docsets = _core_instance.get_all_docsets_info()
-        server_logger.info(f"MCP Server: All docsets: {docsets}")  # Added logging
+        server_logger.info(f"MCP Server: All docsets: {docsets}")
         return [d["name"] for d in docsets]
 
     return []

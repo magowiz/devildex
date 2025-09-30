@@ -145,16 +145,13 @@ def _add_callouts_to_plugins_if_missing(
 
     """
     plugins_list: list = []
-    # Ensure plugins_list is a list, creating a new one if necessary
     if isinstance(current_plugins_config, list):
-        plugins_list = current_plugins_config.copy()  # Work on a copy
-    elif current_plugins_config is not None:  # It's some other type
+        plugins_list = current_plugins_config.copy()
+    elif current_plugins_config is not None:
         logger.warning(
             f"'plugins' in mkdocs.yml was {type(current_plugins_config)}, not a list. "
             "Initializing as a new list for 'callouts' addition."
         )
-        # plugins_list remains []
-    # If current_plugins_config was None, plugins_list is already []
 
     is_already_plugin = any(_is_plugin_callouts(p_item) for p_item in plugins_list)
 
@@ -176,9 +173,7 @@ def _handle_config_preparation(
 
     config_content = _parse_mkdocs_config(original_config_path)
     if config_content is None:
-        logger.error(
-            "Failed to parse config file %s. Aborting.", original_config_path
-        )
+        logger.error("Failed to parse config file %s. Aborting.", original_config_path)
         return None, None
 
     if theme_custom_dir_override:
@@ -198,17 +193,13 @@ def _handle_config_preparation(
     )
 
     if processed_config:
-        logger.info(
-            "Overwriting original mkdocs.yml with final processed config..."
-        )
+        logger.info("Overwriting original mkdocs.yml with final processed config...")
         try:
             with open(original_config_path, "w", encoding="utf-8") as f_out:
 
                 class NullSafeDumper(yaml.SafeDumper):
                     def represent_none(self, _: None) -> None:
-                        return self.represent_scalar(
-                            "tag:yaml.org,2002:null", "null"
-                        )
+                        return self.represent_scalar("tag:yaml.org,2002:null", "null")
 
                 NullSafeDumper.add_representer(
                     type(None), NullSafeDumper.represent_none

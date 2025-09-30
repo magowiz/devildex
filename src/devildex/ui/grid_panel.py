@@ -25,8 +25,6 @@ class DocsetGridPanel(wx.Panel):
         super().__init__(parent)
 
         self.on_cell_selected_callback = on_cell_selected_callback
-
-        # Grid-specific state
         self.grid: wx.grid.Grid | None = None
         self.custom_highlighted_row_index: int | None = None
         self.custom_row_highlight_attr = wx.grid.GridCellAttr()

@@ -295,16 +295,11 @@ def test_build_sphinx_docs_success(mocker: MockerFixture, tmp_path: Path) -> Non
     mock_execute_command = mocker.patch(
         "devildex.readthedocs.readthedocs_src.execute_command", return_value=("", "", 0)
     )
-
-    # Configure the mock IsolatedVenvManager
     mock_venv_manager_cls = mocker.patch(
         "devildex.readthedocs.readthedocs_src.IsolatedVenvManager"
     )
-    mock_venv_instance = (
-        mock_venv_manager_cls.return_value.__enter__.return_value
-    )  # Get the instance returned by 'with' statement
-    mock_venv_instance.python_executable = "/usr/bin/python"  # Set it to a string
-
+    mock_venv_instance = mock_venv_manager_cls.return_value.__enter__.return_value
+    mock_venv_instance.python_executable = "/usr/bin/python"
     mocker.patch(
         "devildex.readthedocs.readthedocs_src.install_project_and_dependencies_in_venv",
         return_value=True,
@@ -313,11 +308,7 @@ def test_build_sphinx_docs_success(mocker: MockerFixture, tmp_path: Path) -> Non
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     (source_dir / "conf.py").touch()
-
-    # Mock shutil.rmtree to prevent actual file system operations
     mocker.patch("shutil.rmtree")
-
-    # Manually create the expected output directory for the test assertion
     expected_output_dir = tmp_path / "output" / "test_project" / "1.0"
     expected_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -474,7 +465,7 @@ def test_run_clone_vcs_not_found(
     clone_dir = tmp_path / "cloned_repo"
     bzr = False
 
-    with caplog.at_level(logging.ERROR):  # _get_vcs_executable logs error
+    with caplog.at_level(logging.ERROR):
         result = run_clone(repo_url, initial_default_branch, clone_dir, bzr)
 
     assert result is None
@@ -608,7 +599,7 @@ def test_attempt_clone_and_process_result_failure(
         )
 
     assert success is False
-    assert branch == "main"  # Should still return initial_default_branch on failure
+    assert branch == "main"
     assert "Cloning failed for 'test_project'" in caplog.text
 
 
@@ -654,7 +645,6 @@ def test_handle_repository_cloning_existing_clone(
     assert clone_path == clone_dir
     assert effective_branch == "main"
     assert "Repository for 'test_project' already exists" in caplog.text
-    # Ensure _attempt_clone_and_process_result was NOT called
     mocker.patch(
         "devildex.readthedocs.readthedocs_src._attempt_clone_and_process_result"
     )

@@ -150,7 +150,7 @@ def test_gui_only_no_mcp_starts(
 async def test_mcp_only_no_gui(
     free_port: int,
     tmp_path: Path,
-    mcp_config_manager_for_test: ConfigManager,  # Inject the new fixture
+    mcp_config_manager_for_test: ConfigManager,
 ) -> None:
     """Test mcp only no gui."""
     test_name = "single_instance"
@@ -159,18 +159,13 @@ async def test_mcp_only_no_gui(
     assert isinstance(mcp_port, int)
     assert MIN_PORT_NUMBER <= mcp_port <= MAX_PORT_NUMBER
 
-    # Configure the mocked ConfigManager for this test
     mcp_config_manager_for_test.get_mcp_server_enabled.return_value = True
     mcp_config_manager_for_test.get_mcp_server_hide_gui_when_enabled.return_value = True
     mcp_config_manager_for_test.get_mcp_server_port.return_value = mcp_port
 
-    # --- Step 3: Start the main application (DevilDexApp) ---
     app = wx.App(redirect=False)
     app.SetAppName(f"DevilDexTest_{test_name}")
-
-    core_instance = (
-        DevilDexCore()
-    )  # Core will use ConfigManager, which uses ConfigManager, which uses our ENV var
+    core_instance = DevilDexCore()
 
     db_url_for_mcp = core_instance.database_url
     server_started = core_instance.start_mcp_server_if_enabled(db_url_for_mcp)
@@ -201,14 +196,8 @@ async def test_mcp_only_no_gui(
     assert (
         app_config.get_mcp_server_hide_gui_when_enabled() is True
     ), "App's ConfigManager should show GUI hidden."
-
-    # Assertion 3.4: Verify the GUI is hidden
-
     assert main_app.main_frame is not None, "Main frame should be created."
-
     assert not main_app.main_frame.IsShown(), "Main frame should be hidden."
-
-    # --- Step 4: Test MCP client ---
 
     client_config = {
         "mcpServers": {
@@ -219,7 +208,7 @@ async def test_mcp_only_no_gui(
 
     start_time = time.time()
 
-    max_wait = 10  # seconds
+    max_wait = 10
 
     connected = False
 
@@ -251,13 +240,7 @@ async def test_mcp_only_no_gui(
     assert response is not None
 
     assert isinstance(response.data, list)
-
-    # Sleep for a short time to ensure server is stable
-
     await asyncio.sleep(1)
-
-    # --- Cleanup (will be moved to a finally block later) ---
-
     if main_app.main_frame:
 
         wx.CallAfter(main_app.main_frame.Destroy)
@@ -296,7 +279,7 @@ async def test_gui_and_mcp_coexistence(
     client = Client(config, timeout=10)
 
     start_time = time.time()
-    max_wait = 10  # seconds
+    max_wait = 10
     connected = False
     last_exception = None
     response = None

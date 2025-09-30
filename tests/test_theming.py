@@ -80,15 +80,12 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
     webbrowser.open_new_tab(url_to_open)
 
 
-# In tests/test_theming.py
-
-
 @pytest.mark.parametrize("dummy_project_in_tmp_path", [True], indirect=True)
 def test_pdoc3_theme(dummy_project_in_tmp_path: Path) -> None:
     """Test applying a pdoc3 theme."""
     doc_generator = DocStringsSrc(template_dir=PDOC3_THEME_SOURCE)
     pdoc_build_root_dir = dummy_project_in_tmp_path / "pdoc3_docs_output"
-    project_root_for_pdoc3 = dummy_project_in_tmp_path  # This is .../base_dir
+    project_root_for_pdoc3 = dummy_project_in_tmp_path
     pdoc_build_root_dir.mkdir(parents=True, exist_ok=True)
 
     output_content_path_str = doc_generator.generate_docs_from_folder(

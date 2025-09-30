@@ -36,7 +36,7 @@ class TestMainAppLogic(unittest.TestCase):
         self.mock_core.app_paths.active_project_file.unlink = MagicMock()
 
         self.app = DevilDexApp(core=self.mock_core)
-        self.app.OnInit()  # Manually call OnInit for testing setup
+        self.app.OnInit()
 
         wx.Yield()
 

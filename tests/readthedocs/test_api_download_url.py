@@ -52,7 +52,6 @@ def test_get_download_url_returns_none_for_missing_downloads_key() -> None:
 def test_get_download_url_returns_none_for_empty_or_none_details() -> None:
     """Verify it returns None if the version_details dictionary is empty or None."""
     assert _get_download_url({}, "htmlzip") is None
-    # The type hint is `dict`, but let's be robust and test for None as well
     assert _get_download_url(None, "htmlzip") is None
 
 

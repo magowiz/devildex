@@ -72,7 +72,7 @@ def mcp_server_process(
             env = os.environ.copy()
             env["DEVILDEX_MCP_DB_URL"] = db_url
             env["DEVILDEX_MCP_SERVER_PORT"] = str(free_port)
-            env["DEVILDEX_DEV_MODE"] = "1"  # Ensure dev mode is enabled
+            env["DEVILDEX_DEV_MODE"] = "1"
             env["DEVILDEX_DOCSET_BASE_OUTPUT_PATH"] = str(temp_docset_path)
             env["DEVILDEX_USER_DATA_DIR"] = str(temp_user_data_dir)
             server_command = [
@@ -352,9 +352,7 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
     client = Client(config, timeout=45)
     package_name = "six"
     package_version = "1.16.0"
-
     async with client:
-        # 1. Generate Docset
         generation_response = await client.call_tool(
             "generate_docset",
             {
@@ -365,10 +363,8 @@ async def test_generate_and_delete_docset(mcp_server_process: tuple[int, str]) -
         )
         assert "task_id" in generation_response.data
         task_id = generation_response.data["task_id"]
-
-        # 2. Poll Task Status
         status_response = None
-        for _ in range(20):  # Poll for 40 seconds max
+        for _ in range(20):
             await asyncio.sleep(2)
             status_response = await client.call_tool(
                 "get_task_status", {"task_id": task_id}, timeout=5

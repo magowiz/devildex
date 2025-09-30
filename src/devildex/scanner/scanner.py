@@ -153,7 +153,7 @@ master_doc = 'index'
     (test_sphinx_dir_docs / "docs").mkdir(exist_ok=True)
     (test_sphinx_dir_docs / "docs" / "conf.py").write_text(
         """
-# conf.py per un projecto con docs/
+# conf.py for a project with docs/
 project = 'Another Test Project'
 copyright = '2024, Tester'
 author = 'Tester'
@@ -186,7 +186,7 @@ html_theme = 'alabaster'
     test_non_sphinx_dir.mkdir(exist_ok=True)
     (test_non_sphinx_dir / "conf.py").write_text(
         """
-# Questa è una configuration for another thing
+# This is a configuration for another thing
 MY_APP_NAME = "My Custom App"
 DEBUG_MODE = True
 LOG_LEVEL = "INFO"
@@ -266,7 +266,6 @@ def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
     """
     logger.debug("Searching for Python package root in: %s", scan_base_path)
 
-    # Strategy 1: Look for a direct subdirectory with __init__.py
     for item in scan_base_path.iterdir():
         if item.is_dir() and (item / "__init__.py").exists():
             logger.debug(
@@ -274,7 +273,6 @@ def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
             )
             return item
 
-    # Strategy 2: Look for a 'src' directory containing a package
     src_dir = scan_base_path / "src"
     if src_dir.is_dir():
         for item in src_dir.iterdir():
@@ -282,7 +280,6 @@ def _find_python_package_root(scan_base_path: Path) -> Optional[Path]:
                 logger.debug("Found Python package root in src/: %s", item)
                 return item
 
-    # Strategy 3: Check if the base path itself is a package (contains __init__.py)
     if (scan_base_path / "__init__.py").exists():
         logger.debug("Project root itself is a Python package: %s", scan_base_path)
         return scan_base_path

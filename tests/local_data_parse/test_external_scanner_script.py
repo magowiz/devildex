@@ -81,7 +81,7 @@ def test_args_checker_insufficient_args(
     mock_logger_debug: MagicMock, mock_exit: MagicMock
 ) -> None:
     """Verify _args_checker exits if not enough arguments are provided."""
-    with patch("sys.argv", ["_external_scanner_script.py"]):  # Only one arg
+    with patch("sys.argv", ["_external_scanner_script.py"]):
         scanner_script._args_checker()
     mock_logger_debug.assert_called_once_with(
         "DEBUG_HELPER: Error: Output file path not provided as argument."

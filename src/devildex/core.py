@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from devildex.app_paths import AppPaths
-from devildex.config_manager import ConfigManager  # New import for ConfigManager
+from devildex.config_manager import ConfigManager
 from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageDetails
 from devildex.local_data_parse import registered_project_parser
@@ -23,7 +23,7 @@ from devildex.local_data_parse.external_venv_scanner import (
     ExternalVenvScanner,
 )
 from devildex.local_data_parse.registered_project_parser import RegisteredProjectData
-from devildex.mcp_server.mcp_server_manager import McpServerManager  # New import
+from devildex.mcp_server.mcp_server_manager import McpServerManager
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
@@ -324,8 +324,6 @@ class DevilDexCore:
                 return False, msg
 
             package_level_docset_dir = path_of_specific_docset_build.parent
-
-            # Delete the specific build directory
             shutil.rmtree(path_of_specific_docset_build)
             logger.info(
                 f"Successfully deleted docset build: {path_of_specific_docset_build}"

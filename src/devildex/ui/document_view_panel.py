@@ -1,5 +1,3 @@
-# src/devildex/ui/document_view_panel.py
-
 """A wx.Panel that encapsulates the document web view and its navigation controls."""
 
 import logging
@@ -25,7 +23,6 @@ class DocumentViewPanel(wx.Panel):
         super().__init__(parent)
         self.on_home_callback = on_home_callback
 
-        # Widgets managed by this panel
         self.webview: wx.html2.WebView | None = None
         self.back_button: wx.Button | None = None
         self.forward_button: wx.Button | None = None
@@ -90,7 +87,6 @@ class DocumentViewPanel(wx.Panel):
 
         self.back_button.Bind(wx.EVT_BUTTON, self._on_back)
         self.forward_button.Bind(wx.EVT_BUTTON, self._on_forward)
-        # When home is clicked, we call the callback provided by the main app
         self.home_button.Bind(wx.EVT_BUTTON, lambda evt: self.on_home_callback())
 
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -112,8 +108,6 @@ class DocumentViewPanel(wx.Panel):
         """Update the title label displayed above the WebView."""
         if self.package_display_label:
             self.package_display_label.SetLabel(title)
-
-    # --- Internal Event Handlers ---
 
     def _on_webview_navigated(self, event: wx.html2.WebViewEvent) -> None:
         """Update navigation button states when the page changes."""

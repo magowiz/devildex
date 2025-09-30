@@ -41,22 +41,16 @@ def test_bootstrap_database_and_load_data(
     mocker: MockerFixture,
 ) -> None:
     """Verify that bootstrap_database_and_load_data correctly populates the DB."""
-    # Arrange
     mocker.patch(
         "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
     )
     mock_ensure_pkg = mocker.patch(
         "devildex.core.database.ensure_package_entities_exist"
     )
-
-    # Act
     core.bootstrap_database_and_load_data(
         initial_package_source=mock_installed_packages, is_fallback_data=False
     )
-
-    # Assert
     assert mock_ensure_pkg.call_count == len(mock_installed_packages)
-
     requests_call_args = mock_ensure_pkg.call_args_list[0].kwargs
     assert requests_call_args["package_name"] == "requests"
     assert requests_call_args["package_version"] == "2.25.1"
@@ -65,7 +59,6 @@ def test_bootstrap_database_and_load_data(
 
 def test_set_active_project_success(core: DevilDexCore, mocker: MockerFixture) -> None:
     """Verify that a valid project can be set as active."""
-    # Arrange
     project_details = {
         "project_name": "TestProject",
         "project_path": "/path/to/project",
@@ -74,11 +67,7 @@ def test_set_active_project_success(core: DevilDexCore, mocker: MockerFixture) -
     mock_db_manager = mocker.patch("devildex.core.database.DatabaseManager")
     mock_db_manager.get_project_details_by_name.return_value = project_details
     mock_parser = mocker.patch("devildex.core.registered_project_parser")
-
-    # Act
     result = core.set_active_project("TestProject")
-
-    # Assert
     assert result is True
     assert core.registered_project_name == "TestProject"
     assert core.registered_project_path == "/path/to/project"
@@ -90,18 +79,13 @@ def test_set_active_project_not_found_clears_state(
     core: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify behavior when setting a project that is not in the database."""
-    # Arrange
     mock_db_manager = mocker.patch("devildex.core.database.DatabaseManager")
     mock_db_manager.get_project_details_by_name.return_value = None
     mock_parser = mocker.patch("devildex.core.registered_project_parser")
-    core.registered_project_name = "OldProject"  # Set some initial state
-
-    # Act
+    core.registered_project_name = "OldProject"
     result = core.set_active_project("NonExistentProject")
-
-    # Assert
     assert result is False
-    assert core.registered_project_name is None  # Should be cleared
+    assert core.registered_project_name is None
     mock_parser.clear_active_registered_project.assert_called_once()
 
 
@@ -109,14 +93,9 @@ def test_set_active_project_to_none_for_global_view(
     core: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify that setting the active project to None clears state for global view."""
-    # Arrange
     mock_parser = mocker.patch("devildex.core.registered_project_parser")
     core.registered_project_name = "SomeProject"
-
-    # Act
     result = core.set_active_project(None)
-
-    # Assert
     assert result is True
     assert core.registered_project_name is None
     mock_parser.clear_active_registered_project.assert_called_once()
@@ -126,19 +105,11 @@ def test_delete_docset_build_success_and_removes_empty_parent(
     core: DevilDexCore, mocker: MockerFixture, tmp_path: Path
 ) -> None:
     """Verify successful deletion of a docset build and its now-empty parent."""
-    # Arrange
     mock_rmtree = mocker.patch("shutil.rmtree")
     docset_version_path = tmp_path / "requests" / "2.25.1"
     docset_version_path.mkdir(parents=True)
-
-    # FIX: Patch the method on the 'pathlib.Path' class, not on a specific instance.
-    # This is the standard and robust way to mock methods on built-in types.
     mocker.patch("pathlib.Path.iterdir", return_value=iter([]))
-
-    # Act
     success, msg = core.delete_docset_build(str(docset_version_path))
-
-    # Assert
     assert success is True
     assert "Successfully deleted" in msg
     assert mock_rmtree.call_count == EXPECTED_RMTEE_CALL_COUNT
@@ -148,13 +119,8 @@ def test_delete_docset_build_success_and_removes_empty_parent(
 
 def test_delete_docset_build_path_not_exist(core: DevilDexCore, tmp_path: Path) -> None:
     """Verify deletion fails if the target path does not exist."""
-    # Arrange
     non_existent_path = tmp_path / "non" / "existent" / "path"
-
-    # Act
     success, msg = core.delete_docset_build(non_existent_path)
-
-    # Assert
     assert success is False
     assert "does not exist" in msg
 
@@ -163,17 +129,12 @@ def test_delete_docset_build_os_error(
     core: DevilDexCore, mocker: MockerFixture, tmp_path: Path
 ) -> None:
     """Verify deletion handles OSError gracefully."""
-    # Arrange
     mock_rmtree = mocker.patch(
         "shutil.rmtree", side_effect=OSError("Permission denied")
     )
     docset_version_path = tmp_path / "some_docset" / "1.0"
     docset_version_path.mkdir(parents=True)
-
-    # Act
     success, msg = core.delete_docset_build(str(docset_version_path))
-
-    # Assert
     assert success is False
     assert "Permission denied" in msg
     mock_rmtree.assert_called_once_with(docset_version_path)
@@ -184,18 +145,12 @@ def test_delete_docset_build_os_error(
 
 def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> None:
     """Verify successful docset generation path."""
-    # Arrange
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
     mock_orchestrator_instance = mock_orchestrator_class.return_value
     mock_orchestrator_instance.get_detected_doc_type.return_value = "pydoctor"
     mock_orchestrator_instance.grab_build_doc.return_value = "/path/to/generated/docset"
-
     package_data = {"name": "requests", "version": "2.25.1", "project_urls": {}}
-
-    # Act
     success, msg = core.generate_docset(package_data)
-
-    # Assert
     assert success is True
     assert msg == "/path/to/generated/docset"
     mock_orchestrator_class.assert_called_once()
@@ -207,7 +162,6 @@ def test_generate_docset_unknown_type_failure(
     core: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify failure when the orchestrator cannot determine the doc type."""
-    # Arrange
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
     mock_orchestrator_instance = mock_orchestrator_class.return_value
     mock_orchestrator_instance.get_detected_doc_type.return_value = "unknown"
@@ -216,11 +170,7 @@ def test_generate_docset_unknown_type_failure(
     )
 
     package_data = {"name": "requests", "version": "2.25.1"}
-
-    # Act
     success, msg = core.generate_docset(package_data)
-
-    # Assert
     assert success is False
     assert "unable to determine" in msg
     assert "No config file found" in msg
@@ -230,7 +180,6 @@ def test_generate_docset_build_failure(
     core: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify failure when the build process itself fails."""
-    # Arrange
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
     mock_orchestrator_instance = mock_orchestrator_class.return_value
     mock_orchestrator_instance.get_detected_doc_type.return_value = "pydoctor"
@@ -240,11 +189,7 @@ def test_generate_docset_build_failure(
     )
 
     package_data = {"name": "requests", "version": "2.25.1"}
-
-    # Act
     success, msg = core.generate_docset(package_data)
-
-    # Assert
     assert success is False
     assert "Failure nella generation" in msg
     assert "pydoctor command failed" in msg
@@ -252,13 +197,8 @@ def test_generate_docset_build_failure(
 
 def test_generate_docset_missing_input_data(core: DevilDexCore) -> None:
     """Verify early exit if package name or version is missing."""
-    # Arrange
-    package_data = {"name": "requests"}  # Missing version
-
-    # Act
+    package_data = {"name": "requests"}
     success, msg = core.generate_docset(package_data)
-
-    # Assert
     assert success is False
     assert "missing package name or version" in msg
 
@@ -269,7 +209,6 @@ def test_scan_project_with_explicit_dependencies(
     mocker: MockerFixture,
 ) -> None:
     """Verify that scan_project filters packages based on explicit dependencies."""
-    # Arrange
     core.registered_project_name = "TestProject"
     core.registered_project_python_executable = "/path/to/python"
     mocker.patch(
@@ -278,11 +217,7 @@ def test_scan_project_with_explicit_dependencies(
     )
     mock_scanner = mocker.patch("devildex.core.ExternalVenvScanner").return_value
     mock_scanner.scan_packages.return_value = mock_installed_packages
-
-    # Act
     result = core.scan_project()
-
-    # Assert
     assert result is not None
     assert len(result) == EXPECTED_SCANNED_PACKAGES_EXPLICIT
     package_names = {pkg.name for pkg in result}
@@ -303,24 +238,15 @@ def test_scan_project_no_explicit_dependencies(
     )
     mock_scanner = mocker.patch("devildex.core.ExternalVenvScanner").return_value
     mock_scanner.scan_packages.return_value = mock_installed_packages
-
-    # Act
     result = core.scan_project()
-
-    # Assert
     assert result is not None
     assert len(result) == EXPECTED_SCANNED_PACKAGES_NO_EXPLICIT
 
 
 def test_scan_project_no_project_active(core: DevilDexCore) -> None:
     """Verify that scan_project returns None when no project is active."""
-    # Arrange
     core.registered_project_name = None
-
-    # Act
     result = core.scan_project()
-
-    # Assert
     assert result is None
 
 
@@ -330,20 +256,15 @@ def test_bootstrap_database_and_load_data_fallback(
     mocker: MockerFixture,
 ) -> None:
     """Verify that bootstrap_database_and_load_data handles fallback data correctly."""
-    # Arrange
     mocker.patch(
         "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
     )
     mock_ensure_pkg = mocker.patch(
         "devildex.core.database.ensure_package_entities_exist"
     )
-
-    # Act
     core.bootstrap_database_and_load_data(
         initial_package_source=mock_installed_packages, is_fallback_data=True
     )
-
-    # Assert
     requests_call_args = mock_ensure_pkg.call_args_list[0].kwargs
     assert "project_name" not in requests_call_args
 
@@ -352,7 +273,6 @@ def test_bootstrap_database_and_load_data_missing_pkg_data(
     core: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify that packages with missing name or version are skipped."""
-    # Arrange
     mocker.patch(
         "devildex.core.DevilDexCore._bootstrap_database_read_db", return_value=[]
     )
@@ -360,36 +280,26 @@ def test_bootstrap_database_and_load_data_missing_pkg_data(
         "devildex.core.database.ensure_package_entities_exist"
     )
     packages = [PackageDetails(name="requests", version=None, project_urls={})]
-
-    # Act
     core.bootstrap_database_and_load_data(
         initial_package_source=packages, is_fallback_data=False
     )
 
     mock_ensure_pkg.assert_not_called()
 
+
 def test_list_package_dirs_no_base_dir(core: DevilDexCore, tmp_path: Path) -> None:
     """Verify list_package_dirs returns empty list if base directory doesn't exist."""
     core.docset_base_output_path = tmp_path / "non_existent_dir"
-
-    # Act
     result = core.list_package_dirs()
-
-    # Assert
     assert result == []
 
 
 def test_dev_mode_paths(mocker: MockerFixture, tmp_path: Path) -> None:
     """Verify that DEV_MODE uses the correct paths."""
-    # Arrange
     mocker.patch.dict("os.environ", {"DEVILDEX_DEV_MODE": "1"})
     mock_app_paths_class = mocker.patch("devildex.core.AppPaths")
     mock_app_paths_instance = mock_app_paths_class.return_value
     mock_app_paths_instance.docsets_base_dir = tmp_path / "docsets"
     mock_app_paths_instance.database_path = tmp_path / "devildex_test.db"
-
-    # Act
     core = DevilDexCore()
-
-    # Assert
     assert core.docset_base_output_path == mock_app_paths_instance.docsets_base_dir

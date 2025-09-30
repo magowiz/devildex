@@ -64,7 +64,7 @@ def _get_unique_branches_to_attempt(initial_default_branch: str) -> list[str]:
     potential_branches = [initial_default_branch, "master", "main"]
     unique_branches: list[str] = []
     for b_candidate in potential_branches:
-        if b_candidate:  # Ensure candidate is not None or empty string
+        if b_candidate:
             stripped_candidate = b_candidate.strip()
             if stripped_candidate and stripped_candidate not in unique_branches:
                 unique_branches.append(stripped_candidate)
@@ -81,7 +81,7 @@ def _get_vcs_executable(bzr: bool) -> str | None:
             )
             return None
         return git_exe
-    else:  # bzr
+    else:
         bzr_exe = shutil.which("bzr")
         if not bzr_exe:
             logger.error(
@@ -103,7 +103,6 @@ def _attempt_single_branch_clone(
 
     Handles directory preparation, command construction, and execution.
     """
-    # 1. Prepare clone directory
     if clone_dir_path.exists():
         logger.info(f"Cleaning up existing clone directory: {clone_dir_path}")
         try:
@@ -114,7 +113,6 @@ def _attempt_single_branch_clone(
             )
             return CloneAttemptStatus.FAILED_CRITICAL_PREPARE_DIR
 
-    # 2. Construct command
     cmd_list: list[str]
     if not bzr:
         cmd_list = [
@@ -127,10 +125,9 @@ def _attempt_single_branch_clone(
             repo_url,
             str(clone_dir_path),
         ]
-    else:  # bzr
+    else:
         cmd_list = [vcs_executable_path, "branch", repo_url, str(clone_dir_path)]
 
-    # 3. Execute command
     try:
         logger.debug(f"Executing clone command: {' '.join(cmd_list)}")
         result = subprocess.run(  # noqa: S603
@@ -141,7 +138,6 @@ def _attempt_single_branch_clone(
             encoding="utf-8",
         )
         if result.returncode == 0:
-            # Logged by the caller upon success to include full context
             return CloneAttemptStatus.SUCCESS
         else:
             logger.warning(
@@ -152,8 +148,6 @@ def _attempt_single_branch_clone(
             )
             return CloneAttemptStatus.FAILED_RETRYABLE
     except FileNotFoundError:
-        # This implies the vcs_executable_path, though found initially,
-        # became unavailable or was incorrect for the subprocess.
         logger.exception(
             f"Error: VCS command ({vcs_executable_path}) not found "
             "during subprocess.run. "
@@ -198,7 +192,6 @@ def run_clone(
 
     vcs_executable_path = _get_vcs_executable(bzr)
     if not vcs_executable_path:
-        # Error is logged by _get_vcs_executable
         return None
 
     cloned_branch_name: str | None = None
@@ -215,13 +208,13 @@ def run_clone(
                 f"from {repo_url} into {clone_dir_path}"
             )
             cloned_branch_name = branch_to_try
-            break  # Exit loop on first successful clone
+            break
         elif status == CloneAttemptStatus.FAILED_CRITICAL_PREPARE_DIR:
             logger.error(
                 "Critical error preparing clone directory. Aborting all "
                 "clone attempts for this repository."
             )
-            return None  # Stop all attempts for this repo
+            return None
         elif status == CloneAttemptStatus.FAILED_CRITICAL_VCS_NOT_FOUND_EXEC:
             logger.error(
                 "Critical error: VCS command not found during execution. "
@@ -771,7 +764,7 @@ def download_readthedocs_source_and_build(
         bzr,
     ) = _prepare_rtd_build_environment(project_name, clone_base_dir_override)
 
-    if not project_slug or not actual_clone_base_dir:  # Check if preparation failed
+    if not project_slug or not actual_clone_base_dir:
         return False
     cloning_conf = RtdCloningConfig(
         repo_url=repo_url_from_api,

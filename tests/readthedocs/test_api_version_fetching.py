@@ -40,7 +40,6 @@ class MockResponse:
 
 def test_fetch_available_versions_single_page(mocker: MockerFixture) -> None:
     """Verify it correctly fetches versions from a single API page."""
-    # Arrange
     mock_api_response = {
         "count": 2,
         "next": None,
@@ -53,11 +52,7 @@ def test_fetch_available_versions_single_page(mocker: MockerFixture) -> None:
         "requests.get",
         return_value=MockResponse(json_data=mock_api_response, status_code=200),
     )
-
-    # Act
     versions = _fetch_available_versions("my-project")
-
-    # Assert
     assert versions is not None
     assert len(versions) == EXPECTED_VERSION_COUNT_SINGLE_PAGE
     assert versions[0]["slug"] == "stable"
@@ -66,7 +61,6 @@ def test_fetch_available_versions_single_page(mocker: MockerFixture) -> None:
 
 def test_fetch_available_versions_with_pagination(mocker: MockerFixture) -> None:
     """Verify it correctly handles API pagination across multiple pages."""
-    # Arrange
     page1_response = {
         "count": 2,
         "next": "http://api.example.com/page2",
@@ -80,11 +74,7 @@ def test_fetch_available_versions_with_pagination(mocker: MockerFixture) -> None
             MockResponse(json_data=page2_response, status_code=200),
         ],
     )
-
-    # Act
     versions = _fetch_available_versions("my-project")
-
-    # Assert
     assert versions is not None
     assert len(versions) == EXPECTED_VERSION_COUNT_PAGINATION
     assert [v["slug"] for v in versions] == ["v2.0", "v1.0"]

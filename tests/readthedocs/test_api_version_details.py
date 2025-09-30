@@ -34,7 +34,6 @@ class MockResponse:
 
 def test_fetch_version_details_success(mocker: MockerFixture) -> None:
     """Verify it correctly returns data on a successful API call."""
-    # Arrange
     project_slug = "my-project"
     version_slug = "stable"
     mock_api_response = {

@@ -22,7 +22,6 @@ def test_init_script_content_not_loaded(
     mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that an error is logged if the helper script content cannot be loaded."""
-    # Arrange
     mocker.patch(
         "devildex.local_data_parse.external_venv_scanner.ExternalVenvScanner._load_helper_script_content",
         return_value=None,
@@ -221,22 +220,16 @@ def test_execute_helper_script_with_stdout(
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
         args=[], returncode=0, stdout="Some output"
     )
-    # Mock the constructor's checks
     mocker.patch("pathlib.Path.is_file", return_value=True)
     mocker.patch("os.access", return_value=True)
-    # Mock the helper script content loading
     mocker.patch(
         "devildex.local_data_parse.external_venv_scanner.ExternalVenvScanner._load_helper_script_content",
         return_value="dummy script content",
     )
     scanner = ExternalVenvScanner(python_executable_path="/usr/bin/python3")
-
-    # Act
     caplog.clear()
     with caplog.at_level(logging.DEBUG):
         scanner._execute_helper_script("any/path")
-
-    # Assert
     assert "STDOUT (diagnostic) of helper script" in caplog.text
 
 
@@ -244,16 +237,11 @@ def test_load_helper_script_content_not_a_file(
     mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that an error is logged when the helper script path is not a file."""
-    # Arrange
     mock_path = mocker.MagicMock()
     mock_path.__truediv__.return_value.is_file.return_value = False
     mocker.patch("importlib.resources.files", return_value=mock_path)
-
-    # Act
     with caplog.at_level(logging.ERROR):
         result = ExternalVenvScanner._load_helper_script_content()
-
-    # Assert
     assert result is None
     assert "not found as file" in caplog.text
 
@@ -262,18 +250,13 @@ def test_read_and_process_output_file_empty_file(
     mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that an empty file is handled correctly."""
-    # Arrange
     mock_path_instance = mocker.MagicMock(spec=Path)
     mock_path_instance.is_file.return_value = True
     mock_path_instance.stat.return_value.st_size = 100
     mock_path_instance.read_text.return_value = " "
     scanner = ExternalVenvScanner(python_executable_path="/fake/path")
-
-    # Act
     with caplog.at_level(logging.INFO):
         result = scanner._read_and_process_output_file(mock_path_instance)
-
-    # Assert
     assert result == []
     assert "No JSON content" in caplog.text
 
@@ -282,7 +265,6 @@ def test_scan_packages_logs_completion(
     mocker: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Verify that a successful scan logs the completion message."""
-    # Arrange
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
         args=[], returncode=0
     )
@@ -301,10 +283,6 @@ def test_scan_packages_logs_completion(
     scanner = ExternalVenvScanner(
         python_executable_path=str(temp_file_path.parent / "python")
     )
-
-    # Act
     with caplog.at_level(logging.DEBUG):
         scanner.scan_packages()
-
-    # Assert
     assert "Scan complete" in caplog.text

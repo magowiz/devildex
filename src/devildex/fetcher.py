@@ -151,7 +151,7 @@ class PackageSourceFetcher:
 
     @staticmethod
     def _is_valid_vcs_url(url: str) -> bool:
-        if not url or not isinstance(url, str):  # Added type check
+        if not url or not isinstance(url, str):
             return False
         return any(
             host in url for host in ["github.com", "gitlab.com", "bitbucket.org"]
@@ -297,8 +297,6 @@ class PackageSourceFetcher:
             if temp_base_dir.exists():
                 shutil.rmtree(temp_base_dir)
             temp_base_dir.mkdir(parents=True, exist_ok=True)
-            # For VCS archives, we don't want to follow redirects to avoid downloading
-            # the main branch by mistake.
             allow_redirects = not from_vcs
             PackageSourceFetcher._download_file(
                 archive_filename, url, allow_redirects=allow_redirects

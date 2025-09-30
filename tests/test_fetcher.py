@@ -10,9 +10,6 @@ from pytest_mock import MockerFixture
 
 from devildex.fetcher import PackageSourceFetcher
 
-# --- Tests for _sanitize_path_component ---
-
-# A list of tuples: (input_name, expected_sanitized_name)
 sanitize_test_cases = [
     ("normal-package-name", "normal-package-name"),
     ("package with spaces", "package_with_spaces"),
@@ -28,8 +25,6 @@ sanitize_test_cases = [
 @pytest.mark.parametrize(("input_name", "expected"), sanitize_test_cases)
 def test_sanitize_path_component(input_name: str, expected: str) -> None:
     """Verify path component sanitization for various inputs."""
-    # This is a static method, so we can call it directly on the class
-    # without needing an instance.
     sanitized_name = PackageSourceFetcher._sanitize_path_component(input_name)
     assert sanitized_name == expected
 
@@ -47,16 +42,9 @@ def test_ensure_target_dir_exists_success(
     fetcher_instance: PackageSourceFetcher,
 ) -> None:
     """Verify it creates the directory and returns True on success."""
-    # Arrange
     target_dir = fetcher_instance.download_target_path
-    # Pre-condition: The directory should not exist before the call
     assert not target_dir.exists()
-
-    # Act
     result = fetcher_instance._ensure_target_dir_exists()
-
-    # Assert
-    # Post-condition: The method should return True and the directory should exist
     assert result is True
     assert target_dir.is_dir()
 
@@ -65,42 +53,23 @@ def test_ensure_target_dir_exists_os_error(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it returns False when directory creation fails with an OSError."""
-    # Arrange
-    # We patch the class method to raise an OSError when called.
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied"))
-
-    # Act
     result = fetcher_instance._ensure_target_dir_exists()
-
-    # Assert
     assert result is False
-
-
-# --- Tests for _cleanup_target_dir_content ---
 
 
 def test_cleanup_target_dir_content_success(
     fetcher_instance: PackageSourceFetcher,
 ) -> None:
     """Verify it removes all files and subdirectories from the target directory."""
-    # Arrange
     target_dir = fetcher_instance.download_target_path
     target_dir.mkdir(parents=True, exist_ok=True)
-
-    # Create some content to be deleted
     (target_dir / "file_to_delete.txt").touch()
     subdir = target_dir / "subdir_to_delete"
     subdir.mkdir()
     (subdir / "nested_file.txt").touch()
-
-    # Pre-condition: The directory contains items
     assert any(target_dir.iterdir())
-
-    # Act
     fetcher_instance._cleanup_target_dir_content()
-
-    # Assert
-    # Post-condition: The directory itself should still exist, but be empty.
     assert target_dir.exists()
     assert not any(target_dir.iterdir())
 
@@ -109,18 +78,11 @@ def test_cleanup_target_dir_content_handles_os_error(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it handles an OSError during cleanup without crashing."""
-    # Arrange
     target_dir = fetcher_instance.download_target_path
     target_dir.mkdir(parents=True, exist_ok=True)
-    (target_dir / "a_file.txt").touch()  # Add a file
-    (target_dir / "a_subdir").mkdir()  # Add a directory
-
-    # Mock shutil.rmtree to fail, simulating a permissions error on a subdirectory
+    (target_dir / "a_file.txt").touch()
+    (target_dir / "a_subdir").mkdir()
     mocker.patch("shutil.rmtree", side_effect=OSError("Permission denied"))
-
-    # Act & Assert
-    # The method should catch the exception and log it, not crash.
-    # So, we just call it and expect no exception to be raised.
     try:
         fetcher_instance._cleanup_target_dir_content()
     except OSError:
@@ -128,8 +90,6 @@ def test_cleanup_target_dir_content_handles_os_error(
             "The _cleanup_target_dir_content method raised an unhandled OSError."
         )
 
-
-# --- Tests for _is_valid_vcs_url ---
 
 vcs_url_test_cases = [
     ("https://github.com/user/repo.git", True),
@@ -149,9 +109,6 @@ def test_is_valid_vcs_url(url: str, expected: str) -> None:
     assert PackageSourceFetcher._is_valid_vcs_url(url) is expected
 
 
-# --- Security Tests for Archive Extraction ---
-
-
 def test_is_path_safe_allows_paths_within_base(tmp_path: Path) -> None:
     """Verify _is_path_safe correctly identifies paths inside the base directory."""
     base_dir = tmp_path.resolve()
@@ -165,11 +122,8 @@ def test_is_path_safe_allows_paths_within_base(tmp_path: Path) -> None:
 def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path) -> None:
     """Verify _is_path_safe rejects paths that resolve outside the base directory."""
     base_dir = tmp_path.resolve()
-    # Path traversal attempt
     unsafe_path1 = base_dir / ".." / "outside_file.txt"
-    # Absolute path outside the base
     unsafe_path2 = Path("/etc/passwd")
-
     assert PackageSourceFetcher._is_path_safe(base_dir, unsafe_path1) is False
     assert PackageSourceFetcher._is_path_safe(base_dir, unsafe_path2) is False
 
@@ -177,18 +131,12 @@ def test_is_path_safe_rejects_paths_outside_base(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("member_name", "expected"),
     [
-        # Standard safe cases
         ("file.txt", True),
         ("subdir/file.txt", True),
         ("subdir/deeper/file.txt", True),
-        # Unsafe path traversal
         ("../evil.txt", False),
         ("subdir/../../evil.txt", False),
-        # Unsafe absolute paths (POSIX style)
         ("/absolute/path.txt", False),
-        # Platform-dependent check for Windows-style absolute paths
-        # This path is UNSAFE (is_absolute() -> True) only on Windows.
-        # On Linux/macOS, it's a valid relative filename, so it's SAFE.
         ("C:\\windows\\system32", sys.platform != "win32"),
     ],
 )
@@ -196,8 +144,6 @@ def test_is_member_name_safe(member_name: str, expected: str) -> None:
     """Verify _is_member_name_safe correctly identifies archive member names."""
     assert PackageSourceFetcher._is_member_name_safe(member_name) is expected
 
-
-# --- Tests for _find_vcs_url_in_dict ---
 
 find_vcs_url_test_cases = [
     (None, "none", None),
@@ -256,16 +202,11 @@ def test_get_vcs_url_uses_local_url_first(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify _get_vcs_url returns a local URL without calling PyPI if one is valid."""
-    # Arrange
     fetcher_instance.project_urls = {"Source Code": "https://github.com/local/repo.git"}
     mock_fetch_from_pypi = mocker.patch.object(
         fetcher_instance, "_fetch_project_urls_from_pypi"
     )
-
-    # Act
     found_url = fetcher_instance._get_vcs_url()
-
-    # Assert
     assert found_url == "https://github.com/local/repo.git"
     mock_fetch_from_pypi.assert_not_called()
 
@@ -274,18 +215,13 @@ def test_get_vcs_url_falls_back_to_pypi(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify _get_vcs_url calls PyPI when no local URL is valid."""
-    # Arrange
     fetcher_instance.project_urls = {"Homepage": "https://not-a-vcs.com"}
     mock_fetch_from_pypi = mocker.patch.object(
         fetcher_instance,
         "_fetch_project_urls_from_pypi",
         return_value={"Repository": "https://github.com/pypi/repo.git"},
     )
-
-    # Act
     found_url = fetcher_instance._get_vcs_url()
-
-    # Assert
     assert found_url == "https://github.com/pypi/repo.git"
     mock_fetch_from_pypi.assert_called_once()
 
@@ -294,16 +230,11 @@ def test_get_vcs_url_returns_none_if_no_url_found(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify _get_vcs_url returns None if no valid URL is found anywhere."""
-    # Arrange
-    fetcher_instance.project_urls = {}  # No local URLs
+    fetcher_instance.project_urls = {}
     mock_fetch_from_pypi = mocker.patch.object(
         fetcher_instance, "_fetch_project_urls_from_pypi", return_value=None
     )
-
-    # Act
     found_url = fetcher_instance._get_vcs_url()
-
-    # Assert
     assert found_url is None
     mock_fetch_from_pypi.assert_called_once()
 
@@ -312,26 +243,17 @@ def test_get_vcs_url_caches_result(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify that after the first call, the result is cached and not re-calculated."""
-    # Arrange
     fetcher_instance.project_urls = {}
     mock_fetch_from_pypi = mocker.patch.object(
         fetcher_instance,
         "_fetch_project_urls_from_pypi",
         return_value={"Source": "https://github.com/cached/repo.git"},
     )
-
-    # Act
     first_call_url = fetcher_instance._get_vcs_url()
-    second_call_url = fetcher_instance._get_vcs_url()  # This should hit the cache
-
-    # Assert
+    second_call_url = fetcher_instance._get_vcs_url()
     assert first_call_url == "https://github.com/cached/repo.git"
     assert second_call_url == first_call_url
-    # The expensive network call should only happen once
     mock_fetch_from_pypi.assert_called_once()
-
-
-# --- Tests for _fetch_project_urls_from_pypi ---
 
 
 def test_fetch_from_pypi_success(
@@ -365,16 +287,11 @@ def test_fetch_from_pypi_bad_json(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it returns None when the API response is not valid JSON."""
-    # Arrange
     mock_response = mocker.Mock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.side_effect = json.JSONDecodeError("msg", "doc", 0)
     mocker.patch("requests.get", return_value=mock_response)
-
-    # Act
     result = fetcher_instance._fetch_project_urls_from_pypi()
-
-    # Assert
     assert result is None
 
 
@@ -382,15 +299,9 @@ def test_fetch_from_pypi_missing_keys(
     fetcher_instance: PackageSourceFetcher, mocker: MockerFixture
 ) -> None:
     """Verify it returns None if the JSON response is missing expected keys."""
-    # Arrange
     mock_response = mocker.Mock()
     mock_response.raise_for_status.return_value = None
-    # Simulate a valid JSON response, but without the 'project_urls' key
     mock_response.json.return_value = {"info": {"version": "1.0.0"}}
     mocker.patch("requests.get", return_value=mock_response)
-
-    # Act
     result = fetcher_instance._fetch_project_urls_from_pypi()
-
-    # Assert
     assert result is None

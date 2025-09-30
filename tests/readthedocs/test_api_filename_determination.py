@@ -35,7 +35,6 @@ test_cases = [
         "htmlzip",
         "some-project-feature-branch.zip",
     ),
-    # Case: URL has query parameters that should be ignored
     (
         "another-project",
         "stable",
@@ -43,7 +42,6 @@ test_cases = [
         "htmlzip",
         "another-project.zip",
     ),
-    # Case: download_format is 'htmlzip', should result in '.zip' extension
     (
         "special-case",
         "v1",

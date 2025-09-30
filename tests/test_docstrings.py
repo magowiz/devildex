@@ -151,7 +151,7 @@ def test_build_pdoc_command_no_modules(
     with caplog.at_level(logging.ERROR):
         command = doc_generator._build_pdoc_command(
             python_executable="/usr/bin/python",
-            modules_to_document=[],  # Empty list
+            modules_to_document=[],
             output_directory=tmp_path / "output",
         )
 
@@ -213,7 +213,7 @@ def test_handle_successful_doc_move_existing_destination(
 
     final_docs_destination = tmp_path / "final_docs"
     final_docs_destination.mkdir()
-    (final_docs_destination / "old_file.html").touch()  # Existing content
+    (final_docs_destination / "old_file.html").touch()
 
     mock_cleanup_folder = mocker.patch.object(doc_generator, "cleanup_folder")
     mock_shutil_move = mocker.patch("shutil.move")
@@ -329,11 +329,7 @@ def test_attempt_install_missing_dependency(mocker: MockerFixture) -> None:
 def test_is_pdoc_dummy_module(mocker: MockerFixture) -> None:
     """Verify _is_pdoc_dummy_module correctly identifies dummy modules."""
     doc_generator = DocStringsSrc()
-
-    # Case 1: None module
     assert doc_generator._is_pdoc_dummy_module(None, "any_module") is True
-
-    # Case 2: Module without __file__ or __path__
     mock_module_no_attrs = mocker.MagicMock()
     del mock_module_no_attrs.__file__
     del mock_module_no_attrs.__path__
@@ -342,22 +338,16 @@ def test_is_pdoc_dummy_module(mocker: MockerFixture) -> None:
         doc_generator._is_pdoc_dummy_module(mock_module_no_attrs, "dummy_module")
         is True
     )
-
-    # Case 3: Module with __file__ (real module)
     mock_real_module = mocker.MagicMock()
     mock_real_module.__file__ = "/path/to/real_module.py"
     mock_real_module.__name__ = "real_module"
     assert doc_generator._is_pdoc_dummy_module(mock_real_module, "real_module") is False
-
-    # Case 4: Module with __path__ (real package)
     mock_real_package = mocker.MagicMock()
     mock_real_package.__path__ = ["/path/to/real_package"]
     mock_real_package.__name__ = "real_package"
     assert (
         doc_generator._is_pdoc_dummy_module(mock_real_package, "real_package") is False
     )
-
-    # Case 5: Module with __name__ not matching expected_name
     mock_module_wrong_name = mocker.MagicMock()
     mock_module_wrong_name.__file__ = "/path/to/file.py"
     mock_module_wrong_name.__name__ = "wrong_name"

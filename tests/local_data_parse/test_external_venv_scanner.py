@@ -22,13 +22,8 @@ def mock_python_executable(tmp_path: Path) -> Path:
 
 def test_scan_packages_success(mock_python_executable: Path, mocker: MagicMock) -> None:
     """Verify a successful package scan returns a list of PackageDetails."""
-    # Arrange
-    # 1. Mock the subprocess call
     mock_run = mocker.patch("subprocess.run")
-    # Simulate the external script writing to the temp file
     mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
-
-    # 2. Mock the temporary file to control its content
     mock_temp_file = mocker.patch("tempfile.NamedTemporaryFile")
     temp_file_path = mock_python_executable.parent.parent / "scan.json"
     mock_file_handle = MagicMock()
@@ -80,7 +75,6 @@ def test_scan_packages_empty_json_output(
     mock_python_executable: Path, mocker: MagicMock
 ) -> None:
     """Verify that an empty JSON file (e.g., empty venv) returns an empty list."""
-    # Arrange
     mocker.patch("subprocess.run").return_value = subprocess.CompletedProcess(
         args=[], returncode=0
     )
