@@ -56,15 +56,13 @@ class DevilDexCore:
         self.registered_project_python_executable: Optional[str] = None
         self.mcp_server_manager: Optional[McpServerManager] = None
         self._tasks: dict[str, dict[str, Any]] = {}
-        # Added MCP server manager attribute
         self.gui_warning_callback = gui_warning_callback
 
         if docset_base_output_path:
             self.set_docset_base_output_path(docset_base_output_path)
         else:
-            # Initialize with default from AppPaths if not provided
             self.docset_base_output_path = self.app_paths.docsets_base_dir
-            self._setup_registered_project()  # Call for registered project logic
+            self._setup_registered_project()
 
     def set_docset_base_output_path(self, path: Path) -> None:
         """Set the base output path for docsets and initialize components."""
@@ -77,8 +75,7 @@ class DevilDexCore:
 
     def shutdown(self) -> None:
         """Shut down the core services."""
-        self.stop_mcp_server()  # Call the new method
-        pass  # No other action needed here for MCP server shutdown
+        self.stop_mcp_server()
 
     def _run_generation_task(
         self, task_id: str, package_data: dict, force: bool
@@ -203,9 +200,7 @@ class DevilDexCore:
         with database.get_session() as session:
             docset = (
                 session.query(database.Docset)
-                .filter_by(
-                    package_name=package_name, package_version=package_version
-                )
+                .filter_by(package_name=package_name, package_version=package_version)
                 .first()
             )
             if docset:
@@ -336,7 +331,6 @@ class DevilDexCore:
                 f"Successfully deleted docset build: {path_of_specific_docset_build}"
             )
 
-            # Check if the parent package directory is now empty and delete it if so
             if (
                 package_level_docset_dir.exists()
                 and package_level_docset_dir.is_dir()
@@ -512,7 +506,6 @@ class DevilDexCore:
         base_path = self.docset_base_output_path / package_name
 
         if version:
-            # If version is explicitly provided, construct the path directly
             docset_path = base_path / version
             if docset_path.is_dir():
                 return docset_path
@@ -523,12 +516,9 @@ class DevilDexCore:
                 )
                 return None
 
-        # If no version is provided, try to auto-detect
-        # 1. Check directly in the package directory
         if (base_path / "index.html").is_file():
             return base_path
 
-        # 2. Check one level deep in subdirectories
         for subdir in base_path.iterdir():
             if subdir.is_dir() and (subdir / "index.html").is_file():
                 logger.info(
@@ -559,7 +549,6 @@ class DevilDexCore:
     def get_docsets_info_for_project(self, project_name: str) -> list[dict[str, Any]]:
         """Retrieve information for docsets associated with a specific project."""
         with database.get_session() as session:
-            # Query Docset objects associated with the given project_name
             docsets = session.scalars(
                 select(database.Docset)
                 .join(database.Docset.associated_projects)
@@ -615,7 +604,6 @@ class DevilDexCore:
                 return False
 
             for docset in docsets_to_delete:
-                # Delete files from filesystem
                 path_to_delete = self.get_docset_path(
                     docset.package_name, docset.package_version
                 )
@@ -627,14 +615,12 @@ class DevilDexCore:
                             f"'{docset.package_name}' "
                             f"version '{docset.package_version}': {msg}"
                         )
-                        # Continue to delete from DB even if files not deleted
                 else:
                     logger.warning(
                         f"Core: Docset path not found for '{docset.package_name}' "
                         f"version '{docset.package_version}'. Deleting only from DB."
                     )
 
-                # Delete from database
                 session.delete(docset)
                 logger.info(
                     f"Core: Deleted docset '{docset.package_name}' version "
@@ -685,7 +671,7 @@ class DevilDexCore:
 
     def start_mcp_server_if_enabled(self, db_url: str) -> bool:
         """Start the MCP server if it is enabled in the configuration."""
-        config = ConfigManager()  # Get the singleton instance
+        config = ConfigManager()
         if config.get_mcp_server_enabled():
             logger.info("Core: MCP server is enabled. Starting...")
             if not self.mcp_server_manager:
