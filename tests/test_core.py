@@ -150,7 +150,21 @@ def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> N
     mock_orchestrator_instance.get_detected_doc_type.return_value = "pydoctor"
     mock_orchestrator_instance.grab_build_doc.return_value = "/path/to/generated/docset"
     package_data = {"name": "requests", "version": "2.25.1", "project_urls": {}}
-    success, msg = core.generate_docset(package_data)
+
+    # Mock the threading.Thread to prevent actual thread creation and execution
+    mock_thread_class = mocker.patch("devildex.core.threading.Thread")
+    mock_thread_instance = mock_thread_class.return_value
+    mock_thread_instance.start.return_value = None  # Ensure start does nothing
+
+    task_id = core.generate_docset(package_data, force=True)
+
+    # Manually call the target function to simulate thread execution
+    # This ensures the _tasks dictionary is updated as if the thread ran
+    core._run_generation_task(task_id, package_data, force=True)
+
+    task_status = core.get_task_status(task_id)
+    success, msg = task_status["result"]
+
     assert success is True
     assert msg == "/path/to/generated/docset"
     mock_orchestrator_class.assert_called_once()
@@ -170,7 +184,20 @@ def test_generate_docset_unknown_type_failure(
     )
 
     package_data = {"name": "requests", "version": "2.25.1"}
-    success, msg = core.generate_docset(package_data)
+
+    # Mock the threading.Thread to prevent actual thread creation and execution
+    mock_thread_class = mocker.patch("devildex.core.threading.Thread")
+    mock_thread_instance = mock_thread_class.return_value
+    mock_thread_instance.start.return_value = None  # Ensure start does nothing
+
+    task_id = core.generate_docset(package_data, force=True)
+
+    # Manually call the target function to simulate thread execution
+    core._run_generation_task(task_id, package_data, force=True)
+
+    task_status = core.get_task_status(task_id)
+    success, msg = task_status["result"]
+
     assert success is False
     assert "unable to determine" in msg
     assert "No config file found" in msg
@@ -189,16 +216,45 @@ def test_generate_docset_build_failure(
     )
 
     package_data = {"name": "requests", "version": "2.25.1"}
-    success, msg = core.generate_docset(package_data)
+
+    # Mock the threading.Thread to prevent actual thread creation and execution
+    mock_thread_class = mocker.patch("devildex.core.threading.Thread")
+    mock_thread_instance = mock_thread_class.return_value
+    mock_thread_instance.start.return_value = None  # Ensure start does nothing
+
+    task_id = core.generate_docset(package_data, force=True)
+
+    # Manually call the target function to simulate thread execution
+    core._run_generation_task(task_id, package_data, force=True)
+
+    task_status = core.get_task_status(task_id)
+    success, msg = task_status["result"]
+
     assert success is False
     assert "Failure nella generation" in msg
     assert "pydoctor command failed" in msg
 
 
-def test_generate_docset_missing_input_data(core: DevilDexCore) -> None:
+def test_generate_docset_missing_input_data(core: DevilDexCore, mocker: MockerFixture) -> None:
     """Verify early exit if package name or version is missing."""
     package_data = {"name": "requests"}
-    success, msg = core.generate_docset(package_data)
+
+    # Mock search_for_docset to ensure no existing docsets are found
+    mocker.patch("devildex.core.DevilDexCore.search_for_docset", return_value=[])
+
+    # Mock the threading.Thread to prevent actual thread creation and execution
+    mock_thread_class = mocker.patch("devildex.core.threading.Thread")
+    mock_thread_instance = mock_thread_class.return_value
+    mock_thread_instance.start.return_value = None  # Ensure start does nothing
+
+    task_id = core.generate_docset(package_data)
+
+    # Manually call the target function to simulate thread execution
+    core._run_generation_task(task_id, package_data, force=False)
+
+    task_status = core.get_task_status(task_id)
+    success, msg = task_status["result"]
+
     assert success is False
     assert "missing package name or version" in msg
 
