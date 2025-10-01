@@ -120,7 +120,7 @@ def test_delete_docset_build_success_and_removes_empty_parent(
 def test_delete_docset_build_path_not_exist(core: DevilDexCore, tmp_path: Path) -> None:
     """Verify deletion fails if the target path does not exist."""
     non_existent_path = tmp_path / "non" / "existent" / "path"
-    success, msg = core.delete_docset_build(non_existent_path)
+    success, msg = core.delete_docset_build(str(non_existent_path))
     assert success is False
     assert "does not exist" in msg
 
@@ -235,7 +235,9 @@ def test_generate_docset_build_failure(
     assert "pydoctor command failed" in msg
 
 
-def test_generate_docset_missing_input_data(core: DevilDexCore, mocker: MockerFixture) -> None:
+def test_generate_docset_missing_input_data(
+    core: DevilDexCore, mocker: MockerFixture
+) -> None:
     """Verify early exit if package name or version is missing."""
     package_data = {"name": "requests"}
 
