@@ -16,7 +16,7 @@ a = Analysis(
         ('../../../src/devildex/alembic/versions', 'devildex/alembic/versions'),
         ('../../../src/devildex/alembic/env.py', 'devildex/alembic')
     ],
-    hiddenimports=['sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager'],
+    hiddenimports=['sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager', 'alembic'],
     hookspath=['packaging/pyinstaller/hooks'],
     hooksconfig={},
     runtime_hooks=[],

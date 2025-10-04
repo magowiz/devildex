@@ -20,6 +20,7 @@ a = Analysis(
         'sqlalchemy.dialects.sqlite',
         'pkg_resources',
         'devildex.database.db_manager',
+        'alembic',
     ],
     hookspath=['packaging/pyinstaller/hooks'],
     hooksconfig={},
