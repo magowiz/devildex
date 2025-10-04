@@ -62,7 +62,18 @@ jobs:
   build-macos-wheel:
     if: false
     name: Build macOS Wheel
-      - name: Install Poetry
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry and Export Plugin
         run: |
           pip install poetry
           poetry self add poetry-plugin-export
@@ -175,12 +186,10 @@ jobs:
       - name: Install wxPython
         if: runner.os == 'macOS'
         run: pip install "wxpython==4.2.3"
-      - name: Install wxPython
-        if: runner.os == 'Linux'
-        run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
-
       - name: Install Poetry
-        run: pip install poetry
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
 
       - name: Export requirements.txt
         run: poetry export -f requirements.txt --output requirements.txt
@@ -402,17 +411,21 @@ jobs:
 
           if [ -z "$RELEASE_TYPE" ]; then
             echo "No release type found in commit message. Skipping release."
-            echo "release_type=null" >> "$GITHUB_OUTPUT"
-            echo "current_version=null" >> "$GITHUB_OUTPUT"
-            echo "next_version=null" >> "$GITHUB_OUTPUT"
+            { \
+              echo "release_type=null"; \
+              echo "current_version=null"; \
+              echo "next_version=null"; \
+            } >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           CURRENT_VERSION=$(grep -oP 'version = "\K(\d+\.\d+\.\d+)' pyproject.toml | head -1)
           echo "Current version from pyproject.toml: $CURRENT_VERSION"
 
-          echo "release_type=$RELEASE_TYPE" >> "$GITHUB_OUTPUT"
-          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+            { \
+              echo "release_type=$RELEASE_TYPE"; \
+              echo "current_version=$CURRENT_VERSION"; \
+            } >> "$GITHUB_OUTPUT"
 
       - name: Delete existing GitHub Release (if any)
         env:
