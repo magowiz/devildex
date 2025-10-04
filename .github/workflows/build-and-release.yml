@@ -204,13 +204,13 @@ jobs:
         run: |
           poetry install --no-root
 
-      - name: Debug Alembic installation
+      - name: List installed packages
         if: runner.os == 'Windows'
         run: |
           $VENV_PATH = poetry env info --path
           Write-Host "Poetry virtual environment path: $VENV_PATH"
           & "$VENV_PATH\Scripts\Activate.ps1"
-          pip show alembic
+          pip list
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
