@@ -344,11 +344,6 @@ jobs:
         run: |
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros python3-poetry
 
-      - name: Install project dependencies with Poetry
-        run: |
-          export PATH="/usr/bin:$PATH"
-          poetry install --no-root
-
       - name: Convert pyproject.toml for Poetry 1.x
         run: |
           # Ensure toml is installed for the conversion script
@@ -366,6 +361,18 @@ jobs:
 
           # Sostituisci con la versione compatibile con Poetry 1.x
           mv pyproject.toml.poetry1x pyproject.toml
+
+      - name: Debug Poetry Path
+        run: |
+          echo "PATH: $PATH"
+          which poetry
+          poetry --version
+
+      - name: Install project dependencies with Poetry
+        run: |
+          poetry install --no-root
+
+
 
       - name: Create source tarball
         run: |
