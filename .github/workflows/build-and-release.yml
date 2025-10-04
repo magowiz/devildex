@@ -342,7 +342,7 @@ jobs:
 
       - name: Install pyenv dependencies
         run: |
-          dnf install -y git make zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel bzip2 libtool libyaml-devel rpm-build
+          dnf install -y git make zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel bzip2 libtool libyaml-devel rpm-build pyproject-rpm-macros python3-devel python3-pip python3-setuptools python3-wheel
 
       - name: Install pyenv
         run: |
