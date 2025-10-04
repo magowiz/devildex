@@ -141,7 +141,7 @@ jobs:
           kill %1
 
   test-rpm-package:
-    runs-on: ubuntu-latest
+    runs-on: fedora-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download RPM package
