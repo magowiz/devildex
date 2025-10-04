@@ -16,10 +16,6 @@ permissions:
 jobs:
   build-linux-wheel:
     if: false
-    name: Build Linux Wheel
-    runs-on: ubuntu-24.04
-
-    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -27,6 +23,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
 
       - name: Install Poetry and Export Plugin
         run: |
@@ -62,9 +64,6 @@ jobs:
   build-macos-wheel:
     if: false
     name: Build macOS Wheel
-    runs-on: macos-latest
-
-    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -72,6 +71,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
 
       - name: Install Poetry and Export Plugin
         run: |
@@ -100,6 +105,12 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+
       - name: Install Poetry
         run: pip install poetry
 
@@ -114,9 +125,6 @@ jobs:
 
   build-deb-package:
     if: false
-    name: Build Debian Package
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -124,6 +132,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
 
       - name: Install Poetry
         run: pip install poetry
@@ -165,6 +179,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13" # Use a consistent Python version
+
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
 
 
 
@@ -266,6 +286,12 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+
       - name: Install Poetry and Export Plugin
         run: |
           pip install poetry
@@ -339,27 +365,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install toml library
+        run: pip install toml
+
+      - name: Generate platform-specific pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+
       - name: Install RPM build tools and Python packages
         run: |
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
 
-      - name: Convert pyproject.toml for Poetry 1.x
-        run: |
-          # Ensure toml is installed for the conversion script
-          pip3 install toml
 
-          # Run the conversion script
-          # Input: pyproject.toml della root del progetto
-          # Output: a temporary file for the converted pyproject.toml
-          python packaging/rpm/convert_poetry_toml.py pyproject.toml pyproject.toml.poetry1x
-
-      - name: Backup and Replace pyproject.toml with Poetry 1.x version
-        run: |
-          # Esegui il backup del pyproject.toml originale
-          mv pyproject.toml pyproject.toml.bak
-
-          # Sostituisci con la versione compatibile con Poetry 1.x
-          mv pyproject.toml.poetry1x pyproject.toml
 
 
 
