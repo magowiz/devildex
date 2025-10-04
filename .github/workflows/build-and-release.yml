@@ -130,12 +130,10 @@ jobs:
 
       - name: Build Debian package
         run: |
-          # Placeholder for .deb build commands
-          # This will involve creating a debian/ directory and using dpkg-buildpackage
-          echo "Building .deb package..."
-          # For now, let's just create a dummy .deb file for testing the workflow structure
+          cp -r packaging/debian .
+          dpkg-buildpackage -us -uc
           mkdir -p dist/deb
-          echo "This is a dummy deb package" > dist/deb/devildex_1.0.0_amd64.deb
+          mv ../*.deb dist/deb/
 
       - name: Upload Debian Package artifact
         uses: actions/upload-artifact@v4
