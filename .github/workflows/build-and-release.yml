@@ -199,8 +199,20 @@ jobs:
       - name: Export requirements.txt
         run: poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-      - name: Install Project Dependencies
-        run: poetry install
+      - name: Find Poetry Executable
+        id: find_poetry
+        run: |
+          POETRY_PATH=$(find /usr -name poetry -type f -executable | head -n 1)
+          if [ -z "$POETRY_PATH" ]; then
+            echo "Error: Poetry executable not found!"
+            exit 1
+          fi
+          echo "Found Poetry at: $POETRY_PATH"
+          echo "POETRY_BIN=$POETRY_PATH" >> "$GITHUB_ENV"
+
+      - name: Install project dependencies with Poetry
+        run: |
+          $POETRY_BIN install --no-root
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
@@ -362,15 +374,7 @@ jobs:
           # Sostituisci con la versione compatibile con Poetry 1.x
           mv pyproject.toml.poetry1x pyproject.toml
 
-      - name: Debug Poetry Path
-        run: |
-          echo "PATH: $PATH"
-          command -v poetry
-          poetry --version
 
-      - name: Install project dependencies with Poetry
-        run: |
-          poetry install --no-root
 
 
 
