@@ -30,8 +30,13 @@ and generation of various documentation formats.
 
 %files
 %license LICENSE
+%{_bindir}/devildex
+%{_bindir}/devildex-alembic
+%{_bindir}/devildex-gemini-setup
+%{_bindir}/devildex-register-project
 %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}-%{version}.dist-info/
+%{python3_sitelib}/scripts/
 
 %changelog
 * Sat Oct 04 2025 magowiz <magowiz@gmail.com> - 0.2.1-1
