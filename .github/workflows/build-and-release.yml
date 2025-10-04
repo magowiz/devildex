@@ -354,7 +354,7 @@ jobs:
 
       - name: Install RPM build tools and Python packages
         run: |
-          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros python3-poetry
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
 
       - name: Convert pyproject.toml for Poetry 1.x
         run: |
@@ -378,25 +378,12 @@ jobs:
 
 
 
-      - name: Find Poetry Executable
-        id: find_poetry
-        run: |
-          POETRY_PATH=$(find /usr -name poetry -type f -executable | head -n 1)
-          if [ -z "$POETRY_PATH" ]; then
-            echo "Error: Poetry executable not found!"
-            exit 1
-          fi
-          echo "Found Poetry at: $POETRY_PATH"
-          echo "POETRY_BIN=$POETRY_PATH" >> "$GITHUB_ENV"
 
-      - name: Install project dependencies with Poetry
-        run: |
-          "$POETRY_BIN" install --no-root
 
       - name: Create source tarball
         run: |
           mkdir -p ~/rpmbuild/SOURCES/
-          "$POETRY_BIN" build --format sdist
+          poetry build --format sdist
           mv dist/*.tar.gz ~/rpmbuild/SOURCES/devildex-0.2.1.tar.gz
 
       - name: Restore original pyproject.toml
