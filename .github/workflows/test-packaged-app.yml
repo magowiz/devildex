@@ -204,8 +204,10 @@ jobs:
           fi
 
   test-rpm-package:
-    runs-on: fedora-latest
-    if: false
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download RPM package
         uses: actions/download-artifact@v4
