@@ -342,7 +342,15 @@ jobs:
 
       - name: Install RPM build tools
         run: |
-          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel python3-poetry pyproject-rpm-macros
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros
+
+      - name: Install pipx
+        run: pip install pipx
+
+      - name: Install Poetry via pipx
+        run: |
+          pipx install poetry
+          echo "/github/home/.local/bin" >> $GITHUB_PATH
 
       - name: Install pipx
         run: pip install pipx
