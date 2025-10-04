@@ -1,6 +1,6 @@
 [project]
 name = "devildex"
-version = "0.2.0"
+version = "0.2.1"
 description = "A desktop application for discovering, generating, and viewing Python package documentation (docsets). It scans your projects for dependencies, builds their documentation, and provides a unified interface to browse it all locally."
 authors = [
     {name = "magowiz",email = "magowiz@gmail.com"}
@@ -22,6 +22,7 @@ dependencies = [
     "uvicorn (>=0.35.0,<0.36.0)",
     "markdownify (>=1.2.0,<2.0.0)",
     "pyinstaller (>=6.16.0,<7.0.0)",
+    "alembic (>=1.13.1,<2.0.0)",
 ]
 
 [tool.poetry]
