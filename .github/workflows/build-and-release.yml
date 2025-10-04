@@ -212,6 +212,7 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libxtst-dev \
             xvfb \
+            libegl1 \
             python3-gi \
             python3-gi-cairo \
             python3-wxgtk4.0 \
