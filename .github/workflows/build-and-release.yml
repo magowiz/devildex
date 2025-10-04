@@ -349,11 +349,35 @@ jobs:
           export PATH="/usr/bin:$PATH"
           poetry install --no-root
 
+      - name: Convert pyproject.toml for Poetry 1.x
+        run: |
+          # Ensure toml is installed for the conversion script
+          pip install toml
+
+          # Run the conversion script
+          # Input: pyproject.toml della root del progetto
+          # Output: a temporary file for the converted pyproject.toml
+          python packaging/rpm/convert_poetry_toml.py pyproject.toml pyproject.toml.poetry1x
+
+      - name: Backup and Replace pyproject.toml with Poetry 1.x version
+        run: |
+          # Esegui il backup del pyproject.toml originale
+          mv pyproject.toml pyproject.toml.bak
+
+          # Sostituisci con la versione compatibile con Poetry 1.x
+          mv pyproject.toml.poetry1x pyproject.toml
+
       - name: Create source tarball
         run: |
           mkdir -p ~/rpmbuild/SOURCES/
           poetry build --format sdist
           mv dist/*.tar.gz ~/rpmbuild/SOURCES/devildex-0.2.1.tar.gz
+
+      - name: Restore original pyproject.toml
+        if: always() # Ensure this step runs even if previous steps fail
+        run: |
+          # Ripristina il pyproject.toml originale dal backup
+          mv pyproject.toml.bak pyproject.toml
 
       - name: Build RPM package
         run: |
