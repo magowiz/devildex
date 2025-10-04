@@ -40,7 +40,6 @@ jobs:
     if: false
     name: Test macOS PyInstaller Bundle
     runs-on: macos-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
@@ -72,7 +71,6 @@ jobs:
     if: false
     name: Test Linux Debian Package
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download Linux artifact
         uses: actions/download-artifact@v4
@@ -118,7 +116,6 @@ jobs:
     if: false
     name: Test Linux Wheel Package
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download Linux Wheel artifact
         uses: actions/download-artifact@v4
@@ -147,7 +144,6 @@ jobs:
     if: false
     name: Test Windows PyInstaller Bundle (PyInstaller Job)
     runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download PyInstaller Windows bundle
         uses: actions/download-artifact@v4
@@ -176,7 +172,6 @@ jobs:
     if: false
     name: Test macOS PyInstaller Bundle (PyInstaller Job)
     runs-on: macos-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download PyInstaller macOS bundle
         uses: actions/download-artifact@v4
@@ -207,7 +202,6 @@ jobs:
     if: false
     name: Test Linux PyInstaller Bundle
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download PyInstaller Linux bundle
         uses: actions/download-artifact@v4
@@ -242,7 +236,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: fedora:latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download RPM package
         uses: actions/download-artifact@v4
