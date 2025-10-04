@@ -342,7 +342,7 @@ jobs:
 
       - name: Install RPM build tools
         run: |
-          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel python3-poetry
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel python3-poetry pyproject-rpm-macros
 
       - name: Install project dependencies with Poetry
         run: poetry run python3 -m poetry install --no-root
