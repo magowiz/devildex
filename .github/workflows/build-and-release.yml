@@ -342,6 +342,8 @@ jobs:
 
       - name: Install RPM build tools and Python packages
         run: |
+          dnf clean all
+          dnf makecache
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros
 
       - name: Install Poetry globally
