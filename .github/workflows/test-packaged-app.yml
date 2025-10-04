@@ -76,6 +76,27 @@ jobs:
           sleep 20
           kill %1
 
+  test-linux-wheel-package:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download Linux Wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-linux-wheel-artifact
+          path: build/wheel/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+
+      - name: List downloaded files (Linux Wheel)
+        run: ls -R build/wheel/
+
+      - name: Test Installed Wheel (Linux)
+        run: |
+          pip install ./build/wheel/*.whl
+          python -c "import devildex; print('devildex imported successfully')"
+
   test-pyinstaller-windows-package:
     runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
