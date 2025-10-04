@@ -335,22 +335,14 @@ jobs:
     name: Build RPM Package
     runs-on: ubuntu-latest
     container:
-      image: fedora:latest
+      image: fedora:43
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install RPM build tools
         run: |
-          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros
-
-      - name: Install pipx
-        run: pip install pipx
-
-      - name: Install Poetry via pipx
-        run: |
-          pipx install poetry
-          echo "/github/home/.local/bin" >> $GITHUB_PATH
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel python3-poetry pyproject-rpm-macros
 
       - name: Install pipx
         run: pip install pipx
@@ -371,7 +363,6 @@ jobs:
 
       - name: Build RPM package
         run: |
-          export PYTHONPATH=/github/home/.local/pipx/venvs/poetry/lib/python3.13/site-packages:$PYTHONPATH
           rpmbuild -ba packaging/rpm/devildex.spec
 
       - name: Upload RPM Package artifact
