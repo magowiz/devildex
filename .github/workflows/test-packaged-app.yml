@@ -91,6 +91,11 @@ jobs:
       - name: List downloaded files (PyInstaller Windows)
         run: ls -R build/windows-latest/
 
+      - name: Test Built Application (PyInstaller Windows)
+        run: |
+          Start-Process -FilePath ".\build\windows-latest\devildex_windows.exe" -NoNewWindow -PassThru | Wait-Process -Timeout 20
+          Stop-Process -Name "devildex_windows.exe" -ErrorAction SilentlyContinue
+
   test-pyinstaller-macos-package:
     runs-on: macos-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -105,6 +110,13 @@ jobs:
           repository: ${{ github.repository }}
       - name: List downloaded files (PyInstaller macOS)
         run: ls -R build/macos-latest/
+
+      - name: Test Built Application (PyInstaller macOS)
+        run: |
+          chmod +x ./build/macos-latest/devildex_macos
+          ./build/macos-latest/devildex_macos &
+          sleep 20
+          kill %1
 
   test-pyinstaller-linux-package:
     runs-on: ubuntu-latest
@@ -121,6 +133,13 @@ jobs:
       - name: List downloaded files (PyInstaller Linux)
         run: ls -R build/ubuntu-latest/
 
+      - name: Test Built Application (PyInstaller Linux)
+        run: |
+          chmod +x ./build/ubuntu-latest/devildex_linux
+          ./build/ubuntu-latest/devildex_linux &
+          sleep 20
+          kill %1
+
   test-rpm-package:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -135,3 +154,10 @@ jobs:
           repository: ${{ github.repository }}
       - name: List downloaded files (RPM)
         run: ls -R build/rpm/
+
+      - name: Test Built Application (RPM)
+        run: |
+          sudo dnf install -y ./build/rpm/*.rpm
+          devildex &
+          sleep 20
+          kill %1
