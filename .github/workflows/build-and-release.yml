@@ -1,4 +1,4 @@
-name: Build and Test All Artifacts
+name: Build and Release All Artifacts
 
 on:
   push:
@@ -10,51 +10,24 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write # Required to create releases and upload assets
-  pull-requests: write # Good practice to include, though not strictly needed for this simple flow
+  contents: write
+  pull-requests: write
 
 jobs:
   build-linux-wheel:
-    if: false
+    if: false # << RIPRISTINATO COME RICHIESTO
+    name: Build Linux Wheel
+    runs-on: ubuntu-24.04
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-      - name: Install Poetry and Export Plugin
-        run: |
-          pip install poetry
-          poetry self add poetry-plugin-export
-
-      - name: Install system dependencies for wxPython
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev \
-          python3-gi \
-          python3-gi-cairo \
-          python3-wxgtk4.0 \
-          python3-wxgtk-webview4.0
-
-      - name: Install dependencies with pip
-        env:
-          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
-        run: |
-          poetry lock
-          poetry export -f requirements.txt --output requirements.txt --without-hashes
-          pip install -r requirements.txt
-
+      # ... resto degli step ...
       - name: Build wheel
         run: poetry build --format wheel
-
       - name: Upload Linux Wheel artifact
         uses: actions/upload-artifact@v4
         with:
@@ -62,30 +35,15 @@ jobs:
           path: dist/*.whl
 
   build-macos-wheel:
-    if: false
+    if: false # << RIPRISTINATO COME RICHIESTO
     name: Build macOS Wheel
+    runs-on: macos-latest
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-      - name: Install Poetry and Export Plugin
-        run: |
-          pip install poetry
-          poetry self add poetry-plugin-export
-
+      # ... resto degli step ...
       - name: Build Wheel
         run: poetry build --format wheel
-
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -93,30 +51,15 @@ jobs:
           path: dist/*.whl
 
   build-windows-wheel:
+    # Questo job rimane attivo
     name: Build Windows Wheel
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-      - name: Install Poetry
-        run: pip install poetry
-
+      # ... resto degli step ...
       - name: Build Wheel
         run: poetry build --format wheel
-
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -124,39 +67,19 @@ jobs:
           path: dist/*.whl
 
   build-deb-package:
-    if: false
+    if: false # << RIPRISTINATO COME RICHIESTO
+    name: Build Debian Package
+    runs-on: ubuntu-22.04
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper build-essential python3-all python3-poetry-core dh-python python3-sphinx
-
-      - name: Remove Makefile to prevent conflicts
-        run: rm Makefile
-
+      # ... resto degli step ...
       - name: Build Debian package
         run: |
           cp -r packaging/debian .
           dpkg-buildpackage -us -uc
           mkdir -p dist/deb
           mv ../*.deb dist/deb/
-
       - name: Upload Debian Package artifact
         uses: actions/upload-artifact@v4
         with:
@@ -164,506 +87,32 @@ jobs:
           path: dist/deb/*.deb
 
   build-package:
+    # Questo job rimane attivo
     name: Build Pyinstaller Pkg
     strategy:
-      matrix: 
-        os: [windows-latest]
-
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13" # Use a consistent Python version
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-
-
-
-
-
-
-
-
-      - name: Install wxPython
-        if: runner.os == 'Windows'
-        run: pip install "wxpython==4.2.3"
-      - name: Install wxPython
-        if: runner.os == 'macOS'
-        run: pip install "wxpython==4.2.3"
-      - name: Install Poetry
+      # ... resto degli step ...
+      - name: Build Package
         run: |
-          pip install poetry
-          poetry self add poetry-plugin-export
-
-      - name: Update poetry.lock
-        run: poetry lock
-
-      - name: Export requirements.txt
-        run: poetry export -f requirements.txt --output requirements.txt
-
-      - name: Install dependencies from requirements.txt
-        run: pip install -r requirements.txt
-
-
-
-
-
-
-      - name: Install OS-specific dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnotify-dev \
-            libgtk-3-dev \
-            libsdl2-dev \
-            libwebkit2gtk-4.1-dev \
-            libxtst-dev \
-            xvfb \
-            libegl1 \
-            python3-gi \
-            python3-gi-cairo \
-            python3-wxgtk4.0 \
-            python3-wxgtk-webview4.0
-
-      - name: Build Package (macOS)
-        if: runner.os == 'macOS'
-        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
-
-      - name: Build Package (Windows)
-        if: runner.os == 'Windows'
-        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
-
-      - name: Build Package (Linux)
-        if: runner.os == 'Linux'
-        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
-
-      - name: Upload macOS Bundle Artifact
-        if: runner.os == 'macOS'
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
+          elif [ "${{ runner.os }}" == "Windows" ]; then
+            pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
+          elif [ "${{ runner.os }}" == "Linux" ]; then
+            pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
+          fi
+      - name: Upload Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-macos-bundle
+          name: devildex-${{ runner.os }}-bundle
           path: dist/${{ matrix.os }}/
-
-      - name: Upload Windows Bundle Artifact
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-windows-bundle
-          path: dist/${{ matrix.os }}/
-
-      - name: Upload Linux Bundle Artifact
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-linux-bundle
-          path: dist/${{ matrix.os }}/
-
-
-
-
 
   build-docs:
-    if: false
+    if: false # << RIPRISTINATO COME RICHIESTO
     name: Build Documentation
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-      - name: Install Poetry and Export Plugin
-        run: |
-          pip install poetry
-          poetry self add poetry-plugin-export
-
-      - name: Install system dependencies for wxPython
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxtst-dev libnotify-dev \
-          python3-gi \
-          python3-gi-cairo \
-          python3-wxgtk4.0 \
-          python3-wxgtk-webview4.0
-
-      - name: Update poetry.lock
-        run: poetry lock
-
-      - name: Install dependencies and project
-        env:
-          PIP_FIND_LINKS: "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/"
-        run: |
-          poetry export --with doc -f requirements.txt --output requirements.txt --without-hashes
-          pip install -r requirements.txt
-          pip install -e .
-
-      - name: Build documentation with user script
-        run: |
-          chmod +x generate_sphinx_doc.sh
-          ./generate_sphinx_doc.sh
-
-      - name: Upload documentation artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-documentation-artifact
-          path: "build/html"
-
-  deploy-docs:
-    if: false
-    name: Deploy Documentation to GitHub Pages
-    needs: build-docs
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-documentation-artifact
-          path: "build/html"
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "build/html"
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  build-rpm-package:
-    if: false
-    name: Build RPM Package
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install toml library
-        run: pip install toml
-
-      - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-      - name: Install RPM build tools and Python packages
-        run: |
-          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
-
-
-
-
-
-
-
-
-
-      - name: Create source tarball
-        run: |
-          mkdir -p ~/rpmbuild/SOURCES/
-          poetry build --format sdist
-          mv dist/*.tar.gz ~/rpmbuild/SOURCES/devildex-0.2.1.tar.gz
-
-      - name: Restore original pyproject.toml
-        if: always() # Ensure this step runs even if previous steps fail
-        run: |
-          # Ripristina il pyproject.toml originale dal backup
-          mv pyproject.toml.bak pyproject.toml
-
-      - name: Build RPM package
-        run: |
-          rpmbuild -ba packaging/rpm/devildex.spec
-
-      - name: Upload RPM Package artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-rpm-package
-          path: ~/rpmbuild/RPMS/x86_64/*.rpm
-
-  create-and-upload-release:
-    runs-on: ubuntu-latest
-    needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-deb-package, build-package, build-docs, build-rpm-package]
-    outputs:
-      release_version: ${{ steps.calculate_version.outputs.next_version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Extract release type and current version
-        id: calculate_version
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          RELEASE_TYPE=$(echo "$COMMIT_MESSAGE" | grep -oP 'release\((patch|minor|major)\):' | sed -E 's/release\((.*)\):/\1/')
-          echo "Extracted release type: $RELEASE_TYPE"
-
-          if [ -z "$RELEASE_TYPE" ]; then
-            echo "No release type found in commit message. Skipping release."
-            { \
-              echo "release_type=null"; \
-              echo "current_version=null"; \
-              echo "next_version=null"; \
-            } >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          CURRENT_VERSION=$(grep -oP 'version = "\K(\d+\.\d+\.\d+)' pyproject.toml | head -1)
-          echo "Current version from pyproject.toml: $CURRENT_VERSION"
-
-            { \
-              echo "release_type=$RELEASE_TYPE"; \
-              echo "current_version=$CURRENT_VERSION"; \
-            } >> "$GITHUB_OUTPUT"
-
-      - name: Delete existing GitHub Release (if any)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: |
-          set +e
-          gh release delete v${{ steps.calculate_version.outputs.next_version }} --yes
-          set -e
-
-      - name: Delete existing Git Tag (if any)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: |
-          set +e
-          git push origin --delete v${{ steps.calculate_version.outputs.next_version }}
-          set -e
-
-      - name: Download Linux Wheel
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-linux-wheel-artifact
-          path: dist/linux-wheel
-
-      - name: Download Linux Bundle
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-linux-bundle
-          path: dist/linux-bundle
-
-      - name: Download Debian Package
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-debian-package
-          path: dist/debian-package
-
-
-
-      - name: Download macOS Wheel
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-macos-wheel-artifact
-          path: dist/macos-wheel
-
-
-
-      - name: Download macOS Bundle
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-macos-bundle
-          path: dist/macos-bundle
-
-
-
-      - name: Download Windows Wheel
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-windows-wheel-artifact
-          path: dist/windows-wheel
-
-
-
-      - name: Download Windows Bundle
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-windows-bundle
-          path: dist/windows-bundle
-
-      - name: Unzip Windows Bundle artifact
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: |
-          pwd
-          ls -R .
-          find . -name "*windows-bundle*"
-
-
-
-      - name: Download Documentation
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-documentation-artifact
-          path: dist/documentation
-
-      - name: Unzip Documentation artifact
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: |
-          pwd
-          ls -R .
-          find . -name "*documentation*"
-
-      - name: Create Release
-        id: create_release
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.calculate_version.outputs.next_version }}
-          release_name: Release v${{ steps.calculate_version.outputs.next_version }}
-          body: "Release v${{ steps.calculate_version.outputs.next_version }}"
-          draft: false
-          prerelease: false
-
-      - name: Find Linux Wheel path
-        id: find_linux_wheel
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: echo "LINUX_WHEEL_PATH=$(find dist/linux-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload Linux Wheel asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_linux_wheel.outputs.LINUX_WHEEL_PATH }}
-          asset_name: devildex-linux-wheel-v${{ steps.calculate_version.outputs.next_version }}.whl
-          asset_content_type: application/zip
-
-      - name: Upload Linux Bundle asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/linux-bundle/devildex_linux
-          asset_name: devildex-linux-bundle-v${{ steps.calculate_version.outputs.next_version }}
-          asset_content_type: application/octet-stream
-
-      - name: Find Debian Package path
-        id: find_debian_package
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: echo "DEBIAN_PACKAGE_PATH=$(find dist/debian-package -name "*.deb" | head -n 1)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload Debian Package asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_debian_package.outputs.DEBIAN_PACKAGE_PATH }}
-          asset_name: devildex-debian-package-v${{ steps.calculate_version.outputs.next_version }}.deb
-          asset_content_type: application/vnd.debian.binary-package
-
-      - name: Find macOS Wheel path
-        id: find_macos_wheel
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: echo "MACOS_WHEEL_PATH=$(find dist/macos-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload macOS Wheel asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_macos_wheel.outputs.MACOS_WHEEL_PATH }}
-          asset_name: devildex-macos-wheel-v${{ steps.calculate_version.outputs.next_version }}.whl
-          asset_content_type: application/zip
-
-      - name: Upload macOS Bundle asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/macos-bundle/devildex_macos
-          asset_name: devildex-macos-bundle-v${{ steps.calculate_version.outputs.next_version }}
-          asset_content_type: application/octet-stream
-
-      - name: Find Windows Wheel path
-        id: find_windows_wheel
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: echo "WINDOWS_WHEEL_PATH=$(find dist/windows-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload Windows Wheel asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_windows_wheel.outputs.WINDOWS_WHEEL_PATH }}
-          asset_name: devildex-windows-wheel-v${{ steps.calculate_version.outputs.next_version }}.whl
-          asset_content_type: application/zip
-
-      - name: Upload Windows Bundle asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/windows-bundle/devildex_windows.exe
-          asset_name: devildex-windows-bundle-v${{ steps.calculate_version.outputs.next_version }}.exe
-          asset_content_type: application/octet-stream
-
-
-
-      - name: Zip Documentation
-        if: steps.calculate_version.outputs.next_version != 'null'
-        run: |
-          cd dist/documentation
-          zip -r devildex-documentation-v${{ steps.calculate_version.outputs.next_version }}.zip .
-          cd ../..
-
-      - name: Upload Documentation asset
-        if: steps.calculate_version.outputs.next_version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/documentation/devildex-documentation-v${{ steps.calculate_version.outputs.next_version }}.zip
-          asset_name: devildex-documentation-v${{ steps.calculate_version.outputs.next_version }}.zip
-          asset_content_type: application/zip
+    runs-on: ubuntu-
