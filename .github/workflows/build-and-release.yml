@@ -28,7 +28,7 @@ jobs:
       - name: Install toml library
         run: pip install toml
       - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os|lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install Poetry and Export Plugin
         run: |
           pip install poetry
@@ -70,7 +70,7 @@ jobs:
       - name: Install toml library
         run: pip install toml
       - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install Poetry and Export Plugin
         run: |
           pip install poetry
@@ -96,7 +96,7 @@ jobs:
       - name: Install toml library
         run: pip install toml
       - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install Poetry
         run: pip install poetry
       - name: Build Wheel
@@ -121,7 +121,7 @@ jobs:
       - name: Install toml library
         run: pip install toml
       - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install Poetry
         run: pip install poetry
       - name: Install build dependencies
@@ -158,7 +158,7 @@ jobs:
       - name: Install toml library
         run: pip install toml
       - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install wxPython (Windows & macOS)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         run: pip install wxpython==4.2.3
@@ -213,7 +213,7 @@ jobs:
       - name: Install toml library
         run: pip install toml
       - name: Generate platform-specific pyproject.toml
-        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+        run: python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install Poetry and Export Plugin
         run: |
           pip install poetry
@@ -283,7 +283,7 @@ jobs:
       - name: Generate platform-specific pyproject.toml
         run: |
           cp pyproject.toml pyproject.toml.bak
-          python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os | lower }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
+          python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
       - name: Install RPM build tools and Python packages
         run: |
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
