@@ -2,21 +2,26 @@
 
 
 a = Analysis(
-    ['../src/devildex/main.py'],
+    ['../../../src/devildex/main.py'],
     pathex=[],
     binaries=[],
     datas=[
-        ('../src/devildex/local_data_parse/_external_scanner_script.py', 'devildex/local_data_parse'),
-        ('../devildex_config.ini', '.'),
-        ('../pyproject.toml', '.'),
-        ('../requirements.txt', '.'),
-        ('../src/devildex/database/__init__.py', 'devildex/database'),
-        ('../src/devildex/database/db_manager.py', 'devildex/database'),
-        ('../src/devildex/alembic.ini', 'devildex'),
-        ('../src/devildex/alembic/versions', 'devildex/alembic/versions')
+        ('../../../src/devildex/local_data_parse/_external_scanner_script.py', 'devildex/local_data_parse'),
+        ('../../../devildex_config.ini', '.'),
+        ('../../../pyproject.toml', '.'),
+        ('../../../requirements.txt', '.'),
+        ('../../../src/devildex/database/__init__.py', 'devildex/database'),
+        ('../../../src/devildex/database/db_manager.py', 'devildex/database'),
+        ('../../../src/devildex/alembic.ini', 'devildex'),
+        ('../../../src/devildex/alembic/versions', 'devildex/alembic/versions'),
+        ('../../../src/devildex/alembic/env.py', 'devildex/alembic')
     ],
-    hiddenimports=['sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager', 'alembic'],
-    hookspath=[],
+    hiddenimports=[
+        'sqlalchemy.dialects.sqlite',
+        'pkg_resources',
+        'devildex.database.db_manager',
+    ],
+    hookspath=['packaging/pyinstaller/hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
