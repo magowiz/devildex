@@ -21,7 +21,7 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-cd devildex-0.2.1
+%build
 poetry build
 
 %install
