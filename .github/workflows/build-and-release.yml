@@ -108,6 +108,41 @@ jobs:
           name: devildex-windows-wheel-artifact
           path: dist/*.whl
 
+  build-deb-package:
+    name: Build Debian Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev debhelper
+
+      - name: Build Debian package
+        run: |
+          # Placeholder for .deb build commands
+          # This will involve creating a debian/ directory and using dpkg-buildpackage
+          echo "Building .deb package..."
+          # For now, let's just create a dummy .deb file for testing the workflow structure
+          mkdir -p dist/deb
+          echo "This is a dummy deb package" > dist/deb/devildex_1.0.0_amd64.deb
+
+      - name: Upload Debian Package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-debian-package
+          path: dist/deb/*.deb
+
   build-package:
     strategy:
       matrix: 
@@ -211,40 +246,7 @@ jobs:
 
 
 
-  build-deb-package:
-    name: Build Debian Package
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper
-
-      - name: Build Debian package
-        run: |
-          # Placeholder for .deb build commands
-          # This will involve creating a debian/ directory and using dpkg-buildpackage
-          echo "Building .deb package..."
-          # For now, let's just create a dummy .deb file for testing the workflow structure
-          mkdir -p dist/deb
-          echo "This is a dummy deb package" > dist/deb/devildex_1.0.0_amd64.deb
-
-      - name: Upload Debian Package artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-debian-package
-          path: dist/deb/*.deb
 
   build-docs:
     name: Build Documentation
@@ -322,7 +324,7 @@ jobs:
 
   create-and-upload-release:
     runs-on: ubuntu-latest
-    needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-package, build-deb-package, build-docs]
+    needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-deb-package, build-package, build-docs]
     outputs:
       release_version: ${{ steps.get_version.outputs.version }}
     steps:
