@@ -166,17 +166,11 @@ jobs:
         with:
           python-version: "3.13" # Use a consistent Python version
 
-      - name: Copy pyproject.toml for Windows
-        if: runner.os == 'Windows'
-        run: cp pyproject.toml.win pyproject.toml
 
-      - name: Copy pyproject.toml for macOS
-        if: runner.os == 'macOS'
-        run: cp pyproject.toml.mac pyproject.toml
 
-      - name: Copy pyproject.toml for Linux
-        if: runner.os == 'Linux'
-        run: cp pyproject.toml.linux pyproject.toml
+
+
+
 
 
 
