@@ -61,6 +61,10 @@ sphinx-copybutton = "^0.5.2"
 ruff = "^0.13.3"
 black = "^25.9.0"
 
+
+[tool.poetry.group.dev.dependencies]
+flatpak-pip-generator = "^25.0.0"
+
 [project.scripts]
 devildex = "devildex.main:main"
 devildex-register-project = "devildex.utils.companion:main"
