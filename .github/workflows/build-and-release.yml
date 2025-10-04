@@ -398,8 +398,9 @@ jobs:
 
       - name: Extract release type and current version
         id: calculate_version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
           RELEASE_TYPE=$(echo "$COMMIT_MESSAGE" | grep -oP 'release\((patch|minor|major)\):' | sed -E 's/release\((.*)\):/\1/')
           echo "Extracted release type: $RELEASE_TYPE"
 
@@ -598,7 +599,9 @@ jobs:
           asset_name: devildex-macos-bundle-v${{ steps.calculate_version.outputs.next_version }}
           asset_content_type: application/octet-stream
 
-if: steps.calculate_version.outputs.next_version != 'null'
+      - name: Find Windows Wheel path
+        id: find_windows_wheel
+        if: steps.calculate_version.outputs.next_version != 'null'
         run: echo "WINDOWS_WHEEL_PATH=$(find dist/windows-wheel -name "*.whl" | head -n 1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload Windows Wheel asset
