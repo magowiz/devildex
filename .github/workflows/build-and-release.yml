@@ -365,7 +365,7 @@ jobs:
       - name: Debug Poetry Path
         run: |
           echo "PATH: $PATH"
-          which poetry
+          command -v poetry
           poetry --version
 
       - name: Install project dependencies with Poetry
