@@ -21,7 +21,8 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-%py3_build
+cd devildex-0.2.1
+poetry build
 
 %install
 %py3_install
