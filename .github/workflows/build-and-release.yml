@@ -223,8 +223,8 @@ jobs:
 
       - name: Set up Flathub remote and install SDK
         run: |
-          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y flathub org.gnome.Platform/x86_64/46 org.gnome.Sdk/x86_64/46
+          flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak --user install -y flathub org.gnome.Platform/x86_64/46 org.gnome.Sdk/x86_64/46
 
       - name: Build Flatpak bundle
         run: flatpak-builder --force-clean build-dir io.github.magowiz.devildex.json --repo=repo
