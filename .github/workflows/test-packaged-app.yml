@@ -2,7 +2,7 @@ name: Test Packaged Application
 
 on:
   workflow_run:
-    workflows: ["Package Desktop Application"]
+    workflows: ["Build and Test All Artifacts"]
     types:
       - completed
 
