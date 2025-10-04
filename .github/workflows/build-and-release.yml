@@ -204,6 +204,10 @@ jobs:
         run: |
           poetry install --no-root
 
+      - name: Debug Alembic installation
+        if: runner.os == 'Windows'
+        run: poetry run pip show alembic
+
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
