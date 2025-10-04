@@ -327,7 +327,8 @@ jobs:
   build-rpm-package:
     name: Build RPM Package
     runs-on: ubuntu-latest
-
+    container:
+      image: fedora:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -339,8 +340,7 @@ jobs:
 
       - name: Install RPM build tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y rpm rpm-build rpmlint
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel
 
       - name: Create source tarball
         run: |
