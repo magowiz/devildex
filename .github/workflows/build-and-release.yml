@@ -142,7 +142,7 @@ jobs:
           path: dist/deb/*.deb
 
   build-package:
-    name: Build Pyinstaller Bundle/Package
+    name: Build Pyinstaller Package
     strategy:
       matrix: 
         os: [windows-latest, macos-latest, ubuntu-latest]
