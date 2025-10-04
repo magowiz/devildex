@@ -11,7 +11,7 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
-
+BuildRequires:  pyproject-rpm-macros
 
 %description
 Devildex is a comprehensive tool designed to streamline the management
@@ -21,12 +21,10 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-%build
-%build
-python3 -m poetry build
+%pyproject_wheel
 
 %install
-%py3_install
+%pyproject_install
 
 %files
 %license LICENSE
