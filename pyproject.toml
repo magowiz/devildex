@@ -29,7 +29,8 @@ dependencies = [
 
 [tool.poetry]
 packages = [
-    { include = "devildex", from = "src" }
+    { include = "devildex", from = "src" },
+    { include = "scripts" },
 ]
 
 [tool.poetry.group.packaging.dependencies]
@@ -64,6 +65,7 @@ black = "^25.9.0"
 devildex = "devildex.main:main"
 devildex-register-project = "devildex.utils.companion:main"
 devildex-gemini-setup = "devildex.setup.gemini_cli:main"
+devildex-alembic = "scripts.run_alembic:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
