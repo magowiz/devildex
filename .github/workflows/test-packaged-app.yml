@@ -84,9 +84,21 @@ jobs:
       - name: Test Built Application (Linux)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./build/deb/*.deb
-          export PATH="/usr/bin:$PATH"
-          devildex &
+          sudo apt-get install -y xvfb ./build/deb/*.deb
+          echo "APT-GET install exit code: $?"
+          ls -l /usr/bin/devildex || true # Use || true to prevent the step from failing if devildex is not found yet
+          
+          # Find the devildex executable
+          DEVIDEX_PATH=$(find /usr/bin /usr/local/bin /opt -name devildex -type f -executable | head -n 1)
+          
+          if [ -z "$DEVIDEX_PATH" ]; then
+            echo "Error: devildex executable not found after Debian package installation."
+            exit 1
+          fi
+          
+          echo "Found devildex executable at: $DEVIDEX_PATH"
+          
+          xvfb-run "$DEVIDEX_PATH" &
           PID=$!
           sleep 30
           if ps -p $PID > /dev/null; then
@@ -110,12 +122,18 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
 
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
       - name: List downloaded files (Linux Wheel)
         run: ls -R build/wheel/
 
       - name: Test Installed Wheel (Linux)
         run: |
-          pip install ./build/wheel/*.whl
+          pip install ./build/wheel/devildex-*.whl
+          pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-pyinstaller-windows-package:
@@ -191,8 +209,10 @@ jobs:
 
       - name: Test Built Application (PyInstaller Linux)
         run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
           chmod +x ./build/ubuntu-latest/devildex_linux
-          ./build/ubuntu-latest/devildex_linux &
+          xvfb-run ./build/ubuntu-latest/devildex_linux &
           PID=$!
           sleep 30
           if ps -p $PID > /dev/null; then
@@ -222,8 +242,16 @@ jobs:
 
       - name: Test Built Application (RPM)
         run: |
+          sudo dnf install -y xorg-x11-server-Xvfb
+          
+          # Install Python dependencies using pip
+          pip install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
+          
+          # Install wxpython separately as it's a direct URL dependency
+          pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
+          
           sudo dnf install -y ./build/rpm/*.rpm
-          devildex &
+          xvfb-run devildex &
           PID=$!
           sleep 30
           if ps -p $PID > /dev/null; then
