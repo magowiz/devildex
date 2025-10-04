@@ -191,6 +191,9 @@ jobs:
           pip install poetry
           poetry self add poetry-plugin-export
 
+      - name: Update poetry.lock
+        run: poetry lock
+
       - name: Export requirements.txt
         run: poetry export -f requirements.txt --output requirements.txt
 
