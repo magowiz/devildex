@@ -75,3 +75,48 @@ jobs:
           devildex &
           sleep 20
           kill %1
+
+  test-pyinstaller-windows-package:
+    runs-on: windows-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download PyInstaller Windows bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-windows-bundle
+          path: build/windows-latest/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+      - name: List downloaded files (PyInstaller Windows)
+        run: ls -R build/windows-latest/
+
+  test-pyinstaller-macos-package:
+    runs-on: macos-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download PyInstaller macOS bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-macos-bundle
+          path: build/macos-latest/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+      - name: List downloaded files (PyInstaller macOS)
+        run: ls -R build/macos-latest/
+
+  test-rpm-package:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download RPM package
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-rpm-package
+          path: build/rpm/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+      - name: List downloaded files (RPM)
+        run: ls -R build/rpm/
