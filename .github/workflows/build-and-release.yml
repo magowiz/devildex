@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   build-linux-wheel:
-    if: false
     name: Build Linux Wheel
     runs-on: ubuntu-24.04
 
@@ -60,7 +59,6 @@ jobs:
           path: dist/*.whl
 
   build-macos-wheel:
-    if: false
     name: Build macOS Wheel
     runs-on: macos-latest
 
@@ -86,7 +84,6 @@ jobs:
           path: dist/*.whl
 
   build-windows-wheel:
-    if: false
     name: Build Windows Wheel
     runs-on: windows-latest
 
@@ -112,7 +109,6 @@ jobs:
           path: dist/*.whl
 
   build-deb-package:
-    if: false
     name: Build Debian Package
     runs-on: ubuntu-latest
     steps:
@@ -149,7 +145,6 @@ jobs:
           path: dist/deb/*.deb
 
   build-package:
-    if: false
     name: Build Pyinstaller Pkg
     strategy:
       matrix: 
@@ -268,7 +263,6 @@ jobs:
 
 
   build-docs:
-    if: false
     name: Build Documentation
     runs-on: ubuntu-24.04
     steps:
@@ -317,7 +311,6 @@ jobs:
           path: "build/html"
 
   deploy-docs:
-    if: false
     name: Deploy Documentation to GitHub Pages
     needs: build-docs
     runs-on: ubuntu-latest
@@ -462,11 +455,7 @@ jobs:
           name: devildex-debian-package
           path: dist/debian-package
 
-      - name: Unzip linux bundle artifact
-        run: |
-          pwd
-          ls -R .
-          find . -name "*linux-bundle*"
+
 
       - name: Download macOS Wheel
         if: steps.get_version.outputs.version != 'null'
@@ -484,12 +473,7 @@ jobs:
           name: devildex-macos-bundle
           path: dist/macos-bundle
 
-      - name: Unzip macOS Bundle artifact
-        if: steps.get_version.outputs.version != 'null'
-        run: |
-          pwd
-          ls -R .
-          find . -name "*macos-bundle*"
+
 
       - name: Download Windows Wheel
         if: steps.get_version.outputs.version != 'null'
