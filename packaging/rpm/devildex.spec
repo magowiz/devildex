@@ -1,3 +1,4 @@
+%{?_disable_debug_package}
 Name:           devildex
 Version:        0.2.1
 Release:        1%{?dist}
