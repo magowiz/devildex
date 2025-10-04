@@ -177,6 +177,7 @@ jobs:
         run: |
           pip install poetry
           poetry self add poetry-plugin-export
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Update poetry.lock
         run: poetry lock
