@@ -13,10 +13,11 @@ a = Analysis(
         ('../src/devildex/database/__init__.py', 'devildex/database'),
         ('../src/devildex/database/db_manager.py', 'devildex/database'),
         ('../src/devildex/alembic.ini', 'devildex'),
-        ('../src/devildex/alembic/versions', 'devildex/alembic/versions')
+        ('../src/devildex/alembic/versions', 'devildex/alembic/versions'),
+        ('../src/devildex/alembic/env.py', 'devildex/alembic')
     ],
-    hiddenimports=['sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager', 'alembic'],
-    hookspath=[],
+    hiddenimports=['sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager'],
+    hookspath=['../pyinstaller_hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
