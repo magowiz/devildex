@@ -352,9 +352,9 @@ jobs:
 
       - name: Create source tarball
         run: |
-          python -m pip install setuptools
+          mkdir -p ~/rpmbuild/SOURCES/
           poetry build --format sdist
-          mv dist/*.tar.gz packaging/rpm/devildex-0.2.1.tar.gz
+          mv dist/*.tar.gz ~/rpmbuild/SOURCES/devildex-0.2.1.tar.gz
 
       - name: Build RPM package
         run: |
