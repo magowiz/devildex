@@ -58,8 +58,8 @@ jobs:
       - name: Download Linux artifact
         uses: actions/download-artifact@v4
         with:
-          name: devildex-ubuntu-latest-build
-          path: build/
+          name: devildex-debian-package
+          path: build/deb/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -69,7 +69,8 @@ jobs:
 
       - name: Test Built Application (Linux)
         run: |
-          chmod +x ./build/devildex_linux
-          ./build/devildex_linux &
+          sudo apt-get update
+          sudo apt-get install -y ./build/deb/*.deb
+          devildex &
           sleep 20
           kill %1
