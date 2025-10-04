@@ -196,21 +196,15 @@ jobs:
         run: pip install "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
 
       - name: Export requirements.txt
-        run: poetry export -f requirements.txt --output requirements.txt --without-hashes
+        run: poetry export -f requirements.txt --output requirements.txt
+
+      - name: Install dependencies from requirements.txt
+        run: pip install -r requirements.txt
 
 
 
-      - name: Install project dependencies with Poetry
-        run: |
-          poetry install --no-root
 
-      - name: List installed packages
-        if: runner.os == 'Windows'
-        run: |
-          $VENV_PATH = poetry env info --path
-          Write-Host "Poetry virtual environment path: $VENV_PATH"
-          & "$VENV_PATH\Scripts\Activate.ps1"
-          pip list
+
 
       - name: Install OS-specific dependencies (Linux)
         if: runner.os == 'Linux'
