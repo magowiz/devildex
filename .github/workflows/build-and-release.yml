@@ -344,7 +344,8 @@ jobs:
 
       - name: Create source tarball
         run: |
-          python3 setup.py sdist --formats=gztar
+          pip install setuptools
+          poetry build --format sdist
           mv dist/*.tar.gz packaging/rpm/devildex-0.2.1.tar.gz
 
       - name: Build RPM package
