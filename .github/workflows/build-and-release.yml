@@ -128,6 +128,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y dpkg-dev debhelper build-essential python3-all python3-poetry-core dh-python python3-sphinx
 
+      - name: Remove Makefile to prevent conflicts
+        run: rm Makefile
+
       - name: Build Debian package
         run: |
           cp -r packaging/debian .
@@ -142,7 +145,7 @@ jobs:
           path: dist/deb/*.deb
 
   build-package:
-    name: Build Pyinstaller Package
+    name: Build Pyinstaller Pkg
     strategy:
       matrix: 
         os: [windows-latest, macos-latest, ubuntu-latest]
