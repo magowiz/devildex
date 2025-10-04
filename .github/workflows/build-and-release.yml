@@ -223,15 +223,15 @@ jobs:
 
       - name: Build Package (macOS)
         if: runner.os == 'macOS'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
+        run: poetry run pyinstaller --log-level=DEBUG pyinstaller_specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
 
       - name: Build Package (Windows)
         if: runner.os == 'Windows'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
+        run: poetry run pyinstaller --log-level=DEBUG pyinstaller_specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
 
       - name: Build Package (Linux)
         if: runner.os == 'Linux'
-        run: poetry run pyinstaller pyinstaller_specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
+        run: poetry run pyinstaller --log-level=DEBUG pyinstaller_specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
 
       - name: Upload macOS Bundle Artifact
         if: runner.os == 'macOS'
@@ -395,7 +395,6 @@ jobs:
           path: ~/rpmbuild/RPMS/x86_64/*.rpm
 
   create-and-upload-release:
-    if: false
     runs-on: ubuntu-latest
     needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-deb-package, build-package, build-docs, build-rpm-package]
     outputs:
