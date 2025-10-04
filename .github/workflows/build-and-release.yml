@@ -335,15 +335,17 @@ jobs:
     name: Build RPM Package
     runs-on: ubuntu-latest
     container:
-      image: archlinux/archlinux
+      image: rockylinux:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Arch Linux dependencies
+      - name: Install RPM build tools and Python packages
         run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel rpm python python-pip python-setuptools python-wheel python-poetry
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros
+
+      - name: Install Poetry globally
+        run: pip install poetry
 
       - name: Install project dependencies with Poetry
         run: poetry install --no-root
