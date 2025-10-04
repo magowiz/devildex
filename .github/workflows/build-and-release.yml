@@ -381,7 +381,7 @@ jobs:
       - name: Create source tarball
         run: |
           mkdir -p ~/rpmbuild/SOURCES/
-          $POETRY_BIN build --format sdist
+          "$POETRY_BIN" build --format sdist
           mv dist/*.tar.gz ~/rpmbuild/SOURCES/devildex-0.2.1.tar.gz
 
       - name: Restore original pyproject.toml
