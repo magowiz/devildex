@@ -345,7 +345,7 @@ jobs:
       - name: Convert pyproject.toml for Poetry 1.x
         run: |
           # Ensure toml is installed for the conversion script
-          pip install toml
+          pip3 install toml
 
           # Run the conversion script
           # Input: pyproject.toml della root del progetto
