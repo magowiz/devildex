@@ -62,19 +62,10 @@ jobs:
   build-macos-wheel:
     if: false
     name: Build macOS Wheel
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
       - name: Install Poetry
-        run: pip install poetry
+        run: |
+          pip install poetry
+          poetry self add poetry-plugin-export
 
       - name: Build Wheel
         run: poetry build --format wheel
