@@ -10,7 +10,7 @@ Vcs-Git: https://github.com/magowiz/devildex.git
 
 Package: devildex
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3-wxgtk4.0, python3-wxgtk-webview4.0
+Depends: ${python3:Depends}, ${misc:Depends}, python3-wxgtk4.0, python3-wxgtk-webview4.0, libnotify4
 Description: A desktop application for discovering, generating, and viewing Python package documentation.
  DevilDex scans your projects for dependencies, builds their documentation,
  and provides a unified interface to browse it all locally.
