@@ -136,7 +136,7 @@ jobs:
 
       - name: Test Installed Wheel (Linux)
         run: |
-          pip install ./build/wheel/devildex-*.whl
+          pip install ./build/wheel/devildex-*.whl alembic
           pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
