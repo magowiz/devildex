@@ -350,7 +350,7 @@ jobs:
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel
 
       - name: Install Poetry
-        run: pip install poetry
+        run: python -m pip install poetry
 
       - name: Create source tarball
         run: |
