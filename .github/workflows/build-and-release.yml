@@ -176,14 +176,7 @@ jobs:
         if: runner.os == 'Linux'
         run: cp pyproject.toml.linux pyproject.toml
 
-      - name: Install Poetry
-        run: |
-          pip install poetry
-          poetry self add poetry-plugin-export
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Update poetry.lock
-        run: poetry lock
 
       - name: Install wxPython
         if: runner.os == 'Windows'
@@ -225,15 +218,15 @@ jobs:
 
       - name: Build Package (macOS)
         if: runner.os == 'macOS'
-        run: poetry run pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
 
       - name: Build Package (Windows)
         if: runner.os == 'Windows'
-        run: poetry run pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
 
       - name: Build Package (Linux)
         if: runner.os == 'Linux'
-        run: poetry run pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
 
       - name: Upload macOS Bundle Artifact
         if: runner.os == 'macOS'
