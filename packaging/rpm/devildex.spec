@@ -22,7 +22,8 @@ and generation of various documentation formats.
 
 %build
 %build
-poetry build
+%build
+python3 -m poetry build
 
 %install
 %py3_install
