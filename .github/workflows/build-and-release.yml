@@ -344,8 +344,11 @@ jobs:
         run: |
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros
 
-      - name: Install Poetry via pip
-        run: pip install poetry
+      - name: Install pipx
+        run: pip install pipx
+
+      - name: Install Poetry via pipx
+        run: pipx install poetry
 
       - name: Install project dependencies with Poetry
         run: poetry run python3 -m poetry install --no-root
