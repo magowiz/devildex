@@ -111,10 +111,8 @@
     },
     {
       "name": "python3-setuptools-rust",
-      "buildsystem": "simple",
-      "build-commands": [
-        "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"setuptools-rust==1.12.0\" --no-build-isolation"
-      ],
+      "buildsystem": "python-build",
+      "setup-py-install": true,
       "sources": [
         {
           "type": "file",
