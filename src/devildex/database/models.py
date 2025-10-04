@@ -148,6 +148,7 @@ class Docset(Base):  # type: ignore[valid-type,misc]
         default=lambda: datetime.datetime.now(datetime.timezone.utc),
     )
     status = Column(String, nullable=False, default="unknown")
+    notes = Column(Text, nullable=True)
 
     package_info = relationship("PackageInfo", back_populates="docsets")
 

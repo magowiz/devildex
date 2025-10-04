@@ -203,8 +203,17 @@ class DatabaseManager:
             autocommit=False, autoflush=False, bind=cls._engine
         )
 
-        Base.metadata.create_all(bind=cls._engine)
-        logger.info("Database tables checked/created.")
+        from alembic import command
+        from alembic.config import Config
+
+        try:
+            logger.info("Checking for database migrations...")
+            alembic_cfg = Config("alembic.ini")
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Database is up to date.")
+        except Exception:
+            logger.exception("Failed to run database migrations.")
+
 
     @classmethod
     def get_project_details_by_name(
