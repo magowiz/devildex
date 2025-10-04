@@ -5,5 +5,8 @@
 %:
 	dh $@ --with python3
 
+override_dh_auto_build:
+	# Do nothing to prevent dh_auto_build from calling make
+
 override_dh_auto_clean:
 	# Do nothing to prevent dh_auto_clean from calling make distclean
