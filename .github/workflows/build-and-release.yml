@@ -126,7 +126,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper build-essential python3-all python3-poetry-core dh-python
+          sudo apt-get install -y dpkg-dev debhelper build-essential python3-all python3-poetry-core dh-python python3-sphinx
 
       - name: Build Debian package
         run: |
@@ -142,6 +142,7 @@ jobs:
           path: dist/deb/*.deb
 
   build-package:
+    name: Build Pyinstaller Bundle/Package
     strategy:
       matrix: 
         os: [windows-latest, macos-latest, ubuntu-latest]
