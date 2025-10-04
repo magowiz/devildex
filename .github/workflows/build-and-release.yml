@@ -209,34 +209,7 @@ jobs:
           name: devildex-linux-bundle
           path: dist/${{ matrix.os }}/
 
-  build-flatpak:
-    name: Build Flatpak Package
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Install Flatpak and dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak-builder
-
-      - name: Set up Flathub remote and install SDK
-        run: |
-          flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak --user install -y flathub org.gnome.Platform/x86_64/46 org.gnome.Sdk/x86_64/46
-
-      - name: Build Flatpak bundle
-        run: flatpak-builder --force-clean build-dir io.github.magowiz.devildex.json --repo=repo
-
-      - name: Create Flatpak bundle
-        run: flatpak build-bundle repo devildex.flatpak io.github.magowiz.devildex
-
-      - name: Upload Flatpak artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: devildex-flatpak-bundle
-          path: devildex.flatpak
 
   build-docs:
     name: Build Documentation
@@ -314,7 +287,7 @@ jobs:
 
   create-and-upload-release:
     runs-on: ubuntu-latest
-    needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-package, build-docs, build-flatpak]
+    needs: [build-linux-wheel, build-macos-wheel, build-windows-wheel, build-package, build-docs]
     outputs:
       release_version: ${{ steps.get_version.outputs.version }}
     steps:
@@ -417,12 +390,7 @@ jobs:
           ls -R .
           find . -name "*windows-bundle*"
 
-      - name: Download Flatpak Bundle
-        if: steps.get_version.outputs.version != 'null'
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-flatpak-bundle
-          path: dist/flatpak
+
 
       - name: Download Documentation
         if: steps.get_version.outputs.version != 'null'
@@ -532,16 +500,7 @@ jobs:
           asset_name: devildex-windows-bundle-v${{ steps.get_version.outputs.version }}.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload Flatpak Bundle asset
-        if: steps.get_version.outputs.version != 'null'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/flatpak/devildex.flatpak
-          asset_name: devildex-v${{ steps.get_version.outputs.version }}.flatpak
-          asset_content_type: application/vnd.flatpak
+
 
       - name: Zip Documentation
         if: steps.get_version.outputs.version != 'null'
