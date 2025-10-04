@@ -63,7 +63,7 @@ black = "^25.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
-flatpak-pip-generator = "^25.0.0"
+
 
 [project.scripts]
 devildex = "devildex.main:main"
