@@ -208,7 +208,18 @@ class DatabaseManager:
 
         try:
             logger.info("Checking for database migrations...")
-            alembic_cfg = Config("alembic.ini")
+
+            # Build path to alembic.ini within the package
+            current_file_path = Path(__file__).resolve()
+            package_dir = current_file_path.parent.parent
+            alembic_ini_path = package_dir / "alembic.ini"
+
+            alembic_cfg = Config(str(alembic_ini_path))
+
+            # Set script location programmatically
+            alembic_script_location = package_dir / "alembic"
+            alembic_cfg.set_main_option("script_location", str(alembic_script_location))
+
             command.upgrade(alembic_cfg, "head")
             logger.info("Database is up to date.")
         except Exception:
