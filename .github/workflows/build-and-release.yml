@@ -126,7 +126,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper dh-python build-essential python3-all python3-poetry-core
+          sudo apt-get install -y dpkg-dev debhelper build-essential python3-all python3-poetry-core
 
       - name: Build Debian package
         run: |
