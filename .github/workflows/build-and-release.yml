@@ -371,7 +371,7 @@ jobs:
 
       - name: Build RPM package
         run: |
-          export PYTHONPATH=/usr/lib/python3.13/site-packages:$PYTHONPATH
+          export PYTHONPATH=/github/home/.local/pipx/venvs/poetry/lib/python3.13/site-packages:$PYTHONPATH
           rpmbuild -ba packaging/rpm/devildex.spec
 
       - name: Upload RPM Package artifact
