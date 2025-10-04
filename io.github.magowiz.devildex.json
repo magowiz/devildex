@@ -110,6 +110,20 @@
       ]
     },
     {
+      "name": "python3-setuptools-rust",
+      "buildsystem": "simple",
+      "build-commands": [
+        "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"setuptools-rust==1.12.0\" --no-build-isolation"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "url": "https://files.pythonhosted.org/packages/d9/4a/93f0c97751c17014565f07bdc324bee45d396cd1bba83d8e7af92b945f0c/setuptools_rust-1.12.0.tar.gz",
+          "sha256": "d94a93f0c97751c17014565f07bdc324bee45d396cd1bba83d8e7af92b945f0c"
+        }
+      ]
+    },
+    {
       "name": "python3-maturin",
       "buildsystem": "simple",
       "build-commands": [
