@@ -7,6 +7,15 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Optional, cast
 
+def get_base_path():
+    """Get the base path for resources, whether running as script or bundled."""
+    if getattr(sys, 'frozen', False):
+        # Running in a PyInstaller bundle
+        return sys._MEIPASS
+    else:
+        # Running as a normal Python script
+        return Path(__file__).parent.parent
+
 from sqlalchemy import (
     Engine,
     Executable,
@@ -210,17 +219,9 @@ class DatabaseManager:
         try:
             logger.info("Checking for database migrations...")
 
-            if getattr(sys, 'frozen', False):
-                # Running in a PyInstaller bundle
-                bundle_dir = Path(sys._MEIPASS)
-                alembic_ini_path = bundle_dir / 'devildex' / 'alembic.ini'
-                alembic_script_location = bundle_dir / 'devildex' / 'alembic'
-            else:
-                # Running in a normal Python environment
-                current_file_path = Path(__file__).resolve()
-                package_dir = current_file_path.parent.parent
-                alembic_ini_path = package_dir / "alembic.ini"
-                alembic_script_location = package_dir / "alembic"
+            base_path = get_base_path()
+            alembic_ini_path = base_path / 'devildex' / 'alembic.ini'
+            alembic_script_location = base_path / 'devildex' / 'alembic'
 
             alembic_cfg = Config(str(alembic_ini_path))
             alembic_cfg.set_main_option("script_location", str(alembic_script_location))

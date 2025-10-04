@@ -1,0 +1,116 @@
+Test Windows PyInstaller Bundle	Set up job	﻿2025-10-04T20:40:31.5533731Z Current runner version: '2.328.0'
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5586725Z ##[group]Runner Image Provisioner
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5587473Z Hosted Compute Agent
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5589172Z Version: 20250912.392
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5590313Z Commit: d921fda672a98b64f4f82364647e2f10b2267d0b
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5591359Z Build Date: 2025-09-12T15:23:14Z
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5592928Z ##[endgroup]
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5593844Z ##[group]Operating System
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5594934Z Microsoft Windows Server 2025
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5595896Z 10.0.26100
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5596692Z Datacenter
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5597451Z ##[endgroup]
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5598193Z ##[group]Runner Image
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5599115Z Image: windows-2025
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5599863Z Version: 20250929.44.1
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5601497Z Included Software: https://github.com/actions/runner-images/blob/win25/20250929.44/images/windows/Windows2025-Readme.md
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5603643Z Image Release: https://github.com/actions/runner-images/releases/tag/win25%2F20250929.44
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5605669Z ##[endgroup]
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5610011Z ##[group]GITHUB_TOKEN Permissions
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5612499Z Actions: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5612999Z Attestations: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5613519Z Checks: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5613909Z Contents: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5614392Z Deployments: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5614812Z Discussions: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5615259Z Issues: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5615662Z Metadata: read
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5616123Z Models: read
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5616512Z Packages: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5617000Z Pages: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5617454Z PullRequests: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5617912Z RepositoryProjects: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5618421Z SecurityEvents: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5618942Z Statuses: write
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5619401Z ##[endgroup]
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5621401Z Secret source: Actions
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.5622024Z Prepare workflow directory
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.6013148Z Prepare all required actions
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.6051740Z Getting action download info
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:31.8262819Z Download action repository 'actions/download-artifact@v4' (SHA:d3f86a106a0bac45b974a628896c90dbdf5c8093)
+Test Windows PyInstaller Bundle	Set up job	2025-10-04T20:40:32.2731701Z Complete job name: Test Windows PyInstaller Bundle
+Test Windows PyInstaller Bundle	Download Windows artifact	﻿2025-10-04T20:40:32.4106476Z ##[group]Run actions/download-artifact@v4
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4107483Z with:
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4107856Z   name: devildex-windows-bundle
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4108293Z   path: build/
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4108642Z   run-id: 18249211870
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4109273Z   github-token: ***
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4109664Z   repository: magowiz/devildex
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4110102Z   merge-multiple: false
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.4110670Z ##[endgroup]
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.7080734Z Downloading single artifact
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.9139432Z Preparing to download the following artifacts:
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.9141042Z - devildex-windows-bundle (ID: 4183324548, Size: 30720781, Expected Digest: sha256:a99ceac2b4096f09d23bf227979bc632f1e3f84674c6fed0924c5a01fb3d3a28)
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:32.9277111Z Downloading artifact '4183324548' from 'magowiz/devildex'
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.0184012Z Redirecting to blob download url: https://productionresultssa13.blob.core.windows.net/actions-results/92397c05-ad8a-4596-b521-a54b2c7b8e7b/workflow-job-run-3430fd93-19d8-5023-990a-722c8e3df2f6/artifacts/d84440b05c29639c0ab6c747f71cb17b29826f115e2511b3e46fa33518b10e72.zip
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.0187539Z Starting download of artifact to: D:\a\devildex\devildex\build
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.1024753Z (node:8864) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.1029789Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.6271577Z SHA256 digest of downloaded artifact is a99ceac2b4096f09d23bf227979bc632f1e3f84674c6fed0924c5a01fb3d3a28
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.6275015Z Artifact download completed successfully.
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.6275437Z Total of 1 artifact(s) downloaded
+Test Windows PyInstaller Bundle	Download Windows artifact	2025-10-04T20:40:33.6283665Z Download artifact has finished successfully
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	﻿2025-10-04T20:40:33.6634432Z ##[group]Run ls -R build/
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:33.6634906Z [36;1mls -R build/[0m
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:33.6762287Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:33.6762791Z ##[endgroup]
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4000716Z 
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4008763Z     Directory: D:\a\devildex\devildex\build
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4009387Z 
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4489518Z [32;1mMode   [0m[32;1m              LastWriteTime[0m[32;1m         Length[0m[32;1m Name[0m
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4490407Z [32;1m----   [0m [32;1m             -------------[0m [32;1m        ------[0m [32;1m----[0m
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4758706Z -a---           10/4/2025  8:40 PM       30962869 [32;1mdevildex_windows.exe[0m
+Test Windows PyInstaller Bundle	List downloaded files (Windows)	2025-10-04T20:40:38.4903745Z 
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	﻿2025-10-04T20:40:38.7016366Z ##[group]Run $process = Start-Process -FilePath ".\build\devildex_windows.exe" -NoNewWindow -PassThru
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7017226Z [36;1m$process = Start-Process -FilePath ".\build\devildex_windows.exe" -NoNewWindow -PassThru[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7017702Z [36;1mStart-Sleep -Seconds 30[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7017964Z [36;1mif ($process.HasExited) {[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7018279Z [36;1m    Write-Error "Application exited prematurely."[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7018581Z [36;1m    exit 1[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7018790Z [36;1m} else {[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7019090Z [36;1m    Stop-Process -Id $process.Id -ErrorAction SilentlyContinue[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7019521Z [36;1m    Write-Host "Application remained running for 30 seconds."[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7019846Z [36;1m}[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7090037Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:38.7090438Z ##[endgroup]
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8304207Z devildex.config_manager - INFO - Configuration file not found at: C:\Users\runneradmin\AppData\Local\magowiz\devildex\devildex.ini. Creating with default settings.
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8309083Z devildex.config_manager - INFO - Created default configuration file at: C:\Users\runneradmin\AppData\Local\magowiz\devildex\devildex.ini
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8318317Z devildex.local_data_parse.registered_project_parser - INFO - Registration file path not determinable.
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8319532Z devildex.core - INFO - Core: No registered project found.
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8401158Z devildex.core - INFO - Core: Requesting list of project names from the DB...
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8404058Z devildex.database.db_manager - WARNING - Attempting to get a DB session, but init_db() was not called. Initializing with default path.
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8410228Z devildex.database.db_manager - INFO - Initializing database at: sqlite:///C:\Users\runneradmin\AppData\Local\magowiz\devildex\devildex.db
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8588029Z Traceback (most recent call last):
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8594267Z   File "main.py", line 347, in OnInit
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8595255Z   File "main.py", line 441, in _setup_top_bar
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8596267Z   File "main.py", line 415, in _setup_view_mode_selector
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8596940Z   File "devildex\core.py", line 235, in query_project_names
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8597607Z   File "devildex\database\db_manager.py", line 86, in get_all_project_names
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8598168Z     with get_session() as session:
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8598554Z          ~~~~~~~~~~~^^
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8598912Z   File "contextlib.py", line 141, in __enter__
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8599453Z   File "devildex\database\db_manager.py", line 303, in get_session
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8600299Z     with DatabaseManager.get_session() as db_session:
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8600780Z          ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8601189Z   File "contextlib.py", line 141, in __enter__
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8601749Z   File "devildex\database\db_manager.py", line 281, in get_session
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8603973Z     cls.init_db()
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8604146Z     ~~~~~~~~~~~^^
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8604374Z   File "devildex\database\db_manager.py", line 206, in init_db
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8604664Z     from alembic import command
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8604896Z ModuleNotFoundError: No module named 'alembic'
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8605172Z __main__ - INFO - Application shut down.
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:40:40.8605413Z OnInit returned false, exiting...
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:41:09.7631153Z [31;1mWrite-Error: [31;1mApplication exited prematurely.[0m
+Test Windows PyInstaller Bundle	Test Built Application (Windows)	2025-10-04T20:41:09.7844535Z ##[error]Process completed with exit code 1.
+Test Windows PyInstaller Bundle	Complete job	﻿2025-10-04T20:41:09.7914042Z Cleaning up orphan processes
