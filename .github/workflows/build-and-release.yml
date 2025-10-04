@@ -335,46 +335,23 @@ jobs:
     name: Build RPM Package
     runs-on: ubuntu-latest
     container:
-      image: fedora:42
+      image: fedora/rpm-build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pyenv dependencies
-        run: |
-          dnf install -y git make zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel bzip2 libtool libyaml-devel rpm-build pyproject-rpm-macros python3-devel python3-pip python3-setuptools python3-wheel
-
-      - name: Install pyenv
-        run: |
-          curl https://pyenv.run | bash
-
-      - name: Configure pyenv
-        run: |
-          echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-          echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-          echo 'eval "$(pyenv init --path)"' >> ~/.bashrc
-          echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc
-        shell: bash
-
-      - name: Install Python 3.13 with pyenv
-        run: |
-          source ~/.bashrc
-          pyenv install 3.13.0
-          pyenv global 3.13.0
-        shell: bash
-
       - name: Install pipx and Poetry
         run: |
-          source ~/.bashrc
           pip install pipx
           pipx install poetry
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-        shell: bash
+
+      - name: Install Python-specific RPM build dependencies
+        run: |
+          dnf install -y python3-devel python3-setuptools python3-pip pyproject-rpm-macros python3-wheel
 
       - name: Install project dependencies with Poetry
-        run: |
-          source ~/.bashrc
-          poetry install --no-root
+        run: poetry install --no-root
 
       - name: Create source tarball
         run: |
