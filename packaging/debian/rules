@@ -6,4 +6,4 @@
 	dh $@ --with python3
 
 override_dh_auto_clean:
-	dh_auto_clean
+	# Do nothing to prevent dh_auto_clean from calling make distclean
