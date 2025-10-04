@@ -1,6 +1,7 @@
 """docset database module."""
 
 import logging
+import sys
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
@@ -209,15 +210,19 @@ class DatabaseManager:
         try:
             logger.info("Checking for database migrations...")
 
-            # Build path to alembic.ini within the package
-            current_file_path = Path(__file__).resolve()
-            package_dir = current_file_path.parent.parent
-            alembic_ini_path = package_dir / "alembic.ini"
+            if getattr(sys, 'frozen', False):
+                # Running in a PyInstaller bundle
+                bundle_dir = Path(sys._MEIPASS)
+                alembic_ini_path = bundle_dir / 'devildex' / 'alembic.ini'
+                alembic_script_location = bundle_dir / 'devildex' / 'alembic'
+            else:
+                # Running in a normal Python environment
+                current_file_path = Path(__file__).resolve()
+                package_dir = current_file_path.parent.parent
+                alembic_ini_path = package_dir / "alembic.ini"
+                alembic_script_location = package_dir / "alembic"
 
             alembic_cfg = Config(str(alembic_ini_path))
-
-            # Set script location programmatically
-            alembic_script_location = package_dir / "alembic"
             alembic_cfg.set_main_option("script_location", str(alembic_script_location))
 
             command.upgrade(alembic_cfg, "head")
