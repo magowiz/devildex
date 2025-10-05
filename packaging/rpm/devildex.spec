@@ -23,6 +23,7 @@ and generation of various documentation formats.
 %setup -q
 
 %build
+ls -F %{_builddir}/%{name}-%{version}/scripts/
 %pyproject_wheel
 
 %install
