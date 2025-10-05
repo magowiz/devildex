@@ -275,8 +275,22 @@ jobs:
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
           mv -f pyproject.toml.tmp pyproject.toml
+      - name: Install OS-specific dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnotify-dev \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libxtst-dev \
+            xvfb \
+            libegl1 \
+            python3-gi \
+            python3-gi-cairo \
+            python3-wxgtk4.0 \
+            python3-wxgtk-webview4.0
       - name: Install wxPython
-        run: pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
+        run: pip install wxpython==4.2.3
       - name: Install Poetry and dependencies
         run: |
           poetry self add poetry-plugin-export

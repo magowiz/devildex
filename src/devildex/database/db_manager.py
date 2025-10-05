@@ -216,9 +216,9 @@ class DatabaseManager:
         try:
             logger.info("Checking for database migrations...")
 
-            paths = AppPaths()
-            alembic_ini_path = paths.devildex_ini_path
-            alembic_script_location = base_path / "alembic"
+            base_path = get_base_path()
+            alembic_ini_path = base_path / "devildex" / "alembic.ini"
+            alembic_script_location = base_path / "devildex" / "alembic"
 
             alembic_cfg = Config(str(alembic_ini_path))
             alembic_cfg.set_main_option("script_location", str(alembic_script_location))
