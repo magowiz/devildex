@@ -217,14 +217,14 @@ class DatabaseManager:
             logger.info("Checking for database migrations...")
 
             base_path = get_base_path()
-            alembic_ini_path = base_path / "devildex" / "alembic.ini"
-            alembic_script_location = base_path / "devildex" / "alembic"
+            alembic_ini_path = base_path / "alembic.ini"
+            alembic_script_location = base_path / "alembic"
 
             alembic_cfg = Config(str(alembic_ini_path))
             alembic_cfg.set_main_option("script_location", str(alembic_script_location))
 
             command.upgrade(alembic_cfg, "head")
-            logger.info("Database is up to date.")
+            print("--- DIRECT PRINT: DATABASE MIGRATION COMPLETED. APPLICATION CONTINUES. ---", file=sys.stderr)
         except Exception:
             logger.exception("Failed to run database migrations.")
 
