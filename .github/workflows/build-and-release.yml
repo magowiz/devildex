@@ -20,10 +20,7 @@ jobs:
       test_packages: ${{ steps.get_vars.outputs.test_packages }}
     steps:
       - id: get_vars
-        run: |
-          echo "test_packages<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ vars.TEST_PACKAGES || '["all"]' }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+        run: echo "test_packages=$(echo "${{ vars.TEST_PACKAGES || '[\"all\"]' }}" | jq -c .)" >> $GITHUB_OUTPUT
 
   build-linux-wheel:
     needs: setup
