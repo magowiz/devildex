@@ -213,8 +213,7 @@ jobs:
           poetry lock
           poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
           pip install pyinstaller
-      - name: List files before PyInstaller build
-        run: ls -la
+
       - name: Build Package (Windows)
         if: runner.os == 'Windows'
         run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
