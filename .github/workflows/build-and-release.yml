@@ -323,7 +323,7 @@ jobs:
       - name: Install RPM build tools and Python packages
         run: |
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
-          pip install toml
+          python3 -m pip install toml
       - name: Create source tarball
         run: |
           mkdir -p ~/rpmbuild/SOURCES/
