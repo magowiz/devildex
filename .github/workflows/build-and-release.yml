@@ -314,7 +314,7 @@ jobs:
       - name: Generate platform-specific pyproject.toml
         run: |
           cp pyproject.toml pyproject.toml.bak
-          python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
+          python3 scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
           if [ "${{ runner.os }}" == "Windows" ]; then
             mv -Force pyproject.toml.tmp pyproject.toml
           else
