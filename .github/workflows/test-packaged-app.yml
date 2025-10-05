@@ -2,7 +2,7 @@ name: Test Packaged Application
 
 on:
   workflow_run:
-    workflows: ["Build and Test All Artifacts"]
+    workflows: ["Build and Release All Artifacts"]
     types:
       - completed
 
@@ -68,7 +68,6 @@ jobs:
           fi
 
   test-linux-debian-package:
-    if: false
     name: Test Linux Debian Package
     runs-on: ubuntu-latest
     steps:
@@ -141,7 +140,6 @@ jobs:
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-windows-pyinstaller-bundle-pyinstaller-job:
-    if: false
     name: Test Windows PyInstaller Bundle (PyInstaller Job)
     runs-on: windows-latest
     steps:
@@ -169,7 +167,6 @@ jobs:
           }
 
   test-macos-pyinstaller-bundle-pyinstaller-job:
-    if: false
     name: Test macOS PyInstaller Bundle (PyInstaller Job)
     runs-on: macos-latest
     steps:
@@ -199,7 +196,6 @@ jobs:
           fi
 
   test-linux-pyinstaller-bundle:
-    if: false
     name: Test Linux PyInstaller Bundle
     runs-on: ubuntu-latest
     steps:
@@ -231,7 +227,6 @@ jobs:
           fi
 
   test-rpm-package:
-    if: false
     name: Test RPM Package
     runs-on: ubuntu-latest
     container:
