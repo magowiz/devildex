@@ -227,6 +227,7 @@ jobs:
           fi
       - name: Set runner.os to lowercase
         id: lower_os
+        shell: bash
         run: echo "os_name=$(echo ${{ runner.os }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Upload Bundle Artifact
