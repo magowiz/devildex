@@ -181,7 +181,7 @@ jobs:
   build-package:
     needs: setup
     name: Build Pyinstaller Pkg
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle') }}
+    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || (contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') && matrix.os == 'windows-latest') || (contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle') && matrix.os == 'macos-latest') || (contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle') && matrix.os == 'ubuntu-latest') }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
@@ -255,8 +255,10 @@ jobs:
           path: dist/${{ matrix.os }}/
 
   build-docs:
+    needs: setup
     name: Build Documentation
     runs-on: ubuntu-24.04
+    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -305,8 +307,9 @@ jobs:
           path: "build/html"
 
   deploy-docs:
+    needs: [setup, build-docs]
     name: Deploy Documentation to GitHub Pages
-    needs: build-docs
+    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') }}
     runs-on: ubuntu-latest
     permissions:
       pages: write
