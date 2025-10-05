@@ -12,10 +12,7 @@ jobs:
     runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-windows-bundle
+          name: devildex-windows-latest-bundle
           path: build/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +41,7 @@ jobs:
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: devildex-macos-bundle
+          name: devildex-macos-latest-bundle
           path: build/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -86,8 +83,9 @@ jobs:
 
       - name: Test Built Application (Linux)
         run: |
+          dpkg -c build/deb/*.deb
           sudo apt-get update
-          sudo apt-get install -y xvfb ./build/deb/*.deb
+          sudo apt-get install -y xvfb libnotify4 ./build/deb/*.deb
           echo "APT-GET install exit code: $?"
           ls -l /usr/bin/devildex || true # Use || true to prevent the step from failing if devildex is not found yet
           
@@ -134,8 +132,13 @@ jobs:
       - name: List downloaded files (Linux Wheel)
         run: ls -R build/wheel/
 
+      - name: Install libnotify
+        run: sudo apt-get update && sudo apt-get install -y libnotify4
+
       - name: Test Installed Wheel (Linux)
         run: |
+          pip list
+          ls -lR build/wheel
           pip install ./build/wheel/devildex-*.whl alembic
           pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
@@ -176,7 +179,7 @@ jobs:
       - name: Download PyInstaller macOS bundle
         uses: actions/download-artifact@v4
         with:
-          name: devildex-macos-bundle
+          name: devildex-macos-latest-bundle
           path: build/macos-latest/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -206,7 +209,7 @@ jobs:
       - name: Download PyInstaller Linux bundle
         uses: actions/download-artifact@v4
         with:
-          name: devildex-linux-bundle
+          name: devildex-ubuntu-latest-bundle
           path: build/ubuntu-latest/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -217,7 +220,7 @@ jobs:
       - name: Test Built Application (PyInstaller Linux)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb
+          sudo apt-get install -y xvfb libnotify4
           chmod +x ./build/ubuntu-latest/devildex_linux
           xvfb-run ./build/ubuntu-latest/devildex_linux &
           PID=$!
@@ -250,7 +253,7 @@ jobs:
 
       - name: Test Built Application (RPM)
         run: |
-          sudo dnf install -y xorg-x11-server-Xvfb
+          sudo dnf install -y xorg-x11-server-Xvfb libnotify
           
           # Install Python dependencies using pip
           pip3 install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
