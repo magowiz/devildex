@@ -159,36 +159,66 @@ jobs:
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
 
-  test-macos-pyinstaller-bundle-pyinstaller-job:
+
+  test-macos-wheel-package:
     needs: setup
-    name: Test macOS PyInstaller Bundle (PyInstaller Job)
+    name: Test macOS Wheel Package
     runs-on: macos-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle')) }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-wheel')) }}
     steps:
-      - name: Download PyInstaller macOS bundle
+      - name: Download macOS Wheel artifact
         uses: actions/download-artifact@v4
         with:
-          name: devildex-macos-bundle
-          path: build/macos-latest/
+          name: devildex-macos-wheel-artifact
+          path: build/wheel/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-      - name: List downloaded files (PyInstaller macOS)
-        run: ls -R build/macos-latest/
 
-      - name: Test Built Application (PyInstaller macOS)
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: List downloaded files (macOS Wheel)
+        run: ls -R build/wheel/
+
+      - name: Test Installed Wheel (macOS)
         run: |
-          chmod +x ./build/macos-latest/devildex_macos
-          ./build/macos-latest/devildex_macos &
-          PID=$!
-          sleep 30
-          if ps -p $PID > /dev/null; then
-              kill $PID
-              echo "Application remained running for 30 seconds."
-          else
-              echo "Application exited prematurely."
-              exit 1
-          fi
+          pip list
+          ls -lR build/wheel
+          pip install ./build/wheel/devildex-*.whl alembic
+          python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
+
+  test-windows-wheel-package:
+    needs: setup
+    name: Test Windows Wheel Package
+    runs-on: windows-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-wheel')) }}
+    steps:
+      - name: Download Windows Wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: devildex-windows-wheel-artifact
+          path: build/wheel/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: List downloaded files (Windows Wheel)
+        run: ls -R build/wheel/
+
+      - name: Test Installed Wheel (Windows)
+        run: |
+          pip list
+          ls -lR build/wheel
+          pip install ./build/wheel/devildex-*.whl alembic
+          python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-linux-pyinstaller-bundle:
     needs: setup
