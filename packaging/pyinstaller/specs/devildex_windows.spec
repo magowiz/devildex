@@ -16,7 +16,7 @@ a = Analysis(
         ('../../../src/devildex/alembic/versions', 'devildex/alembic/versions'),
         ('../../../src/devildex/alembic/env.py', 'devildex/alembic')
     ],
-    hiddenimports=['sqlalchemy.sql.default_comparator', 'sqlalchemy.util._collections', 'sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager', 'alembic.command', 'alembic.config', 'alembic.script'],
+    hiddenimports=['sqlalchemy.sql.default_comparator', 'sqlalchemy.util._collections', 'sqlalchemy.dialects.sqlite', 'pkg_resources', 'devildex.database.db_manager', 'alembic.command', 'alembic.config', 'alembic.script', 'devildex.database.models'],
     hookspath=['packaging/pyinstaller/hooks'],
     hooksconfig={},
     runtime_hooks=[],
