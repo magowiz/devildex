@@ -1,9 +1,20 @@
 import logging
 import sys
+import re
 
 import toml
 
 logger = logging.getLogger(__name__)
+
+
+def parse_dependency_string(dep_string: str) -> tuple[str, str]:
+    """Parses a dependency string like 'package (>=version,<version)' into (package_name, version_constraint)."""
+    match = re.match(r"^([a-zA-Z0-9_.-]+)(?:\s*\((.*)\))?$", dep_string)
+    if match:
+        name = match.group(1)
+        constraint = match.group(2) if match.group(2) else "*"
+        return name, constraint
+    return dep_string, "*" # Fallback if parsing fails
 
 
 def convert_to_poetry_1x(data: dict) -> dict:
@@ -28,15 +39,23 @@ def convert_to_poetry_1x(data: dict) -> dict:
         tool_poetry_data["dependencies"] = tool_poetry_data.get("dependencies", {})
         tool_poetry_data["dependencies"]["python"] = project_data["requires-python"]
 
-    # Handle dependencies
+    # Handle dependencies: convert list to dict
     if "dependencies" in project_data:
-        tool_poetry_data["dependencies"] = {**tool_poetry_data.get("dependencies", {}), **project_data["dependencies"]}
+        converted_deps = {}
+        for dep_string in project_data["dependencies"]:
+            name, constraint = parse_dependency_string(dep_string)
+            converted_deps[name] = constraint
+        tool_poetry_data["dependencies"] = {**tool_poetry_data.get("dependencies", {}), **converted_deps}
 
     # Handle optional-dependencies to extras
     if "optional-dependencies" in project_data:
         tool_poetry_data["extras"] = {}
-        for group_name, deps in project_data["optional-dependencies"].items():
-            tool_poetry_data["extras"][group_name] = deps
+        for group_name, deps_list in project_data["optional-dependencies"].items():
+            converted_extra_deps = {}
+            for dep_string in deps_list:
+                name, constraint = parse_dependency_string(dep_string)
+                converted_extra_deps[name] = constraint
+            tool_poetry_data["extras"][group_name] = converted_extra_deps
 
     # Handle scripts
     if "scripts" in project_data:
@@ -55,7 +74,7 @@ def generate_pyproject_toml(original_path: str, tgt_os: str):
         data = toml.load(f)
 
     # Apply platform-specific dependency filtering
-    if tgt_os.lower() in ["windows", "macos"]:
+    if tgt_os.lower() in ["windows", "macos", "fedora"]:
         # Check both project.dependencies and tool.poetry.dependencies
         if "project" in data and "dependencies" in data["project"]:
             dependencies = data["project"]["dependencies"]
