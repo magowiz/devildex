@@ -7,11 +7,19 @@ on:
       - completed
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      test_packages: ${{ steps.get_vars.outputs.test_packages }}
+    steps:
+      - id: get_vars
+        run: echo "test_packages=${{ vars.TEST_PACKAGES || '["all"]' }}" >> $GITHUB_OUTPUT
 
   test-windows-pyinstaller-bundle:
+    needs: setup
     name: Test Windows PyInstaller Bundle
     runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle')) }}
     steps:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
@@ -38,9 +46,10 @@ jobs:
           }
 
   test-macos-pyinstaller-bundle:
+    needs: setup
     name: Test macOS PyInstaller Bundle
     runs-on: macos-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle')) }}
     steps:
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
@@ -69,9 +78,10 @@ jobs:
           fi
 
   test-linux-debian-package:
+    needs: setup
     name: Test Linux Debian Package
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'debian-package')) }}
     steps:
       - name: Download Linux artifact
         uses: actions/download-artifact@v4
@@ -115,9 +125,10 @@ jobs:
           fi
 
   test-linux-wheel-package:
+    needs: setup
     name: Test Linux Wheel Package
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-wheel')) }}
     steps:
       - name: Download Linux Wheel artifact
         uses: actions/download-artifact@v4
@@ -148,9 +159,10 @@ jobs:
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-windows-pyinstaller-bundle-pyinstaller-job:
+    needs: setup
     name: Test Windows PyInstaller Bundle (PyInstaller Job)
     runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle')) }}
     steps:
       - name: Download PyInstaller Windows bundle
         uses: actions/download-artifact@v4
@@ -174,9 +186,10 @@ jobs:
           }
 
   test-macos-pyinstaller-bundle-pyinstaller-job:
+    needs: setup
     name: Test macOS PyInstaller Bundle (PyInstaller Job)
     runs-on: macos-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle')) }}
     steps:
       - name: Download PyInstaller macOS bundle
         uses: actions/download-artifact@v4
@@ -204,9 +217,10 @@ jobs:
           fi
 
   test-linux-pyinstaller-bundle:
+    needs: setup
     name: Test Linux PyInstaller Bundle
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle')) }}
     steps:
       - name: Download PyInstaller Linux bundle
         uses: actions/download-artifact@v4
@@ -236,9 +250,10 @@ jobs:
           fi
 
   test-rpm-package:
+    needs: setup
     name: Test RPM Package
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'rpm-package')) }}
     container:
       image: fedora:latest
     steps:
