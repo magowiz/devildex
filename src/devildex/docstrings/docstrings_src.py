@@ -730,7 +730,6 @@ class DocStringsSrc:
         """Perform a single attempt to import the module using pdoc.
 
         Returns:
-
             - module_object: on successful import of a real module.
             - (None, exception_object) if ModuleNotFoundError or ImportError occurs
               directly from pdoc.import_module (less common with skip_errors=True
