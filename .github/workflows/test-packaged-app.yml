@@ -21,6 +21,11 @@ jobs:
     runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle')) }}
     steps:
+      - name: Debug
+        run: |
+          echo "test_packages: ${{ needs.setup.outputs.test_packages }}"
+          echo "contains all: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') }}"
+          echo "contains windows-bundle: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') }}"
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
