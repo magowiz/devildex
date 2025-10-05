@@ -23,11 +23,10 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-ls -F %{_builddir}/%{name}-%{version}/scripts/
-%pyproject_wheel
+poetry build --format wheel
 
 %install
-%pyproject_install
+pip install --prefix %{buildroot}/usr --no-deps dist/*.whl
 
 # Explicitly install scripts
 mkdir -p %{buildroot}%{_bindir}
