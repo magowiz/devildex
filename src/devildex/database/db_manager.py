@@ -216,7 +216,7 @@ class DatabaseManager:
         try:
             logger.info("Checking for database migrations...")
 
-            base_path = get_base_path()
+            base_path = Path(get_base_path())
             alembic_ini_path = base_path / "alembic.ini"
             alembic_script_location = base_path / "alembic"
 

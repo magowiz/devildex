@@ -240,7 +240,7 @@ jobs:
       - name: Test Built Application (PyInstaller Linux)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libnotify4 libsdl2-2.0-0
+          sudo apt-get install -y xvfb libnotify4 libsdl2-2.0-0 libwebkit2gtk-4.1-0
           chmod +x ./build/ubuntu-latest/devildex_linux
           xvfb-run ./build/ubuntu-latest/devildex_linux &
           PID=$!
