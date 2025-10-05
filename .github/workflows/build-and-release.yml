@@ -208,6 +208,7 @@ jobs:
           poetry self add poetry-plugin-export
           poetry lock
           poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
+          pip install -r requirements.txt
           pip install pyinstaller
       - name: Build Package
         run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/windows-latest
