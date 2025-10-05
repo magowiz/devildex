@@ -217,8 +217,14 @@ class DatabaseManager:
             logger.info("Checking for database migrations...")
 
             base_path = Path(get_base_path())
-            alembic_ini_path = base_path / "alembic.ini"
-            alembic_script_location = base_path / "alembic"
+            if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+                # PyInstaller bundle paths
+                alembic_ini_path = base_path / "devildex" / "alembic.ini"
+                alembic_script_location = base_path / "devildex" / "alembic"
+            else:
+                # Development environment paths
+                alembic_ini_path = Path(__file__).parent.parent / "alembic.ini"
+                alembic_script_location = Path(__file__).parent.parent / "alembic"
 
             alembic_cfg = Config(str(alembic_ini_path))
             alembic_cfg.set_main_option("script_location", str(alembic_script_location))
