@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   build-linux-wheel:
-    if: false
     name: Build Linux Wheel
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +63,6 @@ jobs:
           path: dist/*.whl
 
   build-macos-wheel:
-    if: false
     name: Build macOS Wheel
     runs-on: macos-latest
     steps:
@@ -115,7 +113,6 @@ jobs:
           path: dist/*.whl
 
   build-deb-package:
-    if: false
     name: Build Debian Package
     runs-on: ubuntu-22.04
     steps:
@@ -223,7 +220,6 @@ jobs:
           path: dist/${{ matrix.os }}/
 
   build-docs:
-    if: false
     name: Build Documentation
     runs-on: ubuntu-24.04
     steps:
@@ -274,7 +270,6 @@ jobs:
           path: "build/html"
 
   deploy-docs:
-    if: false
     name: Deploy Documentation to GitHub Pages
     needs: build-docs
     runs-on: ubuntu-latest
@@ -299,7 +294,6 @@ jobs:
         uses: actions/deploy-pages@v4
 
   build-rpm-package:
-    if: false
     name: Build RPM Package
     runs-on: ubuntu-latest
     container:
