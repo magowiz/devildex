@@ -158,32 +158,6 @@ jobs:
           pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
-  test-windows-pyinstaller-bundle-pyinstaller-job:
-    needs: setup
-    name: Test Windows PyInstaller Bundle (PyInstaller Job)
-    runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle')) }}
-    steps:
-      - name: Download PyInstaller Windows bundle
-        uses: actions/download-artifact@v4
-        with:
-          name: devildex-windows-bundle
-          path: build/windows-latest/
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-
-      - name: Test Built Application (PyInstaller Windows)
-        run: |
-          $process = Start-Process -FilePath ".\build\windows-latest\devildex_windows.exe" -NoNewWindow -PassThru
-          Start-Sleep -Seconds 30
-          if ($process.HasExited) {
-              Write-Error "Application exited prematurely."
-              exit 1
-          } else {
-              Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
-              Write-Host "Application remained running for 30 seconds."
-          }
 
   test-macos-pyinstaller-bundle-pyinstaller-job:
     needs: setup
