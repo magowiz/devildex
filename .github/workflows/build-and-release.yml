@@ -18,6 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       test_packages: ${{ steps.get_vars.outputs.test_packages }}
+      run_windows_bundle: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'windows-bundle') }}
+      run_macos_bundle: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'macos-bundle') }}
+      run_linux_bundle: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'linux-bundle') }}
+      run_debian_package: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'debian-package') }}
+      run_linux_wheel: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'linux-wheel') }}
+      run_rpm_package: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'rpm-package') }}
+      run_windows_wheel: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'windows-wheel') }}
+      run_macos_wheel: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'macos-wheel') }}
     steps:
       - id: get_vars
         run: |
@@ -28,7 +36,7 @@ jobs:
     needs: setup
     name: Build Linux Wheel
     runs-on: ubuntu-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-wheel') }}
+    if: ${{ needs.setup.outputs.run_linux_wheel == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -79,7 +87,7 @@ jobs:
     needs: setup
     name: Build macOS Wheel
     runs-on: macos-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-wheel') }}
+    if: ${{ needs.setup.outputs.run_macos_wheel == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,7 +120,7 @@ jobs:
     needs: setup
     name: Build Windows Wheel
     runs-on: windows-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-wheel') }}
+    if: ${{ needs.setup.outputs.run_windows_wheel == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -142,7 +150,7 @@ jobs:
     needs: setup
     name: Build Debian Package
     runs-on: ubuntu-22.04
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'debian-package') }}
+    if: ${{ needs.setup.outputs.run_debian_package == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -186,6 +194,7 @@ jobs:
     needs: setup
     name: Build Windows Bundle
     runs-on: windows-latest
+    if: ${{ needs.setup.outputs.run_windows_bundle == 'true' }}
     steps:
       - name: Debug if condition
         run: |
@@ -226,7 +235,7 @@ jobs:
     needs: setup
     name: Build macOS Bundle
     runs-on: macos-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle') }}
+    if: ${{ needs.setup.outputs.run_macos_bundle == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -262,7 +271,7 @@ jobs:
     needs: setup
     name: Build Linux Bundle
     runs-on: ubuntu-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle') }}
+    if: ${{ needs.setup.outputs.run_linux_bundle == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -387,7 +396,7 @@ jobs:
     needs: setup
     name: Build RPM Package
     runs-on: ubuntu-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'rpm-package') }}
+    if: ${{ needs.setup.outputs.run_rpm_package == 'true' }}
     container:
       image: fedora:latest
     steps:
