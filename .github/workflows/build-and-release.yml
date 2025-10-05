@@ -85,6 +85,8 @@ jobs:
 
   build-windows-wheel:
     name: Build Windows Wheel
+    runs-on: windows-latest
+    steps:
       - name: Generate platform-specific pyproject.toml
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
@@ -185,7 +187,7 @@ jobs:
         run: |
           pip install poetry
           poetry self add poetry-plugin-export
-          poetry export -f requirements.txt | grep -v "wxPython" > requirements.txt
+          poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
       - name: Build Package
         run: |
           if [ "${{ runner.os }}" == "macOS" ]; then
