@@ -205,12 +205,14 @@ jobs:
           poetry self add poetry-plugin-export
           poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
           pip install pyinstaller
-      - name: Build Package
+      - name: Build Package (Windows)
+        if: runner.os == 'Windows'
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
+      - name: Build Package (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
           if [ "${{ runner.os }}" == "macOS" ]; then
             pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
-          elif [ "${{ runner.os }}" == "Windows" ]; then
-            pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
           elif [ "${{ runner.os }}" == "Linux" ]; then
             pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
           fi
