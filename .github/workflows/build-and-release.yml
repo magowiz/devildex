@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install toml library
+        run: pip install toml
       - name: Generate platform-specific pyproject.toml
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
@@ -188,6 +190,7 @@ jobs:
           pip install poetry
           poetry self add poetry-plugin-export
           poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
+          pip install pyinstaller
       - name: Build Package
         run: |
           if [ "${{ runner.os }}" == "macOS" ]; then
