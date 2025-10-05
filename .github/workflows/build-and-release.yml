@@ -175,11 +175,11 @@ jobs:
       - name: Generate platform-specific pyproject.toml
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
-          if ("${{ runner.os }}" -eq "Windows") {
-            mv -Force pyproject.toml.tmp pyproject.toml
-          } else {
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            pwsh -Command "mv -Force pyproject.toml.tmp pyproject.toml"
+          else
             mv -f pyproject.toml.tmp pyproject.toml
-          }
+          fi
       - name: Install wxPython (Windows & macOS)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         run: pip install wxpython==4.2.3
