@@ -22,8 +22,7 @@ jobs:
       - id: get_vars
         run: |
           echo "test_packages=${{ vars.TEST_PACKAGES || '[\"all\"]' }}" >> $GITHUB_OUTPUT
-      - name: Debug setup output
-        run: echo "Setup output test_packages: ${{ steps.get_vars.outputs.test_packages }}"
+
 
   build-linux-wheel:
     needs: setup
