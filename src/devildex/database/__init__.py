@@ -1,6 +1,6 @@
 """db_manager module."""
 
-from .db_manager import Base as Base
+from .models import Base as Base
 from .db_manager import DatabaseManager as DatabaseManager
 from .db_manager import Docset as Docset
 from .db_manager import PackageInfo as PackageInfo
