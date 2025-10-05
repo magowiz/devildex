@@ -7,7 +7,14 @@ on:
       - completed
 
 jobs:
+  wait-for-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for artifacts
+        run: sleep 60
+
   test-windows-pyinstaller-bundle:
+    needs: wait-for-artifacts
     name: Test Windows PyInstaller Bundle
     runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -37,6 +44,7 @@ jobs:
           }
 
   test-macos-pyinstaller-bundle:
+    needs: wait-for-artifacts
     name: Test macOS PyInstaller Bundle
     runs-on: macos-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -68,6 +76,7 @@ jobs:
           fi
 
   test-linux-debian-package:
+    needs: wait-for-artifacts
     name: Test Linux Debian Package
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -114,6 +123,7 @@ jobs:
           fi
 
   test-linux-wheel-package:
+    needs: wait-for-artifacts
     name: Test Linux Wheel Package
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -147,6 +157,7 @@ jobs:
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-windows-pyinstaller-bundle-pyinstaller-job:
+    needs: wait-for-artifacts
     name: Test Windows PyInstaller Bundle (PyInstaller Job)
     runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -173,6 +184,7 @@ jobs:
           }
 
   test-macos-pyinstaller-bundle-pyinstaller-job:
+    needs: wait-for-artifacts
     name: Test macOS PyInstaller Bundle (PyInstaller Job)
     runs-on: macos-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -203,6 +215,7 @@ jobs:
           fi
 
   test-linux-pyinstaller-bundle:
+    needs: wait-for-artifacts
     name: Test Linux PyInstaller Bundle
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -235,6 +248,7 @@ jobs:
           fi
 
   test-rpm-package:
+    needs: wait-for-artifacts
     name: Test RPM Package
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
