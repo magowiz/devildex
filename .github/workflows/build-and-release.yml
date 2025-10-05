@@ -170,6 +170,7 @@ jobs:
       - name: Build Debian package
         run: |
           cp -r packaging/debian .
+          poetry install
           dpkg-buildpackage -us -uc
           mkdir -p dist/deb
           mv ../*.deb dist/deb/
