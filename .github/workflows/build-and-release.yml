@@ -407,6 +407,7 @@ jobs:
         run: |
           VERSION=$(poetry version --short)
           rpmbuild -ba packaging/rpm/devildex.spec --define "version $VERSION"
+          ls -R ~/rpmbuild/RPMS/
       - name: Restore original pyproject.toml
         if: always()
         run: mv pyproject.toml.bak pyproject.toml
