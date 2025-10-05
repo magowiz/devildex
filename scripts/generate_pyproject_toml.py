@@ -11,7 +11,7 @@ def generate_pyproject_toml(original_path: Path, tgt_os: str):
     with open(original_path) as f:
         data = toml.load(f)
 
-    if tgt_os in ["windows", "macos"]:
+    if tgt_os.lower() in ["windows", "macos"]:
         dependencies = data["project"]["dependencies"]
         new_dependencies = []
         for dep in dependencies:
