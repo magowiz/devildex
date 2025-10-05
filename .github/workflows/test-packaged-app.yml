@@ -156,7 +156,7 @@ jobs:
           ls -lR build/wheel
           pip install ./build/wheel/devildex-*.whl alembic
           pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
-          python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
+          xvfb-run python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
 
 
@@ -188,6 +188,7 @@ jobs:
           pip list
           ls -lR build/wheel
           pip install ./build/wheel/devildex-*.whl alembic
+          pip install wxpython==4.2.3
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-windows-wheel-package:
@@ -216,8 +217,9 @@ jobs:
       - name: Test Installed Wheel (Windows)
         run: |
           pip list
-          ls -lR build/wheel
+          Get-ChildItem -Recurse build/wheel
           pip install ./build/wheel/devildex-*.whl alembic
+          pip install wxpython==4.2.3
           python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
 
   test-linux-pyinstaller-bundle:
