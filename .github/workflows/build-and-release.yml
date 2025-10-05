@@ -315,7 +315,7 @@ jobs:
         run: |
           dnf update && dnf install python
           cp pyproject.toml pyproject.toml.bak
-          python3 scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
+          python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
           if [ "${{ runner.os }}" == "Windows" ]; then
             mv -Force pyproject.toml.tmp pyproject.toml
           else
@@ -324,7 +324,7 @@ jobs:
       - name: Install RPM build tools and Python packages
         run: |
           dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
-          python3 -m pip install toml
+          python -m pip install toml
       - name: Check Python versions
         run: |
           which python python3
