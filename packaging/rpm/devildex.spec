@@ -14,6 +14,7 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
 BuildRequires:  pyproject-rpm-macros
+Requires:       SDL2
 
 %description
 Devildex is a comprehensive tool designed to streamline the management
