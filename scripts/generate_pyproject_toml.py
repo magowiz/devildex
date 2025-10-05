@@ -1,7 +1,10 @@
+import logging
 import sys
 from pathlib import Path
 
 import toml
+
+logger = logging.getLogger(__name__)
 
 
 def generate_pyproject_toml(original_path: Path, tgt_os: str):
@@ -21,6 +24,7 @@ def generate_pyproject_toml(original_path: Path, tgt_os: str):
 if __name__ == "__main__":
     original_pyproject_toml_path = sys.argv[1]
     target_os = sys.argv[2]  # 'windows', 'macos', or 'linux'
+    logger.info(target_os)
 
     modified_content = generate_pyproject_toml(original_pyproject_toml_path, target_os)
     sys.stdout.write(modified_content)
