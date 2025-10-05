@@ -172,14 +172,16 @@ jobs:
         run: pip install poetry
       - name: Install toml library
         run: pip install toml
-      - name: Generate platform-specific pyproject.toml
+      - name: Generate platform-specific pyproject.toml (Windows)
+        if: runner.os == 'Windows'
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            pwsh -Command "mv -Force pyproject.toml.tmp pyproject.toml"
-          else
-            mv -f pyproject.toml.tmp pyproject.toml
-          fi
+          mv -Force pyproject.toml.tmp pyproject.toml
+      - name: Generate platform-specific pyproject.toml (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
+          mv -f pyproject.toml.tmp pyproject.toml
       - name: Install wxPython (Windows & macOS)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         run: pip install wxpython==4.2.3
