@@ -415,7 +415,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: devildex-rpm-package
-          path: ~/rpmbuild/RPMS/noarch/*.rpm
+          path: ~/rpmbuild/RPMS/x86_64/*.rpm
 
   check-build-status:
     runs-on: ubuntu-latest
