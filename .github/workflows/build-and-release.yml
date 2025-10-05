@@ -210,6 +210,7 @@ jobs:
       - name: Install Poetry and dependencies
         run: |
           poetry self add poetry-plugin-export
+          poetry lock
           poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
           pip install pyinstaller
       - name: List files before PyInstaller build
