@@ -88,7 +88,7 @@ jobs:
         run: |
           dpkg -c build/deb/*.deb
           sudo apt-get update
-          sudo apt-get install -y xvfb libnotify4 ./build/deb/*.deb
+          sudo apt-get install -y xvfb libnotify4 libsdl2-2.0-0 ./build/deb/*.deb
           echo "APT-GET install exit code: $?"
           ls -l /usr/bin/devildex || true # Use || true to prevent the step from failing if devildex is not found yet
           
@@ -136,7 +136,7 @@ jobs:
         run: ls -R build/wheel/
 
       - name: Install libnotify
-        run: sudo apt-get update && sudo apt-get install -y libnotify4
+        run: sudo apt-get update && sudo apt-get install -y libnotify4 libsdl2-2.0-0
 
       - name: Test Installed Wheel (Linux)
         run: |
@@ -221,7 +221,7 @@ jobs:
       - name: Test Built Application (PyInstaller Linux)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libnotify4
+          sudo apt-get install -y xvfb libnotify4 libsdl2-2.0-0
           chmod +x ./build/ubuntu-latest/devildex_linux
           xvfb-run ./build/ubuntu-latest/devildex_linux &
           PID=$!
@@ -254,7 +254,7 @@ jobs:
 
       - name: Test Built Application (RPM)
         run: |
-          sudo dnf install -y xorg-x11-server-Xvfb libnotify
+          sudo dnf install -y xorg-x11-server-Xvfb libnotify SDL2
           
           # Install Python dependencies using pip
           pip3 install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
