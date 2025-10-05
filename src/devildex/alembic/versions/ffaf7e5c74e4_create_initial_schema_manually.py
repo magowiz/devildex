@@ -5,11 +5,10 @@ Revises:
 Create Date: 2025-10-04 10:42:56.917457
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
+from typing import Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = 'ffaf7e5c74e4'
@@ -19,6 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 from devildex.database.models import Base
+
 
 def upgrade() -> None:
     """Upgrade schema."""

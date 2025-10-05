@@ -1,7 +1,9 @@
-import toml
-import sys
 import re
+import sys
 from collections import OrderedDict
+
+import toml
+
 
 def parse_dependency_string(dep_string):
     # Gestisce prima le dipendenze URL
@@ -17,7 +19,7 @@ def parse_dependency_string(dep_string):
         package_name = match_version_spec.group(1).strip()
         version_spec = match_version_spec.group(2).strip()
         return package_name, version_spec
-    
+
     # Gestisce il nome del pacchetto semplice con versione opzionale (es. "package ^1.0.0" o "package")
     parts = dep_string.split(' ', 1) # Divide solo al primo spazio
     if len(parts) == 2:
@@ -27,14 +29,14 @@ def parse_dependency_string(dep_string):
     elif len(parts) == 1:
         package_name = parts[0].strip()
         return package_name, "*" # Predefinito a qualsiasi versione se non specificato
-    
+
     print(f"Attenzione: Impossibile analizzare completamente la stringa di dipendenza '{dep_string}'. Saltando.")
     return None, None
 
 
 def convert_pyproject_to_poetry_1x(input_file, output_file):
     try:
-        with open(input_file, 'r') as f:
+        with open(input_file) as f:
             data = toml.load(f)
     except FileNotFoundError:
         print(f"Errore: File di input '{input_file}' non trovato.")
@@ -53,7 +55,7 @@ def convert_pyproject_to_poetry_1x(input_file, output_file):
         new_data['tool']['poetry']['name'] = project.get('name')
         new_data['tool']['poetry']['version'] = project.get('version')
         new_data['tool']['poetry']['description'] = project.get('description')
-        
+
         # Conversione formato autori
         authors = project.get('authors', [])
         formatted_authors = []
@@ -77,7 +79,7 @@ def convert_pyproject_to_poetry_1x(input_file, output_file):
         new_data['tool']['poetry']['dependencies'] = OrderedDict()
         if 'requires-python' in project:
             new_data['tool']['poetry']['dependencies']['python'] = project['requires-python']
-        
+
         if 'dependencies' in project:
             for dep_string in project['dependencies']:
                 package_name, dep_spec = parse_dependency_string(dep_string)
@@ -104,7 +106,7 @@ def convert_pyproject_to_poetry_1x(input_file, output_file):
         with open(output_file, 'w') as f:
             toml.dump(new_data, f)
         print(f"Convertito con successo '{input_file}' al formato Poetry 1.x in '{output_file}'.")
-    except IOError as e:
+    except OSError as e:
         print(f"Errore durante la scrittura del file di output '{output_file}': {e}")
         sys.exit(1)
 
@@ -112,7 +114,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Utilizzo: python convert_poetry.py <input_pyproject.toml> <output_pyproject.toml>")
         sys.exit(1)
-    
+
     input_path = sys.argv[1]
     output_path = sys.argv[2]
     convert_pyproject_to_poetry_1x(input_path, output_path)

@@ -1,17 +1,15 @@
-from logging.config import fileConfig
-
 # Add src to sys.path to allow importing devildex modules
 import sys
+from logging.config import fileConfig
 from pathlib import Path
+
 sys.path.insert(0, str(Path.cwd().joinpath("src")))
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 from devildex.app_paths import AppPaths
-from devildex.database.models import Base, Docset, PackageInfo, RegisteredProject
+from devildex.database.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

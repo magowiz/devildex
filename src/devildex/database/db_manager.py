@@ -7,15 +7,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Optional, cast
 
-def get_base_path():
-    """Get the base path for resources, whether running as script or bundled."""
-    if getattr(sys, 'frozen', False):
-        # Running in a PyInstaller bundle
-        return sys._MEIPASS
-    else:
-        # Running as a normal Python script
-        return Path(__file__).parent.parent
-
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import (
     Engine,
     Executable,
@@ -30,7 +23,6 @@ from sqlalchemy.orm import selectinload, sessionmaker
 from devildex.app_paths import AppPaths
 
 from .models import (
-    Base,
     Docset,
     PackageInfo,
     RegisteredProject,
@@ -38,6 +30,14 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_base_path() -> Path:
+    """Get the base path for resources, whether running as script or bundled."""
+    if getattr(sys, "frozen", False):
+        return sys._MEIPASS
+    else:
+        return Path(__file__).parent.parent
 
 
 class DatabaseNotInitializedError(RuntimeError):
@@ -213,15 +213,12 @@ class DatabaseManager:
             autocommit=False, autoflush=False, bind=cls._engine
         )
 
-        from alembic import command
-        from alembic.config import Config
-
         try:
             logger.info("Checking for database migrations...")
 
             base_path = get_base_path()
-            alembic_ini_path = base_path / 'devildex' / 'alembic.ini'
-            alembic_script_location = base_path / 'devildex' / 'alembic'
+            alembic_ini_path = base_path / "devildex" / "alembic.ini"
+            alembic_script_location = base_path / "devildex" / "alembic"
 
             alembic_cfg = Config(str(alembic_ini_path))
             alembic_cfg.set_main_option("script_location", str(alembic_script_location))
@@ -230,7 +227,6 @@ class DatabaseManager:
             logger.info("Database is up to date.")
         except Exception:
             logger.exception("Failed to run database migrations.")
-
 
     @classmethod
     def get_project_details_by_name(
