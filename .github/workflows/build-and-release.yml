@@ -313,6 +313,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Generate platform-specific pyproject.toml
         run: |
+          dnf update && dnf install python
           cp pyproject.toml pyproject.toml.bak
           python3 scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
           if [ "${{ runner.os }}" == "Windows" ]; then
