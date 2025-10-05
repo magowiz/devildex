@@ -339,6 +339,10 @@ jobs:
     needs:
       - build-windows-wheel
       - build-package
+      - build-linux-wheel
+      - build-macos-wheel
+      - build-deb-package
+      - build-rpm-package
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
