@@ -1,6 +1,7 @@
 """Provides default sample data for DevilDex.
 
 This module includes:
+
 - PACKAGES_DATA: A list of raw package data dictionaries.
 - COLUMNS_ORDER: A predefined order for displaying package attributes.
 - PACKAGES_DATA_AS_DETAILS: A list of PackageDetails objects,
