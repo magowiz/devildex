@@ -331,13 +331,13 @@ jobs:
           mkdir -p ~/rpmbuild/SOURCES/
           poetry build --format sdist
           mv dist/*.tar.gz ~/rpmbuild/SOURCES/
-      - name: Restore original pyproject.toml
-        if: always()
-        run: mv pyproject.toml.bak pyproject.toml
       - name: Build RPM package
         run: |
           VERSION=$(poetry version --short)
           rpmbuild -ba packaging/rpm/devildex.spec --define "version $VERSION"
+      - name: Restore original pyproject.toml
+        if: always()
+        run: mv pyproject.toml.bak pyproject.toml
       - name: Upload RPM Package artifact
         uses: actions/upload-artifact@v4
         with:
