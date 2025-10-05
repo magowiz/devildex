@@ -178,13 +178,13 @@ jobs:
           name: devildex-debian-package
           path: dist/deb/*.deb
 
-  build-package:
+
+
+  build-windows-bundle:
     needs: setup
-    name: Build Pyinstaller Pkg
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    name: Build Windows Bundle
+    runs-on: windows-latest
+    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -196,21 +196,83 @@ jobs:
         run: pip install poetry
       - name: Install toml library
         run: pip install toml
-      - name: Generate platform-specific pyproject.toml (Windows)
-        if: runner.os == 'Windows'
+      - name: Generate platform-specific pyproject.toml
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
           mv -Force pyproject.toml.tmp pyproject.toml
-      - name: Generate platform-specific pyproject.toml (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Install wxPython
+        run: pip install wxpython==4.2.3
+      - name: Install Poetry and dependencies
+        run: |
+          poetry self add poetry-plugin-export
+          poetry lock
+          poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
+          pip install pyinstaller
+      - name: Build Package
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/windows-latest
+      - name: Upload Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-windows-bundle
+          path: dist/windows-latest/
+
+  build-macos-bundle:
+    needs: setup
+    name: Build macOS Bundle
+    runs-on: macos-latest
+    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install toml library
+        run: pip install toml
+      - name: Generate platform-specific pyproject.toml
         run: |
           python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
           mv -f pyproject.toml.tmp pyproject.toml
-      - name: Install wxPython (Windows & macOS)
-        if: runner.os == 'Windows' || runner.os == 'macOS'
+      - name: Install wxPython
         run: pip install wxpython==4.2.3
-      - name: Install OS-specific dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Poetry and dependencies
+        run: |
+          poetry self add poetry-plugin-export
+          poetry lock
+          poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
+          pip install pyinstaller
+      - name: Build Package
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/macos-latest
+      - name: Upload Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devildex-macos-bundle
+          path: dist/macos-latest/
+
+  build-linux-bundle:
+    needs: setup
+    name: Build Linux Bundle
+    runs-on: ubuntu-latest
+    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install toml library
+        run: pip install toml
+      - name: Generate platform-specific pyproject.toml
+        run: |
+          python scripts/generate_pyproject_toml.py pyproject.toml ${{ runner.os }} > pyproject.toml.tmp
+          mv -f pyproject.toml.tmp pyproject.toml
+      - name: Install OS-specific dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -230,28 +292,13 @@ jobs:
           poetry lock
           poetry export -f requirements.txt --output requirements.tmp && grep -v "wxPython" requirements.tmp > requirements.txt && rm requirements.tmp
           pip install pyinstaller
-
-      - name: Build Package (Windows)
-        if: runner.os == 'Windows' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle'))
-        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
-      - name: Build Package (Linux/macOS)
-        if: (runner.os == 'macOS' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle'))) || (runner.os == 'Linux' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle')))
-        run: |
-          if [ "${{ runner.os }}" == "macOS" ]; then
-            pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
-          elif [ "${{ runner.os }}" == "Linux" ]; then
-            pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
-          fi
-      - name: Set runner.os to lowercase
-        id: lower_os
-        shell: bash
-        run: echo "os_name=$(echo ${{ runner.os }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
+      - name: Build Package
+        run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/ubuntu-latest
       - name: Upload Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-${{ steps.lower_os.outputs.os_name }}-bundle
-          path: dist/${{ matrix.os }}/
+          name: devildex-linux-bundle
+          path: dist/ubuntu-latest/
 
   build-docs:
     needs: setup
@@ -379,9 +426,11 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-windows-wheel
-      - build-package
+      - build-windows-bundle
       - build-linux-wheel
+      - build-linux-bundle
       - build-macos-wheel
+      - build-macos-bundle
       - build-deb-package
       - build-rpm-package
     outputs:
@@ -390,9 +439,11 @@ jobs:
       - id: check_status
         run: |
           if [[ "${{ needs.build-windows-wheel.result }}" == "success" || \
-                "${{ needs.build-package.result }}" == "success" || \
+                "${{ needs.build-windows-bundle.result }}" == "success" || \
                 "${{ needs.build-linux-wheel.result }}" == "success" || \
+                "${{ needs.build-linux-bundle.result }}" == "success" || \
                 "${{ needs.build-macos-wheel.result }}" == "success" || \
+                "${{ needs.build-macos-bundle.result }}" == "success" || \
                 "${{ needs.build-deb-package.result }}" == "success" || \
                 "${{ needs.build-rpm-package.result }}" == "success" ]]; then
             echo "run_release=true" >> $GITHUB_OUTPUT
@@ -405,6 +456,14 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - check-build-status
+      - build-windows-wheel
+      - build-windows-bundle
+      - build-linux-wheel
+      - build-linux-bundle
+      - build-macos-wheel
+      - build-macos-bundle
+      - build-deb-package
+      - build-rpm-package
     if: ${{ needs.check-build-status.outputs.run_release == 'true' }}
     steps:
       - name: Checkout code
