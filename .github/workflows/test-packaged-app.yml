@@ -22,7 +22,7 @@ jobs:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: devildex-windows-latest-bundle
+          name: devildex-windows-bundle
           path: build/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -52,7 +52,7 @@ jobs:
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: devildex-macos-latest-bundle
+          name: devildex-macos-bundle
           path: build/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -165,7 +165,7 @@ jobs:
       - name: Download PyInstaller Windows bundle
         uses: actions/download-artifact@v4
         with:
-          name: devildex-windows-latest-bundle
+          name: devildex-windows-bundle
           path: build/windows-latest/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -192,7 +192,7 @@ jobs:
       - name: Download PyInstaller macOS bundle
         uses: actions/download-artifact@v4
         with:
-          name: devildex-macos-latest-bundle
+          name: devildex-macos-bundle
           path: build/macos-latest/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -223,7 +223,7 @@ jobs:
       - name: Download PyInstaller Linux bundle
         uses: actions/download-artifact@v4
         with:
-          name: devildex-ubuntu-latest-bundle
+          name: devildex-linux-bundle
           path: build/ubuntu-latest/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

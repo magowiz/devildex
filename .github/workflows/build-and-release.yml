@@ -225,10 +225,14 @@ jobs:
           elif [ "${{ runner.os }}" == "Linux" ]; then
             pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_linux.spec --distpath dist/${{ matrix.os }}
           fi
+      - name: Set runner.os to lowercase
+        id: lower_os
+        run: echo "os_name=$(echo ${{ runner.os }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Upload Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: devildex-${{ runner.os }}-bundle
+          name: devildex-${{ steps.lower_os.outputs.os_name }}-bundle
           path: dist/${{ matrix.os }}/
 
   build-docs:
