@@ -28,8 +28,7 @@ jobs:
       run_macos_wheel: ${{ contains(fromJSON(steps.get_vars.outputs.test_packages), 'all') || contains(fromJSON(steps.get_vars.outputs.test_packages), 'macos-wheel') }}
     steps:
       - id: get_vars
-        run: |
-          echo "test_packages=${{ vars.TEST_PACKAGES || '[\"all\"]' }}" >> $GITHUB_OUTPUT
+        run: echo "test_packages=\"${{ vars.TEST_PACKAGES || '[\\"all\\\"]' }}\"" >> $GITHUB_OUTPUT
 
 
   build-linux-wheel:
