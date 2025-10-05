@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 -m src.devildex.local_data_parse.registered_project_parser "$@"
