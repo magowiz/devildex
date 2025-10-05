@@ -9,8 +9,8 @@ on:
 jobs:
   setup:
     runs-on: ubuntu-latest
-    outputs:
-      test_packages: ${{ steps.get_vars.outputs.test_packages }}
+      - id: get_vars
+        run: echo "test_packages=\"${{ vars.TEST_PACKAGES || '[\\"all\\\"]' }}\"" >> $GITHUB_OUTPUT
     steps:
       - id: get_vars
         run: echo "test_packages=\"${{ vars.TEST_PACKAGES || '[\\"all\\\"]' }}\"" >> $GITHUB_OUTPUT
