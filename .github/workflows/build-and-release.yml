@@ -186,8 +186,12 @@ jobs:
     needs: setup
     name: Build Windows Bundle
     runs-on: windows-latest
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') }}
     steps:
+      - name: Debug if condition
+        run: |
+          echo "test_packages: ${{ needs.setup.outputs.test_packages }}"
+          echo "contains all: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') }}"
+          echo "contains windows-bundle: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') }}"
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up Python
