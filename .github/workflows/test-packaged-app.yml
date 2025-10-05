@@ -156,7 +156,16 @@ jobs:
           ls -lR build/wheel
           pip install ./build/wheel/devildex-*.whl alembic
           pip install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
-          xvfb-run python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
+          xvfb-run devildex &
+          PID=$!
+          sleep 30
+          if ps -p $PID > /dev/null; then
+              kill $PID
+              echo "Application remained running for 30 seconds."
+          else
+              echo "Application exited prematurely."
+              exit 1
+          fi
 
 
 
@@ -189,7 +198,16 @@ jobs:
           ls -lR build/wheel
           pip install ./build/wheel/devildex-*.whl alembic
           pip install wxpython==4.2.3
-          python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
+          devildex &
+          PID=$!
+          sleep 30
+          if ps -p $PID > /dev/null; then
+              kill $PID
+              echo "Application remained running for 30 seconds."
+          else
+              echo "Application exited prematurely."
+              exit 1
+          fi
 
   test-windows-wheel-package:
     needs: setup
@@ -217,10 +235,15 @@ jobs:
       - name: Test Installed Wheel (Windows)
         run: |
           pip list
-          Get-ChildItem -Recurse build/wheel
-          pip install ./build/wheel/devildex-*.whl alembic
-          pip install wxpython==4.2.3
-          python -c "import devildex; import subprocess; p = subprocess.Popen(['devildex']); import time; time.sleep(30); p.poll() or p.terminate(); exit(0) if p.returncode is None else exit(1)"
+          $process = Start-Process -FilePath "devildex.exe" -NoNewWindow -PassThru
+          Start-Sleep -Seconds 30
+          if ($process.HasExited) {
+              Write-Error "Application exited prematurely."
+              exit 1
+          } else {
+              Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
+              Write-Host "Application remained running for 30 seconds."
+          }
 
   test-linux-pyinstaller-bundle:
     needs: setup
