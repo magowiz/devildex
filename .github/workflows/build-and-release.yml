@@ -181,7 +181,6 @@ jobs:
   build-package:
     needs: setup
     name: Build Pyinstaller Pkg
-    if: ${{ contains(fromJSON(needs.setup.outputs.test_packages), 'all') || (contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle') && matrix.os == 'windows-latest') || (contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle') && matrix.os == 'macos-latest') || (contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle') && matrix.os == 'ubuntu-latest') }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
@@ -233,10 +232,10 @@ jobs:
           pip install pyinstaller
 
       - name: Build Package (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'windows-bundle'))
         run: pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_windows.spec --distpath dist/${{ matrix.os }}
       - name: Build Package (Linux/macOS)
-        if: runner.os != 'Windows'
+        if: (runner.os == 'macOS' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'macos-bundle'))) || (runner.os == 'Linux' && (contains(fromJSON(needs.setup.outputs.test_packages), 'all') || contains(fromJSON(needs.setup.outputs.test_packages), 'linux-bundle')))
         run: |
           if [ "${{ runner.os }}" == "macOS" ]; then
             pyinstaller --log-level=DEBUG packaging/pyinstaller/specs/devildex_macos.spec --distpath dist/${{ matrix.os }}
