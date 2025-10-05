@@ -306,8 +306,8 @@ jobs:
 
       - name: Test Built Application (RPM)
         run: |
-         sudo dnf install -y xorg-x11-server-Xvfb libnotify
-         
+                   sudo dnf install -y xorg-x11-server-Xvfb libnotify
+                   sudo dnf install -y python3-pip         
          # Install Python dependencies using pip
          pip3 install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
          
