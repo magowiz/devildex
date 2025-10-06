@@ -305,12 +305,11 @@ jobs:
 
       - name: Test Built Application (RPM)
         run: |
-          sudo dnf install -y xorg-x11-server-Xvfb libnotify
+          sudo dnf install -y xorg-x11-server-Xvfb libnotify procps-ng webkit2gtk4.1
           sudo dnf install -y python3-pip
           # Install Python dependencies using pip
           pip3 install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
-          # Install wxpython separately as it's a direct URL dependency
-          pip3 install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
+
           sudo dnf install -y ./build/rpm/*.rpm
           xvfb-run devildex &
           PID=$!
