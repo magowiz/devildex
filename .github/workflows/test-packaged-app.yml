@@ -307,10 +307,9 @@ jobs:
         run: |
           sudo dnf install -y xorg-x11-server-Xvfb libnotify procps-ng
           sudo dnf install -y python3-pip
+          sudo dnf install -y ./build/rpm/*.rpm
           # Install Python dependencies using pip
           pip3 install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
-
-          sudo dnf install -y ./build/rpm/*.rpm
           xvfb-run devildex &
           PID=$!
           sleep 30
