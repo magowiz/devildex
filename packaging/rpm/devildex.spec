@@ -13,7 +13,7 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
-BuildRequires:  pyproject-rpm-macros
+
 Requires:       SDL2
 
 %description
