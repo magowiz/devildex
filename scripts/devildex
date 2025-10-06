@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 -m src.devildex.main "$@"
+python3 -m devildex.main "$@"
