@@ -22,6 +22,7 @@ Requires:       python3
 Requires:       SDL2
 Requires:       python3-wxpython4
 Requires:       python3-wxpython4-webview
+Requires:       python3-platformdirs
 Provides: python3.13dist(fastapi) < 0.117~~
 Provides: python3.13dist(fastmcp) < 3~~
 Provides: python3.13dist(markdownify) < 2~~
