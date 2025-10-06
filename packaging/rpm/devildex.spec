@@ -63,7 +63,7 @@ find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 %{python3_sitelib}/
 
 %post
-pip3 install pdoc3
+pip3 install --prefix=/usr pdoc3
 
 
 %changelog
