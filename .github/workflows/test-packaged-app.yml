@@ -303,6 +303,9 @@ jobs:
       - name: List downloaded files (RPM)
         run: ls -R build/rpm/
 
+      - name: Search for python webkit2gtk packages
+        run: sudo dnf search python webkit2gtk
+
       - name: Test Built Application (RPM)
         run: |
           sudo dnf install -y xorg-x11-server-Xvfb libnotify procps-ng
