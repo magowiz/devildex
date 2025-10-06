@@ -32,18 +32,24 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-poetry build --format wheel
-
++
++ cd devildex-0.2.1
++ poetry build --format wheel
++ mv dist/*.whl %{_pyproject_wheeldir}
 %install
 %pyproject_install
 find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 
-%files -f python_files.lst
+%files
 %license LICENSE
 %{_bindir}/devildex
 %{_bindir}/devildex-alembic
 %{_bindir}/devildex-gemini-setup
 %{_bindir}/devildex-register-project
+%{python3_sitelib}/%{name}
+%{python3_sitelib}/%{name}-%{version}.dist-info/
+%{python3_sitelib}/scripts/
+%{python3_sitelib}/
 
 
 %changelog
