@@ -33,6 +33,7 @@ and generation of various documentation formats.
 %setup -q
 
 %build
+dnf install -y patchelf
 export QA_RPATHS=$(( 0x0001|0x0004 ))
 poetry build --format wheel
 mkdir -p %{_pyproject_wheeldir}
