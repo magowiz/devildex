@@ -15,10 +15,12 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
 BuildRequires:  patchelf
+BuildRequires:  python3-wxpython4
 AutoReq: no
 AutoProv: no
 Requires:       python3
 Requires:       SDL2
+Requires:       python3-wxpython4
 Provides: python3.13dist(fastapi) < 0.117~~
 Provides: python3.13dist(fastmcp) < 3~~
 Provides: python3.13dist(markdownify) < 2~~
@@ -40,13 +42,7 @@ cp dist/devildex-0.2.1-py3-none-any.whl %{_pyproject_wheeldir}
 
 %install
 %pyproject_install
-echo "--- Before wxPython installation ---"
-ls -R %{buildroot}
-echo "--- Installing wxPython ---"
-python3 -m pip install --root %{buildroot} --no-deps --ignore-installed --compile "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
-echo "--- After wxPython installation ---"
-ls -R %{buildroot}%{python3_sitelib}/
-patchelf --remove-rpath %{buildroot}%{python3_sitelib}/wx/svg/_nanosvg.cpython-313-x86_64-linux-gnu.so
+
 find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 
 %files
