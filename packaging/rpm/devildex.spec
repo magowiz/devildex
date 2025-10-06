@@ -32,7 +32,6 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-+
 cd devildex-0.2.1
 poetry build --format wheel
 %install
