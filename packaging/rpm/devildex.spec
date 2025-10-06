@@ -18,6 +18,11 @@ AutoReq: no
 AutoProv: no
 Requires:       python3
 Requires:       SDL2
+Provides: python3.13dist(fastapi) < 0.117~~
+Provides: python3.13dist(fastmcp) < 3~~
+Provides: python3.13dist(markdownify) < 2~~
+Provides: python3.13dist(pdoc3) < 0.12~~
+Provides: python3.13dist(pydoctor) < 26~~
 
 %description
 Devildex is a comprehensive tool designed to streamline the management
