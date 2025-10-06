@@ -1,4 +1,2 @@
-scripts/devildex usr/bin/
-scripts/devildex-alembic usr/bin/
-scripts/devildex-gemini-setup usr/bin/
-scripts/devildex-register-project usr/bin/
+src/devildex usr/lib/python3/dist-packages/
+scripts/* usr/bin/
