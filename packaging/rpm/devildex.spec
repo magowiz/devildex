@@ -57,6 +57,7 @@ cp -r %{_builddir}/%{name}-%{version}/scripts/* %{buildroot}%{python3_sitelib}/s
 %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}-%{version}.dist-info/
 %{python3_sitelib}/scripts/
+%{python3_sitelib}/*
 
 %changelog
 * Sat Oct 04 2025 magowiz <magowiz@gmail.com> - 0.2.1-1
