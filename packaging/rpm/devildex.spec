@@ -32,6 +32,7 @@ Requires:       python3-pip-requirements-parser
 Requires:       python3-requests
 Requires:       python3-poetry-core
 Requires:       python3-pydoctor
+Requires:       libnotify
 Provides: python3.13dist(fastapi) < 0.117~~
 Provides: python3.13dist(fastmcp) < 3~~
 Provides: python3.13dist(markdownify) < 2~~
