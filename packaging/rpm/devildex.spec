@@ -28,6 +28,10 @@ Requires:       python3-alembic
 Requires:       python3-toml
 Requires:       python3-packaging
 Requires:       python3-pyyaml
+Requires:       python3-pip-requirements-parser
+Requires:       python3-requests
+Requires:       python3-poetry-core
+Requires:       python3-pydoctor
 Provides: python3.13dist(fastapi) < 0.117~~
 Provides: python3.13dist(fastmcp) < 3~~
 Provides: python3.13dist(markdownify) < 2~~
@@ -64,7 +68,7 @@ find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 %{python3_sitelib}/
 
 %post
-pip3 install --prefix=/usr pdoc3
+pip3 install --prefix=/usr pdoc3 fastapi uvicorn markdownify
 
 
 %changelog
