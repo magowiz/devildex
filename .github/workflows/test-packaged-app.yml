@@ -305,7 +305,6 @@ jobs:
 
       - name: Test Built Application (RPM)
         run: |
-<<<<<<< HEAD
           sudo dnf install -y xorg-x11-server-Xvfb libnotify procps-ng
           sudo dnf install -y python3-pip
           # Install Python dependencies using pip
