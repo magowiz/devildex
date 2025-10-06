@@ -62,6 +62,9 @@ find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 %{python3_sitelib}/scripts/
 %{python3_sitelib}/
 
+%post
+pip3 install pdoc3
+
 
 %changelog
 * Mon Oct 06 2025 magowiz <magowiz@gmail.com> - 0.2.0-1
