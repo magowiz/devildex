@@ -60,5 +60,8 @@ cp -r %{_builddir}/%{name}-%{version}/scripts/* %{buildroot}%{python3_sitelib}/s
 %{python3_sitelib}/
 
 %changelog
-* Sat Oct 04 2025 magowiz <magowiz@gmail.com> - 0.2.1-1
-- Initial RPM package creation.
+* Mon Oct 06 2025 magowiz <magowiz@gmail.com> - 0.2.0-1
+- Initial RPM release
+
+%post
+ls -R %{buildroot}%{python3_sitelib}
