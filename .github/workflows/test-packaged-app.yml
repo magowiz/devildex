@@ -104,7 +104,7 @@ jobs:
         run: |
          dpkg -c build/deb/*.deb
          sudo apt-get update
-         sudo apt-get install -y xvfb libnotify4 ./build/deb/*.deb
+         sudo apt-get install -y xvfb ./build/deb/*.deb
          echo "APT-GET install exit code: $?"
          ls -l /usr/bin/devildex || true # Use || true to prevent the step from failing if devildex is not found yet
          
