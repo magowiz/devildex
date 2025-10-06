@@ -303,7 +303,7 @@ jobs:
       - name: List downloaded files (RPM)
         run: ls -R build/rpm/
 
-
+      - name: Test Built Application (RPM)
         run: |
           sudo dnf install -y xorg-x11-server-Xvfb libnotify procps-ng
           sudo dnf install -y python3-pip
