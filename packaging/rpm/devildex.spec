@@ -21,9 +21,7 @@ AutoProv: no
 Requires:       python3
 Requires:       SDL2
 Requires:       python3-wxpython4
-Requires:       webkit2gtk4.1
-Requires:       python3-webkit2gtk
-Requires:       webkit2gtk4.1-devel
+Requires:       python3-wxpython4-webview
 Provides: python3.13dist(fastapi) < 0.117~~
 Provides: python3.13dist(fastmcp) < 3~~
 Provides: python3.13dist(markdownify) < 2~~
