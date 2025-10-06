@@ -27,6 +27,7 @@ Requires:       python3-sqlalchemy
 Requires:       python3-alembic
 Requires:       python3-toml
 Requires:       python3-packaging
+Requires:       python3-pyyaml
 Provides: python3.13dist(fastapi) < 0.117~~
 Provides: python3.13dist(fastmcp) < 3~~
 Provides: python3.13dist(markdownify) < 2~~
