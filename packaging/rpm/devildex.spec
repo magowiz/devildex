@@ -12,9 +12,9 @@ Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
-BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
 BuildRequires:  patchelf
+BuildRequires:  python3-poetry
 AutoReq: no
 AutoProv: no
 Requires:       python3
