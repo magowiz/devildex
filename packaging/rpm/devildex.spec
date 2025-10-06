@@ -33,9 +33,8 @@ and generation of various documentation formats.
 
 %build
 +
-+ cd devildex-0.2.1
-+ poetry build --format wheel
-+ cp dist/*.whl %{_pyproject_wheeldir}
+cd devildex-0.2.1
+poetry build --format wheel
 %install
 %pyproject_install
 find %{buildroot}%{python3_sitelib} -type f > python_files.lst
