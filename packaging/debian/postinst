@@ -5,7 +5,7 @@ set -e
 case "$1" in
     configure)
         echo "Installing Python dependencies via pip..."
-        python3 -m pip install \
+        python3 -m pip install --ignore-installed \
             pip-requirements-parser \
             pdoc3 \
             pydoctor \
