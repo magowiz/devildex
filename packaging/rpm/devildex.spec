@@ -33,7 +33,6 @@ and generation of various documentation formats.
 %setup -q
 
 %build
-dnf install -y patchelf
 export QA_RPATHS=$(( 0x0001|0x0004 ))
 poetry build --format wheel
 mkdir -p %{_pyproject_wheeldir}
@@ -42,6 +41,7 @@ cp dist/devildex-0.2.1-py3-none-any.whl %{_pyproject_wheeldir}
 %install
 %pyproject_install
 python3 -m pip install --root %{buildroot} --no-deps --ignore-installed --compile "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
+ls -R %{buildroot}%{python3_sitelib}/wx/
 patchelf --remove-rpath %{buildroot}%{python3_sitelib}/wx/svg/_nanosvg.cpython-313-x86_64-linux-gnu.so
 find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 
