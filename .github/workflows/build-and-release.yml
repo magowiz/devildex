@@ -384,6 +384,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Generate platform-specific pyproject.toml
         run: |
+          dnf install -y python3 python3-pip
+          python3 -m pip install toml
           cp pyproject.toml pyproject.toml.bak
           python3 scripts/generate_pyproject_toml.py pyproject.toml fedora > pyproject.toml.tmp
           if [ "${{ runner.os }}" == "Windows" ]; then
@@ -393,7 +395,8 @@ jobs:
           fi
       - name: Install RPM build tools and Python packages
         run: |
-          # All RPM build tools and Python packages are now handled by BuildRequires in devildex.spec.
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry patchelf python3-wxpython4
+          python -m pip install toml
       - name: Add Poetry to PATH
         run: echo "/usr/bin" >> $GITHUB_PATH
       - name: Create source tarball
