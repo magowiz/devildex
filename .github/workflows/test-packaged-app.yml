@@ -307,7 +307,6 @@ jobs:
         run: |
 <<<<<<< HEAD
           sudo dnf install -y xorg-x11-server-Xvfb libnotify procps-ng
->>>>>>> parent of a50b15b (Revert "release(patch): Fix test-packaged-app.yml for RPM package\n\n- Add procps-ng to dnf install to fix 'ps: command not found'.\n- Remove pip3 install of wxpython to rely on python3-wxpython4 RPM package.\n- Add webkit2gtk4.1-devel to dnf install to resolve 'ModuleNotFoundError: No module named \'wx.html2\''.")
           sudo dnf install -y python3-pip
           # Install Python dependencies using pip
           pip3 install toml pip-requirements-parser pdoc3 requests platformdirs poetry-core sqlalchemy pyyaml pydoctor fastapi uvicorn markdownify pyinstaller alembic
