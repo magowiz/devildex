@@ -27,7 +27,7 @@ and generation of various documentation formats.
 poetry build --format wheel
 
 %install
-pip install --prefix %{buildroot}/usr --no-deps dist/*.whl
+pip install --prefix %{buildroot}/usr dist/*.whl
 
 # Explicitly install scripts
 mkdir -p %{buildroot}%{_bindir}
