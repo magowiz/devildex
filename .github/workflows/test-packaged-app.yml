@@ -239,10 +239,9 @@ jobs:
       - name: Test Installed Wheel (Windows)
         run: |
          pip list
-         Get-ChildItem -Recurse build/wheel
-         pip install ./build/wheel/devildex-*.whl alembic
+         pip install ./build/wheel/devildex-0.2.1-py3-none-any.whl alembic
          pip install wxpython==4.2.3
-         $process = Start-Process -FilePath "devildex.exe" -NoNewWindow -PassThru
+         $process = Start-Process -FilePath "${{ env.pythonLocation }}\Scripts\devildex.exe" -NoNewWindow -PassThru
          Start-Sleep -Seconds 30
          if ($process.HasExited) {
              Write-Error "Application exited prematurely."
