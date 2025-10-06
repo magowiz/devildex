@@ -35,6 +35,7 @@ and generation of various documentation formats.
 poetry build --format wheel
 mkdir -p %{_pyproject_wheeldir}
 cp dist/devildex-0.2.1-py3-none-any.whl %{_pyproject_wheeldir}
+pip3 install "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp313-cp313-linux_x86_64.whl"
 %install
 %pyproject_install
 find %{buildroot}%{python3_sitelib} -type f > python_files.lst
