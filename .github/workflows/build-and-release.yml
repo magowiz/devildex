@@ -395,7 +395,7 @@ jobs:
           fi
       - name: Install RPM build tools and Python packages
         run: |
-          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry
+          dnf install -y rpm-build rpmlint python3-devel python3-setuptools python3-pip python3-wheel pyproject-rpm-macros poetry patchelf
           python -m pip install toml
       - name: Add Poetry to PATH
         run: echo "/usr/bin" >> $GITHUB_PATH
