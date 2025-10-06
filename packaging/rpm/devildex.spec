@@ -15,6 +15,23 @@ BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
 BuildRequires:  pyproject-rpm-macros
 Requires:       SDL2
+Requires:       python3-toml >= 0.10.2
+Requires:       python3-pip-requirements-parser >= 32.0.1
+Requires:       python3-pdoc3 >= 0.11.6
+Requires:       python3-requests >= 2.32.4
+Requires:       python3-platformdirs >= 3.0.0
+Requires:       python3-poetry-core >= 2.0.0
+Requires:       python3-sqlalchemy >= 2.0.41
+Requires:       python3-pyyaml >= 6.0.2
+Requires:       python3-pydoctor >= 25.4.0
+# wxpython is a direct URL dependency, usually not handled by RPM Requires.
+# Assuming it's installed via pip in the build process.
+Requires:       python3-fastmcp >= 2.12.2
+Requires:       python3-fastapi >= 0.116.1
+Requires:       python3-uvicorn >= 0.35.0
+Requires:       python3-markdownify >= 1.2.0
+Requires:       python3-pyinstaller >= 6.16.0
+Requires:       python3-alembic >= 1.13.1
 
 %description
 Devildex is a comprehensive tool designed to streamline the management
