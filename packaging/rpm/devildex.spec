@@ -35,33 +35,17 @@ and generation of various documentation formats.
 poetry build --format wheel
 
 %install
-pip install --prefix %{buildroot}/usr dist/*.whl
+%pyproject_install
+find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 
-# Explicitly install scripts
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 %{_builddir}/%{name}-%{version}/scripts/devildex %{buildroot}%{_bindir}/devildex
-install -m 0755 %{_builddir}/%{name}-%{version}/scripts/devildex-alembic %{buildroot}%{_bindir}/devildex-alembic
-install -m 0755 %{_builddir}/%{name}-%{version}/scripts/devildex-gemini-setup %{buildroot}%{_bindir}/devildex-gemini-setup
-install -m 0755 %{_builddir}/%{name}-%{version}/scripts/devildex-register-project %{buildroot}%{_bindir}/devildex-register-project
-
-# Explicitly install the scripts directory into site-packages
-mkdir -p %{buildroot}%{python3_sitelib}/scripts
-cp -r %{_builddir}/%{name}-%{version}/scripts/* %{buildroot}%{python3_sitelib}/scripts/
-
-%files
+%files -f python_files.lst
 %license LICENSE
 %{_bindir}/devildex
 %{_bindir}/devildex-alembic
 %{_bindir}/devildex-gemini-setup
 %{_bindir}/devildex-register-project
-%{python3_sitelib}/%{name}
-%{python3_sitelib}/%{name}-%{version}.dist-info/
-%{python3_sitelib}/scripts/
-%{python3_sitelib}/
+
 
 %changelog
 * Mon Oct 06 2025 magowiz <magowiz@gmail.com> - 0.2.0-1
 - Initial RPM release
-
-%post
-ls -R %{buildroot}%{python3_sitelib}
