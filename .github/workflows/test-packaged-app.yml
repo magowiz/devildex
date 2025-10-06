@@ -304,7 +304,7 @@ jobs:
         run: ls -R build/rpm/
 
       - name: Search for python webkit2gtk packages
-        run: sudo dnf search python webkit2gtk
+        run: sudo dnf search webkit2gtk | grep python
 
       - name: Test Built Application (RPM)
         run: |
