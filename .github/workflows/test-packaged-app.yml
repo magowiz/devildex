@@ -303,8 +303,8 @@ jobs:
       - name: List downloaded files (RPM)
         run: ls -R build/rpm/
 
-      - name: Search for python webkit2gtk packages
-        run: sudo dnf search webkit2gtk | grep python
+      - name: Search for wx.html2 provider
+        run: sudo dnf provides 'python3-wxpython4(html2)'
 
       - name: Test Built Application (RPM)
         run: |
