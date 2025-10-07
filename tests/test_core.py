@@ -34,6 +34,18 @@ def core(tmp_path: Path, mocker: MockerFixture) -> DevilDexCore:
     instance = DevilDexCore()
     return instance
 
+@pytest.fixture
+def core_with_db(tmp_path: Path, mocker: MockerFixture, db_connection_and_tables) -> DevilDexCore:
+    """Provide a DevilDexCore instance with a file-based database."""
+    db_url, _, _ = db_connection_and_tables
+    mock_app_paths_class = mocker.patch("devildex.core.AppPaths")
+    mock_app_paths_instance = mock_app_paths_class.return_value
+    mock_app_paths_instance.docsets_base_dir = tmp_path / "docsets"
+    mock_app_paths_instance.database_path = db_url.replace("sqlite:///", "")
+    mocker.patch.dict("os.environ", {"DEVILDEX_DEV_MODE": "0"})
+    instance = DevilDexCore(database_url=db_url)
+    return instance
+
 
 def test_bootstrap_database_and_load_data(
     core: DevilDexCore,
@@ -143,7 +155,7 @@ def test_delete_docset_build_os_error(
 """Tests for the DevilDexCore class."""
 
 
-def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> None:
+def test_generate_docset_success(core_with_db: DevilDexCore, mocker: MockerFixture) -> None:
     """Verify successful docset generation path."""
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
     mock_orchestrator_instance = mock_orchestrator_class.return_value
@@ -156,13 +168,13 @@ def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> N
     mock_thread_instance = mock_thread_class.return_value
     mock_thread_instance.start.return_value = None  # Ensure start does nothing
 
-    task_id = core.generate_docset(package_data, force=True)
+    task_id = core_with_db.generate_docset(package_data, force=True)
 
     # Manually call the target function to simulate thread execution
     # This ensures the _tasks dictionary is updated as if the thread ran
-    core._run_generation_task(task_id, package_data, force=True)
+    core_with_db._run_generation_task(task_id, package_data, force=True)
 
-    task_status = core.get_task_status(task_id)
+    task_status = core_with_db.get_task_status(task_id)
     success, msg = task_status["result"]
 
     assert success is True
@@ -173,7 +185,7 @@ def test_generate_docset_success(core: DevilDexCore, mocker: MockerFixture) -> N
 
 
 def test_generate_docset_unknown_type_failure(
-    core: DevilDexCore, mocker: MockerFixture
+    core_with_db: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify failure when the orchestrator cannot determine the doc type."""
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
@@ -190,12 +202,12 @@ def test_generate_docset_unknown_type_failure(
     mock_thread_instance = mock_thread_class.return_value
     mock_thread_instance.start.return_value = None  # Ensure start does nothing
 
-    task_id = core.generate_docset(package_data, force=True)
+    task_id = core_with_db.generate_docset(package_data, force=True)
 
     # Manually call the target function to simulate thread execution
-    core._run_generation_task(task_id, package_data, force=True)
+    core_with_db._run_generation_task(task_id, package_data, force=True)
 
-    task_status = core.get_task_status(task_id)
+    task_status = core_with_db.get_task_status(task_id)
     success, msg = task_status["result"]
 
     assert success is False
@@ -204,7 +216,7 @@ def test_generate_docset_unknown_type_failure(
 
 
 def test_generate_docset_build_failure(
-    core: DevilDexCore, mocker: MockerFixture
+    core_with_db: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify failure when the build process itself fails."""
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
@@ -222,12 +234,12 @@ def test_generate_docset_build_failure(
     mock_thread_instance = mock_thread_class.return_value
     mock_thread_instance.start.return_value = None  # Ensure start does nothing
 
-    task_id = core.generate_docset(package_data, force=True)
+    task_id = core_with_db.generate_docset(package_data, force=True)
 
     # Manually call the target function to simulate thread execution
-    core._run_generation_task(task_id, package_data, force=True)
+    core_with_db._run_generation_task(task_id, package_data, force=True)
 
-    task_status = core.get_task_status(task_id)
+    task_status = core_with_db.get_task_status(task_id)
     success, msg = task_status["result"]
 
     assert success is False
@@ -236,7 +248,7 @@ def test_generate_docset_build_failure(
 
 
 def test_generate_docset_missing_input_data(
-    core: DevilDexCore, mocker: MockerFixture
+    core_with_db: DevilDexCore, mocker: MockerFixture
 ) -> None:
     """Verify early exit if package name or version is missing."""
     package_data = {"name": "requests"}
@@ -249,12 +261,12 @@ def test_generate_docset_missing_input_data(
     mock_thread_instance = mock_thread_class.return_value
     mock_thread_instance.start.return_value = None  # Ensure start does nothing
 
-    task_id = core.generate_docset(package_data)
+    task_id = core_with_db.generate_docset(package_data)
 
     # Manually call the target function to simulate thread execution
-    core._run_generation_task(task_id, package_data, force=False)
+    core_with_db._run_generation_task(task_id, package_data, force=False)
 
-    task_status = core.get_task_status(task_id)
+    task_status = core_with_db.get_task_status(task_id)
     success, msg = task_status["result"]
 
     assert success is False

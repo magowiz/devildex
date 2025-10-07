@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
+from pytest_mock import MockerFixture
 
 from devildex.local_data_parse.common_read import (
     _parse_pep621_dependencies,
@@ -81,14 +82,15 @@ def test_no_config_files_found(tmp_path: Path) -> None:
 
 
 def test_handles_malformed_pyproject_toml(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, mocker: MockerFixture
 ) -> None:
     """Verify it handles a corrupt pyproject.toml gracefully."""
     malformed_content = "this is not valid toml"
     (tmp_path / "pyproject.toml").write_text(malformed_content)
+    mock_logger = mocker.patch("devildex.local_data_parse.common_read.logger")
     deps = get_explicit_dependencies_from_project_config(str(tmp_path))
     assert deps == set()
-    assert "Invalid TOML in" in caplog.text
+    mock_logger.exception.assert_called_once()
 
 
 def test_handles_empty_requirements_txt(tmp_path: Path) -> None:

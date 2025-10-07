@@ -2,10 +2,11 @@
 
 import logging
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from pip_requirements_parser import RequirementsFile
+from pytest_mock import MockerFixture
 
 from devildex.utils.deps_utils import (
     _process_requirements_obj,
@@ -17,17 +18,19 @@ EXPECTED_DEBUG_CALL_COUNT = 2
 
 @patch("devildex.utils.deps_utils.RequirementsFile", None)
 def test_filter_requirements_lines_requirements_file_none(
-    caplog: pytest.LogCaptureFixture,
+    mocker: MockerFixture,
 ) -> None:
     """Verify filter_requirements_lines handles RequirementsFile being None."""
-    with caplog.at_level(logging.ERROR):
-        result = filter_requirements_lines("/fake/path/reqs.txt")
+    mock_logger = mocker.patch("devildex.utils.deps_utils.logger")
+    result = filter_requirements_lines("/fake/path/reqs.txt")
     assert result is None
-    assert "The 'pip-requirements-parser' package is not installed." in caplog.text
+    mock_logger.error.assert_called_once_with(
+        "The 'pip-requirements-parser' package is not installed.Unable to filter the requirements file."
+    )
 
 
 def test_process_requirements_obj_invalid_lines(
-    caplog: pytest.LogCaptureFixture,
+    mocker: MockerFixture,
 ) -> None:
     """Verify _process_requirements_obj logs warning for invalid lines."""
     mock_req_file = MagicMock(spec=RequirementsFile)
@@ -38,19 +41,19 @@ def test_process_requirements_obj_invalid_lines(
         MagicMock(line=""),
         MagicMock(line=None),
     ]
-
-    with caplog.at_level(logging.WARNING):
-        result = _process_requirements_obj(mock_req_file, Path("/fake/reqs.txt"), set())
+    mock_logger = mocker.patch("devildex.utils.deps_utils.logger")
+    result = _process_requirements_obj(mock_req_file, Path("/fake/reqs.txt"), set())
 
     assert result == []
-    assert len(caplog.records) == 1
-    record = caplog.records[0]
-    assert "Found 2 RS ROWS NOT VALID" in record.message
-    assert "in ' /fake/reqs.txt'." in record.message
+    mock_logger.warning.assert_called_once_with(
+        "Found %s RS ROWS NOT VALID (landfill from the parser) in ' %s'.",
+        2,
+        Path("/fake/reqs.txt"),
+    )
 
 
 def test_process_requirements_obj_explicit_removal(
-    caplog: pytest.LogCaptureFixture,
+    mocker: MockerFixture,
 ) -> None:
     """Verify _process_requirements_obj handles explicit removal lines."""
     mock_req_file = MagicMock(spec=RequirementsFile)
@@ -61,13 +64,15 @@ def test_process_requirements_obj_explicit_removal(
     mock_req_file.invalid_lines = []
 
     lines_to_remove = {"-e ."}
-    with caplog.at_level(logging.INFO):
-        result = _process_requirements_obj(
-            mock_req_file, Path("/fake/reqs.txt"), lines_to_remove
-        )
+    mock_logger = mocker.patch("devildex.utils.deps_utils.logger")
+    result = _process_requirements_obj(
+        mock_req_file, Path("/fake/reqs.txt"), lines_to_remove
+    )
 
     assert result == ["valid-dep"]
-    assert "Explicit removal of the line '-e .' from '/fake/reqs.txt'" in caplog.text
+    mock_logger.info.assert_called_once_with(
+        "Explicit removal of the line '%s' from '%s'", "-e .", Path("/fake/reqs.txt")
+    )
 
 
 @patch("devildex.utils.deps_utils.logger.error")

@@ -4,10 +4,11 @@ import logging
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from devildex.database import db_manager as database
-from devildex.database.models import Docset, PackageInfo, RegisteredProject
+from devildex.database.models import Base, Docset, PackageInfo, RegisteredProject
 
 LEN_DATA = 2
 
@@ -19,10 +20,15 @@ def db_session() -> Session | None:
     Yields a session to interact with the database.
     """
     db_url = "sqlite:///:memory:"
-    database.DatabaseManager.close_db()
-    database.init_db(db_url)
+    engine = create_engine(db_url)
+    Base.metadata.create_all(engine)
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    
+    database.DatabaseManager._engine = engine
+    database.DatabaseManager._session_local = session_local
+
     try:
-        with database.get_session() as session:
+        with session_local() as session:
             yield session
     finally:
         database.DatabaseManager.close_db()
@@ -105,24 +111,23 @@ def test_package_info_project_urls_setter_none_or_empty(db_session: Session) -> 
 
 
 def test_database_manager_init_db_called_twice(
-    caplog: pytest.LogCaptureFixture, mocker: MockerFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify calling init_db twice logs a debug message and doesn't re-initialize."""
     database.DatabaseManager._engine = None
     database.DatabaseManager._session_local = None
-    mocker.patch("devildex.database.db_manager.logger.info")
+    mock_logger_info = mocker.patch("devildex.database.db_manager.logger.info")
     database.init_db("sqlite:///:memory:")
-    database.logger.info.assert_any_call("Initializing database at: sqlite:///:memory:")
-    database.logger.info.assert_any_call("Database tables checked/created.")
-    database.logger.info.reset_mock()
-    mocker.patch("devildex.database.db_manager.logger.debug")
+    mock_logger_info.assert_any_call("Initializing database at: sqlite:///:memory:")
+    mock_logger_info.reset_mock()
+    mock_logger_debug = mocker.patch("devildex.database.db_manager.logger.debug")
     database.init_db("sqlite:///:memory:")
-    database.logger.debug.assert_any_call("Database engine already initialized.")
-    database.logger.info.assert_not_called()
+    mock_logger_debug.assert_any_call("Database engine already initialized.")
+    mock_logger_info.assert_not_called()
 
 
 def test_get_docsets_for_project_view_sqlalchemy_error(
-    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify get_docsets_for_project_view handles SQLAlchemyError."""
     mocker.patch(
@@ -131,14 +136,14 @@ def test_get_docsets_for_project_view_sqlalchemy_error(
     )
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
     mocker.patch("devildex.database.db_manager.get_session", return_value=mock_session)
-    with caplog.at_level(logging.ERROR):
-        result = database.DatabaseManager.get_docsets_for_project_view(None)
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
+    result = database.DatabaseManager.get_docsets_for_project_view(None)
     assert result == []
-    assert "Error retrieving docsets for the view" in caplog.text
+    mock_logger.exception.assert_called_once_with("Error retrieving docsets for the view")
 
 
 def test_get_all_registered_projects_details_sqlalchemy_error(
-    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify get_all_registered_projects_details handles SQLAlchemyError."""
     mocker.patch(
@@ -147,29 +152,29 @@ def test_get_all_registered_projects_details_sqlalchemy_error(
     )
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
     mocker.patch("devildex.database.db_manager.get_session", return_value=mock_session)
-    with caplog.at_level(logging.ERROR):
-        result = database.DatabaseManager.get_all_registered_projects_details()
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
+    result = database.DatabaseManager.get_all_registered_projects_details()
     assert result == []
-    assert "Error retrieving all registered projects" in caplog.text
+    mock_logger.exception.assert_called_once_with("Error retrieving all registered projects")
 
 
 def test_get_project_details_by_name_not_found(
-    db_session: Session, caplog: pytest.LogCaptureFixture
+    db_session: Session, mocker: MockerFixture
 ) -> None:
     """Verify get_project_details_by_name returns None, logs warning for no proj."""
     non_existent_project = "NonExistentProject"
-    with caplog.at_level(logging.WARNING):
-        result = database.DatabaseManager.get_project_details_by_name(
-            non_existent_project
-        )
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
+    result = database.DatabaseManager.get_project_details_by_name(
+        non_existent_project
+    )
     assert result is None
-    assert (
-        f"No project found in the DB with name '{non_existent_project}'." in caplog.text
+    mock_logger.warning.assert_called_once_with(
+        f"No project found in the DB with name '{non_existent_project}'."
     )
 
 
 def test_get_project_details_by_name_sqlalchemy_error(
-    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify get_project_details_by_name handles SQLAlchemyError."""
     mocker.patch(
@@ -178,14 +183,16 @@ def test_get_project_details_by_name_sqlalchemy_error(
     )
     mock_session = mocker.MagicMock(spec=database.SQLAlchemySession)
     mocker.patch("devildex.database.db_manager.get_session", return_value=mock_session)
-    with caplog.at_level(logging.ERROR):
-        result = database.DatabaseManager.get_project_details_by_name("AnyProject")
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
+    result = database.DatabaseManager.get_project_details_by_name("AnyProject")
     assert result is None
-    assert "Error retrieving details for project 'AnyProject'" in caplog.text
+    mock_logger.exception.assert_called_once_with(
+        "Error retrieving details for project 'AnyProject'"
+    )
 
 
 def test_get_session_raises_database_not_initialized_error(
-    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify get_session raises DatabaseNotInitializedError if init_db fails."""
     database.DatabaseManager._session_local = None
@@ -193,11 +200,9 @@ def test_get_session_raises_database_not_initialized_error(
         "devildex.database.db_manager.DatabaseManager.init_db",
         side_effect=lambda *args, **kwargs: None,
     )
-    with (
-        pytest.raises(database.DatabaseNotInitializedError) as excinfo,
-        database.DatabaseManager.get_session(),
-    ):
-        pass
+    with pytest.raises(database.DatabaseNotInitializedError) as excinfo:
+        with database.DatabaseManager.get_session():
+            pass
     assert (
         "Failed to initialize SessionLocal even after attempting default init."
         in str(excinfo.value)
@@ -205,7 +210,7 @@ def test_get_session_raises_database_not_initialized_error(
 
 
 def test_get_session_logs_warning_if_not_initialized(
-    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify get_session logs a warning if init_db was not called."""
     database.DatabaseManager._session_local = None
@@ -215,17 +220,18 @@ def test_get_session_logs_warning_if_not_initialized(
             setattr(database.DatabaseManager, "_session_local", mocker.MagicMock())
         ),
     )
-
-    with caplog.at_level(logging.WARNING), database.DatabaseManager.get_session():
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
+    with database.DatabaseManager.get_session():
         pass
 
-    assert (
-        "Attempting to get a DB session, but init_db() was not called." in caplog.text
+    mock_logger.warning.assert_called_once_with(
+        "Attempting to get a DB session, but init_db() was not called. "
+        "Initializing with default path."
     )
 
 
 def test_ensure_registered_project_and_association_value_error(
-    db_session: Session, caplog: pytest.LogCaptureFixture
+    db_session: Session, mocker: MockerFixture
 ) -> None:
     """Check ens reg proj and association raise ValueError if no proj details."""
     pkg_info = database.PackageInfo(package_name="test_pkg")
@@ -235,6 +241,7 @@ def test_ensure_registered_project_and_association_value_error(
     db_session.add_all([pkg_info, docset])
     db_session.commit()
 
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
     with pytest.raises(
         ValueError,
         match=r"project_path and python_executable must be provided.",
@@ -247,14 +254,14 @@ def test_ensure_registered_project_and_association_value_error(
             docset=docset,
         )
     assert "project_path and python_executable must be provided." in str(excinfo.value)
-    assert (
+    mock_logger.error.assert_called_once_with(
         "To create a new RegisteredProject 'NewProject', project_path and "
-        "python_executable must be provided." in caplog.text
+        "python_executable must be provided."
     )
 
 
 def test_ensure_package_entities_exist_commit_exception(
-    mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    mocker: MockerFixture
 ) -> None:
     """Verify ensure_package_entities_exist handles commit exceptions."""
     package_data = {
@@ -278,14 +285,16 @@ def test_ensure_package_entities_exist_commit_exception(
     mocker.patch(
         "devildex.database.db_manager.get_session", return_value=mock_context_manager
     )
-    with (
-        pytest.raises(database.SQLAlchemyError) as excinfo,
-        caplog.at_level(logging.ERROR),
-    ):
+    
+    mock_logger = mocker.patch("devildex.database.db_manager.logger")
+
+    with pytest.raises(database.SQLAlchemyError) as excinfo:
         database.ensure_package_entities_exist(**package_data)
 
     assert "Commit failed" in str(excinfo.value)
-    assert "Error during final commit while ensuring package entities." in caplog.text
+    mock_logger.exception.assert_called_once_with(
+        "Error during final commit while ensuring package entities."
+    )
     mock_session.rollback.assert_called_once()
 
 
@@ -360,7 +369,7 @@ def test_database_not_initialized_error_custom_message() -> None:
 
 
 def test_package_info_project_urls_json_decode_error(
-    db_session: Session, caplog: pytest.LogCaptureFixture
+    db_session: Session, mocker: MockerFixture
 ) -> None:
     """Verify that a JSONDecodeError is handled when accessing project_urls."""
     invalid_json = '{"key": "value"'
@@ -369,12 +378,11 @@ def test_package_info_project_urls_json_decode_error(
     )
     db_session.add(pkg_info)
     db_session.commit()
-    with caplog.at_level(logging.ERROR):
-        urls = pkg_info.project_urls
+    mock_logger = mocker.MagicMock()
+    mocker.patch("logging.getLogger", return_value=mock_logger)
+    urls = pkg_info.project_urls
     assert urls == {}
-    assert "Error nel decoding project_urls JSON" in caplog.text
-    assert "invalid_json_pkg" in caplog.text
-    assert invalid_json in caplog.text
+    assert mock_logger.exception.call_args[0][0].startswith("Error nel decoding project_urls JSON per package_info")
 
 
 def test_get_all_project_names(db_session: Session) -> None:

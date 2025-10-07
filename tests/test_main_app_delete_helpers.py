@@ -51,23 +51,31 @@ def test_handle_delete_success(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify that _handle_delete_success shows a message, and updates the grid."""
     mock_update_grid = mocker.patch.object(app, "_update_grid_after_delete")
     package_name = "test-package"
+    
+    mock_logger = mocker.patch("devildex.main.logger")
+    
     app._handle_delete_success(package_name)
-    app.log_text_ctrl.AppendText.assert_called_once()
-    assert "Successfully deleted" in app.log_text_ctrl.AppendText.call_args[0][0]
+
+    mock_logger.info.assert_called_once_with(
+        f"GUI: Successfully deleted docset for '{package_name}'."
+    )
     wx.MessageBox.assert_called_once()
     assert "has been deleted" in wx.MessageBox.call_args[0][0]
     mock_update_grid.assert_called_once()
 
 
-def test_handle_delete_failure(app: DevilDexApp) -> None:
+def test_handle_delete_failure(app: DevilDexApp, mocker: MockerFixture) -> None:
     """Verify that _handle_delete_failure logs and shows an error message."""
     package_name = "test-package"
     error_message = "Disk is full"
+    
+    mock_logger = mocker.patch("devildex.main.logger")
+    
     app._handle_delete_failure(package_name, error_message)
-    app.log_text_ctrl.AppendText.assert_called_once()
-    log_call_args = app.log_text_ctrl.AppendText.call_args[0][0]
-    assert "failed to delete" in log_call_args
-    assert error_message in log_call_args
+    
+    mock_logger.error.assert_called_once_with(
+        f"GUI: Core failed to delete docset for '{package_name}'. Reason: {error_message}"
+    )
     wx.MessageBox.assert_called_once()
     msg_box_args = wx.MessageBox.call_args[0]
     assert "Could not delete" in msg_box_args[0]

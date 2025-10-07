@@ -34,6 +34,11 @@ from devildex.main import DevilDexApp
 logger = logging.getLogger(__name__)
 
 
+@pytest.fixture(autouse=True)
+def configure_logging():
+    logging.basicConfig(level=logging.DEBUG)
+
+
 @pytest.fixture(scope="session")
 def free_port() -> int:
     """Fixture to provide a free port for testing."""
@@ -203,7 +208,7 @@ def populated_db_session(
 ]:
     """Fixture to populate the database with test data."""
     db_url, _engine, session_local = db_connection_and_tables
-    os.environ["DEVILDEX_CUSTOM_DB_PATH"] = db_url.replace("sqlite:///", "")
+    os.environ["DEVILDEX_CUSTOM_DB_PATH"] = db_url.replace("sqlite:////", "")
 
     with tempfile.TemporaryDirectory() as temp_docset_dir:
         temp_docset_path = Path(temp_docset_dir)
