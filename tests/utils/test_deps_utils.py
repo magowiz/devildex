@@ -1,10 +1,8 @@
 """Tests for the deps_utils module."""
 
-import logging
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from pip_requirements_parser import RequirementsFile
 from pytest_mock import MockerFixture
 

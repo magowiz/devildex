@@ -3,7 +3,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
 from pytest_mock import MockerFixture
 
 from devildex.local_data_parse.common_read import (

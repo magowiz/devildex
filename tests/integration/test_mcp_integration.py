@@ -14,7 +14,6 @@ from fastmcp import Client
 
 from devildex.config_manager import ConfigManager
 from devildex.core import DevilDexCore
-from devildex.database import db_manager as database
 from devildex.database.models import Docset, PackageInfo, RegisteredProject
 from devildex.main import DevilDexApp
 from tests.custom_exceptions import CustomAssertionError
@@ -102,7 +101,7 @@ def populated_db_session(db_connection_and_tables: tuple[str, Any, Any]) -> Gene
         session.add_all([pkg_info_django, docset_django])
         session.commit()
 
-    yield db_url
+    return db_url
 
 
 

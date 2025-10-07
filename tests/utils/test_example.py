@@ -1,9 +1,7 @@
 """Tests for the example.py utility script."""
 
-import logging
 from unittest.mock import MagicMock
 
-import pytest
 from pytest_mock import MockerFixture
 
 from devildex.utils import example
@@ -21,7 +19,7 @@ def test_example_script_logs_correctly(
         mock_venv_manager_instance
     )
     mocker.patch("devildex.utils.example.IsolatedVenvManager", mock_venv_manager_class)
-    
+
     mock_logger = mocker.patch("devildex.utils.example.logger")
 
     example.main()

@@ -1,6 +1,5 @@
 """Tests for the database module."""
 
-import logging
 
 import pytest
 from pytest_mock import MockerFixture
@@ -23,7 +22,7 @@ def db_session() -> Session | None:
     engine = create_engine(db_url)
     Base.metadata.create_all(engine)
     session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    
+
     database.DatabaseManager._engine = engine
     database.DatabaseManager._session_local = session_local
 
@@ -285,7 +284,7 @@ def test_ensure_package_entities_exist_commit_exception(
     mocker.patch(
         "devildex.database.db_manager.get_session", return_value=mock_context_manager
     )
-    
+
     mock_logger = mocker.patch("devildex.database.db_manager.logger")
 
     with pytest.raises(database.SQLAlchemyError) as excinfo:
