@@ -1,4 +1,4 @@
-"""Add notes column to docset
+"""Add notes column to docset.
 
 Revision ID: 78c459e1a2ab
 Revises: ffaf7e5c74e4

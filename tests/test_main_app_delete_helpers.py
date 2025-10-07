@@ -74,7 +74,8 @@ def test_handle_delete_failure(app: DevilDexApp, mocker: MockerFixture) -> None:
     app._handle_delete_failure(package_name, error_message)
 
     mock_logger.error.assert_called_once_with(
-        f"GUI: Core failed to delete docset for '{package_name}'. Reason: {error_message}"
+        f"GUI: Core failed to delete docset for '{package_name}'."
+        f" Reason: {error_message}"
     )
     wx.MessageBox.assert_called_once()
     msg_box_args = wx.MessageBox.call_args[0]

@@ -1,3 +1,8 @@
+"""Alembic environment configuration.
+
+This module defines the configuration for Alembic migrations, including
+how to connect to the database and how to handle metadata.
+"""
 # Add src to sys.path to allow importing devildex modules
 import sys
 from logging.config import fileConfig
@@ -28,14 +33,10 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
 
 
 def run_migrations_offline() -> None:

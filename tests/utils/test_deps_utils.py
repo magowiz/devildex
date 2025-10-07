@@ -23,7 +23,8 @@ def test_filter_requirements_lines_requirements_file_none(
     result = filter_requirements_lines("/fake/path/reqs.txt")
     assert result is None
     mock_logger.error.assert_called_once_with(
-        "The 'pip-requirements-parser' package is not installed.Unable to filter the requirements file."
+        "The 'pip-requirements-parser' package is not installed.Unable to filter"
+        " the requirements file."
     )
 
 

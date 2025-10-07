@@ -60,7 +60,9 @@ def test_register_project_success(
     assert "registration_timestamp_utc" in data
     assert "devildex_version_at_registration" in data
 
-    mock_logger.info.assert_any_call("Project 'my-cool-project' registered successfully!")
+    mock_logger.info.assert_any_call(
+        "Project 'my-cool-project' registered successfully!"
+    )
     mock_logger.info.assert_any_call(f"Registration File: {registration_file}")
 
 
@@ -70,7 +72,9 @@ def test_register_project_no_venv(mocker: MockerFixture) -> None:
     with patch.dict("os.environ", {}, clear=True):
         companion.register_project("/fake/project")
     mock_logger.error.assert_called_once_with(
-        "Operation cancelled: no active user virtual environment (VIRTUAL_ENV) detected. Ensure you have activated the virtual environment of the project you wish to register."
+        "Operation cancelled: no active user virtual environment (VIRTUAL_ENV) "
+        "detected. Ensure you have activated the virtual environment of the"
+        " project you wish to register."
     )
 
 
@@ -84,7 +88,9 @@ def test_register_project_no_python_executable(
     mock_logger = mocker.patch("devildex.utils.companion.logger")
     companion.register_project("/fake/project")
     mock_logger.error.assert_called_once_with(
-        f"Operation cancelled: VIRTUAL_ENV '{venv_dir}' detected, but unable to determine the correct Python executable within it. Check the structure of your virtual environment."
+        f"Operation cancelled: VIRTUAL_ENV '{venv_dir}' detected, "
+        "but unable to determine the correct Python executable"
+        " within it. Check the structure of your virtual environment."
     )
 
 

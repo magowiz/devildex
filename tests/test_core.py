@@ -1,6 +1,7 @@
 """Tests for the DevilDexCore class."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
@@ -34,8 +35,12 @@ def core(tmp_path: Path, mocker: MockerFixture) -> DevilDexCore:
     instance = DevilDexCore()
     return instance
 
+
 @pytest.fixture
-def core_with_db(tmp_path: Path, mocker: MockerFixture, db_connection_and_tables) -> DevilDexCore:
+def core_with_db(
+    tmp_path: Path, mocker: MockerFixture,
+    db_connection_and_tables: tuple[str, Any, Any]
+) -> DevilDexCore:
     """Provide a DevilDexCore instance with a file-based database."""
     db_url, _, _ = db_connection_and_tables
     mock_app_paths_class = mocker.patch("devildex.core.AppPaths")
@@ -155,7 +160,9 @@ def test_delete_docset_build_os_error(
 """Tests for the DevilDexCore class."""
 
 
-def test_generate_docset_success(core_with_db: DevilDexCore, mocker: MockerFixture) -> None:
+def test_generate_docset_success(
+    core_with_db: DevilDexCore, mocker: MockerFixture
+) -> None:
     """Verify successful docset generation path."""
     mock_orchestrator_class = mocker.patch("devildex.core.Orchestrator")
     mock_orchestrator_instance = mock_orchestrator_class.return_value

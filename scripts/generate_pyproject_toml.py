@@ -1,6 +1,9 @@
+"""generate_pyproject_toml module."""
+
 import logging
 import re
 import sys
+from collections import OrderedDict
 
 import toml
 
@@ -8,68 +11,115 @@ logger = logging.getLogger(__name__)
 
 
 def parse_dependency_string(dep_string: str) -> tuple[str, str]:
-    """Parses a dependency string like 'package (>=version,<version)' into (package_name, version_constraint)."""
+    """Parse a dependency string into package name and version constraint.
+
+    Parses a dependency string like 'package (>=version,<version)' into
+    (package_name, version_constraint).
+    """
     match = re.match(r"^([a-zA-Z0-9_.-]+)(?:\s*\((.*)\))?$", dep_string)
     if match:
         name = match.group(1)
         constraint = match.group(2) if match.group(2) else "*"
         return name, constraint
-    return dep_string, "*" # Fallback if parsing fails
+    return dep_string, "*"  # Fallback if parsing fails
 
 
-def convert_to_poetry_1x(data: dict) -> dict:
-    """Converts a pyproject.toml from PEP 621 format to Poetry 1.x format."""
-    if "project" not in data:
-        return data
-
-    project_data = data.pop("project")
-    tool_poetry_data = data.setdefault("tool", {}).setdefault("poetry", {})
-
-    # Move core metadata
-    for key in ["name", "version", "description", "license", "readme", "homepage", "repository", "documentation", "keywords", "classifiers"]:
+def _handle_poetry_metadata(project_data: dict, tool_poetry_data: OrderedDict) -> None:
+    """Handle project metadata conversion for Poetry."""
+    for key in [
+        "name",
+        "version",
+        "description",
+        "license",
+        "readme",
+        "homepage",
+        "repository",
+        "documentation",
+        "keywords",
+        "classifiers",
+    ]:
         if key in project_data:
             tool_poetry_data[key] = project_data[key]
 
-    # Handle authors: convert list of dicts to list of strings
     if "authors" in project_data:
-        tool_poetry_data["authors"] = [f"{author['name']} <{author['email']}>" for author in project_data["authors"]]
+        tool_poetry_data["authors"] = [
+            f"{author['name']} <{author['email']}>"
+            for author in project_data["authors"]
+        ]
 
-    # Handle requires-python
+
+def _handle_poetry_dependencies(
+    project_data: dict, tool_poetry_data: OrderedDict
+) -> None:
+    """Handle project dependencies conversion for Poetry."""
     if "requires-python" in project_data:
-        tool_poetry_data["dependencies"] = tool_poetry_data.get("dependencies", {})
-        tool_poetry_data["dependencies"]["python"] = project_data["requires-python"]
+        tool_poetry_data["dependencies"] = {"python": project_data["requires-python"]}
 
-    # Handle dependencies: convert list to dict
     if "dependencies" in project_data:
-        converted_deps = {}
+        converted_deps = OrderedDict()
         for dep_string in project_data["dependencies"]:
             name, constraint = parse_dependency_string(dep_string)
             converted_deps[name] = constraint
-        tool_poetry_data["dependencies"] = {**tool_poetry_data.get("dependencies", {}), **converted_deps}
+        tool_poetry_data["dependencies"] = {
+            **tool_poetry_data.get("dependencies", {}),
+            **converted_deps,
+        }
 
-    # Handle optional-dependencies to extras
+
+def _handle_poetry_extras_and_scripts(
+    project_data: dict, tool_poetry_data: OrderedDict
+) -> None:
+    """Handle optional dependencies and scripts conversion for Poetry."""
     if "optional-dependencies" in project_data:
-        tool_poetry_data["extras"] = {}
-        for group_name, deps_list in project_data["optional-dependencies"].items():
-            converted_extra_deps = {}
-            for dep_string in deps_list:
-                name, constraint = parse_dependency_string(dep_string)
-                converted_extra_deps[name] = constraint
-            tool_poetry_data["extras"][group_name] = converted_extra_deps
+        tool_poetry_data["extras"] = project_data["optional-dependencies"]
 
-    # Handle scripts
     if "scripts" in project_data:
         tool_poetry_data["scripts"] = project_data["scripts"]
 
-    # Handle build-system (remove if it's poetry-core based, as 1.x doesn't use it this way)
+
+def _handle_poetry_build_system(data: dict) -> None:
+    """Handle build-system conversion for Poetry."""
+    if (
+        "build-system" in data
+        and "requires" in data["build-system"]
+        and any("poetry-core" in req for req in data["build-system"]["requires"])
+    ):
+        data.pop("build-system")
+
+
+def convert_to_poetry_1x(data: dict) -> dict:
+    """Convert a pyproject.toml from PEP 621 format to Poetry 1.x format."""
+    if "project" not in data:
+        return data
+
+    project_data = data["project"]
+    tool_poetry_data = OrderedDict()
+
+    _handle_poetry_metadata(project_data, tool_poetry_data)
+    _handle_poetry_dependencies(project_data, tool_poetry_data)
+    _handle_poetry_extras_and_scripts(project_data, tool_poetry_data)
+    _handle_poetry_build_system(data)
+
+    # Construct new data structure
+    new_data = OrderedDict()
+    new_data["tool"] = {"poetry": tool_poetry_data}
     if "build-system" in data:
-        if "requires" in data["build-system"] and any("poetry-core" in req for req in data["build-system"]["requires"]):
-            data.pop("build-system")
+        new_data["build-system"] = data["build-system"]
 
-    return data
+    return new_data
 
 
-def generate_pyproject_toml(original_path: str, tgt_os: str):
+def generate_pyproject_toml(original_path: str, tgt_os: str) -> str:
+    """Generate a pyproject.toml file with platform-specific adjustments.
+
+    Args:
+        original_path: Path to the original pyproject.toml file.
+        tgt_os: Target operating system (e.g., 'windows', 'macos', 'linux', 'fedora').
+
+    Returns:
+        The modified pyproject.toml content as a string.
+
+    """
     with open(original_path) as f:
         data = toml.load(f)
 
@@ -83,7 +133,11 @@ def generate_pyproject_toml(original_path: str, tgt_os: str):
                 if "wxpython" not in dep or "linux_x86_64.whl" not in dep:
                     new_dependencies.append(dep)
             data["project"]["dependencies"] = new_dependencies
-        elif "tool" in data and "poetry" in data["tool"] and "dependencies" in data["tool"]["poetry"]:
+        elif (
+            "tool" in data
+            and "poetry" in data["tool"]
+            and "dependencies" in data["tool"]["poetry"]
+        ):
             dependencies = data["tool"]["poetry"]["dependencies"]
             new_dependencies = []
             for dep in dependencies:
@@ -91,7 +145,7 @@ def generate_pyproject_toml(original_path: str, tgt_os: str):
                     new_dependencies.append(dep)
             data["tool"]["poetry"]["dependencies"] = new_dependencies
 
-    # Apply Poetry 2.x to 1.x conversion for specific OS where old Poetry might be present
+    # Apply Poetry 2.x to 1.x conversion for specific OS
     if tgt_os.lower() in ["fedora", "windows", "macos"]:
         data = convert_to_poetry_1x(data)
 

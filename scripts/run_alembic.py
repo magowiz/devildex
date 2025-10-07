@@ -19,7 +19,7 @@ def main() -> None:
     ]
     command.extend(sys.argv[1:])
     try:
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True)  # noqa: S603
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     except FileNotFoundError:

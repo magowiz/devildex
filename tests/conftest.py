@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(autouse=True)
-def configure_logging():
+def configure_logging() -> None:
+    """Fixture to configure logging for tests."""
     logging.basicConfig(level=logging.DEBUG)
 
 

@@ -219,7 +219,7 @@ class DatabaseManager:
                 logger.info("Checking for database migrations...")
 
                 base_path = Path(get_base_path())
-                if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+                if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
                     # PyInstaller bundle paths
                     alembic_ini_path = base_path / "devildex" / "alembic.ini"
                     alembic_script_location = base_path / "devildex" / "alembic"
@@ -229,10 +229,15 @@ class DatabaseManager:
                     alembic_script_location = Path(__file__).parent.parent / "alembic"
 
                 alembic_cfg = Config(str(alembic_ini_path))
-                alembic_cfg.set_main_option("script_location", str(alembic_script_location))
+                alembic_cfg.set_main_option(
+                    "script_location", str(alembic_script_location)
+                )
 
                 command.upgrade(alembic_cfg, "head")
-                print("--- DIRECT PRINT: DATABASE MIGRATION COMPLETED. APPLICATION CONTINUES. ---", file=sys.stderr)
+                logger.info(
+                    "--- DIRECT PRINT: DATABASE MIGRATION COMPLETED."
+                    " APPLICATION CONTINUES. ---",
+                )
             except Exception:
                 logger.exception("Failed to run database migrations.")
 

@@ -17,7 +17,10 @@ author = "magowiz"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx.ext.viewcode"]
-autodoc_mock_imports = ["wx", "wx.html2", "cx_Freeze", "wx.adv", "wx.grid", "wx.html", "wx.lib.agw.aui"]
+autodoc_mock_imports = [
+    "wx", "wx.html2", "cx_Freeze", "wx.adv", "wx.grid", "wx.html",
+    "wx.lib.agw.aui"
+]
 # Napoleon settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
