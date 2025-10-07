@@ -1,10 +1,16 @@
 #!/bin/sh
 set -e
+echo "Installing sqlalchemy..."
 pip3 install 'sqlalchemy>=2.0.41'
+echo "Installing pdoc3..."
 pip3 install 'pdoc3>=0.11.6,<0.12.0'
+echo "Installing markdownify..."
 pip3 install 'markdownify>=1.2.0,<2.0.0'
+echo "Installing pip-requirements-parser..."
 pip3 install 'pip-requirements-parser>=32.0.1,<33.0.0'
+echo "Installing pydoctor..."
 pip3 install 'pydoctor>=25.4.0,<26.0.0'
+echo "Installing fastmcp..."
 pip3 install 'fastmcp>=2.12.2,<3.0.0'
 #DEBHELPER#
 exit 0
