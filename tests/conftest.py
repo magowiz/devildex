@@ -178,16 +178,20 @@ def wx_app() -> wx.App:
 @pytest.fixture
 def db_connection_and_tables() -> Generator[tuple[str, Any, Any], Any, None]:
     """Fixture to set up a temporary SQLite database and create tables."""
-    with tempfile.TemporaryDirectory() as temp_db_dir:
-        db_path = Path(temp_db_dir) / "test_db.sqlite"
-        db_url = f"sqlite:///{db_path}"
-        engine = create_engine(db_url)
-        Base.metadata.create_all(engine)
-        session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        try:
-            yield db_url, engine, session_local
-        finally:
-            engine.dispose()
+    os.environ["DEVILDEX_TESTING"] = "1"
+    try:
+        with tempfile.TemporaryDirectory() as temp_db_dir:
+            db_path = Path(temp_db_dir) / "test_db.sqlite"
+            db_url = f"sqlite:///{db_path}"
+            engine = create_engine(db_url)
+            Base.metadata.create_all(engine)
+            session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+            try:
+                yield db_url, engine, session_local
+            finally:
+                engine.dispose()
+    finally:
+        del os.environ["DEVILDEX_TESTING"]
 
 
 @pytest.fixture
