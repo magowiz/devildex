@@ -53,12 +53,11 @@ def mock_config_manager(mocker: MagicMock, free_port: int) -> None:
 
 
 @pytest.fixture
-def populated_db_session(tmp_path: Path) -> Generator[str, Any, None]:
+def populated_db_session(db_connection_and_tables: tuple[str, Any, Any]) -> Generator[str, Any, None]:
     """Fixture to set up an in-memory SQLite database and populate it."""
-    db_url = f"sqlite:///{tmp_path / 'test_db.db'}"
-    database.init_db(db_url)
+    db_url, _engine, session_local = db_connection_and_tables
 
-    with database.get_session() as session:
+    with session_local() as session:
         project1 = RegisteredProject(
             project_name="TestProject",
             project_path="/path/to/test_project",
@@ -104,8 +103,10 @@ def populated_db_session(tmp_path: Path) -> Generator[str, Any, None]:
         session.commit()
 
     yield db_url
-    database.DatabaseManager.close_db()
-    (tmp_path / "test_db.db").unlink(missing_ok=True)
+
+
+
+
 
 
 @pytest.fixture
