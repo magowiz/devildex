@@ -50,7 +50,7 @@ and generation of various documentation formats.
 export QA_RPATHS=$(( 0x0001|0x0004 ))
 poetry build --format wheel
 mkdir -p %{_pyproject_wheeldir}
-cp dist/devildex-0.2.1-py3-none-any.whl %{_pyproject_wheeldir}
+cp dist/*.whl %{_pyproject_wheeldir}
 
 %install
 %pyproject_install
