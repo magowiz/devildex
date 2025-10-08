@@ -65,7 +65,7 @@ find %{buildroot}%{python3_sitelib} -type f > python_files.lst
 %{_bindir}/devildex-register-project
 %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}-%{version}.dist-info/
-%{python3_sitelib}/scripts/
+
 %{python3_sitelib}/
 
 %post
