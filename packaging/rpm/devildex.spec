@@ -1,7 +1,7 @@
 %{?_disable_debug_package}
 %global debug_package %{nil}
 Name:           devildex
-Version:        0.2.1
+Version:        0.2.2
 %global __requires_exclude ^python3\\.13dist\\(.*\\)$
 Release:        1%{?dist}
 Summary:        A tool for managing documentation.
