@@ -404,6 +404,10 @@ jobs:
           mkdir -p ~/rpmbuild/SOURCES/
           poetry build --format sdist
           mv dist/*.tar.gz ~/rpmbuild/SOURCES/
+      - name: Update RPM Spec Version
+        run: |
+          CURRENT_VERSION=$(poetry version --short)
+          sed -i "s/^Version:        .*/Version:        $CURRENT_VERSION/" packaging/rpm/devildex.spec
       - name: Build RPM package
         run: |
           VERSION=$(poetry version --short)
