@@ -525,5 +525,5 @@ jobs:
         run: |
           find dist -type f -print0 | while IFS= read -r -d $'\0' file; do
             echo "Uploading asset: $file"
-            gh release upload v${{ steps.calculate_version.outputs.next_version }} "$file"
+            gh release upload v${{ steps.calculate_version.outputs.next_version }} "$file" --clobber
           done
