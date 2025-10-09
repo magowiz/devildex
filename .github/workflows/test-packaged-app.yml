@@ -238,8 +238,8 @@ jobs:
 
       - name: Test Installed Wheel (Windows)
         run: |
-         pip list
-         pip install ./build/wheel/devildex-*-py3-none-any.whl alembic
+         $wheelFile = Get-ChildItem -Path ./build/wheel/devildex-*.whl | Select-Object -First 1
+         pip install $wheelFile.FullName alembic
          pip install wxpython==4.2.3
          $process = Start-Process -FilePath "${{ env.pythonLocation }}\Scripts\devildex.exe" -NoNewWindow -PassThru
          Start-Sleep -Seconds 30
