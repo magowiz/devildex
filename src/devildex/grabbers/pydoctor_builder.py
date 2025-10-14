@@ -5,9 +5,9 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+from devildex.grabbers.abstract_grabber import AbstractGrabber
 from devildex.orchestrator.context import BuildContext
 from devildex.utils import venv_cm, venv_utils
-from devildex.grabbers.abstract_grabber import AbstractGrabber
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ class PydoctorBuilder(AbstractGrabber):
         if pydoctor_conf_path.is_file():
             logger.info(f"PydoctorBuilder: Found pydoctor.conf at {pydoctor_conf_path}. Can handle.")
             return True
-        
+
         # Alternatively, check for a setup.py that might indicate pydoctor usage
         setup_py_path = source_path / "setup.py"
         if setup_py_path.is_file():

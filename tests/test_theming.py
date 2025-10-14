@@ -11,7 +11,6 @@ from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.grabbers.sphinx_builder import SphinxBuilder
 from devildex.info import PROJECT_ROOT
 from devildex.orchestrator.context import BuildContext
-
 from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (

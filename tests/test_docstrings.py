@@ -167,7 +167,7 @@ def test_generate_docs_from_folder_non_existent_input_folder(
     """Verify generate_docs_from_folder handles non-existent input folder."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
     non_existent_folder = tmp_path / "non_existent_project"
-    
+
     mock_logger_info = mocker.patch("devildex.docstrings.docstrings_src.logger.info")
 
     result = doc_generator.generate_docs_from_folder(
@@ -177,7 +177,7 @@ def test_generate_docs_from_folder_non_existent_input_folder(
     )
 
     assert result is False
-    
+
     # Check that the specific log message was called
     mock_logger_info.assert_any_call(
         "DocstringsSrc: The Specified Source Project Folder does not exist: %s",

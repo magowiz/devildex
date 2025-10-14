@@ -21,8 +21,7 @@ class ReadTheDocsDownloader(AbstractGrabber):
     """Grabber for downloading pre-built documentation from Read the Docs."""
 
     def generate_docset(self, source_path: Path, output_path: Path, context: "BuildContext") -> bool:
-        """
-        Downloads a pre-packaged documentation from Read the Docs.
+        """Downloads a pre-packaged documentation from Read the Docs.
 
         :param source_path: Not used for ReadTheDocsDownloader, but required by AbstractGrabber.
         :param output_path: The path where the downloaded documentation should be stored.
@@ -62,7 +61,7 @@ class ReadTheDocsDownloader(AbstractGrabber):
         local_filename = self._determine_local_filename(
             project_slug, chosen_version_slug, file_url, download_format
         )
-        
+
         # Ensure output_path exists
         output_path.mkdir(parents=True, exist_ok=True)
         local_filepath = output_path / local_filename
@@ -84,8 +83,7 @@ class ReadTheDocsDownloader(AbstractGrabber):
         return False
 
     def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
-        """
-        Determines if this grabber can handle the project.
+        """Determines if this grabber can handle the project.
         For ReadTheDocsDownloader, it can handle if the doc_type in context is 'readthedocs'.
         """
         return context.doc_type == "readthedocs"

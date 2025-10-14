@@ -1,23 +1,22 @@
 import logging
+import os
 import shutil
+import subprocess
 from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
+
+import requests
 
 from devildex.grabbers.abstract_grabber import AbstractGrabber
 from devildex.info import PROJECT_ROOT
-from devildex.theming.manager import ThemeManager
+from devildex.scanner.scanner import is_sphinx_project  # Import is_sphinx_project
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
     execute_command,
     install_project_and_dependencies_in_venv,
 )
-from devildex.scanner.scanner import is_sphinx_project # Import is_sphinx_project
-
-from enum import Enum, auto
-import requests
-import os
-import subprocess
 
 if TYPE_CHECKING:
     from devildex.orchestrator.build_context import BuildContext

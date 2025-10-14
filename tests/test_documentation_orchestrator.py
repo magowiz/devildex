@@ -1,7 +1,7 @@
 """test documentation_orchestrator."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 from pytest_mock import MockerFixture

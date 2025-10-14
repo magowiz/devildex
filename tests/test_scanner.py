@@ -3,7 +3,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
 from devildex.scanner.scanner import (
     has_docstrings,
     is_mkdocs_project,

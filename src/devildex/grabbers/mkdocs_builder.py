@@ -2,7 +2,8 @@ import logging
 import shutil
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union, Any
+from typing import TYPE_CHECKING, Any, Optional, Union
+
 import yaml
 
 from devildex.grabbers.abstract_grabber import AbstractGrabber
@@ -11,6 +12,7 @@ from devildex.utils.venv_utils import (
     execute_command,
     install_project_and_dependencies_in_venv,
 )
+
 # from devildex.scanner.scanner import is_mkdocs_project # To be implemented
 
 if TYPE_CHECKING:
@@ -291,7 +293,7 @@ class MkDocsBuilder(AbstractGrabber):
         logger.info("Explicitly set 'docs_dir' to absolute path: %s in MkDocs config.", mkdocs_config_content["docs_dir"])
 
         # Ensure hooks path is absolute if specified
-        if "hooks" in mkdocs_config_content and mkdocs_config_content["hooks"]:
+        if mkdocs_config_content.get("hooks"):
             hooks_path = Path(mkdocs_config_content["hooks"])
             if not hooks_path.is_absolute():
                 absolute_hooks_path = source_path / hooks_path
@@ -311,7 +313,7 @@ class MkDocsBuilder(AbstractGrabber):
 
                     if "plugins" not in mkdocs_config_content:
                         mkdocs_config_content["plugins"] = []
-                    
+
                     # Ensure 'callouts' is added as a plugin, not 'mkdocs-callouts'
                     if isinstance(mkdocs_config_content["plugins"], list):
                         if "callouts" not in mkdocs_config_content["plugins"]:

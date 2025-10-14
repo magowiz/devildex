@@ -189,28 +189,7 @@ class Orchestrator:
                     "project_root_for_install": self._effective_source_path,
                 },
             },
-            "readthedocs": {
-                "builder": ReadTheDocsDownloader(),
-                "context_args": {
-                    "project_name": self.package_details.name,
-                    "project_version": self.package_details.version or "main",
-                    "base_output_dir": self.base_output_dir,
-                    "project_slug": self.package_details.name,
-                    "version_identifier": self.package_details.version or "main",
-                    "download_format": "htmlzip", # Default format, can be made dynamic later
-                },
-            },
-            "readthedocs": {
-                "builder": ReadTheDocsDownloader(),
-                "context_args": {
-                    "project_name": self.package_details.name,
-                    "project_version": self.package_details.version or "main",
-                    "base_output_dir": self.base_output_dir,
-                    "project_slug": self.package_details.name,
-                    "version_identifier": self.package_details.version or "main",
-                    "download_format": "htmlzip", # Default format, can be made dynamic later
-                },
-            },
+
             "pydoctor": {
                 "builder": self.pydoctor_builder,
                 "context_args": {

@@ -9,7 +9,11 @@ import pytest
 import requests
 from pytest_mock import MockerFixture
 
-from devildex.grabbers.sphinx_builder import SphinxBuilder, CloneAttemptStatus, RtdCloningConfig
+from devildex.grabbers.sphinx_builder import (
+    CloneAttemptStatus,
+    RtdCloningConfig,
+    SphinxBuilder,
+)
 
 EXPECTED_CLONE_ATTEMPTS = 2
 

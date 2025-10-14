@@ -1,5 +1,4 @@
 import logging
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -9,18 +8,12 @@ from pytest_mock import MockerFixture
 
 from devildex.grabbers.mkdocs_builder import (
     MkDocsBuilder,
-    _extract_names_from_config_list_or_dict,
     _find_mkdocs_config_file,
-    _get_plugin_packages_to_install,
-    _get_theme_packages_to_install,
-    _parse_mkdocs_config,
     _find_mkdocs_doc_requirements_file,
     _gather_mkdocs_required_packages,
+    _parse_mkdocs_config,
 )
 from devildex.orchestrator.context import BuildContext
-from devildex.utils.venv_cm import IsolatedVenvManager
-from devildex.utils.venv_utils import execute_command, install_project_and_dependencies_in_venv
-
 
 logger = logging.getLogger(__name__)
 

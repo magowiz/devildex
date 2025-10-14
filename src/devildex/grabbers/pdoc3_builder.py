@@ -1,30 +1,20 @@
 """docstrings pdoc3 module."""
 
-import contextlib
-import importlib
 import logging
 import os
 import re
 import shutil
-import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
-from types import ModuleType
 from typing import Optional
 
-import pdoc  # type: ignore[import-untyped]
-
-from devildex import info
+from devildex.grabbers.abstract_grabber import AbstractGrabber
+from devildex.orchestrator.context import BuildContext
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
     execute_command,
     install_project_and_dependencies_in_venv,
 )
-from devildex.grabbers.abstract_grabber import AbstractGrabber
-from devildex.orchestrator.context import BuildContext
-
-
 
 logger = logging.getLogger(__name__)
 
