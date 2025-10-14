@@ -41,7 +41,11 @@ def test_get_unique_branches_to_attempt() -> None:
     builder = SphinxBuilder()
     assert builder._get_unique_branches_to_attempt("main") == ["main", "master"]
     assert builder._get_unique_branches_to_attempt("master") == ["master", "main"]
-    assert builder._get_unique_branches_to_attempt("feature") == ["feature", "master", "main"]
+    assert builder._get_unique_branches_to_attempt("feature") == [
+        "feature",
+        "master",
+        "main",
+    ]
     assert builder._get_unique_branches_to_attempt("main,master") == [
         "main,master",
         "master",
@@ -49,7 +53,11 @@ def test_get_unique_branches_to_attempt() -> None:
     ]
     assert builder._get_unique_branches_to_attempt("") == ["master", "main"]
     assert builder._get_unique_branches_to_attempt(None) == ["master", "main"]
-    assert builder._get_unique_branches_to_attempt("  dev  ") == ["dev", "master", "main"]
+    assert builder._get_unique_branches_to_attempt("  dev  ") == [
+        "dev",
+        "master",
+        "main",
+    ]
     assert builder._get_unique_branches_to_attempt("   ") == ["master", "main"]
 
 
@@ -277,7 +285,9 @@ def test_find_sphinx_doc_requirements_file_success(tmp_path: Path) -> None:
     source_dir.mkdir()
     (source_dir / "requirements.txt").touch()
 
-    result = builder._find_sphinx_doc_requirements_file(source_dir, tmp_path, "test_project")
+    result = builder._find_sphinx_doc_requirements_file(
+        source_dir, tmp_path, "test_project"
+    )
 
     assert result == (source_dir / "requirements.txt")
 
@@ -309,7 +319,9 @@ def test_extract_repo_url_branch_success(mocker: MockerFixture) -> None:
     }
     mocker.patch("requests.get", return_value=mock_response)
 
-    branch, url = builder._extract_repo_url_branch("http://api.rtd/project", "test_project")
+    branch, url = builder._extract_repo_url_branch(
+        "http://api.rtd/project", "test_project"
+    )
 
     assert branch == "dev"
     assert url == "https://github.com/user/repo"
@@ -325,7 +337,9 @@ def test_extract_repo_url_branch_no_repo_url(
     mocker.patch("requests.get", return_value=mock_response)
 
     with caplog.at_level(logging.ERROR):
-        branch, url = builder._extract_repo_url_branch("http://api.rtd/project", "test_project")
+        branch, url = builder._extract_repo_url_branch(
+            "http://api.rtd/project", "test_project"
+        )
 
     assert branch == "main"
     assert url is None
@@ -343,7 +357,9 @@ def test_extract_repo_url_branch_request_exception(
     )
 
     with caplog.at_level(logging.ERROR):
-        branch, url = builder._extract_repo_url_branch("http://api.rtd/project", "test_project")
+        branch, url = builder._extract_repo_url_branch(
+            "http://api.rtd/project", "test_project"
+        )
 
     assert branch == "main"
     assert url is None
@@ -536,7 +552,9 @@ def test_attempt_clone_and_process_result_success(
 ) -> None:
     """Verify _attempt_clone_and_process_result handles successful clone."""
     builder = SphinxBuilder()
-    mocker.patch("devildex.grabbers.sphinx_builder.SphinxBuilder._run_clone", return_value="main")
+    mocker.patch(
+        "devildex.grabbers.sphinx_builder.SphinxBuilder._run_clone", return_value="main"
+    )
 
     repo_url = "http://example.com/repo.git"
     initial_default_branch = "main"
@@ -557,7 +575,9 @@ def test_attempt_clone_and_process_result_failure(
 ) -> None:
     """Verify _attempt_clone_and_process_result handles failed clone."""
     builder = SphinxBuilder()
-    mocker.patch("devildex.grabbers.sphinx_builder.SphinxBuilder._run_clone", return_value=None)
+    mocker.patch(
+        "devildex.grabbers.sphinx_builder.SphinxBuilder._run_clone", return_value=None
+    )
 
     repo_url = "http://example.com/repo.git"
     initial_default_branch = "main"
@@ -589,7 +609,9 @@ def test_handle_repository_cloning_no_repo_url(
     )
 
     with caplog.at_level(logging.WARNING):
-        clone_path, effective_branch = builder._handle_repository_cloning(cloning_config)
+        clone_path, effective_branch = builder._handle_repository_cloning(
+            cloning_config
+        )
 
     assert clone_path is None
     assert effective_branch == "main"
@@ -614,7 +636,9 @@ def test_handle_repository_cloning_existing_clone(
     )
 
     with caplog.at_level(logging.INFO):
-        clone_path, effective_branch = builder._handle_repository_cloning(cloning_config)
+        clone_path, effective_branch = builder._handle_repository_cloning(
+            cloning_config
+        )
 
     assert clone_path == clone_dir
     assert effective_branch == "main"
@@ -637,11 +661,12 @@ def test_handle_repository_cloning_new_clone_success(
         shutil.rmtree(clone_dir_path_for_test)
 
     def mock_clone_and_process_success(
-        repo_url, initial_default_branch, clone_dir_path, bzr, project_slug
+        repo_url: str, initial_default_branch, clone_dir_path, bzr, project_slug: str
     ) -> tuple[bool, str]:
         mock_clone_dir_path = clone_dir_path
         mock_clone_dir_path.mkdir(parents=True)
         return True, "dev"
+
     mock_attempt_clone_and_process_result = mocker.patch(
         "devildex.grabbers.sphinx_builder.SphinxBuilder._attempt_clone_and_process_result",
         side_effect=mock_clone_and_process_success,
@@ -656,7 +681,9 @@ def test_handle_repository_cloning_new_clone_success(
     )
 
     with caplog.at_level(logging.INFO):
-        clone_path, effective_branch = builder._handle_repository_cloning(cloning_config)
+        clone_path, effective_branch = builder._handle_repository_cloning(
+            cloning_config
+        )
 
     assert clone_path == clone_dir_path_for_test
     assert effective_branch == "dev"
@@ -675,9 +702,14 @@ def test_handle_repository_cloning_new_clone_failure(
         shutil.rmtree(clone_dir_path_for_test)
 
     def mock_clone_and_process_failure(
-        repo_url, initial_default_branch, clone_dir_path, bzr, project_slug
+        repo_url: str,
+        initial_default_branch: str,
+        clone_dir_path,
+        bzr,
+        project_slug: str,
     ) -> tuple[bool, str]:
         return False, "main"
+
     mock_attempt_clone_and_process_result = mocker.patch(
         "devildex.grabbers.sphinx_builder.SphinxBuilder._attempt_clone_and_process_result",
         side_effect=mock_clone_and_process_failure,
@@ -692,7 +724,9 @@ def test_handle_repository_cloning_new_clone_failure(
     )
 
     with caplog.at_level(logging.ERROR):
-        clone_path, effective_branch = builder._handle_repository_cloning(cloning_config)
+        clone_path, effective_branch = builder._handle_repository_cloning(
+            cloning_config
+        )
 
     mock_attempt_clone_and_process_result.assert_called_once()
     assert clone_path is None

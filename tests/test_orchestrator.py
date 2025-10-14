@@ -280,9 +280,10 @@ def test_orchestrator_documentation_retrieval(
         operation_result = orchestrator.get_last_operation_result()
 
         if expect_success:
-            assert (
-                operation_result is not False
-            ), f"Orchestrator's grab_build_doc failed for {package_details_for_test.name} "
+            assert operation_result is not False, (
+                f"Orchestrator's grab_build_doc failed for"
+                f" {package_details_for_test.name} "
+            )
             f"(detected type: {detected_doc_type}). Result: {operation_result}"
             assert isinstance(operation_result, str), (
                 "Expected a path string from successful grab_build_doc for"

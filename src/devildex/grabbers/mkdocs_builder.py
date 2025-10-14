@@ -1,3 +1,6 @@
+
+"""MkDocsBuilder class for generating documentation using MkDocs."""
+
 import logging
 import shutil
 import tempfile
@@ -7,13 +10,11 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 import yaml
 
 from devildex.grabbers.abstract_grabber import AbstractGrabber
-from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
+    IsolatedVenvManager,
     execute_command,
     install_project_and_dependencies_in_venv,
 )
-
-# from devildex.scanner.scanner import is_mkdocs_project # To be implemented
 
 if TYPE_CHECKING:
     from devildex.orchestrator.build_context import BuildContext
@@ -184,14 +185,18 @@ def _get_plugin_packages_to_install(
             if package_to_install not in plugin_packages:
                 plugin_packages.append(package_to_install)
                 logger.debug(
-                    f"Identified Plugin/Extension Package for '{name}': {package_to_install}"
+                    f"Identified Plugin/Extension Package for '{name}': "
+                    f"{package_to_install}"
                 )
         elif package_to_install == BUILT_IN_MARKER:
-            logger.debug(f"Plugin/Extension '{name}' is a built-in feature. No installation needed.")
+            logger.debug(
+                f"Plugin/Extension '{name}' is a built-in feature. "
+                "No installation needed."
+            )
         else:
             logger.debug(
-                f"Plugin/Extension '{name}' is specified but not in KNOWN_PLUGIN_PACKAGES "
-                "or needs no separate install."
+                f"Plugin/Extension '{name}' is specified but not in "
+                "KNOWN_PLUGIN_PACKAGES or needs no separate install."
             )
     return plugin_packages
 
@@ -207,11 +212,14 @@ def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]
         plugins_config = mkdocs_config.get("plugins", [])
         markdown_extensions_config = mkdocs_config.get("markdown_extensions", [])
 
-        if "callouts" in _extract_names_from_config_list_or_dict(markdown_extensions_config):
+        if "callouts" in _extract_names_from_config_list_or_dict(
+            markdown_extensions_config
+        ):
             if isinstance(plugins_config, list):
                 plugins_config.append("mkdocs-callouts")
             elif isinstance(plugins_config, dict):
-                plugins_config["mkdocs-callouts"] = {} # Add as an empty dict if it's a dict
+                plugins_config["mkdocs-callouts"] = {}  # Add as an empty dict
+                # if it's a dict
 
         packages_to_install.extend(
             _get_plugin_packages_to_install(
@@ -265,49 +273,46 @@ def _find_mkdocs_doc_requirements_file(
 
 
 class MkDocsBuilder(AbstractGrabber):
-    def generate_docset(self, source_path: Path, output_path: Path, context: "BuildContext") -> bool:
-        logger.info(
-            "\n--- Starting Isolated MkDocs Build for %s v%s ---",
-            context.project_slug,
-            context.version_identifier,
-        )
+    """A builder for generating documentation using MkDocs."""
 
-        mkdocs_config_file_path = _find_mkdocs_config_file(source_path)
-        if not mkdocs_config_file_path:
-            logger.error(
-                "Critical Error: mkdocs.yml not found in %s or its 'docs' subdir.", source_path
-            )
-            return False
-
-        mkdocs_config_content = _parse_mkdocs_config(mkdocs_config_file_path)
-        if mkdocs_config_content is None:
-            logger.error("Failed to parse mkdocs.yml at %s. Aborting build.", mkdocs_config_file_path)
-            return False
-
-        # Ensure docs_dir is explicitly set to an absolute path
+    def _handle_docs_dir(self, source_path: Path, mkdocs_config_content: dict) -> bool:
         docs_dir_path = source_path / "docs"
         if not docs_dir_path.is_dir():
-            logger.error("MkDocs 'docs' directory not found at %s. Aborting build.", docs_dir_path)
+            logger.error(
+                "MkDocs 'docs' directory not found at %s. Aborting build.",
+                docs_dir_path,
+            )
             return False
         mkdocs_config_content["docs_dir"] = str(docs_dir_path.resolve())
-        logger.info("Explicitly set 'docs_dir' to absolute path: %s in MkDocs config.", mkdocs_config_content["docs_dir"])
+        logger.info(
+            "Explicitly set 'docs_dir' to absolute path: %s in MkDocs config.",
+            mkdocs_config_content["docs_dir"],
+        )
+        return True
 
-        # Ensure hooks path is absolute if specified
+    def _handle_hooks_path(self, source_path: Path, mkdocs_config_content: dict) -> bool:
         if mkdocs_config_content.get("hooks"):
             hooks_path = Path(mkdocs_config_content["hooks"])
             if not hooks_path.is_absolute():
                 absolute_hooks_path = source_path / hooks_path
                 if not absolute_hooks_path.is_file():
-                    logger.error("MkDocs 'hooks' file not found at %s. Aborting build.", absolute_hooks_path)
+                    logger.error(
+                        "MkDocs 'hooks' file not found at %s. Aborting build.",
+                        absolute_hooks_path,
+                    )
                     return False
                 mkdocs_config_content["hooks"] = str(absolute_hooks_path.resolve())
-                logger.info("Explicitly set 'hooks' to absolute path: %s in MkDocs config.", mkdocs_config_content["hooks"])
+                logger.info(
+                    "Explicitly set 'hooks' to absolute path: %s in MkDocs config.",
+                    mkdocs_config_content["hooks"],
+                )
+        return True
 
-        # Special handling for 'callouts' markdown extension, which is provided by a plugin
+    def _handle_callouts_extension(self, mkdocs_config_content: dict) -> None:
         if "markdown_extensions" in mkdocs_config_content:
             markdown_extensions = mkdocs_config_content["markdown_extensions"]
-            if isinstance(markdown_extensions, list):
-                if "callouts" in markdown_extensions:
+            if isinstance(markdown_extensions, list) and \
+               "callouts" in markdown_extensions:
                     markdown_extensions.remove("callouts")
                     logger.info("Removed 'callouts' from markdown_extensions.")
 
@@ -318,15 +323,72 @@ class MkDocsBuilder(AbstractGrabber):
                     if isinstance(mkdocs_config_content["plugins"], list):
                         if "callouts" not in mkdocs_config_content["plugins"]:
                             mkdocs_config_content["plugins"].append("callouts")
-                    elif isinstance(mkdocs_config_content["plugins"], dict):
-                        if "callouts" not in mkdocs_config_content["plugins"]:
+                    elif isinstance(mkdocs_config_content["plugins"], dict) and \
+                         "callouts" not in mkdocs_config_content["plugins"]:
                             mkdocs_config_content["plugins"]["callouts"] = {}
                     logger.info("Added 'callouts' to plugins section.")
 
-        # Ensure docs_dir is explicitly set relative to source_path
+    def _ensure_docs_dir_explicitly_set(self, mkdocs_config_content: dict) -> None:
         if "docs_dir" not in mkdocs_config_content:
             mkdocs_config_content["docs_dir"] = "docs"
             logger.info("Explicitly set 'docs_dir' to 'docs' in MkDocs config.")
+
+    def _get_and_parse_mkdocs_config(
+        self, mkdocs_config_file_path: Path
+    ) -> Optional[dict]:
+        mkdocs_config_content = _parse_mkdocs_config(mkdocs_config_file_path)
+        if mkdocs_config_content is None:
+            logger.error(
+                "Failed to parse mkdocs.yml at %s. Aborting build.",
+                mkdocs_config_file_path,
+            )
+            return None
+        return mkdocs_config_content
+
+    def _process_mkdocs_config(
+        self, source_path: Path, mkdocs_config_file_path: Path
+    ) -> Optional[dict]:
+        mkdocs_config_content = self._get_and_parse_mkdocs_config(
+            mkdocs_config_file_path
+        )
+        if mkdocs_config_content is None:
+            return None
+
+        if not self._handle_docs_dir(source_path, mkdocs_config_content):
+            return None
+
+        if not self._handle_hooks_path(source_path, mkdocs_config_content):
+            return None
+
+        self._handle_callouts_extension(mkdocs_config_content)
+
+        self._ensure_docs_dir_explicitly_set(mkdocs_config_content)
+        return mkdocs_config_content
+
+    def generate_docset(
+        self, source_path: Path, output_path: Path, context: "BuildContext"
+    ) -> bool:
+        """Generate MkDocs documentation in an isolated environment."""
+        logger.info(
+            "\n--- Starting Isolated MkDocs Build for %s v%s ---",
+            context.project_slug,
+            context.version_identifier,
+        )
+
+        mkdocs_config_file_path = _find_mkdocs_config_file(source_path)
+        if not mkdocs_config_file_path:
+            logger.error(
+                "Critical Error: mkdocs.yml not found in %s or its 'docs' "
+                "subdir.",
+                source_path,
+            )
+            return False
+
+        mkdocs_config_content = self._process_mkdocs_config(
+            source_path, mkdocs_config_file_path
+        )
+        if mkdocs_config_content is None:
+            return False
 
         final_output_dir = (
             Path(output_path) / context.project_slug / context.version_identifier
@@ -353,7 +415,9 @@ class MkDocsBuilder(AbstractGrabber):
             with IsolatedVenvManager(
                 project_name=f"{context.project_slug}-{context.version_identifier}"
             ) as venv:
-                required_mkdocs_pkgs = _gather_mkdocs_required_packages(mkdocs_config_content)
+                required_mkdocs_pkgs = _gather_mkdocs_required_packages(
+                    mkdocs_config_content
+                )
                 logger.info(
                     "MkDocs related packages to install for %s: %s",
                     context.project_slug,
@@ -365,23 +429,30 @@ class MkDocsBuilder(AbstractGrabber):
                     project_name=context.project_slug,
                     project_root_for_install=context.project_root_for_install,
                     doc_requirements_path=_find_mkdocs_doc_requirements_file(
-                        source_path, context.project_root_for_install, context.project_slug
+                        source_path,
+                        context.project_root_for_install,
+                        context.project_slug,
                     ),
                     base_packages_to_install=required_mkdocs_pkgs,
                 )
                 if not install_success:
                     logger.error(
-                        "CRITICAL: Installation of project/dependencies (including MkDocs) "
-                        "for %s FAILED or had critical issues. Aborting MkDocs build.",
+                        "CRITICAL: Installation of project/dependencies "
+                        "(including MkDocs) for %s FAILED or had critical "
+                        "issues. Aborting MkDocs build.",
                         context.project_slug,
                     )
                     return False
 
                 # Create a temporary mkdocs.yml with the modified content
-                with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8", suffix=".yml") as temp_config_file:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", delete=False, encoding="utf-8", suffix=".yml"
+                ) as temp_config_file:
                     yaml.dump(mkdocs_config_content, temp_config_file)
                 temp_config_file_path = Path(temp_config_file.name)
-                logger.info("Created temporary MkDocs config file: %s", temp_config_file_path)
+                logger.info(
+                    "Created temporary MkDocs config file: %s", temp_config_file_path
+                )
 
                 mkdocs_command_list = [
                     str(venv.python_executable), # Ensure it's a string
@@ -404,7 +475,10 @@ class MkDocsBuilder(AbstractGrabber):
                 finally:
                     if temp_config_file_path.exists():
                         temp_config_file_path.unlink()
-                        logger.info("Cleaned up temporary MkDocs config file: %s", temp_config_file_path)
+                        logger.info(
+                            "Cleaned up temporary MkDocs config file: %s",
+                            temp_config_file_path,
+                        )
 
                 if return_code == 0:
                     logger.info(
@@ -440,7 +514,13 @@ class MkDocsBuilder(AbstractGrabber):
                 context.project_slug,
             )
 
-    def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
+    def can_handle(
+        self, source_path: Path, context: "BuildContext"
+    ) -> bool:
+        """Determine if this grabber can handle the project.
+
+        For MkDocsBuilder, it can handle if mkdocs.yml is found in the source_path.
+        """
         # Check for mkdocs.yml in the source_path
         return (source_path / MKDOCS_CONFIG_FILE).exists()
 

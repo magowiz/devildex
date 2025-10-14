@@ -1,10 +1,3 @@
-from collections.abc import Sequence
-from typing import Union
-
-from alembic import op
-
-from devildex.database.models import Base
-
 """Create initial schema manually.
 
 Revision ID: ffaf7e5c74e4
@@ -12,7 +5,12 @@ Revises:
 Create Date: 2025-10-04 10:42:56.917457
 
 """
+from collections.abc import Sequence
+from typing import Union
 
+from alembic import op
+
+from devildex.database.models import Base
 
 # revision identifiers, used by Alembic.
 revision: str = 'ffaf7e5c74e4'

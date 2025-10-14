@@ -5,16 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 from devildex.database.models import PackageDetails
-from devildex.grabbers.pdoc3_builder import Pdoc3Builder
 from devildex.fetcher import PackageSourceFetcher
-from devildex.info import PROJECT_ROOT
-
-from devildex.orchestrator.context import BuildContext
+from devildex.grabbers.mkdocs_builder import MkDocsBuilder
+from devildex.grabbers.pdoc3_builder import Pdoc3Builder
 from devildex.grabbers.pydoctor_builder import PydoctorBuilder
 from devildex.grabbers.sphinx_builder import SphinxBuilder
-from devildex.grabbers.mkdocs_builder import MkDocsBuilder
-from devildex.grabbers.readthedocs_downloader import ReadTheDocsDownloader
-
+from devildex.info import PROJECT_ROOT
+from devildex.orchestrator.context import BuildContext
 from devildex.scanner.scanner import (
     _find_python_package_root,
     has_docstrings,

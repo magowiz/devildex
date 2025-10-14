@@ -1,3 +1,5 @@
+"""Test for readthedocs api."""
+
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -10,10 +12,12 @@ from devildex.orchestrator.context import BuildContext
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.fixture
 def rtd_downloader() -> ReadTheDocsDownloader:
     """Fixture for ReadTheDocsDownloader instance."""
     return ReadTheDocsDownloader()
+
 
 @pytest.fixture
 def mock_build_context(mocker: MockerFixture) -> BuildContext:
@@ -27,9 +31,10 @@ def mock_build_context(mocker: MockerFixture) -> BuildContext:
         version_identifier="latest",
         project_root_for_install=Path("/tmp/install"),
         project_url="http://example.com",
-        doc_type="readthedocs", # This is key for can_handle
+        doc_type="readthedocs",  # This is key for can_handle
     )
     return context
+
 
 @patch("devildex.grabbers.readthedocs_downloader.logger.error")
 def test_generate_docset_empty_project_slug(
@@ -49,11 +54,13 @@ def test_generate_docset_empty_project_slug(
         "Error: project_slug is empty in BuildContext. Cannot proceed with download."
     )
 
+
 def test_can_handle_returns_true_for_readthedocs(
     rtd_downloader: ReadTheDocsDownloader, mock_build_context: BuildContext
 ) -> None:
     """Verify can_handle returns True when doc_type is 'readthedocs'."""
     assert rtd_downloader.can_handle(Path("/tmp/source"), mock_build_context) is True
+
 
 def test_can_handle_returns_false_for_other_doc_types(
     rtd_downloader: ReadTheDocsDownloader, mock_build_context: BuildContext

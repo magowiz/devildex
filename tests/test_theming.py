@@ -85,7 +85,11 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
 
     assert build_successful
 
-    output_html_dir = test_base_output_directory / project_slug_for_build / version_identifier_for_build
+    output_html_dir = (
+        test_base_output_directory
+        / project_slug_for_build
+        / version_identifier_for_build
+    )
     index_html_path = output_html_dir / "index.html"
 
     url_to_open = index_html_path.as_uri()

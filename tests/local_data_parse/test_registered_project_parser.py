@@ -76,7 +76,9 @@ def test_load_active_project_missing_required_keys(
     corrupt_data = {"project_name": "Incomplete", "project_path": "/path"}
     mock_app_paths.write_text(json.dumps(corrupt_data))
 
-    mock_logger_error = mocker.patch("devildex.local_data_parse.registered_project_parser.logger.error")
+    mock_logger_error = mocker.patch(
+        "devildex.local_data_parse.registered_project_parser.logger.error"
+    )
 
     loaded_data = registered_project_parser.load_active_registered_project()
     assert loaded_data is None
