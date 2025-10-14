@@ -548,10 +548,10 @@ def test_grab_build_doc_readthedocs(
 
 
 @patch(
-    "devildex.orchestrator.documentation_orchestrator.DocStringsSrc.generate_docs_from_folder"
+    "devildex.grabbers.pdoc3_builder.Pdoc3Builder.generate_docset"
 )
 def test_grab_build_doc_docstrings(
-    mock_generate_docs_from_folder: MagicMock,
+    mock_generate_docset: MagicMock,
     mock_orchestrator: Orchestrator,
     tmp_path: Path,
 ) -> None:
@@ -559,22 +559,26 @@ def test_grab_build_doc_docstrings(
     mock_orchestrator.detected_doc_type = "docstrings"
     (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
-    mock_generate_docs_from_folder.return_value = "docstrings_output_path"
+    mock_generate_docset.return_value = True
     result = mock_orchestrator.grab_build_doc()
-    assert result == "docstrings_output_path"
-    assert mock_orchestrator.last_operation_result == "docstrings_output_path"
-    mock_generate_docs_from_folder.assert_called_once()
+    assert isinstance(result, str)
+    assert mock_orchestrator.last_operation_result == result
+    mock_generate_docset.assert_called_once_with(
+        source_path=ANY,
+        output_path=mock_orchestrator.base_output_dir,
+        context=ANY,
+    )
 
 
 @patch(
-    "devildex.orchestrator.documentation_orchestrator.DocStringsSrc.generate_docs_from_folder"
+    "devildex.grabbers.pdoc3_builder.Pdoc3Builder.generate_docset"
 )
 @patch(
-    "devildex.orchestrator.documentation_orchestrator.PydoctorSrc.generate_docs_from_folder"
+    "devildex.grabbers.pydoctor_builder.PydoctorBuilder.generate_docset"
 )
 def test_grab_build_doc_pdoc3_fails_pydoctor_succeeds(
-    mock_pydoctor_generate_docs: MagicMock,
-    mock_pdoc3_generate_docs: MagicMock,
+    mock_pydoctor_generate_docset: MagicMock,
+    mock_pdoc3_generate_docset: MagicMock,
     mock_orchestrator: Orchestrator,
     tmp_path: Path,
 ) -> None:
@@ -583,15 +587,23 @@ def test_grab_build_doc_pdoc3_fails_pydoctor_succeeds(
     (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
 
-    mock_pdoc3_generate_docs.return_value = False
-    mock_pydoctor_generate_docs.return_value = "pydoctor_output_path"
+    mock_pdoc3_generate_docset.return_value = False
+    mock_pydoctor_generate_docset.return_value = True
 
     result = mock_orchestrator.grab_build_doc()
 
-    assert result == "pydoctor_output_path"
-    assert mock_orchestrator.last_operation_result == "pydoctor_output_path"
-    mock_pdoc3_generate_docs.assert_called_once()
-    mock_pydoctor_generate_docs.assert_called_once()
+    assert isinstance(result, str)
+    assert mock_orchestrator.last_operation_result == result
+    mock_pdoc3_generate_docset.assert_called_once_with(
+        source_path=ANY,
+        output_path=mock_orchestrator.base_output_dir,
+        context=ANY,
+    )
+    mock_pydoctor_generate_docset.assert_called_once_with(
+        source_path=ANY,
+        output_path=mock_orchestrator.base_output_dir,
+        context=ANY,
+    )
 
 
 def test_grab_build_doc_key_error(mock_orchestrator: Orchestrator) -> None:

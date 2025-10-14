@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import Optional
 
 from devildex.database.models import PackageDetails
-from devildex.docstrings.docstrings_src import DocStringsSrc
+from devildex.grabbers.pdoc3_builder import Pdoc3Builder
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
 
 from devildex.orchestrator.context import BuildContext
-from devildex.pydoctor.pydoctor_src import PydoctorSrc
+from devildex.grabbers.pydoctor_builder import PydoctorBuilder
 from devildex.grabbers.sphinx_builder import SphinxBuilder
 from devildex.grabbers.mkdocs_builder import MkDocsBuilder
 from devildex.grabbers.readthedocs_downloader import ReadTheDocsDownloader
@@ -39,11 +39,11 @@ class Orchestrator:
         pdoc3_theme_path = (
             PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pdoc3_theme"
         )
-        self.doc_strings = DocStringsSrc(template_dir=pdoc3_theme_path)
+        self.pdoc3_builder = Pdoc3Builder(template_dir=pdoc3_theme_path)
         pydoctor_theme_path = (
             PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
         )
-        self.pydoctor_src = PydoctorSrc(template_dir=pydoctor_theme_path)
+        self.pydoctor_builder = PydoctorBuilder(template_dir=pydoctor_theme_path)
         self.last_operation_result = None
         self.sphinx_doc_path = None
         if base_output_dir:
@@ -51,7 +51,6 @@ class Orchestrator:
         else:
             self.base_output_dir = (PROJECT_ROOT / "docset").resolve()
         self.base_output_dir.mkdir(parents=True, exist_ok=True)
-        self.doc_strings.docset_dir = self.base_output_dir
         self._effective_source_path = None
 
     def _fetch_repo_fetch(
@@ -201,6 +200,45 @@ class Orchestrator:
                     "download_format": "htmlzip", # Default format, can be made dynamic later
                 },
             },
+            "readthedocs": {
+                "builder": ReadTheDocsDownloader(),
+                "context_args": {
+                    "project_name": self.package_details.name,
+                    "project_version": self.package_details.version or "main",
+                    "base_output_dir": self.base_output_dir,
+                    "project_slug": self.package_details.name,
+                    "version_identifier": self.package_details.version or "main",
+                    "download_format": "htmlzip", # Default format, can be made dynamic later
+                },
+            },
+            "pydoctor": {
+                "builder": self.pydoctor_builder,
+                "context_args": {
+                    "project_name": self.package_details.name,
+                    "project_version": self.package_details.version,
+                    "base_output_dir": self.base_output_dir,
+                    "source_root": self._effective_source_path,
+                    "vcs_url": self.package_details.vcs_url,
+                    "project_slug": self.package_details.name,
+                    "version_identifier": self.package_details.version or "main",
+                    "project_root_for_install": self._effective_source_path,
+                    "project_url": self.package_details.vcs_url, # Assuming project_url is vcs_url
+                },
+            },
+            "pdoc3": {
+                "builder": self.pdoc3_builder,
+                "context_args": {
+                    "project_name": self.package_details.name,
+                    "project_version": self.package_details.version,
+                    "base_output_dir": self.base_output_dir,
+                    "source_root": self._effective_source_path,
+                    "vcs_url": self.package_details.vcs_url,
+                    "project_slug": self.package_details.name,
+                    "version_identifier": self.package_details.version or "main",
+                    "project_root_for_install": self._effective_source_path,
+                    "project_url": self.package_details.vcs_url, # Assuming project_url is vcs_url
+                },
+            },
             "docstrings": {
                 "function": self._generate_docstrings_with_fallback,
                 "args": {
@@ -290,20 +328,31 @@ class Orchestrator:
 
     def _generate_docstrings_with_fallback(self, context: BuildContext) -> str | bool:
         logger.info("Orchestrator: Attempting pdoc3 generation...")
-        pdoc3_result = self.doc_strings.generate_docs_from_folder(context)
+        pdoc3_result = self.pdoc3_builder.generate_docset(
+            source_path=Path(self._get_docstrings_input_folder()),
+            output_path=self.base_output_dir,
+            context=context,
+        )
 
         if pdoc3_result:
             logger.info("Orchestrator: pdoc3 generation successful.")
-            return pdoc3_result
+            return str(self.base_output_dir / context.project_name)
         else:
             logger.warning(
                 "Orchestrator: pdoc3 generation failed. "
                 "Attempting Pydoctor generation..."
             )
-            pydoctor_result = self.pydoctor_src.generate_docs_from_folder(context)
+            # For pydoctor, we need to pass source_path and output_path explicitly
+            source_path_for_pydoctor = Path(self._get_docstrings_input_folder())
+            output_path_for_pydoctor = self.base_output_dir
+            pydoctor_result = self.pydoctor_builder.generate_docset(
+                source_path=source_path_for_pydoctor,
+                output_path=output_path_for_pydoctor,
+                context=context,
+            )
             if pydoctor_result:
                 logger.info("Orchestrator: Pydoctor generation successful.")
-                return pydoctor_result
+                return str(self.base_output_dir / context.project_name)
             else:
                 logger.error("Orchestrator: Pydoctor generation also failed.")
                 return False
