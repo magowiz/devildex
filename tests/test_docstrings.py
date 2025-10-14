@@ -143,41 +143,45 @@ def test_documentation_generation_for_package(
 
 
 def test_build_pdoc_command_no_modules(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, mocker: MockerFixture
 ) -> None:
     """Verify _build_pdoc_command handles no modules to document."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
+    mock_logger_error = mocker.patch("devildex.docstrings.docstrings_src.logger.error")
 
-    with caplog.at_level(logging.INFO):
-        command = doc_generator._build_pdoc_command(
-            python_executable="/usr/bin/python",
-            modules_to_document=[],
-            output_directory=tmp_path / "output",
-        )
+    command = doc_generator._build_pdoc_command(
+        python_executable="/usr/bin/python",
+        modules_to_document=[],
+        output_directory=tmp_path / "output",
+    )
 
     assert command == []
-    assert "DocstringsSrc: No module specified for PDOC." in caplog.text
+    mock_logger_error.assert_called_once_with(
+        "DocstringsSrc: No module specified for PDOC. Impossible to build the command."
+    )
 
 
 def test_generate_docs_from_folder_non_existent_input_folder(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, mocker: MockerFixture
 ) -> None:
     """Verify generate_docs_from_folder handles non-existent input folder."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
-
     non_existent_folder = tmp_path / "non_existent_project"
+    
+    mock_logger_info = mocker.patch("devildex.docstrings.docstrings_src.logger.info")
 
-    with caplog.at_level(logging.INFO):
-        result = doc_generator.generate_docs_from_folder(
-            project_name="test_project",
-            input_folder=str(non_existent_folder),
-            output_folder=str(tmp_path / "output"),
-        )
+    result = doc_generator.generate_docs_from_folder(
+        project_name="test_project",
+        input_folder=str(non_existent_folder),
+        output_folder=str(tmp_path / "output"),
+    )
 
     assert result is False
-    assert (
-        "DocstringsSrc: The Specified Source Project Folder does not exist"
-        in caplog.text
+    
+    # Check that the specific log message was called
+    mock_logger_info.assert_any_call(
+        "DocstringsSrc: The Specified Source Project Folder does not exist: %s",
+        non_existent_folder / "test_project",
     )
 
 
@@ -189,16 +193,15 @@ def test_build_pdoc_command_with_template_dir(
     template_dir.mkdir()
     doc_generator = DocStringsSrc(template_dir=template_dir, output_dir=str(tmp_path))
 
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.INFO, logger="devildex.docstrings.docstrings_src"):
         command = doc_generator._build_pdoc_command(
             python_executable="/usr/bin/python",
             modules_to_document=["my_module"],
             output_directory=tmp_path / "output",
         )
-
-    assert "--template-dir" in command
-    assert str(template_dir.resolve()) in command
-    assert "Using customized template directory" in caplog.text
+        assert "--template-dir" in command
+        assert str(template_dir.resolve()) in command
+        assert "Using customized template directory" in caplog.text
 
 
 def test_handle_successful_doc_move_existing_destination(

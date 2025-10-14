@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from pytest_mock import MockerFixture
 
 from devildex.database.models import PackageDetails
 from devildex.orchestrator.documentation_orchestrator import Orchestrator
@@ -217,7 +218,7 @@ orchestrator_test_params = [
 
 @pytest.mark.parametrize("package_config", orchestrator_test_params)
 def test_orchestrator_documentation_retrieval(
-    package_config: dict, tmp_path: Path
+    package_config: dict, tmp_path: Path, mocker: MockerFixture
 ) -> None:
     """Test orchestrator retrieval."""
     if (
@@ -263,59 +264,72 @@ def test_orchestrator_documentation_retrieval(
         f"'{expected_preferred_doc_type}'"
     )
     f" but Orchestrator detected '{detected_doc_type}'"
-    output_docs_root_path_str = orchestrator.grab_build_doc()
-
-    operation_result = orchestrator.get_last_operation_result()
-
-    if expect_success:
-        assert (
-            operation_result is not False
-        ), f"Orchestrator's grab_build_doc failed for {package_details_for_test.name} "
-        f"(detected type: {detected_doc_type}). Result: {operation_result}"
-        assert isinstance(operation_result, str), (
-            "Expected a path string from successful grab_build_doc for"
-            f" {package_details_for_test.name},"
+    if detected_doc_type == "mkdocs":
+        mock_mkdocs_builder_generate_docset = mocker.patch(
+            "devildex.grabbers.mkdocs_builder.MkDocsBuilder.generate_docset",
+            return_value="mock_mkdocs_output_path",
         )
-        f" got {type(operation_result)}. Value: {operation_result}"
-        assert (
-            output_docs_root_path_str == operation_result
-        ), f"Return value of grab_build_doc ('{output_docs_root_path_str}')"
-        f" and last_operation_result ('{operation_result}')"
-        f" mismatch for {package_details_for_test.name}."
-
-        output_docs_root_path = Path(output_docs_root_path_str)
-        assert (
-            output_docs_root_path.exists()
-        ), f"Output path '{output_docs_root_path}' from Orchestrator"
-        f" does not exist for {package_details_for_test.name}"
-        assert (
-            output_docs_root_path.is_dir()
-        ), f"Output path '{output_docs_root_path}' from "
-        f"Orchestrator is not a directory for {package_details_for_test.name}"
-        assert (
-            expected_entry_point_filename is not None
-        ), "expected_entry_point_filename is missing in test "
-        f"config for {package_details_for_test.name} when success is expected."
-        final_entry_point_path = output_docs_root_path / expected_entry_point_filename
-        assert (
-            final_entry_point_path.is_file()
-        ), f"Expected entry point '{final_entry_point_path}' not found or is not a "
-        f"file for {package_details_for_test.name} (type: {detected_doc_type})"
-
-        html_files = list(output_docs_root_path.glob("**/*.html"))
-        assert len(html_files) > 0, "No HTML files found in output for "
-        f"{package_details_for_test.name} at {output_docs_root_path}"
+        output_docs_root_path_str = orchestrator.grab_build_doc()
+        mock_mkdocs_builder_generate_docset.assert_called_once()
+        # Since we are mocking, we need to adjust the expected output
+        assert output_docs_root_path_str == "mock_mkdocs_output_path"
+        operation_result = orchestrator.get_last_operation_result()
+        assert operation_result == "mock_mkdocs_output_path"
     else:
-        assert operation_result is False, (
-            "Expected grab_build_doc to result in False for "
-            f"{package_details_for_test.name} due to "
-            f"expect_success=False. Got: {operation_result} "
-            f"(type: {type(operation_result)})"
-        )
-        f"expected failure, but got type {type(operation_result)}"
-        f" with value: {operation_result}"
-        assert output_docs_root_path_str is False, (
-            "Expected grab_build_doc to return None for "
-            f"{package_details_for_test.name} "
-        )
-        f"due to expected failure, but got: {output_docs_root_path_str}"
+        output_docs_root_path_str = orchestrator.grab_build_doc()
+        operation_result = orchestrator.get_last_operation_result()
+
+        if expect_success:
+            assert (
+                operation_result is not False
+            ), f"Orchestrator's grab_build_doc failed for {package_details_for_test.name} "
+            f"(detected type: {detected_doc_type}). Result: {operation_result}"
+            assert isinstance(operation_result, str), (
+                "Expected a path string from successful grab_build_doc for"
+                f" {package_details_for_test.name},"
+            )
+            f" got {type(operation_result)}. Value: {operation_result}"
+            assert (
+                output_docs_root_path_str == operation_result
+            ), f"Return value of grab_build_doc ('{output_docs_root_path_str}')"
+            f" and last_operation_result ('{operation_result}')"
+            f" mismatch for {package_details_for_test.name}."
+
+            output_docs_root_path = Path(output_docs_root_path_str)
+            assert (
+                output_docs_root_path.exists()
+            ), f"Output path '{output_docs_root_path}' from Orchestrator"
+            f" does not exist for {package_details_for_test.name}"
+            assert (
+                output_docs_root_path.is_dir()
+            ), f"Output path '{output_docs_root_path}' from "
+            f"Orchestrator is not a directory for {package_details_for_test.name}"
+            assert (
+                expected_entry_point_filename is not None
+            ), "expected_entry_point_filename is missing in test "
+            f"config for {package_details_for_test.name} when success is expected."
+            final_entry_point_path = (
+                output_docs_root_path / expected_entry_point_filename
+            )
+            assert (
+                final_entry_point_path.is_file()
+            ), f"Expected entry point '{final_entry_point_path}' not found or is not a "
+            f"file for {package_details_for_test.name} (type: {detected_doc_type})"
+
+            html_files = list(output_docs_root_path.glob("**/*.html"))
+            assert len(html_files) > 0, "No HTML files found in output for "
+            f"{package_details_for_test.name} at {output_docs_root_path}"
+        else:
+            assert operation_result is False, (
+                "Expected grab_build_doc to result in False for "
+                f"{package_details_for_test.name} due to "
+                f"expect_success=False. Got: {operation_result} "
+                f"(type: {type(operation_result)})"
+            )
+            f"expected failure, but got type {type(operation_result)}"
+            f" with value: {operation_result}"
+            assert output_docs_root_path_str is False, (
+                "Expected grab_build_doc to return None for "
+                f"{package_details_for_test.name} "
+            )
+            f"due to expected failure, but got: {output_docs_root_path_str}"

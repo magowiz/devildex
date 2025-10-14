@@ -8,10 +8,11 @@ from devildex.database.models import PackageDetails
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.fetcher import PackageSourceFetcher
 from devildex.info import PROJECT_ROOT
-from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
+
 from devildex.orchestrator.context import BuildContext
 from devildex.pydoctor.pydoctor_src import PydoctorSrc
 from devildex.grabbers.sphinx_builder import SphinxBuilder
+from devildex.grabbers.mkdocs_builder import MkDocsBuilder
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
 
 from devildex.scanner.scanner import (
@@ -178,12 +179,15 @@ class Orchestrator:
                 },
             },
             "mkdocs": {
-                "function": process_mkdocs_source_and_build,
-                "args": {
-                    "source_project_path": effective_source_path_str,
+                "builder": MkDocsBuilder(),
+                "context_args": {
+                    "project_name": self.package_details.name,
+                    "project_version": self.package_details.version,
+                    "base_output_dir": self.base_output_dir,
+                    "source_root": self._effective_source_path,
                     "project_slug": self.package_details.name,
                     "version_identifier": self.package_details.version or "main",
-                    "base_output_dir": self.base_output_dir,
+                    "project_root_for_install": self._effective_source_path,
                 },
             },
             "readthedocs": {

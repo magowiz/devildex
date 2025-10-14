@@ -1,7 +1,7 @@
 """test documentation_orchestrator."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 
 import pytest
 from pytest_mock import MockerFixture
@@ -461,10 +461,7 @@ def test_grab_build_doc_unknown_doc_type(mock_orchestrator: Orchestrator) -> Non
     assert result is False
     assert mock_orchestrator.last_operation_result is False
 
-
-    @patch(
-        "devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset"
-    )
+    @patch("devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset")
     def test_grab_build_doc_sphinx(
         mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
     ) -> None:
@@ -478,9 +475,7 @@ def test_grab_build_doc_unknown_doc_type(mock_orchestrator: Orchestrator) -> Non
         assert mock_orchestrator.last_operation_result is True
         mock_generate_docset.assert_called_once()
 
-    @patch(
-        "devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset"
-    )
+    @patch("devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset")
     def test_grab_build_doc_sphinx_with_existing_source_path(
         mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
     ) -> None:
@@ -496,12 +491,10 @@ def test_grab_build_doc_unknown_doc_type(mock_orchestrator: Orchestrator) -> Non
         mock_generate_docset.assert_called_once_with(
             source_path=existing_source_path,
             output_path=mock_orchestrator.base_output_dir,
-            context=ANY, # We can use ANY here as BuildContext is complex to mock fully
+            context=ANY,  # We can use ANY here as BuildContext is complex to mock fully
         )
 
-    @patch(
-        "devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset"
-    )
+    @patch("devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset")
     def test_grab_build_doc_sphinx_raises_exception(
         mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
     ) -> None:
@@ -515,21 +508,24 @@ def test_grab_build_doc_unknown_doc_type(mock_orchestrator: Orchestrator) -> Non
         assert mock_orchestrator.last_operation_result is False
         mock_generate_docset.assert_called_once()
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.process_mkdocs_source_and_build"
-)
+
+@patch("devildex.grabbers.mkdocs_builder.MkDocsBuilder.generate_docset")
 def test_grab_build_doc_mkdocs(
-    mock_process_mkdocs: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
+    mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
 ) -> None:
     """Test grab build doc mkdocs."""
     mock_orchestrator.detected_doc_type = "mkdocs"
     (tmp_path / "source").mkdir()
     mock_orchestrator._effective_source_path = tmp_path / "source"
-    mock_process_mkdocs.return_value = "mkdocs_output_path"
+    mock_generate_docset.return_value = "mkdocs_output_path"
     result = mock_orchestrator.grab_build_doc()
     assert result == "mkdocs_output_path"
     assert mock_orchestrator.last_operation_result == "mkdocs_output_path"
-    mock_process_mkdocs.assert_called_once()
+    mock_generate_docset.assert_called_once_with(
+        source_path=mock_orchestrator._effective_source_path,
+        output_path=mock_orchestrator.base_output_dir,
+        context=ANY,  # Use ANY as BuildContext is created internally
+    )
 
 
 @patch(
@@ -600,9 +596,6 @@ def test_grab_build_doc_key_error(mock_orchestrator: Orchestrator) -> None:
     result = mock_orchestrator.grab_build_doc()
     assert result is False
     assert mock_orchestrator.last_operation_result is False
-
-
-
 
 
 def test_get_detected_doc_type(mock_orchestrator: Orchestrator) -> None:
