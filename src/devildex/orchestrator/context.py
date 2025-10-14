@@ -23,6 +23,8 @@ class BuildContext:
     version_identifier: Optional[str] = None
     project_root_for_install: Optional[Path] = None
     project_url: Optional[str] = None
+    doc_type: Optional[str] = None
+    download_format: Optional[str] = None
 
     temp_dir: Path = field(init=False)
     final_docs_dir: Path = field(init=False)

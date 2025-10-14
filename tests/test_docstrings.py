@@ -186,22 +186,26 @@ def test_generate_docs_from_folder_non_existent_input_folder(
 
 
 def test_build_pdoc_command_with_template_dir(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, mocker: MockerFixture
 ) -> None:
     """Verify _build_pdoc_command includes template_dir when provided."""
     template_dir = tmp_path / "my_template"
     template_dir.mkdir()
     doc_generator = DocStringsSrc(template_dir=template_dir, output_dir=str(tmp_path))
 
-    with caplog.at_level(logging.INFO, logger="devildex.docstrings.docstrings_src"):
-        command = doc_generator._build_pdoc_command(
-            python_executable="/usr/bin/python",
-            modules_to_document=["my_module"],
-            output_directory=tmp_path / "output",
-        )
-        assert "--template-dir" in command
-        assert str(template_dir.resolve()) in command
-        assert "Using customized template directory" in caplog.text
+    mock_logger_info = mocker.patch("devildex.docstrings.docstrings_src.logger.info")
+
+    command = doc_generator._build_pdoc_command(
+        python_executable="/usr/bin/python",
+        modules_to_document=["my_module"],
+        output_directory=tmp_path / "output",
+    )
+
+    assert "--template-dir" in command
+    assert str(template_dir.resolve()) in command
+    mock_logger_info.assert_any_call(
+        "Using customized template directory: %s", template_dir
+    )
 
 
 def test_handle_successful_doc_move_existing_destination(

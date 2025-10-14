@@ -13,7 +13,7 @@ from devildex.orchestrator.context import BuildContext
 from devildex.pydoctor.pydoctor_src import PydoctorSrc
 from devildex.grabbers.sphinx_builder import SphinxBuilder
 from devildex.grabbers.mkdocs_builder import MkDocsBuilder
-from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
+from devildex.grabbers.readthedocs_downloader import ReadTheDocsDownloader
 
 from devildex.scanner.scanner import (
     _find_python_package_root,
@@ -191,10 +191,14 @@ class Orchestrator:
                 },
             },
             "readthedocs": {
-                "function": download_readthedocs_prebuilt_robust,
-                "args": {
+                "builder": ReadTheDocsDownloader(),
+                "context_args": {
                     "project_name": self.package_details.name,
-                    "download_folder": str(self.base_output_dir),
+                    "project_version": self.package_details.version or "main",
+                    "base_output_dir": self.base_output_dir,
+                    "project_slug": self.package_details.name,
+                    "version_identifier": self.package_details.version or "main",
+                    "download_format": "htmlzip", # Default format, can be made dynamic later
                 },
             },
             "docstrings": {
@@ -237,7 +241,8 @@ class Orchestrator:
                     logger.info(f" DETECTED DOC TYPE: {self.detected_doc_type}")
                     logger.info(f" RESULT FROM GRABBER: {res}")
                     self.last_operation_result = res
-                except Exception:
+                except Exception as e:
+                    logger.exception(f"Orchestrator: Exception during grab_build_doc for {self.detected_doc_type}: {e}")
                     self.last_operation_result = False
                 else:
                     return res

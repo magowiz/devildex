@@ -13,6 +13,11 @@ def test_initial_state_and_title(devildex_app: DevilDexApp) -> None:
     """Test the initial state of the main window."""
     frame = devildex_app.main_frame
     assert frame is not None, "Main frame should be created"
+    # Ensure the frame is shown for the test
+    if frame and not frame.IsShown():
+        frame.Show(True)
+        wx.Yield() # Process pending events to ensure visibility update
+
     assert frame.IsShown(), "Main frame should be visible"
     assert frame.GetTitle() == "DevilDex", "Window title is incorrect"
 

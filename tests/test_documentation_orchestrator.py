@@ -528,19 +528,23 @@ def test_grab_build_doc_mkdocs(
     )
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.download_readthedocs_prebuilt_robust"
-)
+@patch("devildex.grabbers.readthedocs_downloader.ReadTheDocsDownloader.generate_docset")
 def test_grab_build_doc_readthedocs(
-    mock_download_readthedocs: MagicMock, mock_orchestrator: Orchestrator
+    mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
 ) -> None:
     """Test grab build doc readthedocs."""
     mock_orchestrator.detected_doc_type = "readthedocs"
-    mock_download_readthedocs.return_value = "readthedocs_output_path"
+    (tmp_path / "source").mkdir() # Create a dummy source path for the context
+    mock_orchestrator._effective_source_path = tmp_path / "source"
+    mock_generate_docset.return_value = True # generate_docset returns True on success
     result = mock_orchestrator.grab_build_doc()
-    assert result == "readthedocs_output_path"
-    assert mock_orchestrator.last_operation_result == "readthedocs_output_path"
-    mock_download_readthedocs.assert_called_once()
+    assert result is True # Expect True on success
+    assert mock_orchestrator.last_operation_result is True
+    mock_generate_docset.assert_called_once_with(
+        source_path=mock_orchestrator._effective_source_path,
+        output_path=mock_orchestrator.base_output_dir,
+        context=ANY,  # Use ANY as BuildContext is created internally
+    )
 
 
 @patch(
