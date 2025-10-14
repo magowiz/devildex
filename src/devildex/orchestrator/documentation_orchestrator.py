@@ -11,8 +11,9 @@ from devildex.info import PROJECT_ROOT
 from devildex.mkdocs.mkdocs_src import process_mkdocs_source_and_build
 from devildex.orchestrator.context import BuildContext
 from devildex.pydoctor.pydoctor_src import PydoctorSrc
+from devildex.grabbers.sphinx_builder import SphinxBuilder
 from devildex.readthedocs.readthedocs_api import download_readthedocs_prebuilt_robust
-from devildex.readthedocs.readthedocs_src import download_readthedocs_source_and_build
+
 from devildex.scanner.scanner import (
     _find_python_package_root,
     has_docstrings,
@@ -43,6 +44,7 @@ class Orchestrator:
         )
         self.pydoctor_src = PydoctorSrc(template_dir=pydoctor_theme_path)
         self.last_operation_result = None
+        self.sphinx_doc_path = None
         if base_output_dir:
             self.base_output_dir = Path(base_output_dir).resolve()
         else:
@@ -162,13 +164,17 @@ class Orchestrator:
 
         return {
             "sphinx": {
-                "function": download_readthedocs_source_and_build,
-                "args": {
-                    "project_url": self.package_details.vcs_url,
+                "builder": SphinxBuilder(),
+                "context_args": {
                     "project_name": self.package_details.name,
-                    "output_dir": self.base_output_dir,
-                    "clone_base_dir_override": self.base_output_dir / "temp_clones",
-                    "existing_clone_path": existing_clone_path_for_sphinx,
+                    "project_version": self.package_details.version,
+                    "base_output_dir": self.base_output_dir,
+                    "source_root": self._effective_source_path,
+                    "vcs_url": self.package_details.vcs_url,
+                    "project_slug": self.package_details.name,
+                    "version_identifier": self.package_details.version or "main",
+                    "project_root_for_install": self._effective_source_path,
+                    "project_url": self.package_details.vcs_url, # Assuming project_url is vcs_url
                 },
             },
             "mkdocs": {
@@ -201,29 +207,36 @@ class Orchestrator:
             },
         }
 
-    @staticmethod
-    def _interpret_tuple_res(value: tuple[str, bool] | str) -> str | bool | None:
-        if isinstance(value, tuple):
-            return value[0] if value[1] else False
-        return value
-
     def grab_build_doc(self) -> str | bool:
         """Grab and build documentation."""
         if self.detected_doc_type and self.detected_doc_type != "unknown":
             grabber_config = self._grabbers.get(self.detected_doc_type)
             if grabber_config:
                 try:
-                    method = grabber_config["function"]
-                    args = grabber_config["args"]
-                    res = method(**args)
+                    if "builder" in grabber_config:
+                        builder = grabber_config["builder"]
+                        context_args = grabber_config["context_args"]
+                        build_context = BuildContext(**context_args)
+                        source_path = self._effective_source_path
+                        if self.detected_doc_type == "sphinx":
+                            source_path = Path(self.sphinx_doc_path)
+                        res = builder.generate_docset(
+                            source_path=source_path,
+                            output_path=self.base_output_dir,
+                            context=build_context,
+                        )
+                    else:
+                        method = grabber_config["function"]
+                        args = grabber_config["args"]
+                        res = method(**args)
+
                     logger.info(f" DETECTED DOC TYPE: {self.detected_doc_type}")
                     logger.info(f" RESULT FROM GRABBER: {res}")
-                    int_res = self._interpret_tuple_res(res)
-                    self.last_operation_result = int_res
+                    self.last_operation_result = res
                 except Exception:
                     self.last_operation_result = False
                 else:
-                    return int_res
+                    return res
             else:
                 self.last_operation_result = False
                 logger.error(
@@ -302,8 +315,10 @@ class Orchestrator:
                 "Orchestrator: Scanning effective source path: " f"{scan_path_str}"
             )
 
-            if is_sphinx_project(scan_path_str):
+            sphinx_path = is_sphinx_project(scan_path_str)
+            if sphinx_path:
                 self.detected_doc_type = "sphinx"
+                self.sphinx_doc_path = sphinx_path
             elif is_mkdocs_project(scan_path_str):
                 self.detected_doc_type = "mkdocs"
             elif has_docstrings(scan_path_str):

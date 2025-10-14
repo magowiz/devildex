@@ -228,7 +228,7 @@ def test_execute_helper_script_with_stdout(
     )
     scanner = ExternalVenvScanner(python_executable_path="/usr/bin/python3")
     caplog.clear()
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.INFO):
         scanner._execute_helper_script("any/path")
     assert "STDOUT (diagnostic) of helper script" in caplog.text
 

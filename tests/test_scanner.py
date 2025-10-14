@@ -3,6 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
 from devildex.scanner.scanner import (
     has_docstrings,
     is_mkdocs_project,
@@ -13,7 +14,7 @@ from devildex.scanner.scanner import (
 def test_is_sphinx_project_identifies_correctly(tmp_path: Path) -> None:
     """Verify that a basic Sphinx project is recognized."""
     (tmp_path / "conf.py").write_text("extensions = ['sphinx.ext.autodoc']")
-    assert is_sphinx_project(str(tmp_path)) is True
+    assert isinstance(is_sphinx_project(str(tmp_path)), Path)
 
 
 def test_is_sphinx_project_in_docs_subdir(tmp_path: Path) -> None:
@@ -21,7 +22,7 @@ def test_is_sphinx_project_in_docs_subdir(tmp_path: Path) -> None:
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()
     (docs_dir / "conf.py").write_text("html_theme = 'furo'")
-    assert is_sphinx_project(str(tmp_path)) is True
+    assert isinstance(is_sphinx_project(str(tmp_path)), Path)
 
 
 def test_is_sphinx_project_in_doc_subdir(tmp_path: Path) -> None:
@@ -29,7 +30,7 @@ def test_is_sphinx_project_in_doc_subdir(tmp_path: Path) -> None:
     doc_dir = tmp_path / "doc"
     doc_dir.mkdir()
     (doc_dir / "conf.py").write_text("html_theme = 'furo'")
-    assert is_sphinx_project(str(tmp_path)) is True
+    assert isinstance(is_sphinx_project(str(tmp_path)), Path)
 
 
 def test_is_sphinx_project_by_score(tmp_path: Path) -> None:
@@ -41,26 +42,26 @@ author = 'The Author'
 # No other strong indicators
 """
     (tmp_path / "conf.py").write_text(conf_content)
-    assert is_sphinx_project(str(tmp_path)) is True
+    assert isinstance(is_sphinx_project(str(tmp_path)), Path)
 
 
 def test_is_sphinx_project_with_sys_path_pattern(tmp_path: Path) -> None:
     """Verify recognition via the common sys.path modification pattern."""
     conf_content = "import os; import sys; sys.path.insert(0, os.path.abspath('.'))"
     (tmp_path / "conf.py").write_text(conf_content)
-    assert is_sphinx_project(str(tmp_path)) is True
+    assert isinstance(is_sphinx_project(str(tmp_path)), Path)
 
 
 def test_is_sphinx_project_returns_false_for_non_sphinx(tmp_path: Path) -> None:
     """Verify that a folder without conf.py is not recognized as a Sphinx project."""
     (tmp_path / "some_file.txt").write_text("hello")
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_sphinx_project_returns_false_for_irrelevant_conf(tmp_path: Path) -> None:
     """Verify that a non-relevant conf.py is not recognized as a Sphinx project."""
     (tmp_path / "conf.py").write_text("unrelated_config = True")
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_sphinx_project_read_file_fails(mocker: MagicMock, tmp_path: Path) -> None:
@@ -69,7 +70,7 @@ def test_is_sphinx_project_read_file_fails(mocker: MagicMock, tmp_path: Path) ->
     mocker.patch(
         "devildex.scanner.scanner.read_file_content_robustly", return_value=None
     )
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_sphinx_project_score_too_low(tmp_path: Path) -> None:
@@ -80,7 +81,7 @@ copyright = '2024, Me'
 # Only 2 common variables
 """
     (tmp_path / "conf.py").write_text(conf_content)
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_mkdocs_project_identifies_correctly(tmp_path: Path) -> None:
@@ -149,7 +150,7 @@ def test_has_docstrings_os_error(mocker: MagicMock, tmp_path: Path) -> None:
 
 def test_is_sphinx_project_no_conf_file(tmp_path: Path) -> None:
     """Verify that is_sphinx_project returns False when no conf.py is found."""
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_sphinx_project_read_file_content_robustly_returns_none(
@@ -160,14 +161,14 @@ def test_is_sphinx_project_read_file_content_robustly_returns_none(
     mocker.patch(
         "devildex.scanner.scanner.read_file_content_robustly", return_value=None
     )
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_sphinx_project_irrelevant_conf_file(tmp_path: Path) -> None:
     """Verify that returns False for a conf.py with no strong Sphinx indicators."""
     conf_content = "MY_APP_NAME = 'My Custom App'\nDEBUG_MODE = True"
     (tmp_path / "conf.py").write_text(conf_content)
-    assert is_sphinx_project(str(tmp_path)) is False
+    assert is_sphinx_project(str(tmp_path)) is None
 
 
 def test_is_mkdocs_project_explicit_call(tmp_path: Path) -> None:

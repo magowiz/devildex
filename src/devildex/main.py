@@ -1075,13 +1075,14 @@ class DevilDexApp(wx.App):
         self._perform_startup_docset_scan()
 
         self.docset_status_col_grid_idx = COLUMNS_ORDER.index("docset_status") + 1
-        self.generation_task_manager = GenerationTaskManager(
-            core_instance=self.core,
-            owner_for_timer=self.main_frame,
-            update_grid_cell_callback=self._update_grid_cell_from_manager,
-            on_task_complete_callback=self._on_generation_complete_from_manager,
-            update_action_buttons_callback=self._update_action_buttons_state,
-        )
+        if self.main_frame:
+            self.generation_task_manager = GenerationTaskManager(
+                core_instance=self.core,
+                owner_for_timer=self.main_frame,
+                update_grid_cell_callback=self._update_grid_cell_from_manager,
+                on_task_complete_callback=self._on_generation_complete_from_manager,
+                update_action_buttons_callback=self._update_action_buttons_state,
+            )
         self.update_grid_data()
 
         if scan_successful:

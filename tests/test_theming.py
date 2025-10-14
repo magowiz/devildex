@@ -8,8 +8,10 @@ from pathlib import Path
 import pytest
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
+from devildex.grabbers.sphinx_builder import SphinxBuilder
 from devildex.info import PROJECT_ROOT
-from devildex.readthedocs.readthedocs_src import build_sphinx_docs
+from devildex.orchestrator.context import BuildContext
+
 from devildex.theming.manager import ThemeManager
 from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
@@ -64,15 +66,27 @@ def test_sphinx_theme(dummy_project_in_tmp_path: Path) -> None:
     project_slug_for_build = "dummy_project_test"
     version_identifier_for_build = "local_test"
     test_base_output_directory = dummy_project_in_tmp_path / "test_sphinx_build_output"
-    output_html_dir_str = build_sphinx_docs(
-        isolated_source_path=str(sphinx_source_dir.resolve()),
+
+    builder = SphinxBuilder()
+    build_context = BuildContext(
+        project_name=project_slug_for_build,
+        project_version=version_identifier_for_build,
+        base_output_dir=test_base_output_directory,
+        source_root=sphinx_source_dir,
         project_slug=project_slug_for_build,
         version_identifier=version_identifier_for_build,
-        original_clone_dir_path=str(dummy_project_in_tmp_path.resolve()),
-        base_output_dir=test_base_output_directory,
+        project_root_for_install=dummy_project_in_tmp_path,
     )
 
-    output_html_dir = Path(output_html_dir_str)
+    build_successful = builder.generate_docset(
+        source_path=sphinx_source_dir,
+        output_path=test_base_output_directory,
+        context=build_context,
+    )
+
+    assert build_successful
+
+    output_html_dir = test_base_output_directory / project_slug_for_build / version_identifier_for_build
     index_html_path = output_html_dir / "index.html"
 
     url_to_open = index_html_path.as_uri()

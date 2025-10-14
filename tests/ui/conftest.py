@@ -40,6 +40,7 @@ def devildex_app(wx_app: wx.App, core: DevilDexCore) -> DevilDexApp:
     """Fixture to create the main DevilDexApp instance."""
     main_app = DevilDexApp(core=core)
     os.environ["DEVILDEX_DB_PATH_OVERRIDE"] = core.database_url
+    main_app.OnInit()  # Call OnInit to fully initialize the wx.App
     main_app._initialize_data_and_managers()
     main_app.update_grid_data()
     wx.Yield()

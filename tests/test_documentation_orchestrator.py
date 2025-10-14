@@ -462,63 +462,58 @@ def test_grab_build_doc_unknown_doc_type(mock_orchestrator: Orchestrator) -> Non
     assert mock_orchestrator.last_operation_result is False
 
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.download_readthedocs_source_and_build"
-)
-def test_grab_build_doc_sphinx(
-    mock_download_sphinx: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
-) -> None:
-    """Test grab build doc sphinx."""
-    mock_orchestrator.detected_doc_type = "sphinx"
-    (tmp_path / "source").mkdir()
-    mock_orchestrator._effective_source_path = tmp_path / "source"
-    mock_download_sphinx.return_value = "sphinx_output_path"
-    result = mock_orchestrator.grab_build_doc()
-    assert result == "sphinx_output_path"
-    assert mock_orchestrator.last_operation_result == "sphinx_output_path"
-    mock_download_sphinx.assert_called_once()
-
-
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.download_readthedocs_source_and_build"
-)
-def test_grab_build_doc_sphinx_with_existing_source_path(
-    mock_download_sphinx: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
-) -> None:
-    """Test grab build doc sphinx with existing source path."""
-    mock_orchestrator.detected_doc_type = "sphinx"
-    existing_source_path = tmp_path / "existing_source"
-    existing_source_path.mkdir()
-    mock_orchestrator._effective_source_path = existing_source_path
-    mock_download_sphinx.return_value = "sphinx_output_path"
-    result = mock_orchestrator.grab_build_doc()
-    assert result == "sphinx_output_path"
-    assert mock_orchestrator.last_operation_result == "sphinx_output_path"
-    mock_download_sphinx.assert_called_once_with(
-        project_url=mock_orchestrator.package_details.vcs_url,
-        project_name=mock_orchestrator.package_details.name,
-        output_dir=mock_orchestrator.base_output_dir,
-        clone_base_dir_override=mock_orchestrator.base_output_dir / "temp_clones",
-        existing_clone_path=existing_source_path,
+    @patch(
+        "devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset"
     )
+    def test_grab_build_doc_sphinx(
+        mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
+    ) -> None:
+        """Test grab build doc sphinx."""
+        mock_orchestrator.detected_doc_type = "sphinx"
+        (tmp_path / "source").mkdir()
+        mock_orchestrator._effective_source_path = tmp_path / "source"
+        mock_generate_docset.return_value = True
+        result = mock_orchestrator.grab_build_doc()
+        assert result is True
+        assert mock_orchestrator.last_operation_result is True
+        mock_generate_docset.assert_called_once()
 
+    @patch(
+        "devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset"
+    )
+    def test_grab_build_doc_sphinx_with_existing_source_path(
+        mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
+    ) -> None:
+        """Test grab build doc sphinx with existing source path."""
+        mock_orchestrator.detected_doc_type = "sphinx"
+        existing_source_path = tmp_path / "existing_source"
+        existing_source_path.mkdir()
+        mock_orchestrator._effective_source_path = existing_source_path
+        mock_generate_docset.return_value = True
+        result = mock_orchestrator.grab_build_doc()
+        assert result is True
+        assert mock_orchestrator.last_operation_result is True
+        mock_generate_docset.assert_called_once_with(
+            source_path=existing_source_path,
+            output_path=mock_orchestrator.base_output_dir,
+            context=ANY, # We can use ANY here as BuildContext is complex to mock fully
+        )
 
-@patch(
-    "devildex.orchestrator.documentation_orchestrator.download_readthedocs_source_and_build"
-)
-def test_grab_build_doc_sphinx_raises_exception(
-    mock_download_sphinx: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
-) -> None:
-    """Test grab build doc sphinx raises exception."""
-    mock_orchestrator.detected_doc_type = "sphinx"
-    (tmp_path / "source").mkdir()
-    mock_orchestrator._effective_source_path = tmp_path / "source"
-    mock_download_sphinx.side_effect = Exception("Sphinx build failed")
-    result = mock_orchestrator.grab_build_doc()
-    assert result is False
-    assert mock_orchestrator.last_operation_result is False
-    mock_download_sphinx.assert_called_once()
-
+    @patch(
+        "devildex.grabbers.sphinx_builder.SphinxBuilder.generate_docset"
+    )
+    def test_grab_build_doc_sphinx_raises_exception(
+        mock_generate_docset: MagicMock, mock_orchestrator: Orchestrator, tmp_path: Path
+    ) -> None:
+        """Test grab build doc sphinx raises exception."""
+        mock_orchestrator.detected_doc_type = "sphinx"
+        (tmp_path / "source").mkdir()
+        mock_orchestrator._effective_source_path = tmp_path / "source"
+        mock_generate_docset.side_effect = Exception("Sphinx build failed")
+        result = mock_orchestrator.grab_build_doc()
+        assert result is False
+        assert mock_orchestrator.last_operation_result is False
+        mock_generate_docset.assert_called_once()
 
 @patch(
     "devildex.orchestrator.documentation_orchestrator.process_mkdocs_source_and_build"
@@ -607,22 +602,7 @@ def test_grab_build_doc_key_error(mock_orchestrator: Orchestrator) -> None:
     assert mock_orchestrator.last_operation_result is False
 
 
-def test_interpret_tuple_res_string() -> None:
-    """Test interpret tuple res string."""
-    result = Orchestrator._interpret_tuple_res("some_string")
-    assert result == "some_string"
 
-
-def test_interpret_tuple_res_tuple_true() -> None:
-    """Test interpret tuple res tuple true."""
-    result = Orchestrator._interpret_tuple_res(("path/to/doc", True))
-    assert result == "path/to/doc"
-
-
-def test_interpret_tuple_res_tuple_false() -> None:
-    """Test interpret tuple res tuple false."""
-    result = Orchestrator._interpret_tuple_res(("path/to/doc", False))
-    assert result is False
 
 
 def test_get_detected_doc_type(mock_orchestrator: Orchestrator) -> None:

@@ -231,11 +231,11 @@ class DocStringsSrc:
 
         source_project_path = Path(input_folder) / project_name
         if not source_project_path.is_dir():
-            logger.error(
+            logger.info(
                 "DocstringsSrc: The Specified Source Project Folder does not exist: %s",
                 source_project_path,
             )
-            logger.error(
+            logger.info(
                 "DocstringsSrc: Details - input_folder: '%s', project_name: '%s'",
                 input_folder,
                 project_name,

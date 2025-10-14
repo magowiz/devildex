@@ -75,7 +75,7 @@ class ExternalVenvScanner:
                 timeout=60,
             )
             if result.stdout:
-                logger.debug(
+                logger.info(
                     "STDOUT (diagnostic) of helper script:\n%s", result.stdout.strip()
                 )
             if result.stderr:
@@ -277,7 +277,7 @@ class ExternalVenvScanner:
             packages = self._read_and_process_output_file(output_file_path_obj)
 
             if packages is not None:
-                logger.debug(
+                logger.info(
                     "Scan complete for %s. Found %d packages.",
                     self.python_executable_path,
                     len(packages),

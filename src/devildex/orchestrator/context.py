@@ -19,6 +19,10 @@ class BuildContext:
     project_version: str
     base_output_dir: Path
     vcs_url: Optional[str] = None
+    project_slug: Optional[str] = None
+    version_identifier: Optional[str] = None
+    project_root_for_install: Optional[Path] = None
+    project_url: Optional[str] = None
 
     temp_dir: Path = field(init=False)
     final_docs_dir: Path = field(init=False)

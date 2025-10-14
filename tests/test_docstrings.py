@@ -148,7 +148,7 @@ def test_build_pdoc_command_no_modules(
     """Verify _build_pdoc_command handles no modules to document."""
     doc_generator = DocStringsSrc(output_dir=str(tmp_path))
 
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.INFO):
         command = doc_generator._build_pdoc_command(
             python_executable="/usr/bin/python",
             modules_to_document=[],
@@ -167,7 +167,7 @@ def test_generate_docs_from_folder_non_existent_input_folder(
 
     non_existent_folder = tmp_path / "non_existent_project"
 
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.INFO):
         result = doc_generator.generate_docs_from_folder(
             project_name="test_project",
             input_folder=str(non_existent_folder),

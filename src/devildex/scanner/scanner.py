@@ -21,14 +21,15 @@ SCORE_MAX = 3
 MKDOCS_CONFIG_FILE = "mkdocs.yml"
 
 
-def is_sphinx_project(project_path: str) -> bool:
+def is_sphinx_project(project_path: str) -> Optional[Path]:
     """Scan project path to determine if it is a Sphinx project.
 
     Args:
         project_path: root directory path of project to scan.
 
     Returns:
-        True if il project is identified as Sphinx, False otherwise.
+        The path to the directory containing conf.py if it is a Sphinx project,
+        None otherwise.
 
     """
     project_dir = Path(project_path)
@@ -41,7 +42,7 @@ def is_sphinx_project(project_path: str) -> bool:
         logger.error(
             "  ❌ No 'conf.py' file found in standard positions for" f" {project_path}"
         )
-        return False
+        return None
 
     logger.info(
         f"  🔍 Found {len(conf_file_paths)} file 'conf.py'. " "Analyzing content..."
@@ -56,14 +57,12 @@ def is_sphinx_project(project_path: str) -> bool:
 
         high_priority_sphinx_checks = [
             (
-                r"extensions\s*=\s*\[.*?['\"]sphinx\.ext\."
-                r"(autodoc|napoleon|intersphinx|viewcode|todo|coverage)['\"].*?\]",
+                r"extensions\s*=\s*\[.*?['\"]sphinx\.ext\..*?['\"]\]",
                 "Found extension 'sphinx.ext.*' key in 'extensions'. "
                 "Very probably Sphinx.",
             ),
             (
-                r"html_theme\s*=\s*['\"]"
-                r"(alabaster|sphinx_rtd_theme|furo|pydata_sphinx_theme)['\"]",
+                r"html_theme\s*=\s*['\"](alabaster|sphinx_rtd_theme|furo|pydata_sphinx_theme)['\"]",
                 "Trovato 'html_theme' con known theme Sphinx. Very probably Sphinx.",
             ),
             (
@@ -71,8 +70,7 @@ def is_sphinx_project(project_path: str) -> bool:
                 "Trovato link alla official documentation Sphinx. Probably Sphinx.",
             ),
             (
-                r"import os\s*;\s*import sys\s*;\s*sys\.path\.insert"
-                r"\(0,\s*os\.path\.abspath\(",
+                r"import os\s*;\s*import sys\s*;\s*sys\.path\.insert\(0,\s*os\.path\.abspath\(",
                 "Trovato setup comune del sys.path per autodoc. Forte indication.",
             ),
         ]
@@ -82,7 +80,7 @@ def is_sphinx_project(project_path: str) -> bool:
         )
         if success_message:
             logger.info(f"    ✅ {success_message}")
-            return True
+            return conf_file_path.parent
 
         common_sphinx_vars = [
             "project =",
@@ -103,12 +101,12 @@ def is_sphinx_project(project_path: str) -> bool:
                 f"    ✅ Found {score} common configuration Sphinx variables."
                 " Good indication."
             )
-            return True
+            return conf_file_path.parent
 
     logger.error(
         f"  ❌ No criteria Sphinx forte trovato nel file 'conf.py' per {project_path}."
     )
-    return False
+    return None
 
 
 def is_mkdocs_project(project_root_path: str | Path) -> bool:
