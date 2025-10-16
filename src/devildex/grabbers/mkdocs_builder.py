@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 import yaml
 
 from devildex.grabbers.abstract_grabber import AbstractGrabber
+from devildex.utils.venv_cm import IsolatedVenvManager
 from devildex.utils.venv_utils import (
-    IsolatedVenvManager,
     execute_command,
     install_project_and_dependencies_in_venv,
 )
