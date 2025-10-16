@@ -5,7 +5,7 @@
 {%- block header %}
 <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="{{ pathto(master_doc) }}">
+        <a class="navbar-brand d-flex align-items-center" id="navbar-brand" href="{{ pathto(master_doc) }}">
             <img src="{{ pathto('_static/imgs/logo-final.png', 1) }}" alt="{{ project }} Logo" class="me-2" height="80">
             <span>{{ project }}</span>
         </a>
@@ -39,17 +39,17 @@
 {%- block relbar2 %}{% endblock %}
 
 {%- block content %}
-<main role="main" class="container-fluid mt-4 mb-4">
+<main role="main" class="container-fluid mt-4 mb-4" id="main-content">
     <div class="row">
         {%- if pagename != 'search' %}
         <div class="col-lg-2 col-md-3">
             <aside class="sphinxsidebar position-sticky" style="top: 5rem;" role="navigation"
                    aria-label="Main navigation">
-                <div class="devildex-sidebar-wrapper card border-dark">
+                <div class="devildex-sidebar-wrapper card border-dark" id="sidebar-nav">
                     <div class="card-header bg-light text-dark">
                         <h5 class="card-title mb-0">{% trans %}Navigation{% endtrans %}</h5>
                     </div>
-                    <div class="card-body p-2 bg-light">
+                    <div class="card-body p-2 bg-light" id="toc">
                         {% if project_links and pagename == master_doc %}
                         <ul>
                             {% for link in project_links %}
@@ -72,7 +72,7 @@
 </main>
 {%- endblock %}
 {%- block footer %}
-<footer class="footer mt-auto py-3 bg-dark text-light border-top">
+<footer class="footer mt-auto py-3 bg-dark text-light border-top" id="footer-info">
     <div class="container">
         <div class="row">
             <div class="col-12 text-center">

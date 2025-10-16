@@ -305,7 +305,7 @@
       idx_submodules = module_param.submodules()
       idx_supermodule = module_param.supermodule
       %>
-      <nav id="sidebar">
+      <nav id="sidebar" class="toc">
         <%include file="logo.mako"/>
 
         % if google_search_query:
@@ -387,7 +387,7 @@
     <body>
         <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
             <div class="container-fluid">
-                    <a class="navbar-brand d-flex align-items-center" href="${module.url(relative_to=module, link_prefix=link_prefix) if module else '#'}">
+                                        <a class="navbar-brand d-flex align-items-center" id="navbar-brand" href="${module.url(relative_to=module, link_prefix=link_prefix) if module else '#'} ">
 
         <img src="${link_prefix}static/imgs/logo-final.png" alt="${module.name if module else 'Project'} Logo" class="me-2" height="80">
         <span>${module.name if module else 'Project'}</span>
@@ -407,9 +407,9 @@
               </div>
         </nav>
 
-        <main role="main" class="container-fluid mt-4 mb-4">
+        <main role="main" class="container-fluid mt-4 mb-4" id="main-content">
             <div class="row">
-                <aside class="col-md-3">
+                <aside class="col-md-3" id="sidebar-nav">
                     <div class="position-sticky" style="top: 5rem;">
                         % if module:
                             <%include file="module_index.mako" />
@@ -433,7 +433,7 @@
             </div>
         </main>
 
-        <footer class="footer mt-auto py-3 bg-dark text-light border-top">
+        <footer class="footer mt-auto py-3 bg-dark text-light border-top" id="footer-info">
           <div class="container">
             <div class="row">
                 <div class="col-12 text-center">

@@ -18,7 +18,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark devildex-top-bar bg-dark sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="{{ nav.homepage.url | url }}">
+        <a class="navbar-brand d-flex align-items-center" id="navbar-brand" href="{{ nav.homepage.url | url }}">
             <img src="{{ 'img/logo-final.png' | url }}" alt="{{ config.site_name }} Logo" class="me-2" height="80">
             <span>{{ config.site_name }}</span>
         </a>
@@ -42,13 +42,13 @@
 
 <div class="container mt-4">
     <div class="row">
-        <main class="col-md-12">
+        <main class="col-md-12" id="main-content">
             {{ page.content }}
         </main>
     </div>
 </div>
 
-<footer class="footer mt-auto py-3 bg-dark text-light border-top">
+<footer class="footer mt-auto py-3 bg-dark text-light border-top" id="footer-info">
     <div class="container">
         <div class="row">
             <div class="col-12 text-center">
