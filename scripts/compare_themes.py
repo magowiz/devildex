@@ -8,20 +8,36 @@ import tempfile
 import webbrowser
 from argparse import Namespace
 from dataclasses import dataclass, replace
+from devildex.orchestrator.context import BuildContext as OrchestratorBuildContext
 from datetime import datetime
 from pathlib import Path
 from typing import cast
 
+import re
+import time
+
 from dev_themes_server import start_server
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
+
+def get_screen_resolution() -> tuple[int, int] | None:
+    """Get screen resolution using xrandr."""
+    try:
+        result = subprocess.run(["xrandr"], capture_output=True, text=True, check=True)
+        output = result.stdout
+        # Example output: Screen 0: minimum 320 x 200, current 1920 x 1080, maximum 7680 x 7680
+        match = re.search(r"current\s+(\d+)\s+x\s+(\d+)", output)
+        if match:
+            width = int(match.group(1))
+            height = int(match.group(2))
+            logger.info(f"Detected screen resolution: {width}x{height}")
+            return width, height
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logger.warning("Could not get screen resolution using xrandr. Is it installed and are you on X.Org?")
+    return None, None
+from devildex.grabbers.mkdocs_builder import MkDocsBuilder
+from devildex.grabbers.sphinx_builder import SphinxBuilder
 from devildex.info import PROJECT_ROOT as DEVILDEX_PROJECT_ROOT
-from devildex.mkdocs.mkdocs_src import (
-    process_mkdocs_source_and_build,
-)
-from devildex.readthedocs.readthedocs_src import (
-    download_readthedocs_source_and_build,
-)
 from devildex.theming.manager import ThemeManager
 
 PYDOCTOR_DEVILDEX_THEME_PATH = (
@@ -251,16 +267,34 @@ def build_sphinx_vanilla(ctx: BuildContext) -> Path | None:
     """Build the original Sphinx documentation by delegating to the core builder."""
     logger.info(f"--- Build Sphinx VANILLA for {ctx.args.project_name} ---")
 
-    output_path_str = download_readthedocs_source_and_build(
-        project_name=f"{ctx.args.project_name}_vanilla",
-        project_url=ctx.args.project_url,
-        existing_clone_path=str(ctx.cloned_repo_path),
-        output_dir=ctx.build_outputs_base_dir,
+    output_path = ctx.build_outputs_base_dir / f"{ctx.args.project_name}_vanilla"
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    doc_source_rel = ctx.project_config.get("doc_source_path_relative", "docs/")
+    doc_source_root_path = ctx.cloned_repo_path / doc_source_rel
+
+    # Construct OrchestratorBuildContext for the builder
+    orchestrator_ctx = OrchestratorBuildContext(
+        project_name=ctx.args.project_name,
+        project_version="vanilla",
+        base_output_dir=output_path,
+        project_slug=f"{ctx.args.project_name}_vanilla",
+        version_identifier="vanilla",
+        project_url=ctx.project_config["repo_url"],
+        project_root_for_install=ctx.cloned_repo_path,
+        doc_source_root=doc_source_root_path,
     )
 
-    if output_path_str and isinstance(output_path_str, str):
-        logger.info(f"Sphinx Vanilla build successful: {output_path_str}")
-        return Path(output_path_str)
+    builder = SphinxBuilder()
+    success = builder.generate_docset(
+        source_path=doc_source_root_path,
+        output_path=output_path,
+        context=orchestrator_ctx,
+    )
+
+    if success:
+        logger.info(f"Sphinx Vanilla build successful: {output_path}")
+        return output_path
     else:
         logger.error("Sphinx Vanilla build failed.")
         return None
@@ -425,6 +459,25 @@ def build_sphinx_devil(ctx: BuildContext, doc_source_relative_path: str) -> Path
         logger.error(f"Original conf.py not found at {original_conf_py}")
         return None
 
+    output_path = ctx.build_outputs_base_dir / f"{ctx.args.project_name}_devil"
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    doc_source_root_path = ctx.cloned_repo_path / doc_source_relative_path
+
+    # Construct OrchestratorBuildContext for the builder
+    orchestrator_ctx = OrchestratorBuildContext(
+        project_name=ctx.args.project_name,
+        project_version="devil",
+        base_output_dir=output_path,
+        project_slug=f"{ctx.args.project_name}_devil",
+        version_identifier="devil",
+        project_url=ctx.project_config["repo_url"],
+        project_root_for_install=ctx.cloned_repo_path,
+        doc_source_root=doc_source_root_path,
+    )
+
+    builder = SphinxBuilder()
+    build_result = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".bak", delete=False) as backup_file:
             backup_conf_py = Path(backup_file.name)
@@ -438,16 +491,15 @@ def build_sphinx_devil(ctx: BuildContext, doc_source_relative_path: str) -> Path
         theme_manager.sphinx_change_conf(dev_mode=ctx.args.serve)
         logger.info(f"Applied DevilDex theme to: {original_conf_py}")
 
-        output_path_str = download_readthedocs_source_and_build(
-            project_name=f"{ctx.args.project_name}_devil",
-            project_url=ctx.project_config["repo_url"],
-            existing_clone_path=str(ctx.cloned_repo_path),
-            output_dir=ctx.build_outputs_base_dir,
+        success = builder.generate_docset(
+            source_path=doc_source_root_path,
+            output_path=output_path,
+            context=orchestrator_ctx,
         )
 
-        if output_path_str and isinstance(output_path_str, str):
-            logger.info(f"Sphinx Devil build successful: {output_path_str}")
-            build_result = Path(output_path_str)
+        if success:
+            logger.info(f"Sphinx Devil build successful: {output_path}")
+            build_result = output_path
         else:
             logger.error("Sphinx Devil build failed.")
     except (OSError, subprocess.CalledProcessError):
@@ -475,29 +527,30 @@ def build_mkdocs_vanilla(
     """Build MkDocs documentation with its original configuration."""
     logger.info(f"--- Building MkDocs VANILLA for {project_slug} ---")
     vanilla_output_dir = (output_base_dir / f"{project_slug}_mkdocs_vanilla").resolve()
-    temp_base_for_mkdocs_build = (
-        output_base_dir / f"{project_slug}_mkdocs_vanilla_temp_base"
-    )
+    vanilla_output_dir.mkdir(parents=True, exist_ok=True)
 
-    built_path_str = process_mkdocs_source_and_build(
-        source_project_path=str(cloned_repo_path.resolve()),
+    # Construct OrchestratorBuildContext for the builder
+    orchestrator_ctx = OrchestratorBuildContext(
+        project_name=project_slug,
+        project_version=version_id,
+        base_output_dir=vanilla_output_dir,
         project_slug=project_slug,
         version_identifier=version_id,
-        base_output_dir=temp_base_for_mkdocs_build,
-        theme_custom_dir_override=None,
+        project_root_for_install=cloned_repo_path,
     )
-    if built_path_str:
-        if vanilla_output_dir.exists():
-            shutil.rmtree(vanilla_output_dir)
-        shutil.move(built_path_str, vanilla_output_dir)
+
+    builder = MkDocsBuilder()
+    success = builder.generate_docset(
+        source_path=cloned_repo_path,
+        output_path=vanilla_output_dir,
+        context=orchestrator_ctx,
+    )
+
+    if success:
         logger.info(f"MkDocs vanilla build successful: {vanilla_output_dir}")
-        if temp_base_for_mkdocs_build.exists():
-            shutil.rmtree(temp_base_for_mkdocs_build)
         return vanilla_output_dir
     else:
         logger.error("MkDocs vanilla build failed.")
-        if temp_base_for_mkdocs_build.exists():
-            shutil.rmtree(temp_base_for_mkdocs_build)
         return None
 
 
@@ -509,29 +562,31 @@ def build_mkdocs_devil(ctx: BuildContext) -> Path | None:
     devil_output_dir = (
         ctx.build_outputs_base_dir / f"{project_slug}_mkdocs_devil"
     ).resolve()
-    temp_base_for_mkdocs_build = (
-        ctx.build_outputs_base_dir / f"{project_slug}_mkdocs_devil_temp_base"
-    )
-    built_path_str = process_mkdocs_source_and_build(
-        source_project_path=str(ctx.cloned_repo_path.resolve()),
+    devil_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Construct OrchestratorBuildContext for the builder
+    orchestrator_ctx = OrchestratorBuildContext(
+        project_name=project_slug,
+        project_version="devil",
+        base_output_dir=devil_output_dir,
         project_slug=project_slug,
         version_identifier="devil",
-        base_output_dir=temp_base_for_mkdocs_build,
+        project_root_for_install=ctx.cloned_repo_path,
+    )
+
+    builder = MkDocsBuilder()
+    success = builder.generate_docset(
+        source_path=ctx.cloned_repo_path,
+        output_path=devil_output_dir,
+        context=orchestrator_ctx,
         theme_custom_dir_override=str(DEVILDEX_THEME_PATH.resolve()),
     )
 
-    if built_path_str:
-        if devil_output_dir.exists():
-            shutil.rmtree(devil_output_dir)
-        shutil.move(built_path_str, devil_output_dir)
+    if success:
         logger.info(f"MkDocs Devil build successful: {devil_output_dir}")
-        if temp_base_for_mkdocs_build.exists():
-            shutil.rmtree(temp_base_for_mkdocs_build)
         return devil_output_dir
     else:
         logger.error("MkDocs Devil build failed.")
-        if temp_base_for_mkdocs_build.exists():
-            shutil.rmtree(temp_base_for_mkdocs_build)
         return None
 
 
@@ -781,17 +836,68 @@ def run_single_build_mode(base_context: BuildContext) -> None:
     """Manage the single-build workflow and opens the results."""
     vanilla_entry_point, devil_entry_point = _perform_builds(ctx=base_context)
 
-    if vanilla_entry_point and vanilla_entry_point.exists():
-        logger.info(f"Opening VANILLA documentation: {vanilla_entry_point.as_uri()}")
-        webbrowser.open_new(vanilla_entry_point.as_uri())
+    screen_width, screen_height = get_screen_resolution()
+    if screen_width is None or screen_height is None:
+        logger.warning("Cannot arrange windows side-by-side without screen resolution.")
+
+    vanilla_url = vanilla_entry_point.as_uri() if vanilla_entry_point else None
+    devil_url = devil_entry_point.as_uri() if devil_entry_point else None
+
+    if vanilla_url:
+        logger.info(f"Opening VANILLA documentation: {vanilla_url}")
+        webbrowser.open_new(vanilla_url)
     elif not base_context.args.skip_vanilla:
         logger.warning("Vanilla documentation entry point not found or build failed.")
 
-    if devil_entry_point and devil_entry_point.exists():
-        logger.info(f"Opening DEVIL documentation: {devil_entry_point.as_uri()}")
-        webbrowser.open_new(devil_entry_point.as_uri())
+    if devil_url:
+        logger.info(f"Opening DEVIL documentation: {devil_url}")
+        webbrowser.open_new(devil_url)
     elif not base_context.args.skip_devil:
         logger.warning("Devil documentation entry point not found or build failed.")
+
+    if screen_width and screen_height and vanilla_url and devil_url:
+        # Give browsers some time to open and set titles
+        time.sleep(10)
+
+        half_width = screen_width // 2
+        window_height = screen_height
+
+        vanilla_window_id = None
+        devil_window_id = None
+
+        try:
+            wmctrl_output = subprocess.run(
+                ["wmctrl", "-l"], capture_output=True, text=True, check=True
+            ).stdout
+            
+            # Identify windows by title substring
+            for line in wmctrl_output.splitlines():
+                if f"{base_context.args.project_name}_vanilla" in line and "Firefox" in line: # Check for project name and Firefox
+                    vanilla_window_id = line.split()[0]
+                if f"{base_context.args.project_name}_devil" in line and "Firefox" in line: # Check for project name and Firefox
+                    devil_window_id = line.split()[0]
+            
+            if vanilla_window_id and devil_window_id:
+                # Unmaximize windows first
+                subprocess.run(["wmctrl", "-i", "-r", vanilla_window_id, "-b", "remove,maximized_vert,maximized_horz"], check=False)
+                subprocess.run(["wmctrl", "-i", "-r", devil_window_id, "-b", "remove,maximized_vert,maximized_horz"], check=False)
+                time.sleep(1) # Give time to unmaximize
+
+                # Move and resize first window (left half) 
+                subprocess.run(
+                    ["wmctrl", "-i", "-r", vanilla_window_id, "-e", f"0,0,0,{half_width},{window_height}"],
+                    check=True,
+                )
+                # Move and resize second window (right half)
+                subprocess.run(
+                    ["wmctrl", "-i", "-r", devil_window_id, "-e", f"0,{half_width},0,{half_width},{window_height}"],
+                    check=True,
+                )
+                logger.info("Arranged Firefox windows side-by-side.")
+            else:
+                logger.warning("Could not identify both Vanilla and Devil documentation windows by title.")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.warning(f"Could not arrange windows using wmctrl. Error: {e}")
 
 
 def main() -> None:
