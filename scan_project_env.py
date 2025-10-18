@@ -59,7 +59,7 @@ def get_explicit_poetry_dependencies(pyproject_path: Path) -> set:
     (from tool.poetry.dependencies and tool.poetry.group.*.dependencies sections).
     """
     pyproject_data = _read_project_data_toml(pyproject_path)
-    explicit_deps = set()
+    explicit_deps: set[str] = set()
     if (
         "tool" in pyproject_data
         and "poetry" in pyproject_data["tool"]
