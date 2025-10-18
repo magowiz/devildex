@@ -2,30 +2,35 @@
 
 import argparse
 import logging
+import re
 import shutil
 import subprocess
 import tempfile
+import time
 import webbrowser
 from argparse import Namespace
 from dataclasses import dataclass, replace
-from devildex.orchestrator.context import BuildContext as OrchestratorBuildContext
 from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-import re
-import time
-
 from dev_themes_server import start_server
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
+from devildex.grabbers.mkdocs_builder import MkDocsBuilder
+from devildex.grabbers.sphinx_builder import SphinxBuilder
+from devildex.info import PROJECT_ROOT as DEVILDEX_PROJECT_ROOT
+from devildex.orchestrator.context import BuildContext as OrchestratorBuildContext
+from devildex.theming.manager import ThemeManager
+
 
 def get_screen_resolution() -> tuple[int, int] | None:
     """Get screen resolution using xrandr."""
     try:
         result = subprocess.run(["xrandr"], capture_output=True, text=True, check=True)
         output = result.stdout
-        # Example output: Screen 0: minimum 320 x 200, current 1920 x 1080, maximum 7680 x 7680
+        # Example output:
+        # Screen 0: minimum 320 x 200, current 1920 x 1080, maximum 7680 x 7680
         match = re.search(r"current\s+(\d+)\s+x\s+(\d+)", output)
         if match:
             width = int(match.group(1))
@@ -33,12 +38,11 @@ def get_screen_resolution() -> tuple[int, int] | None:
             logger.info(f"Detected screen resolution: {width}x{height}")
             return width, height
     except (subprocess.CalledProcessError, FileNotFoundError):
-        logger.warning("Could not get screen resolution using xrandr. Is it installed and are you on X.Org?")
-    return None, None
-from devildex.grabbers.mkdocs_builder import MkDocsBuilder
-from devildex.grabbers.sphinx_builder import SphinxBuilder
-from devildex.info import PROJECT_ROOT as DEVILDEX_PROJECT_ROOT
-from devildex.theming.manager import ThemeManager
+        logger.warning(
+            "Could not get screen resolution using xrandr. "
+            "Is it installed and are you on X.Org?")
+    return None
+
 
 PYDOCTOR_DEVILDEX_THEME_PATH = (
     DEVILDEX_PROJECT_ROOT / "src" / "devildex" / "theming" / "devildex_pydoctor_theme"
@@ -869,33 +873,40 @@ def run_single_build_mode(base_context: BuildContext) -> None:
             wmctrl_output = subprocess.run(
                 ["wmctrl", "-l"], capture_output=True, text=True, check=True
             ).stdout
-            
             # Identify windows by title substring
             for line in wmctrl_output.splitlines():
-                if f"{base_context.args.project_name}_vanilla" in line and "Firefox" in line: # Check for project name and Firefox
+                if (f"{base_context.args.project_name}_vanilla" in line and
+                        "Firefox" in line):
                     vanilla_window_id = line.split()[0]
-                if f"{base_context.args.project_name}_devil" in line and "Firefox" in line: # Check for project name and Firefox
+                if (f"{base_context.args.project_name}_devil" in line and
+                        "Firefox" in line):
                     devil_window_id = line.split()[0]
-            
             if vanilla_window_id and devil_window_id:
                 # Unmaximize windows first
-                subprocess.run(["wmctrl", "-i", "-r", vanilla_window_id, "-b", "remove,maximized_vert,maximized_horz"], check=False)
-                subprocess.run(["wmctrl", "-i", "-r", devil_window_id, "-b", "remove,maximized_vert,maximized_horz"], check=False)
-                time.sleep(1) # Give time to unmaximize
-
-                # Move and resize first window (left half) 
                 subprocess.run(
-                    ["wmctrl", "-i", "-r", vanilla_window_id, "-e", f"0,0,0,{half_width},{window_height}"],
+                    ["wmctrl", "-i", "-r", vanilla_window_id, "-b",
+                          "remove,maximized_vert,maximized_horz"],
+                    check=False)
+                subprocess.run(
+                    ["wmctrl", "-i", "-r", devil_window_id, "-b",
+                          "remove,maximized_vert,maximized_horz"],
+                    check=False)
+                time.sleep(1)
+                subprocess.run(
+                    ["wmctrl", "-i", "-r", vanilla_window_id, "-e",
+                          f"0,0,0,{half_width},{window_height}"],
                     check=True,
                 )
                 # Move and resize second window (right half)
                 subprocess.run(
-                    ["wmctrl", "-i", "-r", devil_window_id, "-e", f"0,{half_width},0,{half_width},{window_height}"],
+                    ["wmctrl", "-i", "-r", devil_window_id, "-e",
+                     f"0,{half_width},0,{half_width},{window_height}"],
                     check=True,
                 )
                 logger.info("Arranged Firefox windows side-by-side.")
             else:
-                logger.warning("Could not identify both Vanilla and Devil documentation windows by title.")
+                logger.warning("Could not identify both Vanilla and "
+                               "Devil documentation windows by title.")
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.warning(f"Could not arrange windows using wmctrl. Error: {e}")
 
