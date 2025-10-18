@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
+import yaml
 from dev_themes_server import start_server
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
@@ -26,11 +27,19 @@ from devildex.theming.manager import ThemeManager
 
 def get_screen_resolution() -> tuple[int, int] | None:
     """Get screen resolution using xrandr."""
+    xrandr_executable = shutil.which("xrandr")
+    if not xrandr_executable:
+        logger.warning(
+            "xrandr command not found. Cannot get screen resolution. "
+            "Is it installed and are you on X.Org?"
+        )
+        return None
+
     try:
-        result = subprocess.run(["xrandr"], capture_output=True, text=True, check=True)
+        result = subprocess.run(  # noqa: S603
+            [xrandr_executable], capture_output=True, text=True, check=True
+        )
         output = result.stdout
-        # Example output:
-        # Screen 0: minimum 320 x 200, current 1920 x 1080, maximum 7680 x 7680
         match = re.search(r"current\s+(\d+)\s+x\s+(\d+)", output)
         if match:
             width = int(match.group(1))
@@ -120,14 +129,16 @@ def _find_mkdocs_config_file(project_root_path: Path) -> Path | None:
         logger.info(f"Found MkDocs config file: {mkdocs_conf}")
         return mkdocs_conf
     logger.warning(
-        f"MkDocs config not found at {mkdocs_conf}. Searching in 'docs' subdir..."
+        f"MkDocs config not found at {mkdocs_conf}. Searching in"
+        f" '{DOCS_FOLDER}' subdir..."
     )
-    mkdocs_conf_in_docs = project_root_path / "docs" / MKDOCS_CONFIG_FILE
+    mkdocs_conf_in_docs = project_root_path / DOCS_FOLDER / MKDOCS_CONFIG_FILE
     if mkdocs_conf_in_docs.is_file():
-        logger.info(f"Found MkDocs config file in docs/ subdir: {mkdocs_conf_in_docs}")
+        logger.info(f"Found MkDocs config file in {DOCS_FOLDER} "
+                    f"subdir: {mkdocs_conf_in_docs}")
         return mkdocs_conf_in_docs
     logger.error(
-        f"MkDocs config not found in {project_root_path} or its 'docs' subdir."
+        f"MkDocs config not found in {project_root_path} or its '{DOCS_FOLDER}' subdir."
     )
     return None
 
@@ -273,9 +284,7 @@ def build_sphinx_vanilla(ctx: BuildContext) -> Path | None:
     logger.info(f"--- Build Sphinx VANILLA for {ctx.args.project_name} ---")
 
     output_path = ctx.build_outputs_base_dir / f"{ctx.args.project_name}_vanilla"
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    doc_source_rel = ctx.project_config.get("doc_source_path_relative", "docs/")
+    doc_source_rel = ctx.project_config.get("doc_source_path_relative", DOCS_FOLDER)
     doc_source_root_path = ctx.cloned_repo_path / doc_source_rel
 
     # Construct OrchestratorBuildContext for the builder
@@ -564,35 +573,69 @@ def build_mkdocs_devil(ctx: BuildContext) -> Path | None:
     project_slug = ctx.args.project_name
     logger.info(f"--- Building MkDocs DEVIL for {project_slug} ---")
 
+    mkdocs_config_file = _find_mkdocs_config_file(ctx.cloned_repo_path)
+    if not mkdocs_config_file:
+        logger.error("Could not find mkdocs.yml. Aborting Devil build.")
+        return None
+
     devil_output_dir = (
         ctx.build_outputs_base_dir / f"{project_slug}_mkdocs_devil"
     ).resolve()
     devil_output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Construct OrchestratorBuildContext for the builder
-    orchestrator_ctx = OrchestratorBuildContext(
-        project_name=project_slug,
-        project_version="devil",
-        base_output_dir=devil_output_dir,
-        project_slug=project_slug,
-        version_identifier="devil",
-        project_root_for_install=ctx.cloned_repo_path,
-    )
+    backup_file = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".bak") as f:
+            backup_file = Path(f.name)
+        shutil.copy(mkdocs_config_file, backup_file)
+        logger.info(f"Backed up original mkdocs.yml to {backup_file}")
 
-    builder = MkDocsBuilder()
-    success = builder.generate_docset(
-        source_path=ctx.cloned_repo_path,
-        output_path=devil_output_dir,
-        context=orchestrator_ctx,
-        theme_custom_dir_override=str(DEVILDEX_THEME_PATH.resolve()),
-    )
+        with open(mkdocs_config_file, encoding="utf-8") as f:
+            config = yaml.safe_load(f)
 
-    if success:
-        logger.info(f"MkDocs Devil build successful: {devil_output_dir}")
-        return devil_output_dir
-    else:
-        logger.error("MkDocs Devil build failed.")
+        config["theme"] = {
+            "name": None,
+            "custom_dir": str(DEVILDEX_THEME_PATH.resolve()),
+        }
+        if "extra_css" not in config:
+            config["extra_css"] = []
+        config["extra_css"].append("css/devildex.css")
+
+        with open(mkdocs_config_file, "w", encoding="utf-8") as f:
+            yaml.dump(config, f)
+        logger.info("Applied DevilDex theme to mkdocs.yml")
+
+        orchestrator_ctx = OrchestratorBuildContext(
+            project_name=project_slug,
+            project_version="devil",
+            base_output_dir=devil_output_dir,
+            project_slug=project_slug,
+            version_identifier="devil",
+            project_root_for_install=ctx.cloned_repo_path,
+        )
+
+        builder = MkDocsBuilder()
+        success = builder.generate_docset(
+            source_path=ctx.cloned_repo_path,
+            output_path=devil_output_dir,
+            context=orchestrator_ctx,
+        )
+
+        if success:
+            logger.info(f"MkDocs Devil build successful: {devil_output_dir}")
+            return devil_output_dir
+        else:
+            logger.error("MkDocs Devil build failed.")
+            return None
+
+    except (OSError, yaml.YAMLError):
+        logger.exception("A critical error occurred during the Devil build process")
         return None
+    finally:
+        if backup_file and backup_file.exists():
+            logger.info("Restoring original mkdocs.yml from backup...")
+            shutil.move(str(backup_file), mkdocs_config_file)
+            logger.info("Original mkdocs.yml restored.")
 
 
 def find_entry_point(
@@ -746,7 +789,7 @@ def sphinx_run(ctx: BuildContext) -> tuple[Path | None, Path | None]:
     """Run Sphinx build."""
     vanilla_entry_point: Path | None = None
     devil_entry_point: Path | None = None
-    doc_source_rel = ctx.project_config.get("doc_source_path_relative", "docs/")
+    doc_source_rel = ctx.project_config.get("doc_source_path_relative", DOCS_FOLDER)
     if not ctx.args.skip_vanilla:
         vanilla_built_path = build_sphinx_vanilla(ctx=ctx)
         if vanilla_built_path:
@@ -837,111 +880,162 @@ def setup_environment(args: Namespace) -> BuildContext | None:
     )
 
 
-def run_single_build_mode(base_context: BuildContext) -> None:
-    """Manage the single-build workflow and opens the results."""
-    vanilla_entry_point, devil_entry_point = _perform_builds(ctx=base_context)
-
-    screen_width, screen_height = get_screen_resolution()
-    if screen_width is None or screen_height is None:
-        logger.warning("Cannot arrange windows side-by-side without screen resolution.")
-
+def _open_browser_tabs(
+    vanilla_entry_point: Path | None,
+    devil_entry_point: Path | None,
+    skip_vanilla: bool,
+    skip_devil: bool,
+) -> tuple[str | None, str | None]:
+    """Open browser tabs for vanilla and devil builds."""
     vanilla_url = vanilla_entry_point.as_uri() if vanilla_entry_point else None
     devil_url = devil_entry_point.as_uri() if devil_entry_point else None
 
     if vanilla_url:
         logger.info(f"Opening VANILLA documentation: {vanilla_url}")
         webbrowser.open_new(vanilla_url)
-    elif not base_context.args.skip_vanilla:
+    elif not skip_vanilla:
         logger.warning("Vanilla documentation entry point not found or build failed.")
 
     if devil_url:
         logger.info(f"Opening DEVIL documentation: {devil_url}")
         webbrowser.open_new(devil_url)
-    elif not base_context.args.skip_devil:
+    elif not skip_devil:
         logger.warning("Devil documentation entry point not found or build failed.")
 
-    if screen_width and screen_height and vanilla_url and devil_url:
-        # Give browsers some time to open and set titles
-        time.sleep(10)
+    return vanilla_url, devil_url
 
-        half_width = screen_width // 2
-        window_height = screen_height
 
-        vanilla_window_id = None
-        devil_window_id = None
+def _get_window_ids(project_name: str) -> tuple[str | None, str | None]:
+    """Get window IDs for Firefox windows with specific titles."""
+    wmctrl_executable = shutil.which("wmctrl")
+    if not wmctrl_executable:
+        logger.warning("wmctrl command not found. Cannot arrange windows.")
+        return None, None
 
-        try:
-            wmctrl_output = subprocess.run(
-                ["wmctrl", "-l"], capture_output=True, text=True, check=True
-            ).stdout
-            # Identify windows by title substring
-            for line in wmctrl_output.splitlines():
-                if (
-                    f"{base_context.args.project_name}_vanilla" in line
-                    and "Firefox" in line
-                ):
-                    vanilla_window_id = line.split()[0]
-                if (
-                    f"{base_context.args.project_name}_devil" in line
-                    and "Firefox" in line
-                ):
-                    devil_window_id = line.split()[0]
-            if vanilla_window_id and devil_window_id:
-                # Unmaximize windows first
-                subprocess.run(
-                    [
-                        "wmctrl",
-                        "-i",
-                        "-r",
-                        vanilla_window_id,
-                        "-b",
-                        "remove,maximized_vert,maximized_horz",
-                    ],
-                    check=False,
-                )
-                subprocess.run(
-                    [
-                        "wmctrl",
-                        "-i",
-                        "-r",
-                        devil_window_id,
-                        "-b",
-                        "remove,maximized_vert,maximized_horz",
-                    ],
-                    check=False,
-                )
-                time.sleep(1)
-                subprocess.run(
-                    [
-                        "wmctrl",
-                        "-i",
-                        "-r",
-                        vanilla_window_id,
-                        "-e",
-                        f"0,0,0,{half_width},{window_height}",
-                    ],
-                    check=True,
-                )
-                # Move and resize second window (right half)
-                subprocess.run(
-                    [
-                        "wmctrl",
-                        "-i",
-                        "-r",
-                        devil_window_id,
-                        "-e",
-                        f"0,{half_width},0,{half_width},{window_height}",
-                    ],
-                    check=True,
-                )
-                logger.info("Arranged Firefox windows side-by-side.")
-            else:
-                logger.warning(
-                    "Could not identify both Vanilla and "
-                    "Devil documentation windows by title."
-                )
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.warning(f"Could not arrange windows using wmctrl. Error: {e}")
+    try:
+        wmctrl_output = subprocess.run(  # noqa: S603
+            [wmctrl_executable, "-l"], capture_output=True, text=True, check=True
+        ).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        logger.warning(f"Could not list windows using wmctrl. Error: {e}")
+        return None, None
+
+    vanilla_window_id = None
+    devil_window_id = None
+    for line in wmctrl_output.splitlines():
+        if f"{project_name}_vanilla" in line and "Firefox" in line:
+            vanilla_window_id = line.split()[0]
+        if f"{project_name}_devil" in line and "Firefox" in line:
+            devil_window_id = line.split()[0]
+
+    if not (vanilla_window_id and devil_window_id):
+        logger.warning(
+            "Could not identify both Vanilla and Devil documentation windows by title."
+        )
+        return None, None
+
+    return vanilla_window_id, devil_window_id
+
+
+def _arrange_windows(
+    vanilla_window_id: str,
+    devil_window_id: str,
+    screen_width: int,
+    screen_height: int,
+) -> None:
+    """Arrange the vanilla and devil windows side by side."""
+    wmctrl_executable = shutil.which("wmctrl")
+    if not wmctrl_executable:
+        logger.warning("wmctrl command not found. Cannot arrange windows.")
+        return
+
+    # Validate window IDs to be safe
+    if not all(
+        re.match(r"0x[0-9a-fA-F]+", win_id)
+        for win_id in [vanilla_window_id, devil_window_id]
+    ):
+        logger.warning("Invalid window ID format. Aborting window arrangement.")
+        return
+
+    half_width = screen_width // 2
+    window_height = screen_height
+
+    try:
+        # Unmaximize windows first
+        for win_id in [vanilla_window_id, devil_window_id]:
+            subprocess.run(  # noqa: S603
+                [
+                    wmctrl_executable,
+                    "-i",
+                    "-r",
+                    win_id,
+                    "-b",
+                    "remove,maximized_vert,maximized_horz",
+                ],
+                check=False,
+            )
+        time.sleep(1)
+
+        # Move and resize first window (left half)
+        subprocess.run(  # noqa: S603
+            [
+                wmctrl_executable,
+                "-i",
+                "-r",
+                vanilla_window_id,
+                "-e",
+                f"0,0,0,{half_width},{window_height}",
+            ],
+            check=True,
+        )
+        # Move and resize second window (right half)
+        subprocess.run(  # noqa: S603
+            [
+                wmctrl_executable,
+                "-i",
+                "-r",
+                devil_window_id,
+                "-e",
+                f"0,{half_width},0,{half_width},{window_height}",
+            ],
+            check=True,
+        )
+        logger.info("Arranged Firefox windows side-by-side.")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        logger.warning(f"Could not arrange windows using wmctrl. Error: {e}")
+
+
+def run_single_build_mode(base_context: BuildContext) -> None:
+    """Manage the single-build workflow and opens the results."""
+    vanilla_entry_point, devil_entry_point = _perform_builds(ctx=base_context)
+
+    vanilla_url, devil_url = _open_browser_tabs(
+        vanilla_entry_point,
+        devil_entry_point,
+        base_context.args.skip_vanilla,
+        base_context.args.skip_devil,
+    )
+
+    if not (vanilla_url and devil_url):
+        return
+
+    screen_width, screen_height = get_screen_resolution()
+    if not (screen_width and screen_height):
+        logger.warning("Cannot arrange windows side-by-side without screen resolution.")
+        return
+
+    # Give browsers some time to open and set titles
+    time.sleep(10)
+
+    vanilla_window_id, devil_window_id = _get_window_ids(
+        base_context.args.project_name
+    )
+
+    if vanilla_window_id and devil_window_id:
+        _arrange_windows(
+            vanilla_window_id, devil_window_id, screen_width, screen_height
+        )
+
 
 
 def main() -> None:
