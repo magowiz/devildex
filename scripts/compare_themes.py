@@ -40,7 +40,8 @@ def get_screen_resolution() -> tuple[int, int] | None:
     except (subprocess.CalledProcessError, FileNotFoundError):
         logger.warning(
             "Could not get screen resolution using xrandr. "
-            "Is it installed and are you on X.Org?")
+            "Is it installed and are you on X.Org?"
+        )
     return None
 
 
@@ -875,38 +876,70 @@ def run_single_build_mode(base_context: BuildContext) -> None:
             ).stdout
             # Identify windows by title substring
             for line in wmctrl_output.splitlines():
-                if (f"{base_context.args.project_name}_vanilla" in line and
-                        "Firefox" in line):
+                if (
+                    f"{base_context.args.project_name}_vanilla" in line
+                    and "Firefox" in line
+                ):
                     vanilla_window_id = line.split()[0]
-                if (f"{base_context.args.project_name}_devil" in line and
-                        "Firefox" in line):
+                if (
+                    f"{base_context.args.project_name}_devil" in line
+                    and "Firefox" in line
+                ):
                     devil_window_id = line.split()[0]
             if vanilla_window_id and devil_window_id:
                 # Unmaximize windows first
                 subprocess.run(
-                    ["wmctrl", "-i", "-r", vanilla_window_id, "-b",
-                          "remove,maximized_vert,maximized_horz"],
-                    check=False)
+                    [
+                        "wmctrl",
+                        "-i",
+                        "-r",
+                        vanilla_window_id,
+                        "-b",
+                        "remove,maximized_vert,maximized_horz",
+                    ],
+                    check=False,
+                )
                 subprocess.run(
-                    ["wmctrl", "-i", "-r", devil_window_id, "-b",
-                          "remove,maximized_vert,maximized_horz"],
-                    check=False)
+                    [
+                        "wmctrl",
+                        "-i",
+                        "-r",
+                        devil_window_id,
+                        "-b",
+                        "remove,maximized_vert,maximized_horz",
+                    ],
+                    check=False,
+                )
                 time.sleep(1)
                 subprocess.run(
-                    ["wmctrl", "-i", "-r", vanilla_window_id, "-e",
-                          f"0,0,0,{half_width},{window_height}"],
+                    [
+                        "wmctrl",
+                        "-i",
+                        "-r",
+                        vanilla_window_id,
+                        "-e",
+                        f"0,0,0,{half_width},{window_height}",
+                    ],
                     check=True,
                 )
                 # Move and resize second window (right half)
                 subprocess.run(
-                    ["wmctrl", "-i", "-r", devil_window_id, "-e",
-                     f"0,{half_width},0,{half_width},{window_height}"],
+                    [
+                        "wmctrl",
+                        "-i",
+                        "-r",
+                        devil_window_id,
+                        "-e",
+                        f"0,{half_width},0,{half_width},{window_height}",
+                    ],
                     check=True,
                 )
                 logger.info("Arranged Firefox windows side-by-side.")
             else:
-                logger.warning("Could not identify both Vanilla and "
-                               "Devil documentation windows by title.")
+                logger.warning(
+                    "Could not identify both Vanilla and "
+                    "Devil documentation windows by title."
+                )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.warning(f"Could not arrange windows using wmctrl. Error: {e}")
 
