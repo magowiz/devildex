@@ -274,6 +274,10 @@ def _find_mkdocs_doc_requirements_file(
 class MkDocsBuilder(AbstractGrabber):
     """A builder for generating documentation using MkDocs."""
 
+    def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
+        """Determine if this grabber can handle the given project."""
+        return _find_mkdocs_config_file(source_path) is not None
+
     @staticmethod
     def _handle_docs_dir(source_path: Path, mkdocs_config_content: dict) -> bool:
         docs_dir_path = source_path / "docs"
