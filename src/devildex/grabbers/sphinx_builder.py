@@ -1,3 +1,5 @@
+"""sphinx builder module."""
+
 import logging
 import os
 import shutil
@@ -19,7 +21,7 @@ from devildex.utils.venv_utils import (
 )
 
 if TYPE_CHECKING:
-    from devildex.orchestrator.build_context import BuildContext
+    from devildex.orchestrator.context import BuildContext
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -95,7 +97,12 @@ class SphinxBuildContext:
 
 
 class SphinxBuilder(AbstractGrabber):
-    def generate_docset(self, source_path: Path, output_path: Path, context: "BuildContext") -> str | bool:
+    """Builder for sphinx projects."""
+
+    def generate_docset(
+        self, source_path: Path, output_path: Path, context: "BuildContext"
+    ) -> str | bool:
+        """Generate a docset."""
         logger.info(
             "\n--- Starting Isolated Sphinx Build for %s v%s ---",
             context.project_slug,
@@ -114,109 +121,122 @@ class SphinxBuilder(AbstractGrabber):
             version_identifier=context.version_identifier,
             base_output_dir=output_path,
         )
+
+        build_result: str | bool = False
+        should_proceed = True
+
         if not sphinx_build_ctx.conf_py_file.exists():
             logger.error(
                 "Critical Error: conf.py not found in %s.", sphinx_build_ctx.source_dir
             )
-            return False
-        logger.info("Sphinx HTML output directory: %s", sphinx_build_ctx.final_output_dir)
-        try:
-            if sphinx_build_ctx.final_output_dir.exists():
-                logger.info(
-                    "Removing existing output directory: %s",
+            should_proceed = False
+
+        if should_proceed:
+            logger.info(
+                "Sphinx HTML output directory: %s", sphinx_build_ctx.final_output_dir
+            )
+            try:
+                if sphinx_build_ctx.final_output_dir.exists():
+                    logger.info(
+                        "Removing existing output directory: %s",
+                        sphinx_build_ctx.final_output_dir,
+                    )
+                    shutil.rmtree(sphinx_build_ctx.final_output_dir)
+                sphinx_build_ctx.final_output_dir.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                logger.exception(
+                    "Error creating/cleaning output directory %s",
                     sphinx_build_ctx.final_output_dir,
                 )
-                shutil.rmtree(sphinx_build_ctx.final_output_dir)
-            sphinx_build_ctx.final_output_dir.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            logger.exception(
-                "Error creating/cleaning output directory %s",
-                sphinx_build_ctx.final_output_dir,
-            )
-            return False
-        try:
-            with IsolatedVenvManager(
-                project_name=f"{sphinx_build_ctx.project_slug}-"
-                f"{sphinx_build_ctx.version_identifier}"
-            ) as venv:
-                install_success = install_project_and_dependencies_in_venv(
-                    pip_executable=venv.pip_executable,
-                    project_name=sphinx_build_ctx.project_slug,
-                    project_root_for_install=sphinx_build_ctx.project_install_root,
-                    doc_requirements_path=sphinx_build_ctx.doc_requirements_file,
-                    base_packages_to_install=[
-                        "sphinx",
-                        "pallets-sphinx-themes",
-                        "sphinxcontrib.log-cabinet",
-                        "sphinx-tabs",
-                    ],
-                )
-                if not install_success:
-                    logger.error(
-                        "CRITICAL: Installation of project/dependencies (including Sphinx) "
-                        "for %s FAILED or had critical issues. Aborting Sphinx build.",
-                        sphinx_build_ctx.project_slug,
-                    )
-                    return False
-                sphinx_command_list = [
-                    venv.python_executable,
-                    "-m",
-                    "sphinx",
-                    "-b",
-                    "html",
-                    ".",
-                    str(sphinx_build_ctx.final_output_dir),
-                ]
-                sphinx_process_env = {"LC_ALL": "C"}
-                logger.info("Executing Sphinx: %s", " ".join(sphinx_command_list))
-                stdout, stderr, return_code = execute_command(
-                    sphinx_command_list,
-                    f"Sphinx build for {sphinx_build_ctx.project_slug}",
-                    cwd=sphinx_build_ctx.source_dir,
-                    env=sphinx_process_env,
-                )
-                if return_code == 0:
-                    logger.info(
-                        "Sphinx build for %s completed successfully.",
-                        sphinx_build_ctx.project_slug,
-                    )
-                    return str(sphinx_build_ctx.final_output_dir)
-                else:
-                    logger.error(
-                        "Sphinx build for %s failed. Return code: %s",
-                        sphinx_build_ctx.project_slug,
-                        return_code,
-                    )
-                    logger.error("Sphinx stdout:\n%s", stdout)
-                    logger.error("Sphinx stderr:\n%s", stderr)
-                    return False
+                should_proceed = False
 
-        except RuntimeError:
-            logger.exception(
-                "Critical error during isolated build setup for %s",
-                sphinx_build_ctx.project_slug,
-            )
-            return False
-        except OSError:
-            logger.exception(
-                "Error creating/cleaning output directory %s",
-                sphinx_build_ctx.final_output_dir,
-            )
-            return False
-        finally:
-            logger.info(
-                "--- Finished Isolated Sphinx Build for %s ---",
-                sphinx_build_ctx.project_slug,
-            )
+        if should_proceed:
+            try:
+                with IsolatedVenvManager(
+                    project_name=f"{sphinx_build_ctx.project_slug}-"
+                    f"{sphinx_build_ctx.version_identifier}"
+                ) as venv:
+                    install_success = install_project_and_dependencies_in_venv(
+                        pip_executable=venv.pip_executable,
+                        project_name=sphinx_build_ctx.project_slug,
+                        project_root_for_install=sphinx_build_ctx.project_install_root,
+                        doc_requirements_path=sphinx_build_ctx.doc_requirements_file,
+                        base_packages_to_install=[
+                            "sphinx",
+                            "pallets-sphinx-themes",
+                            "sphinxcontrib.log-cabinet",
+                            "sphinx-tabs",
+                        ],
+                    )
+                    if not install_success:
+                        logger.error(
+                            "CRITICAL: Installation of project/dependencies"
+                            " (including Sphinx) "
+                            "for %s FAILED or had critical issues. "
+                            "Aborting Sphinx build.",
+                            sphinx_build_ctx.project_slug,
+                        )
+                        build_result = False
+                    else:
+                        sphinx_command_list = [
+                            venv.python_executable,
+                            "-m",
+                            "sphinx",
+                            "-b",
+                            "html",
+                            ".",
+                            str(sphinx_build_ctx.final_output_dir),
+                        ]
+                        sphinx_process_env = {"LC_ALL": "C"}
+                        logger.info(
+                            "Executing Sphinx: %s", " ".join(sphinx_command_list)
+                        )
+                        stdout, stderr, return_code = execute_command(
+                            sphinx_command_list,
+                            f"Sphinx build for {sphinx_build_ctx.project_slug}",
+                            cwd=sphinx_build_ctx.source_dir,
+                            env=sphinx_process_env,
+                        )
+                        if return_code == 0:
+                            logger.info(
+                                "Sphinx build for %s completed successfully.",
+                                sphinx_build_ctx.project_slug,
+                            )
+                            build_result = str(sphinx_build_ctx.final_output_dir)
+                        else:
+                            logger.error(
+                                "Sphinx build for %s failed. Return code: %s",
+                                sphinx_build_ctx.project_slug,
+                                return_code,
+                            )
+                            logger.error("Sphinx stdout:\n%s", stdout)
+                            logger.error("Sphinx stderr:\n%s", stderr)
+                            build_result = False
 
+            except RuntimeError:
+                logger.exception(
+                    "Critical error during isolated build setup for %s",
+                    sphinx_build_ctx.project_slug,
+                )
+                build_result = False
+            except OSError:
+                logger.exception(
+                    "Error creating/cleaning output directory %s",
+                    sphinx_build_ctx.final_output_dir,
+                )
+                build_result = False
+            finally:
+                logger.info(
+                    "--- Finished Isolated Sphinx Build for %s ---",
+                    sphinx_build_ctx.project_slug,
+                )
+        return build_result
     def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
+        """Determine if current grabber can handle a project."""
         return is_sphinx_project(str(source_path))
 
     def _find_sphinx_doc_requirements_file(
-        self,
-        source_dir_path: Path,
-        clone_root_path: Path,
-        project_slug: str
+        self, source_dir_path: Path, clone_root_path: Path, project_slug: str
     ) -> Path | None:
         """Find the specific requirements file for SPHINX documentation."""
         candidate_req_paths = [
@@ -236,7 +256,9 @@ class SphinxBuilder(AbstractGrabber):
         ]
         for req_path_candidate in candidate_req_paths:
             if req_path_candidate.exists():
-                logger.info("Found documentation requirements file: %s", req_path_candidate)
+                logger.info(
+                    "Found documentation requirements file: %s", req_path_candidate
+                )
                 return req_path_candidate
         logger.info(
             "No specific 'requirements.txt' found for documentation in common "
@@ -262,7 +284,8 @@ class SphinxBuilder(AbstractGrabber):
             git_exe = shutil.which("git")
             if not git_exe:
                 logger.error(
-                    "Error: 'git' command not found. Ensure Git is installed and in PATH."
+                    "Error: 'git' command not found. Ensure Git is"
+                    " installed and in PATH."
                 )
                 return None
             return git_exe
@@ -405,7 +428,6 @@ class SphinxBuilder(AbstractGrabber):
 
         return cloned_branch_name
 
-
     def _find_doc_source_in_clone(self, repo_path: Path) -> str | None:
         """Identify the documentation source directory within a cloned repository.
 
@@ -430,8 +452,10 @@ class SphinxBuilder(AbstractGrabber):
         logger.info(f"Documentation source directory identified at: {doc_source_path}")
         return doc_source_path
 
-    def _find_doc_dir_in_repo(self, repo_path: str, potential_doc_dirs: list) -> str | None:
-        """Find the first potential documentation directory that contains a conf.py file.
+    def _find_doc_dir_in_repo(
+        self, repo_path: str, potential_doc_dirs: list
+    ) -> str | None:
+        """Find the first potential documentation dir that contains a conf.py file.
 
         Also checks the repository root if no specific doc directory is found.
 
@@ -451,7 +475,8 @@ class SphinxBuilder(AbstractGrabber):
                 os.path.join(current_path, CONF_SPHINX_FILE)
             ):
                 logger.info(
-                    "Found documentation source directory with conf.py: " f"{current_path}"
+                    "Found documentation source directory with conf.py: "
+                    f"{current_path}"
                 )
                 return current_path
             if os.path.isdir(current_path):
@@ -497,13 +522,6 @@ class SphinxBuilder(AbstractGrabber):
                 return doc_source_dir
         return None
 
-
-
-
-
-
-
-
     def _cleanup(self, clone_dir_path: Path | None) -> None:
         if clone_dir_path and clone_dir_path.exists():
             logger.info(f"\nDeleting repository cloned directory: {clone_dir_path}")
@@ -512,9 +530,9 @@ class SphinxBuilder(AbstractGrabber):
                 logger.info("Delete completed.")
             except OSError:
                 logger.exception(
-                    "Error during deleting della repository cloned " f"'{clone_dir_path}'"
+                    "Error during deleting della repository cloned "
+                    f"'{clone_dir_path}'"
                 )
-
 
     def _extract_repo_url_branch(
         self, api_project_detail_url: str, project_slug: str
@@ -538,7 +556,8 @@ class SphinxBuilder(AbstractGrabber):
             else:
                 logger.info(f"Trovato URL repository: {repo_url}")
                 logger.info(
-                    "Branch di default (used come version identifier): " f"{default_branch}"
+                    "Branch di default (used come version identifier): "
+                    f"{default_branch}"
                 )
         except requests.exceptions.RequestException:
             logger.exception("Warning: Error durante la richiesta API: ")
@@ -546,7 +565,6 @@ class SphinxBuilder(AbstractGrabber):
                 "Provo a search la repository cloned locally if already exists."
             )
         return default_branch, repo_url
-
 
     def _attempt_clone_and_process_result(
         self,
@@ -612,7 +630,8 @@ class SphinxBuilder(AbstractGrabber):
             )
         elif not config.repo_url:
             logger.warning(
-                "No repository URL provided for '%s'. Cannot clone.", config.project_slug
+                "No repository URL provided for '%s'. Cannot clone.",
+                config.project_slug,
             )
             if not cloned_repo_exists_before:
                 logger.error(
@@ -633,10 +652,6 @@ class SphinxBuilder(AbstractGrabber):
             clone_dir_path,
         )
         return None, effective_branch
-
-
-
-
 
     def _process_documentation(
         self,
@@ -659,8 +674,6 @@ class SphinxBuilder(AbstractGrabber):
                 project_ctx.slug,
                 isolated_source_path,
             )
-            # The actual Sphinx build will be handled by the SphinxBuilder via the orchestrator
-            # For now, we just return the isolated source path.
         else:
             logger.warning(
                 "Documentation source isolation failed for '%s' (path: '%s'). "
@@ -670,18 +683,19 @@ class SphinxBuilder(AbstractGrabber):
             )
         return isolated_source_path, build_output_path
 
-
     def _prepare_rtd_build_environment(
         self, project_name: str, clone_base_dir_override: Path | None
     ) -> tuple[str | None, str | None, str | None, Path | None, bool]:
-        """Prepare environment for RTD build: validate slug, get repo details, set dirs."""
+        """Prepare environment for RTD build: validate slug, get repo details."""
         project_slug = project_name
         if not project_slug:
             logger.error("Project slug (project_name) cannot be empty.")
             return None, None, None, None, False
 
         logger.info("Project Slug: %s", project_slug)
-        api_project_detail_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/"
+        api_project_detail_url = (
+            f"https://readthedocs.org/api/v3/projects/{project_slug}/"
+        )
         logger.info("Fetching project details from API: %s", api_project_detail_url)
 
         initial_default_branch, repo_url = self._extract_repo_url_branch(
@@ -703,7 +717,6 @@ class SphinxBuilder(AbstractGrabber):
             actual_clone_base_dir,
             bzr,
         )
-
 
     def _obtain_rtd_source_code(
         self,
@@ -733,7 +746,6 @@ class SphinxBuilder(AbstractGrabber):
             )
         return clone_dir_path, effective_branch
 
-
     def download_and_prepare_rtd_source(
         self,
         project_name: str,
@@ -744,7 +756,8 @@ class SphinxBuilder(AbstractGrabber):
     ) -> str | bool:
         """Download sources from RTD, clones, isolates doc sources, execute Sphinx."""
         logger.info(
-            "\n--- Starting RTD Source Download, Build & Cleanup for: %s ---", project_name
+            "\n--- Starting RTD Source Download, Build & Cleanup for: %s ---",
+            project_name,
         )
         logger.info("Project URL: %s", project_url)
 
@@ -794,7 +807,6 @@ class SphinxBuilder(AbstractGrabber):
             finalize_conf,
         )
 
-
     def _finalize_rtd_source_preparation_and_cleanup(
         self,
         clone_dir_path: Path,
@@ -805,7 +817,7 @@ class SphinxBuilder(AbstractGrabber):
         isolated_source_path_str, _ = self._process_documentation(
             clone_dir_path,
             project_context,
-            base_output_dir=None,  # No longer building here, so base_output_dir is not needed
+            base_output_dir=None,
         )
 
         if not config.existing_clone_path:
@@ -827,9 +839,3 @@ class SphinxBuilder(AbstractGrabber):
             )
 
         return isolated_source_path_str if isolated_source_path_str else False
-
-
-
-
-
-

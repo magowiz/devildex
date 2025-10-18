@@ -216,24 +216,15 @@ orchestrator_test_params = [
 ]
 
 
-@pytest.mark.parametrize("package_config", orchestrator_test_params)
-def test_orchestrator_documentation_retrieval(
-    package_config: dict, tmp_path: Path, mocker: MockerFixture
-) -> None:
-    """Test orchestrator retrieval."""
-    if (
-        package_config.get("details_data")
-        and package_config.get("details_data").get("name")
-        and package_config.get("details_data").get("name") == "fastapi"
-    ):
-        return
-    details_data_from_config = package_config["details_data"].copy()
+def _setup_test_environment(package_config: dict, tmp_path: Path) -> tuple[Path, Path]:
+    """Set up the test environment by cloning the repo and creating output dirs."""
     repo_url_for_clone = package_config["repo_url_for_clone"]
-    expected_preferred_doc_type = package_config["expected_preferred_type"]
-    expected_entry_point_filename = package_config.get("expected_entry_point")
-    expect_success = package_config.get("expect_grab_success", True)
-    package_name_for_paths = details_data_from_config["name"]
+    package_name_for_paths = package_config["details_data"]["name"]
     clone_target_dir = tmp_path / f"source_clone_{package_name_for_paths}"
+    orchestrator_base_output_for_test = (
+        tmp_path / f"orchestrator_output_{package_name_for_paths}"
+    )
+
     subprocess.run(  # noqa: S603
         [
             GIT_FULL_PATH,
@@ -248,22 +239,119 @@ def test_orchestrator_documentation_retrieval(
         text=True,
         encoding="utf-8",
     )
-    orchestrator_base_output_for_test = (
-        tmp_path / f"orchestrator_output_{package_name_for_paths}"
-    )
-    details_data_from_config["initial_source_path"] = str(clone_target_dir)
-    package_details_for_test = PackageDetails.from_dict(details_data_from_config)
+    return clone_target_dir, orchestrator_base_output_for_test
+
+
+def _run_orchestrator(
+    package_details: PackageDetails, base_output_dir: Path
+) -> tuple[Orchestrator, str]:
+    """Instantiate and run the orchestrator."""
     orchestrator = Orchestrator(
-        package_details=package_details_for_test,
-        base_output_dir=orchestrator_base_output_for_test,
+        package_details=package_details,
+        base_output_dir=base_output_dir,
     )
     orchestrator.start_scan()
     detected_doc_type = orchestrator.get_detected_doc_type()
+    return orchestrator, detected_doc_type
+
+
+def _assert_success(
+    orchestrator: Orchestrator,
+    package_details: PackageDetails,
+    detected_doc_type: str,
+    expected_entry_point: str,
+) -> None:
+    """Assert that the documentation retrieval was successful."""
+    output_docs_root_path_str = orchestrator.grab_build_doc()
+    operation_result = orchestrator.get_last_operation_result()
+
+    assert operation_result is not False, (
+        f"Orchestrator's grab_build_doc failed for {package_details.name} "
+        f"(detected type: {detected_doc_type}). Result: {operation_result}"
+    )
+    assert isinstance(operation_result, str), (
+        f"Expected a path string from successful grab_build_doc for "
+        f"{package_details.name}, got {type(operation_result)}. "
+        f"Value: {operation_result}"
+    )
+    assert output_docs_root_path_str == operation_result, (
+        f"Return value of grab_build_doc ('{output_docs_root_path_str}') "
+        f"and last_operation_result ('{operation_result}') "
+        f"mismatch for {package_details.name}."
+    )
+
+    output_docs_root_path = Path(output_docs_root_path_str)
+    assert output_docs_root_path.exists(), (
+        f"Output path '{output_docs_root_path}' from Orchestrator "
+        f"does not exist for {package_details.name}"
+    )
+    assert output_docs_root_path.is_dir(), (
+        f"Output path '{output_docs_root_path}' from Orchestrator "
+        f"is not a directory for {package_details.name}"
+    )
+    assert expected_entry_point is not None, (
+        "expected_entry_point_filename is missing in test config for "
+        f"{package_details.name} when success is expected."
+    )
+    final_entry_point_path = output_docs_root_path / expected_entry_point
+    assert final_entry_point_path.is_file(), (
+        f"Expected entry point '{final_entry_point_path}' not found or is not a file "
+        f"for {package_details.name} (type: {detected_doc_type})"
+    )
+
+    html_files = list(output_docs_root_path.glob("**/*.html"))
+    assert len(html_files) > 0, (
+        f"No HTML files found in output for {package_details.name} "
+        f"at {output_docs_root_path}"
+    )
+
+
+def _assert_failure(
+    orchestrator: Orchestrator, package_details: PackageDetails
+) -> None:
+    """Assert that the documentation retrieval failed."""
+    output_docs_root_path_str = orchestrator.grab_build_doc()
+    operation_result = orchestrator.get_last_operation_result()
+
+    assert operation_result is False, (
+        "Expected grab_build_doc to result in False for "
+        f"{package_details.name} due to expect_success=False. "
+        f"Got: {operation_result} (type: {type(operation_result)})"
+    )
+    assert output_docs_root_path_str is False, (
+        "Expected grab_build_doc to return None for "
+        f"{package_details.name} due to expected failure, but got: "
+        f"{output_docs_root_path_str}"
+    )
+
+
+@pytest.mark.parametrize("package_config", orchestrator_test_params)
+def test_orchestrator_documentation_retrieval(
+    package_config: dict, tmp_path: Path, mocker: MockerFixture
+) -> None:
+    """Test orchestrator retrieval."""
+    if package_config["details_data"]["name"] == "fastapi":
+        return
+
+    clone_target_dir, orchestrator_base_output_for_test = _setup_test_environment(
+        package_config, tmp_path
+    )
+
+    details_data_from_config = package_config["details_data"].copy()
+    details_data_from_config["initial_source_path"] = str(clone_target_dir)
+    package_details_for_test = PackageDetails.from_dict(details_data_from_config)
+
+    orchestrator, detected_doc_type = _run_orchestrator(
+        package_details_for_test, orchestrator_base_output_for_test
+    )
+
+    expected_preferred_doc_type = package_config["expected_preferred_type"]
     assert detected_doc_type == expected_preferred_doc_type, (
         f"For {package_details_for_test.name}, expected preferred type "
-        f"'{expected_preferred_doc_type}'"
+        f"'{expected_preferred_doc_type}' but Orchestrator detected "
+        f"'{detected_doc_type}'"
     )
-    f" but Orchestrator detected '{detected_doc_type}'"
+
     if detected_doc_type == "mkdocs":
         mock_mkdocs_builder_generate_docset = mocker.patch(
             "devildex.grabbers.mkdocs_builder.MkDocsBuilder.generate_docset",
@@ -271,66 +359,18 @@ def test_orchestrator_documentation_retrieval(
         )
         output_docs_root_path_str = orchestrator.grab_build_doc()
         mock_mkdocs_builder_generate_docset.assert_called_once()
-        # Since we are mocking, we need to adjust the expected output
         assert output_docs_root_path_str == "mock_mkdocs_output_path"
         operation_result = orchestrator.get_last_operation_result()
         assert operation_result == "mock_mkdocs_output_path"
     else:
-        output_docs_root_path_str = orchestrator.grab_build_doc()
-        operation_result = orchestrator.get_last_operation_result()
-
+        expect_success = package_config.get("expect_grab_success", True)
         if expect_success:
-            assert operation_result is not False, (
-                f"Orchestrator's grab_build_doc failed for"
-                f" {package_details_for_test.name} "
+            expected_entry_point_filename = package_config.get("expected_entry_point")
+            _assert_success(
+                orchestrator,
+                package_details_for_test,
+                detected_doc_type,
+                expected_entry_point_filename,
             )
-            f"(detected type: {detected_doc_type}). Result: {operation_result}"
-            assert isinstance(operation_result, str), (
-                "Expected a path string from successful grab_build_doc for"
-                f" {package_details_for_test.name},"
-            )
-            f" got {type(operation_result)}. Value: {operation_result}"
-            assert (
-                output_docs_root_path_str == operation_result
-            ), f"Return value of grab_build_doc ('{output_docs_root_path_str}')"
-            f" and last_operation_result ('{operation_result}')"
-            f" mismatch for {package_details_for_test.name}."
-
-            output_docs_root_path = Path(output_docs_root_path_str)
-            assert (
-                output_docs_root_path.exists()
-            ), f"Output path '{output_docs_root_path}' from Orchestrator"
-            f" does not exist for {package_details_for_test.name}"
-            assert (
-                output_docs_root_path.is_dir()
-            ), f"Output path '{output_docs_root_path}' from "
-            f"Orchestrator is not a directory for {package_details_for_test.name}"
-            assert (
-                expected_entry_point_filename is not None
-            ), "expected_entry_point_filename is missing in test "
-            f"config for {package_details_for_test.name} when success is expected."
-            final_entry_point_path = (
-                output_docs_root_path / expected_entry_point_filename
-            )
-            assert (
-                final_entry_point_path.is_file()
-            ), f"Expected entry point '{final_entry_point_path}' not found or is not a "
-            f"file for {package_details_for_test.name} (type: {detected_doc_type})"
-
-            html_files = list(output_docs_root_path.glob("**/*.html"))
-            assert len(html_files) > 0, "No HTML files found in output for "
-            f"{package_details_for_test.name} at {output_docs_root_path}"
         else:
-            assert operation_result is False, (
-                "Expected grab_build_doc to result in False for "
-                f"{package_details_for_test.name} due to "
-                f"expect_success=False. Got: {operation_result} "
-                f"(type: {type(operation_result)})"
-            )
-            f"expected failure, but got type {type(operation_result)}"
-            f" with value: {operation_result}"
-            assert output_docs_root_path_str is False, (
-                "Expected grab_build_doc to return None for "
-                f"{package_details_for_test.name} "
-            )
-            f"due to expected failure, but got: {output_docs_root_path_str}"
+            _assert_failure(orchestrator, package_details_for_test)

@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 class PydoctorBuilder(AbstractGrabber):
     """Implement class that builds documentation from docstrings using Pydoctor."""
 
-    def __init__(
-        self, template_dir: Optional[Path] = None
-    ) -> None:
+    def __init__(self, template_dir: Optional[Path] = None) -> None:
         """Initialize PydoctorBuilder."""
         super().__init__()
         self.template_dir = template_dir
@@ -47,7 +45,9 @@ class PydoctorBuilder(AbstractGrabber):
 
         return pydoctor_command
 
-    def generate_docset(self, source_path: Path, output_path: Path, context: BuildContext) -> bool:
+    def generate_docset(
+        self, source_path: Path, output_path: Path, context: BuildContext
+    ) -> bool:
         """Generate HTML documentation using Pydoctor in an isolated environment."""
         logger.info(
             "PydoctorBuilder: Attempting to generate docs for %s", context.project_name
@@ -123,25 +123,30 @@ class PydoctorBuilder(AbstractGrabber):
 
     def can_handle(self, source_path: Path, context: BuildContext) -> bool:
         """Determine if the grabber can handle a given project."""
-        # For Pydoctor, we can check for a 'pydoctor.conf' file or a 'setup.py'
-        # that explicitly mentions pydoctor in its dependencies.
-        # For simplicity, let's assume a 'pydoctor.conf' file indicates a pydoctor project.
-        # This can be refined later.
         pydoctor_conf_path = source_path / "pydoctor.conf"
         if pydoctor_conf_path.is_file():
-            logger.info(f"PydoctorBuilder: Found pydoctor.conf at {pydoctor_conf_path}. Can handle.")
+            logger.info(
+                "PydoctorBuilder: Found pydoctor.conf at "
+                f"{pydoctor_conf_path}. Can handle."
+            )
             return True
-
-        # Alternatively, check for a setup.py that might indicate pydoctor usage
         setup_py_path = source_path / "setup.py"
         if setup_py_path.is_file():
             try:
                 content = setup_py_path.read_text()
                 if "pydoctor" in content:
-                    logger.info(f"PydoctorBuilder: Found 'pydoctor' in setup.py at {setup_py_path}. Can handle.")
+                    logger.info(
+                        "PydoctorBuilder: Found 'pydoctor' in setup.py at"
+                        f" {setup_py_path}. Can handle."
+                    )
                     return True
             except Exception as e:
-                logger.warning(f"PydoctorBuilder: Error reading setup.py at {setup_py_path}: {e}")
+                logger.warning(
+                    f"PydoctorBuilder: Error reading setup.py at {setup_py_path}: {e}"
+                )
 
-        logger.info(f"PydoctorBuilder: No pydoctor.conf or pydoctor mention in setup.py at {source_path}. Cannot handle.")
+        logger.info(
+            "PydoctorBuilder: No pydoctor.conf or pydoctor mention in setup.py at"
+            f" {source_path}. Cannot handle."
+        )
         return False

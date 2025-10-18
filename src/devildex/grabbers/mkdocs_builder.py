@@ -1,4 +1,3 @@
-
 """MkDocsBuilder class for generating documentation using MkDocs."""
 
 import logging
@@ -17,7 +16,7 @@ from devildex.utils.venv_utils import (
 )
 
 if TYPE_CHECKING:
-    from devildex.orchestrator.build_context import BuildContext
+    from devildex.orchestrator.context import BuildContext
 
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
@@ -75,6 +74,7 @@ KNOWN_PLUGIN_PACKAGES: dict[str, str | None] = {
     "mkdocs-click": "mkdocs-click",
     "redirects": "mkdocs-redirects",
 }
+
 
 def _find_mkdocs_config_file(project_root_path: Path) -> Optional[Path]:
     """Find the mkdocs.yml file, typically at the project root."""
@@ -239,10 +239,9 @@ def _gather_mkdocs_required_packages(mkdocs_config: Optional[dict]) -> list[str]
 
     return unique_packages
 
+
 def _find_mkdocs_doc_requirements_file(
-    source_dir_path: Path,
-    clone_root_path: Path,
-    project_slug: str
+    source_dir_path: Path, clone_root_path: Path, project_slug: str
 ) -> Path | None:
     """Find the specific requirements file for MkDocs documentation."""
     candidate_req_paths = [
@@ -275,7 +274,8 @@ def _find_mkdocs_doc_requirements_file(
 class MkDocsBuilder(AbstractGrabber):
     """A builder for generating documentation using MkDocs."""
 
-    def _handle_docs_dir(self, source_path: Path, mkdocs_config_content: dict) -> bool:
+    @staticmethod
+    def _handle_docs_dir(source_path: Path, mkdocs_config_content: dict) -> bool:
         docs_dir_path = source_path / "docs"
         if not docs_dir_path.is_dir():
             logger.error(
@@ -290,7 +290,8 @@ class MkDocsBuilder(AbstractGrabber):
         )
         return True
 
-    def _handle_hooks_path(self, source_path: Path, mkdocs_config_content: dict) -> bool:
+    @staticmethod
+    def _handle_hooks_path(source_path: Path, mkdocs_config_content: dict) -> bool:
         if mkdocs_config_content.get("hooks"):
             hooks_path = Path(mkdocs_config_content["hooks"])
             if not hooks_path.is_absolute():
@@ -308,34 +309,39 @@ class MkDocsBuilder(AbstractGrabber):
                 )
         return True
 
-    def _handle_callouts_extension(self, mkdocs_config_content: dict) -> None:
+    @staticmethod
+    def _handle_callouts_extension(mkdocs_config_content: dict) -> None:
         if "markdown_extensions" in mkdocs_config_content:
             markdown_extensions = mkdocs_config_content["markdown_extensions"]
-            if isinstance(markdown_extensions, list) and \
-               "callouts" in markdown_extensions:
-                    markdown_extensions.remove("callouts")
-                    logger.info("Removed 'callouts' from markdown_extensions.")
+            if (
+                isinstance(markdown_extensions, list)
+                and "callouts" in markdown_extensions
+            ):
+                markdown_extensions.remove("callouts")
+                logger.info("Removed 'callouts' from markdown_extensions.")
 
-                    if "plugins" not in mkdocs_config_content:
-                        mkdocs_config_content["plugins"] = []
+                if "plugins" not in mkdocs_config_content:
+                    mkdocs_config_content["plugins"] = []
 
-                    # Ensure 'callouts' is added as a plugin, not 'mkdocs-callouts'
-                    if isinstance(mkdocs_config_content["plugins"], list):
-                        if "callouts" not in mkdocs_config_content["plugins"]:
-                            mkdocs_config_content["plugins"].append("callouts")
-                    elif isinstance(mkdocs_config_content["plugins"], dict) and \
-                         "callouts" not in mkdocs_config_content["plugins"]:
-                            mkdocs_config_content["plugins"]["callouts"] = {}
-                    logger.info("Added 'callouts' to plugins section.")
+                # Ensure 'callouts' is added as a plugin, not 'mkdocs-callouts'
+                if isinstance(mkdocs_config_content["plugins"], list):
+                    if "callouts" not in mkdocs_config_content["plugins"]:
+                        mkdocs_config_content["plugins"].append("callouts")
+                elif (
+                    isinstance(mkdocs_config_content["plugins"], dict)
+                    and "callouts" not in mkdocs_config_content["plugins"]
+                ):
+                    mkdocs_config_content["plugins"]["callouts"] = {}
+                logger.info("Added 'callouts' to plugins section.")
 
-    def _ensure_docs_dir_explicitly_set(self, mkdocs_config_content: dict) -> None:
+    @staticmethod
+    def _ensure_docs_dir_explicitly_set(mkdocs_config_content: dict) -> None:
         if "docs_dir" not in mkdocs_config_content:
             mkdocs_config_content["docs_dir"] = "docs"
             logger.info("Explicitly set 'docs_dir' to 'docs' in MkDocs config.")
 
-    def _get_and_parse_mkdocs_config(
-        self, mkdocs_config_file_path: Path
-    ) -> Optional[dict]:
+    @staticmethod
+    def _get_and_parse_mkdocs_config(mkdocs_config_file_path: Path) -> Optional[dict]:
         mkdocs_config_content = _parse_mkdocs_config(mkdocs_config_file_path)
         if mkdocs_config_content is None:
             logger.error(
@@ -353,17 +359,28 @@ class MkDocsBuilder(AbstractGrabber):
         )
         if mkdocs_config_content is None:
             return None
-
         if not self._handle_docs_dir(source_path, mkdocs_config_content):
             return None
-
         if not self._handle_hooks_path(source_path, mkdocs_config_content):
             return None
-
         self._handle_callouts_extension(mkdocs_config_content)
-
         self._ensure_docs_dir_explicitly_set(mkdocs_config_content)
         return mkdocs_config_content
+
+    def _path_check(self, source_path: Path) -> tuple[Path, dict] | None:
+        mkdocs_config_file_path = _find_mkdocs_config_file(source_path)
+        if mkdocs_config_file_path is None:
+            logger.error(
+                "Critical Error: mkdocs.yml not found in %s or its 'docs' subdir.",
+                source_path,
+            )
+            return None
+        mkdocs_config_content = self._process_mkdocs_config(
+            source_path, mkdocs_config_file_path
+        )
+        if mkdocs_config_content is None:
+            return None
+        return mkdocs_config_file_path, mkdocs_config_content
 
     def generate_docset(
         self, source_path: Path, output_path: Path, context: "BuildContext"
@@ -374,34 +391,15 @@ class MkDocsBuilder(AbstractGrabber):
             context.project_slug,
             context.version_identifier,
         )
-
-        mkdocs_config_file_path = _find_mkdocs_config_file(source_path)
-        if not mkdocs_config_file_path:
-            logger.error(
-                "Critical Error: mkdocs.yml not found in %s or its 'docs' "
-                "subdir.",
-                source_path,
-            )
+        path_check_result = self._path_check(source_path)
+        if path_check_result is None:
             return False
-
-        mkdocs_config_content = self._process_mkdocs_config(
-            source_path, mkdocs_config_file_path
-        )
-        if mkdocs_config_content is None:
-            return False
-
+        _mkdocs_config_file_path, mkdocs_config_content = path_check_result
         final_output_dir = (
             Path(output_path) / context.project_slug / context.version_identifier
         ).resolve()
-
-        logger.info("MkDocs HTML output directory: %s", final_output_dir)
-
         try:
             if final_output_dir.exists():
-                logger.info(
-                    "Removing existing output directory: %s",
-                    final_output_dir,
-                )
                 shutil.rmtree(final_output_dir)
             final_output_dir.mkdir(parents=True, exist_ok=True)
         except OSError:
@@ -410,7 +408,6 @@ class MkDocsBuilder(AbstractGrabber):
                 final_output_dir,
             )
             return False
-
         try:
             with IsolatedVenvManager(
                 project_name=f"{context.project_slug}-{context.version_identifier}"
@@ -423,7 +420,6 @@ class MkDocsBuilder(AbstractGrabber):
                     context.project_slug,
                     required_mkdocs_pkgs,
                 )
-
                 install_success = install_project_and_dependencies_in_venv(
                     pip_executable=venv.pip_executable,
                     project_name=context.project_slug,
@@ -443,28 +439,25 @@ class MkDocsBuilder(AbstractGrabber):
                         context.project_slug,
                     )
                     return False
-
-                # Create a temporary mkdocs.yml with the modified content
                 with tempfile.NamedTemporaryFile(
                     mode="w", delete=False, encoding="utf-8", suffix=".yml"
                 ) as temp_config_file:
                     yaml.dump(mkdocs_config_content, temp_config_file)
                 temp_config_file_path = Path(temp_config_file.name)
                 logger.info(
-                    "Created temporary MkDocs config file: %s", temp_config_file_path
+                    "Created temporary MkDocs config file: %s",
+                    temp_config_file_path,
                 )
-
                 mkdocs_command_list = [
-                    str(venv.python_executable), # Ensure it's a string
+                    str(venv.python_executable),
                     "-m",
                     "mkdocs",
                     "build",
                     "--config-file",
-                    str(temp_config_file_path), # Use the temporary config file
+                    str(temp_config_file_path),
                     "--site-dir",
                     str(final_output_dir),
                 ]
-
                 logger.info("Executing MkDocs: %s", " ".join(mkdocs_command_list))
                 try:
                     stdout, stderr, return_code = execute_command(
@@ -479,13 +472,12 @@ class MkDocsBuilder(AbstractGrabber):
                             "Cleaned up temporary MkDocs config file: %s",
                             temp_config_file_path,
                         )
-
                 if return_code == 0:
                     logger.info(
                         "MkDocs build for %s completed successfully.",
                         context.project_slug,
                     )
-                    return True
+                    build_successful = True
                 else:
                     logger.error(
                         "MkDocs build for %s failed. Return code: %s",
@@ -494,34 +486,22 @@ class MkDocsBuilder(AbstractGrabber):
                     )
                     logger.error("MkDocs stdout:\n%s", stdout)
                     logger.error("MkDocs stderr:\n%s", stderr)
-                    return False
-
+                    build_successful = False
         except RuntimeError:
             logger.exception(
                 "Critical error during isolated build setup for %s",
                 context.project_slug,
             )
-            return False
+            build_successful = False
         except OSError:
             logger.exception(
                 "Error during MkDocs build for %s",
                 context.project_slug,
             )
-            return False
+            build_successful = False
         finally:
             logger.info(
                 "--- Finished Isolated MkDocs Build for %s ---",
                 context.project_slug,
             )
-
-    def can_handle(
-        self, source_path: Path, context: "BuildContext"
-    ) -> bool:
-        """Determine if this grabber can handle the project.
-
-        For MkDocsBuilder, it can handle if mkdocs.yml is found in the source_path.
-        """
-        # Check for mkdocs.yml in the source_path
-        return (source_path / MKDOCS_CONFIG_FILE).exists()
-
-
+        return build_successful

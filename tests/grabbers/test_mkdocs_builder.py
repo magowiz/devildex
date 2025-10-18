@@ -166,10 +166,8 @@ class TestMkDocsBuilder:
         # The temporary config file path is passed as '--config-file /tmp/tmpXXXXXX.yml'
         config_file_arg_index = args[0].index("--config-file") + 1
         temp_config_file_path_in_command = args[0][config_file_arg_index]
-        assert (
-            "tmp" in temp_config_file_path_in_command
-            and ".yml" in temp_config_file_path_in_command
-        )
+        assert "tmp" in temp_config_file_path_in_command
+        assert ".yml" in temp_config_file_path_in_command
         assert (
             str(
                 (
@@ -252,7 +250,6 @@ class TestMkDocsBuilder:
         self, mkdocs_project_with_requirements: Path
     ) -> None:
         """Test _find_mkdocs_doc_requirements_file finds requirements.txt."""
-        builder = MkDocsBuilder()
         result = _find_mkdocs_doc_requirements_file(
             mkdocs_project_with_requirements,
             mkdocs_project_with_requirements,
@@ -264,7 +261,6 @@ class TestMkDocsBuilder:
         self, mkdocs_project_setup: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test _find_mkdocs_doc_requirements_file returns None if no file is found."""
-        builder = MkDocsBuilder()
         with caplog.at_level(logging.INFO):
             result = _find_mkdocs_doc_requirements_file(
                 mkdocs_project_setup, mkdocs_project_setup, "test_project"
@@ -274,7 +270,6 @@ class TestMkDocsBuilder:
 
     def test_gather_mkdocs_required_packages_basic(self, mocker: MockerFixture) -> None:
         """Test _gather_mkdocs_required_packages with basic config."""
-        builder = MkDocsBuilder()
         config = {"site_name": "Test", "theme": "readthedocs"}
         packages = _gather_mkdocs_required_packages(config)
         assert "mkdocs" in packages
@@ -284,7 +279,6 @@ class TestMkDocsBuilder:
         self, mocker: MockerFixture
     ) -> None:
         """Test _gather_mkdocs_required_packages with material theme."""
-        builder = MkDocsBuilder()
         config = {"site_name": "Test", "theme": "material"}
         packages = _gather_mkdocs_required_packages(config)
         assert "mkdocs" in packages
@@ -294,7 +288,6 @@ class TestMkDocsBuilder:
         self, mocker: MockerFixture
     ) -> None:
         """Test _gather_mkdocs_required_packages with plugins."""
-        builder = MkDocsBuilder()
         config = {
             "site_name": "Test",
             "plugins": [
@@ -318,19 +311,16 @@ class TestMkDocsBuilder:
     def test_find_mkdocs_config_file_root(self, tmp_path: Path) -> None:
         """Test _find_mkdocs_config_file finds config in root."""
         (tmp_path / "mkdocs.yml").touch()
-        builder = MkDocsBuilder()
         assert _find_mkdocs_config_file(tmp_path) == (tmp_path / "mkdocs.yml")
 
     def test_find_mkdocs_config_file_docs_subdir(self, tmp_path: Path) -> None:
         """Test _find_mkdocs_config_file finds config in docs subdir."""
         (tmp_path / "docs").mkdir()
         (tmp_path / "docs" / "mkdocs.yml").touch()
-        builder = MkDocsBuilder()
         assert _find_mkdocs_config_file(tmp_path) == (tmp_path / "docs" / "mkdocs.yml")
 
     def test_find_mkdocs_config_file_not_found(self, tmp_path: Path) -> None:
         """Test _find_mkdocs_config_file returns None if not found."""
-        builder = MkDocsBuilder()
         assert _find_mkdocs_config_file(tmp_path) is None
 
     def test_parse_mkdocs_config_success(self, tmp_path: Path) -> None:
@@ -348,7 +338,6 @@ class TestMkDocsBuilder:
         config_content = "site_name: - Test\ntheme: readthedocs"
         config_file = tmp_path / "mkdocs.yml"
         config_file.write_text(config_content)
-        builder = MkDocsBuilder()
         with caplog.at_level(logging.ERROR):
             parsed_config = _parse_mkdocs_config(config_file)
         assert parsed_config is None
@@ -359,7 +348,6 @@ class TestMkDocsBuilder:
     ) -> None:
         """Test _parse_mkdocs_config handles file not found."""
         non_existent_file = tmp_path / "non_existent.yml"
-        builder = MkDocsBuilder()
         with caplog.at_level(logging.ERROR):
             parsed_config = _parse_mkdocs_config(non_existent_file)
         assert parsed_config is None

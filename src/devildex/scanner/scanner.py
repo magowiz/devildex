@@ -70,7 +70,8 @@ def is_sphinx_project(project_path: str) -> Optional[Path]:
                 "Trovato link alla official documentation Sphinx. Probably Sphinx.",
             ),
             (
-                r"import os\s*;\s*import sys\s*;\s*sys\.path\.insert\(0,\s*os\.path\.abspath\(",
+                r"import os\s*;\s*import sys\s*;\s*sys\.path\.insert\(0,\s*"
+                r"os\.path\.abspath\(",
                 "Trovato setup comune del sys.path per autodoc. Forte indication.",
             ),
         ]

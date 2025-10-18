@@ -147,18 +147,6 @@ class Orchestrator:
     @property
     def _grabbers(self) -> dict:
         """Property to dynamically build the grabbers' configuration."""
-        effective_source_path_str = (
-            str(self._effective_source_path) if self._effective_source_path else None
-        )
-
-        existing_clone_path_for_sphinx: Path | None = None
-        if (
-            self._effective_source_path
-            and self._effective_source_path.exists()
-            and self._effective_source_path.is_dir()
-        ):
-            existing_clone_path_for_sphinx = self._effective_source_path
-
         return {
             "sphinx": {
                 "builder": SphinxBuilder(),
@@ -171,7 +159,7 @@ class Orchestrator:
                     "project_slug": self.package_details.name,
                     "version_identifier": self.package_details.version or "main",
                     "project_root_for_install": self._effective_source_path,
-                    "project_url": self.package_details.vcs_url, # Assuming project_url is vcs_url
+                    "project_url": self.package_details.vcs_url,
                 },
             },
             "mkdocs": {
@@ -186,7 +174,6 @@ class Orchestrator:
                     "project_root_for_install": self._effective_source_path,
                 },
             },
-
             "pydoctor": {
                 "builder": self.pydoctor_builder,
                 "context_args": {
@@ -198,7 +185,7 @@ class Orchestrator:
                     "project_slug": self.package_details.name,
                     "version_identifier": self.package_details.version or "main",
                     "project_root_for_install": self._effective_source_path,
-                    "project_url": self.package_details.vcs_url, # Assuming project_url is vcs_url
+                    "project_url": self.package_details.vcs_url,
                 },
             },
             "pdoc3": {
@@ -212,7 +199,7 @@ class Orchestrator:
                     "project_slug": self.package_details.name,
                     "version_identifier": self.package_details.version or "main",
                     "project_root_for_install": self._effective_source_path,
-                    "project_url": self.package_details.vcs_url, # Assuming project_url is vcs_url
+                    "project_url": self.package_details.vcs_url,
                 },
             },
             "docstrings": {
@@ -255,8 +242,11 @@ class Orchestrator:
                     logger.info(f" DETECTED DOC TYPE: {self.detected_doc_type}")
                     logger.info(f" RESULT FROM GRABBER: {res}")
                     self.last_operation_result = res
-                except Exception as e:
-                    logger.exception(f"Orchestrator: Exception during grab_build_doc for {self.detected_doc_type}: {e}")
+                except Exception:
+                    logger.exception(
+                        "Orchestrator: Exception during grab_build_doc for"
+                        f" {self.detected_doc_type}"
+                    )
                     self.last_operation_result = False
                 else:
                     return res

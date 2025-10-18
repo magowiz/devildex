@@ -661,7 +661,11 @@ def test_handle_repository_cloning_new_clone_success(
         shutil.rmtree(clone_dir_path_for_test)
 
     def mock_clone_and_process_success(
-        repo_url: str, initial_default_branch, clone_dir_path, bzr, project_slug: str
+        repo_url: str,
+        initial_default_branch: str,
+        clone_dir_path: Path,
+        bzr: bool,
+        project_slug: str,
     ) -> tuple[bool, str]:
         mock_clone_dir_path = clone_dir_path
         mock_clone_dir_path.mkdir(parents=True)
@@ -704,8 +708,8 @@ def test_handle_repository_cloning_new_clone_failure(
     def mock_clone_and_process_failure(
         repo_url: str,
         initial_default_branch: str,
-        clone_dir_path,
-        bzr,
+        clone_dir_path: Path,
+        bzr: bool,
         project_slug: str,
     ) -> tuple[bool, str]:
         return False, "main"

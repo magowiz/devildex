@@ -1,3 +1,5 @@
+"""ReadTheDocs Downloader module."""
+
 import logging
 import os
 import shutil
@@ -10,7 +12,7 @@ import requests
 from devildex.grabbers.abstract_grabber import AbstractGrabber
 
 if TYPE_CHECKING:
-    from devildex.orchestrator.build_context import BuildContext
+    from devildex.orchestrator.context import BuildContext
 
 logger = logging.getLogger(__name__)
 
@@ -20,78 +22,106 @@ FILENAME_MAX_LENGTH = 60
 class ReadTheDocsDownloader(AbstractGrabber):
     """Grabber for downloading pre-built documentation from Read the Docs."""
 
-    def generate_docset(self, source_path: Path, output_path: Path, context: "BuildContext") -> bool:
-        """Downloads a pre-packaged documentation from Read the Docs.
-
-        :param source_path: Not used for ReadTheDocsDownloader, but required by AbstractGrabber.
-        :param output_path: The path where the downloaded documentation should be stored.
-        :param context: The build context containing necessary information for the download process.
-                        Expected to contain project_slug, version_identifier, and download_format.
-        :return: True if documentation download was successful, False otherwise.
-        """
-        project_slug = context.project_slug
-        version_identifier = context.version_identifier
-        download_format = context.download_format if hasattr(context, 'download_format') else "htmlzip" # Default to htmlzip
-
+    def _validate_download_parameters(
+        self, project_slug: str, version_identifier: str, download_format: str
+    ) -> tuple[bool, str | None, dict | None, str | None]:
+        """Validate download parameters and fetch initial data."""
         if not project_slug:
-            logger.error("Error: project_slug is empty in BuildContext. Cannot proceed with download.")
-            return False
+            logger.error(
+                "Error: project_slug is empty in BuildContext. "
+                "Cannot proceed with download."
+            )
+            return False, None, None, None
 
-        # Use version_identifier from context as preferred version
-        preferred_versions = [version_identifier] if version_identifier else ["stable", "latest"]
+        preferred_versions = (
+            [version_identifier] if version_identifier else ["stable", "latest"]
+        )
 
         available_versions = self._fetch_available_versions(project_slug)
         if available_versions is None:
-            return False
+            return False, None, None, None
 
         chosen_version_slug = self._choose_best_version(
             available_versions, preferred_versions
         )
         if not chosen_version_slug:
-            return False
+            return False, None, None, None
 
         version_details = self._fetch_version_details(project_slug, chosen_version_slug)
         if not version_details:
-            return False
+            return False, None, None, None
 
         file_url = self._get_download_url(version_details, download_format)
         if not file_url:
+            return False, None, None, None
+
+        return True, chosen_version_slug, version_details, file_url
+
+    def generate_docset(
+        self, source_path: Path, output_path: Path, context: "BuildContext"
+    ) -> bool:
+        """Download a pre-packaged documentation from ReadTheDocs."""
+        project_slug = context.project_slug
+        version_identifier = context.version_identifier
+        download_format = (
+            context.download_format
+            if hasattr(context, "download_format")
+            else "htmlzip"
+        )
+
+        download_successful = False
+
+        (
+            is_valid,
+            chosen_version_slug,
+            _version_details,
+            file_url,
+        ) = self._validate_download_parameters(
+            project_slug, version_identifier, download_format
+        )
+
+        if not is_valid:
             return False
 
         local_filename = self._determine_local_filename(
             project_slug, chosen_version_slug, file_url, download_format
         )
 
-        # Ensure output_path exists
         output_path.mkdir(parents=True, exist_ok=True)
         local_filepath = output_path / local_filename
 
         if self._download_file(file_url, local_filepath):
-            # If it's a zip file, extract it
             if download_format == "htmlzip" and local_filepath.suffix == ".zip":
                 extract_dir = output_path / f"{project_slug}-{chosen_version_slug}"
                 try:
                     shutil.unpack_archive(local_filepath, extract_dir)
                     logger.info(f"Extracted {local_filepath} to {extract_dir}")
-                    # Remove the zip file after extraction
                     local_filepath.unlink()
-                    return True
+                    download_successful = True
                 except shutil.ReadError:
                     logger.exception(f"Error extracting archive {local_filepath}")
-                    return False
-            return True
-        return False
+                    download_successful = False
+            else:
+                download_successful = True
+        else:
+            download_successful = False
+
+        return download_successful
 
     def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
-        """Determines if this grabber can handle the project.
-        For ReadTheDocsDownloader, it can handle if the doc_type in context is 'readthedocs'.
+        """Determine if this grabber can handle the project.
+
+        For ReadTheDocsDownloader, it can handle if the doc_type in context is
+            'readthedocs'.
         """
         return context.doc_type == "readthedocs"
 
     def _fetch_available_versions(self, project_slug: str) -> list[dict] | None:
-        """Fetch ALL available versions for a project from RTD API, handling pagination."""
+        """Fetch ALL available versions for a project from RTD API."""
         all_versions_results = []
-        next_page_url = f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
+        next_page_url = (
+            f"https://readthedocs.org/api/v3/projects/{project_slug}/versions/"
+        )
         logger.info(f"\nCalling API to list versions (starting with): {next_page_url}")
 
         page_num = 1
@@ -137,11 +167,14 @@ class ReadTheDocsDownloader(AbstractGrabber):
     ) -> str | None:
         """Choose the slug of the best version of those available."""
         if not available_versions:
-            logger.error("Error: No versions available for choice (list is empty or None).")
+            logger.error(
+                "Error: No versions available for choice (list is empty or None)."
+            )
             return None
 
         logger.info(
-            f"\nAnalyzing {len(available_versions)} available versions to choose the best:"
+            f"\nAnalyzing {len(available_versions)} "
+            "available versions to choose the best:"
         )
 
         for preferred_slug in preferred_versions:
@@ -152,7 +185,8 @@ class ReadTheDocsDownloader(AbstractGrabber):
                     and version.get("built") is True
                 ):
                     logger.info(
-                        f"\nChosen favourite version (active and built): '{preferred_slug}'"
+                        "\nChosen favourite version (active and built): "
+                        f"'{preferred_slug}'"
                     )
                     return preferred_slug
 
@@ -164,27 +198,38 @@ class ReadTheDocsDownloader(AbstractGrabber):
             if version.get("active") is True and version.get("built") is True:
                 chosen_slug = version.get("slug")
                 logger.info(
-                    "Chosen first available (active and built) version:" f" '{chosen_slug}'"
+                    "Chosen first available (active and built) version:"
+                    f" '{chosen_slug}'"
                 )
                 return chosen_slug
 
-        logger.error("\nError: No active and built version found among all available ones.")
+        logger.error(
+            "\nError: No active and built version found among all available ones."
+        )
         return None
 
-    def _fetch_version_details(self, project_slug: str, version_slug: str) -> dict | None:
+    def _fetch_version_details(
+        self, project_slug: str, version_slug: str
+    ) -> dict | None:
         """Fetch a specific version details from RTD API."""
-        api_version_detail_url = f"https://readthedocs.org/api/v3/versions/{version_slug}/"
+        api_version_detail_url = (
+            f"https://readthedocs.org/api/v3/versions/{version_slug}/"
+        )
         logger.info(
             f"\nCalling API fo version details '{version_slug}': "
             f"{api_version_detail_url} con project__slug={project_slug}"
         )
         try:
             response = requests.get(
-                api_version_detail_url, params={"project__slug": project_slug}, timeout=60
+                api_version_detail_url,
+                params={"project__slug": project_slug},
+                timeout=60,
             )
             response.raise_for_status()
             version_detail_data = response.json()
-            logger.info(f"API details version called successfully for '{version_slug}'.")
+            logger.info(
+                f"API details version called successfully for '{version_slug}'."
+            )
 
         except requests.exceptions.RequestException:
             logger.exception(
@@ -201,7 +246,9 @@ class ReadTheDocsDownloader(AbstractGrabber):
         else:
             return version_detail_data
 
-    def _get_download_url(self, version_details: dict, download_format: str) -> str | None:
+    def _get_download_url(
+        self, version_details: dict, download_format: str
+    ) -> str | None:
         """Extract download URL for specific format from version details."""
         if not version_details:
             logger.error(
@@ -246,7 +293,11 @@ class ReadTheDocsDownloader(AbstractGrabber):
         return file_url
 
     def _determine_local_filename(
-        self, project_slug: str, version_slug: str, download_url: str, download_format: str
+        self,
+        project_slug: str,
+        version_slug: str,
+        download_url: str,
+        download_format: str,
     ) -> str:
         """Determine local file name which makes sense for download."""
         file_extension = download_format.replace("htmlzip", "zip")

@@ -1,3 +1,5 @@
+"""AbstractGrabber module."""
+
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -24,9 +26,7 @@ class AbstractGrabber(ABC):
         pass
 
     @abstractmethod
-    def can_handle(
-        self, source_path: Path, context: "BuildContext"
-    ) -> bool:
+    def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
         """Abstract method to determine if the grabber can handle a given project.
 
         :param source_path: The path to the source code.
