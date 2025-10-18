@@ -6,7 +6,7 @@ import threading
 import uuid
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -44,7 +44,7 @@ class DevilDexCore:
     def __init__(
         self,
         database_url: Optional[str] = None,
-        gui_warning_callback: Optional[callable] = None,
+        gui_warning_callback: Optional[Callable] = None,
         docset_base_output_path: Optional[Path] = None,
     ) -> None:
         """Initialize a new DevilDexCore instance."""
@@ -428,12 +428,13 @@ class DevilDexCore:
 
         logger.info("Core: Loading data from database for the grid...")
         with database.get_session() as session:
-            docsets_to_load_from_db = self._bootstrap_database_read_db(
-                project_db_name, session
-            )
-            grid_data_to_return = self._bootstrap_database_loop_docsets(
-                docsets_to_load_from_db
-            )
+            if project_db_name:
+                docsets_to_load_from_db = self._bootstrap_database_read_db(
+                    project_db_name, session
+                )
+                grid_data_to_return = self._bootstrap_database_loop_docsets(
+                    docsets_to_load_from_db
+                )
         return grid_data_to_return
 
     @staticmethod
@@ -493,7 +494,10 @@ class DevilDexCore:
 
     def list_package_dirs(self) -> list[str]:
         """List i nomi delle directory di primo level nella folder base dei docset."""
-        if not self.docset_base_output_path.exists():
+        if (
+            not self.docset_base_output_path
+            or not self.docset_base_output_path.exists()
+        ):
             return []
         return [d.name for d in self.docset_base_output_path.iterdir() if d.is_dir()]
 
@@ -501,8 +505,9 @@ class DevilDexCore:
         self, package_name: str, version: Optional[str] = None
     ) -> Optional[Path]:
         """Construct and return the path to a specific docset."""
+        if not self.docset_base_output_path:
+            return None
         base_path = self.docset_base_output_path / package_name
-
         if version:
             docset_path = base_path / version
             if docset_path.is_dir():
