@@ -193,8 +193,9 @@ class DevilDexCore:
             self._tasks[task_id]["result"] = (False, unexpected_msg)
             self._tasks[task_id]["status"] = TaskStatus.FAILED
 
+    @staticmethod
     def _update_database_on_success(
-        self, package_name: str, package_version: str, project_urls: dict
+        package_name: str, package_version: str, project_urls: dict
     ) -> None:
         """Update the database after a successful docset generation."""
         with database.get_session() as session:
@@ -536,7 +537,8 @@ class DevilDexCore:
         )
         return None
 
-    def get_all_docsets_info(self) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_all_docsets_info() -> list[dict[str, Any]]:
         """Retrieve information for all docsets from the database."""
         with database.get_session() as session:
             docsets = session.scalars(select(database.Docset)).all()
@@ -549,7 +551,8 @@ class DevilDexCore:
                 for d in docsets
             ]
 
-    def get_docsets_info_for_project(self, project_name: str) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_docsets_info_for_project(project_name: str) -> list[dict[str, Any]]:
         """Retrieve information for docsets associated with a specific project."""
         with database.get_session() as session:
             docsets = session.scalars(
