@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from src.devildex.fetcher import PackageSourceFetcher
+from devildex.fetcher import PackageSourceFetcher
 
 DUMMY_PACKAGE_INFO = {"name": "test_package", "version": "1.0.0"}
 
@@ -24,7 +24,7 @@ class TestPackageSourceFetcherCoverage:
         self.BASE_SAVE_PATH = tmp_path / "devildex_test_output"
         self.BASE_SAVE_PATH.mkdir(parents=True, exist_ok=True)
 
-    @patch("src.devildex.fetcher.Path.resolve")
+    @patch("devildex.fetcher.Path.resolve")
     def test_is_path_safe_raises_exception(self, mock_resolve: MagicMock) -> None:
         """Test is path safe raises exception."""
         mock_resolve.side_effect = OSError("Permission denied")
@@ -39,7 +39,7 @@ class TestPackageSourceFetcherCoverage:
             zf.writestr("safe_file.txt", "content")
 
         with patch(
-            "src.devildex.fetcher.PackageSourceFetcher._is_member_name_safe",
+            "devildex.fetcher.PackageSourceFetcher._is_member_name_safe",
             return_value=False,
         ):
             assert not PackageSourceFetcher._extract_zip_safely(
@@ -87,7 +87,7 @@ class TestPackageSourceFetcherCoverage:
         ]
 
         with patch(
-            "src.devildex.fetcher.PackageSourceFetcher._is_member_name_safe",
+            "devildex.fetcher.PackageSourceFetcher._is_member_name_safe",
             return_value=False,
         ):
             tar_path = self.BASE_SAVE_PATH / "dummy.tar.gz"
@@ -152,7 +152,7 @@ class TestPackageSourceFetcherCoverage:
             == single_file_dir
         )
 
-    @patch("src.devildex.fetcher.shutil.move")
+    @patch("devildex.fetcher.shutil.move")
     def test_move_extracted_content_os_error(self, mock_shutil_move: MagicMock) -> None:
         """Test move extracted content raises exception."""
         mock_shutil_move.side_effect = OSError("Permission denied")
@@ -171,22 +171,22 @@ class TestPackageSourceFetcherCoverage:
     ) -> dict[str, MagicMock]:
         """Fixture to provide mocked download and extract dependencies."""
         mock_download_file = mocker.patch(
-            "src.devildex.fetcher.PackageSourceFetcher._download_file"
+            "devildex.fetcher.PackageSourceFetcher._download_file"
         )
         mock_extract_archive = mocker.patch(
-            "src.devildex.fetcher.PackageSourceFetcher._extract_archive"
+            "devildex.fetcher.PackageSourceFetcher._extract_archive"
         )
         mock_determine_content_source_dir = mocker.patch(
-            "src.devildex.fetcher.PackageSourceFetcher._determine_content_source_dir"
+            "devildex.fetcher.PackageSourceFetcher._determine_content_source_dir"
         )
         mock_cleanup_target_dir = mocker.patch(
-            "src.devildex.fetcher.PackageSourceFetcher._cleanup_target_dir_content"
+            "devildex.fetcher.PackageSourceFetcher._cleanup_target_dir_content"
         )
         mock_ensure_target_dir = mocker.patch(
-            "src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists"
+            "devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists"
         )
         mock_move = mocker.patch(
-            "src.devildex.fetcher.PackageSourceFetcher._move_extracted_content"
+            "devildex.fetcher.PackageSourceFetcher._move_extracted_content"
         )
         return {
             "download_file": mock_download_file,
@@ -226,9 +226,7 @@ class TestPackageSourceFetcherCoverage:
         )
         assert not temp_base_dir.exists()
 
-    @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._extract_archive", return_value=False
-    )
+    @patch("devildex.fetcher.PackageSourceFetcher._extract_archive", return_value=False)
     def test_download_and_extract_archive_extract_fails(
         self, mock_extract_archive: MagicMock
     ) -> None:
@@ -238,11 +236,9 @@ class TestPackageSourceFetcherCoverage:
             "http://example.com/archive.zip", self.BASE_SAVE_PATH / "temp_extract_fails"
         )
 
+    @patch("devildex.fetcher.PackageSourceFetcher._extract_archive", return_value=True)
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._extract_archive", return_value=True
-    )
-    @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._determine_content_source_dir",
+        "devildex.fetcher.PackageSourceFetcher._determine_content_source_dir",
         return_value=None,
     )
     def test_download_and_extract_archive_determine_content_fails(
@@ -257,12 +253,10 @@ class TestPackageSourceFetcherCoverage:
             self.BASE_SAVE_PATH / "temp_determine_fails",
         )
 
+    @patch("devildex.fetcher.PackageSourceFetcher._extract_archive", return_value=True)
+    @patch("devildex.fetcher.PackageSourceFetcher._determine_content_source_dir")
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._extract_archive", return_value=True
-    )
-    @patch("src.devildex.fetcher.PackageSourceFetcher._determine_content_source_dir")
-    @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
+        "devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
         return_value=False,
     )
     def test_download_and_extract_archive_ensure_target_fails(
@@ -292,12 +286,12 @@ class TestPackageSourceFetcherCoverage:
             self.BASE_SAVE_PATH / "temp_requests_exception",
         )
 
-    @patch("src.devildex.fetcher.shutil.which", return_value=None)
+    @patch("devildex.fetcher.shutil.which", return_value=None)
     def test_run_git_command_git_not_found(self, mock_which: MagicMock) -> None:
         """Test run git command when git is not found."""
         assert PackageSourceFetcher._run_git_command(["git", "clone", "url"]) is None
 
-    @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
+    @patch("devildex.fetcher.shutil.which", return_value="/usr/bin/git")
     @patch("subprocess.run")
     def test_run_git_command_non_git_first_element(
         self, mock_subprocess_run: MagicMock, mock_which: MagicMock
@@ -319,9 +313,9 @@ class TestPackageSourceFetcherCoverage:
         )
         assert result == mock_process
 
-    @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
+    @patch("devildex.fetcher.shutil.which", return_value="/usr/bin/git")
     @patch("subprocess.run")
-    @patch("src.devildex.fetcher.logger")
+    @patch("devildex.fetcher.logger")
     def test_run_git_command_stdout_logged(
         self,
         mock_logger: MagicMock,
@@ -334,14 +328,14 @@ class TestPackageSourceFetcherCoverage:
         PackageSourceFetcher._run_git_command(["git", "status"])
         mock_logger.debug.assert_any_call("Git stdout:\nsome stdout")
 
-    @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
+    @patch("devildex.fetcher.shutil.which", return_value="/usr/bin/git")
     @patch(
         "subprocess.run",
         side_effect=subprocess.CalledProcessError(
             1, "git clone", stderr="error output"
         ),
     )
-    @patch("src.devildex.fetcher.logger")
+    @patch("devildex.fetcher.logger")
     def test_run_git_command_called_process_error_caught(
         self,
         mock_logger: MagicMock,
@@ -353,9 +347,9 @@ class TestPackageSourceFetcherCoverage:
         assert result is None
         mock_logger.warning.assert_not_called()
 
-    @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
+    @patch("devildex.fetcher.shutil.which", return_value="/usr/bin/git")
     @patch("subprocess.run")
-    @patch("src.devildex.fetcher.logger")
+    @patch("devildex.fetcher.logger")
     def test_run_git_command_stderr_warning_logged(
         self,
         mock_logger: MagicMock,
@@ -368,9 +362,9 @@ class TestPackageSourceFetcherCoverage:
         PackageSourceFetcher._run_git_command(["git", "pull"], check_errors=False)
         mock_logger.warning.assert_any_call("Git stderr:\nsome error")
 
-    @patch("src.devildex.fetcher.shutil.which", return_value="/usr/bin/git")
+    @patch("devildex.fetcher.shutil.which", return_value="/usr/bin/git")
     @patch("subprocess.run")
-    @patch("src.devildex.fetcher.logger")
+    @patch("devildex.fetcher.logger")
     def test_run_git_command_stderr_info_logged(
         self,
         mock_logger: MagicMock,
@@ -383,9 +377,7 @@ class TestPackageSourceFetcherCoverage:
         PackageSourceFetcher._run_git_command(["git", "status"])
         mock_logger.debug.assert_any_call("Git stderr (info):\nsome info")
 
-    @patch(
-        "src.devildex.fetcher.shutil.rmtree", side_effect=OSError("Permission denied")
-    )
+    @patch("devildex.fetcher.shutil.rmtree", side_effect=OSError("Permission denied"))
     def test_cleanup_git_dir_from_path_os_error(self, mock_rmtree: MagicMock) -> None:
         """Test cleanup git dir from path raises exception."""
         git_dir = self.BASE_SAVE_PATH / ".git"
@@ -434,7 +426,7 @@ class TestPackageSourceFetcherCoverage:
         )
 
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._download_and_extract_archive",
+        "devildex.fetcher.PackageSourceFetcher._download_and_extract_archive",
         return_value=False,
     )
     def test_try_fetch_tag_github_archive_all_attempts_fail(
@@ -447,7 +439,7 @@ class TestPackageSourceFetcherCoverage:
         assert not fetcher._try_fetch_tag_github_archive(repo_url, tag_variations)
 
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
+        "devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
         return_value=False,
     )
     def test_try_fetch_tag_shallow_clone_ensure_target_fails(
@@ -472,7 +464,7 @@ class TestPackageSourceFetcherCoverage:
         assert not (destination_dir / ".git").exists()
         assert (destination_dir / "file.txt").exists()
 
-    @patch("src.devildex.fetcher.shutil.copytree", side_effect=OSError("Disk full"))
+    @patch("devildex.fetcher.shutil.copytree", side_effect=OSError("Disk full"))
     def test_copy_cloned_content_copytree_os_error(
         self, mock_copytree: MagicMock
     ) -> None:
@@ -486,9 +478,7 @@ class TestPackageSourceFetcherCoverage:
             source_dir, destination_dir
         )
 
-    @patch(
-        "src.devildex.fetcher.shutil.copy2", side_effect=OSError("Permission denied")
-    )
+    @patch("devildex.fetcher.shutil.copy2", side_effect=OSError("Permission denied"))
     def test_copy_cloned_content_copy2_os_error(self, mock_copy2: MagicMock) -> None:
         """Test copy cloned content raises exception."""
         source_dir = self.BASE_SAVE_PATH / "source_file_error"
@@ -500,10 +490,10 @@ class TestPackageSourceFetcherCoverage:
             source_dir, destination_dir
         )
 
-    @patch("src.devildex.fetcher.PackageSourceFetcher._run_git_command")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists")
-    @patch("src.devildex.fetcher.PackageSourceFetcher._copy_cloned_content")
-    @patch("src.devildex.fetcher.logger")
+    @patch("devildex.fetcher.PackageSourceFetcher._run_git_command")
+    @patch("devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists")
+    @patch("devildex.fetcher.PackageSourceFetcher._copy_cloned_content")
+    @patch("devildex.fetcher.logger")
     def test_try_fetch_tag_variations_checkout_success_copy_success(
         self,
         mock_logger: MagicMock,
@@ -523,9 +513,9 @@ class TestPackageSourceFetcherCoverage:
             f"Checkout of tag 'v1.0.0' successful in {temp_clone_dir}."
         )
 
-    @patch("src.devildex.fetcher.PackageSourceFetcher._run_git_command")
+    @patch("devildex.fetcher.PackageSourceFetcher._run_git_command")
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
+        "devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
         return_value=False,
     )
     def test_try_fetch_tag_variations_ensure_target_fails(
@@ -538,9 +528,9 @@ class TestPackageSourceFetcherCoverage:
         temp_clone_dir.mkdir()
         assert not fetcher._try_fetch_tag_variations(["v1.0.0"], temp_clone_dir)
 
-    @patch("src.devildex.fetcher.PackageSourceFetcher._run_git_command")
+    @patch("devildex.fetcher.PackageSourceFetcher._run_git_command")
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._try_fetch_tag_variations",
+        "devildex.fetcher.PackageSourceFetcher._try_fetch_tag_variations",
         return_value=True,
     )
     def test_try_fetch_tag_full_clone_checkout_success(
@@ -553,9 +543,7 @@ class TestPackageSourceFetcherCoverage:
             "http://example.com/repo.git", ["v1.0.0"]
         )
 
-    @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._run_git_command", return_value=None
-    )
+    @patch("devildex.fetcher.PackageSourceFetcher._run_git_command", return_value=None)
     def test_try_fetch_tag_full_clone_checkout_clone_fails(
         self, mock_run_git_command: MagicMock
     ) -> None:
@@ -571,25 +559,25 @@ class TestPackageSourceFetcherCoverage:
         fetcher = PackageSourceFetcher(self.BASE_SAVE_PATH, package_info)
         with (
             patch(
-                "src.devildex.fetcher.PackageSourceFetcher._try_fetch_tag_github_archive",
+                "devildex.fetcher.PackageSourceFetcher._try_fetch_tag_github_archive",
                 return_value=False,
             ),
             patch(
-                "src.devildex.fetcher.PackageSourceFetcher._try_fetch_tag_shallow_clone",
+                "devildex.fetcher.PackageSourceFetcher._try_fetch_tag_shallow_clone",
                 return_value=False,
             ),
             patch(
-                "src.devildex.fetcher.PackageSourceFetcher._try_fetch_tag_full_clone_checkout",
+                "devildex.fetcher.PackageSourceFetcher._try_fetch_tag_full_clone_checkout",
                 return_value=False,
             ),
         ):
             fetcher._fetch_from_vcs_tag("http://example.com/repo.git")
 
     @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
+        "devildex.fetcher.PackageSourceFetcher._ensure_target_dir_exists",
         return_value=False,
     )
-    @patch("src.devildex.fetcher.logger")
+    @patch("devildex.fetcher.logger")
     def test_fetch_from_vcs_main_ensure_target_fails(
         self, mock_logger: MagicMock, mock_ensure_target_dir_exists: MagicMock
     ) -> None:
@@ -606,7 +594,7 @@ class TestPackageSourceFetcherCoverage:
         fetcher.download_target_path.mkdir(parents=True, exist_ok=True)
         (fetcher.download_target_path / "dummy_file.txt").touch()
         with patch(
-            "src.devildex.fetcher.PackageSourceFetcher._cleanup_git_dir_from_path"
+            "devildex.fetcher.PackageSourceFetcher._cleanup_git_dir_from_path"
         ) as mock_cleanup:
             success, is_master, path_str = fetcher.fetch()
             mock_cleanup.assert_called_once_with(fetcher.download_target_path)
@@ -614,11 +602,9 @@ class TestPackageSourceFetcherCoverage:
             assert not is_master
             assert path_str == str(fetcher.download_target_path)
 
-    @patch(
-        "src.devildex.fetcher.PackageSourceFetcher._fetch_from_pypi", return_value=False
-    )
-    @patch("src.devildex.fetcher.PackageSourceFetcher._get_vcs_url", return_value=None)
-    @patch("src.devildex.fetcher.PackageSourceFetcher._cleanup_target_dir_content")
+    @patch("devildex.fetcher.PackageSourceFetcher._fetch_from_pypi", return_value=False)
+    @patch("devildex.fetcher.PackageSourceFetcher._get_vcs_url", return_value=None)
+    @patch("devildex.fetcher.PackageSourceFetcher._cleanup_target_dir_content")
     def test_fetch_all_methods_fail_cleanup_called(
         self,
         mock_cleanup_target_dir_content: MagicMock,

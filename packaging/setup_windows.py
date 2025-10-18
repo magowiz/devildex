@@ -1,6 +1,6 @@
 """Cx_freeze module to setup windows."""
 
-from cx_Freeze import Executable, setup
+from cx_Freeze import Executable, setup  # type: ignore
 
 build_exe_options = {
     "packages": ["wx", "sqlalchemy", "requests", "fastmcp", "devildex"],

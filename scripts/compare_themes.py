@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import cast
 
 import yaml
-from dev_themes_server import start_server
+from dev_themes_server import start_server  # type: ignore
 
 from devildex.docstrings.docstrings_src import DocStringsSrc
 from devildex.grabbers.mkdocs_builder import MkDocsBuilder

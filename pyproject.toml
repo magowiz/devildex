@@ -60,6 +60,7 @@ sphinx-copybutton = "^0.5.2"
 [tool.poetry.group.lint.dependencies]
 ruff = "^0.13.3"
 black = "^25.9.0"
+mypy = "^1.10.0"
 
 
 [project.scripts]

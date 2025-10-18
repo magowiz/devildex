@@ -2,7 +2,7 @@
 
 from typing import Any, Callable
 
-import wx
+import wx  # type: ignore
 import wx.grid
 
 from devildex.constants import COL_WIDTHS, COLUMNS_ORDER
