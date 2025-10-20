@@ -166,15 +166,12 @@ class SphinxBuilder(AbstractGrabber):
                         project_root_for_install=sphinx_build_ctx.project_install_root,
                         doc_requirements_path=sphinx_build_ctx.doc_requirements_file,
                         base_packages_to_install=[
-                            "sphinx==7.3.7",
-                            "sphinx-autoapi==1.8.4",
-                            "astroid<2.12",
-                            "sphinx-book-theme",
-                            "sphinx-notfound-page",
-                            "sphinx-copybutton",
-                            "sphinx-tabs",
+                            "sphinx",
                             "pallets-sphinx-themes",
                             "sphinxcontrib.log-cabinet",
+                            "sphinx-tabs",
+                            "sphinx-autoapi",
+                            "sphinx-copybutton",
                         ],
                     )
                     logger.debug(f"install_project_and_dependencies_in_venv returned: {install_success}")
