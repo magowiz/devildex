@@ -131,15 +131,15 @@ def test_perform_generation_in_thread_handles_success(
     mock_call_after = mocker.patch("wx.CallAfter")
     mock_core.generate_docset.return_value = "mock_task_id"
     mock_core.get_task_status.side_effect = [
-        {"status": "IN_PROGRESS", "result": None}, # First call
-        {"status": "COMPLETED", "result": (True, "/fake/path")}, # Second call
+        {"status": "IN_PROGRESS", "result": None},
+        {"status": "COMPLETED", "result": (True, "/fake/path")},
     ]
 
     task_manager._perform_generation_in_thread(package_data, row_index)
 
     mock_core.generate_docset.assert_called_once_with(package_data)
     mock_core.get_task_status.assert_called_with("mock_task_id")
-    assert mock_core.get_task_status.call_count == 2 # Called twice due to side_effect
+    assert mock_core.get_task_status.call_count == CB_CALL_COUNT
     mock_call_after.assert_called_once_with(
         task_manager._handle_task_completion,
         True,
@@ -167,7 +167,7 @@ def test_perform_generation_in_thread_handles_failure(
 
     mock_core.generate_docset.assert_called_once_with(package_data)
     mock_core.get_task_status.assert_called_with("mock_task_id_fail")
-    assert mock_core.get_task_status.call_count == 2
+    assert mock_core.get_task_status.call_count == CB_CALL_COUNT
     mock_call_after.assert_called_once_with(
         task_manager._handle_task_completion,
         False,

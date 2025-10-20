@@ -131,11 +131,14 @@ class DevilDexCore:
             return None
 
         logger.info(
-            f"Core: Validating generation inputs for {package_name} v{package_version}. "
+            "Core: Validating generation inputs "
+            f"for {package_name} v{package_version}. "
             f"Force regeneration: {force}"
         )
         existing_docsets = self.search_for_docset(package_name, package_version)
-        logger.info(f"Core: Found existing docsets (status 'COMPLETED'): {existing_docsets}")
+        logger.info(
+            f"Core: Found existing docsets (status 'COMPLETED'): {existing_docsets}"
+        )
         if existing_docsets and not force:
             logger.info(
                 f"Core: Docset for {package_name} v{package_version} already exists "

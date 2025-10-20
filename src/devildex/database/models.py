@@ -181,7 +181,7 @@ class ProjectDocRequirements(Base):  # type: ignore[valid-type,misc]
     package_name = Column(
         String, ForeignKey("package_info.package_name"), nullable=False, index=True
     )
-    builder_type = Column(String, nullable=False, index=True)  # e.g., "sphinx", "mkdocs"
+    builder_type = Column(String, nullable=False, index=True)
     _requirements_json = Column("requirements_json", Text, nullable=True)
 
     package_info = relationship("PackageInfo", backref="doc_requirements")
@@ -218,7 +218,7 @@ class ProjectDocRequirements(Base):  # type: ignore[valid-type,misc]
     def __repr__(self) -> str:
         """Implement repr method."""
         return (
-            f"<ProjectDocRequirements(id={self.id}, package_name='{self.package_name}', "
+            f"<ProjectDocRequirements(id={self.id}, "
+            f"package_name='{self.package_name}', "
             f"builder_type='{self.builder_type}')>"
         )
-

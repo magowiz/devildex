@@ -603,7 +603,10 @@ class PackageSourceFetcher:
         return False
 
     def fetch(self) -> tuple[bool, bool, str | None]:
-        logger.debug(f"Fetcher.fetch called for {self.package_name} v{self.package_version}")
+        """Fetch repository."""
+        logger.debug(
+            f"Fetcher.fetch called for {self.package_name} v{self.package_version}"
+        )
         """Fetch repository.
 
         Returns:
@@ -628,7 +631,9 @@ class PackageSourceFetcher:
             self._cleanup_git_dir_from_path(self.download_target_path)
             fetch_successful = True
             path_to_return = str(self.download_target_path)
-            logger.debug(f"Fetcher: Found existing content at {self.download_target_path}")
+            logger.debug(
+                f"Fetcher: Found existing content at {self.download_target_path}"
+            )
         if not fetch_successful and self._fetch_from_pypi():
             fetch_successful = True
             path_to_return = str(self.download_target_path)
@@ -652,5 +657,8 @@ class PackageSourceFetcher:
             self._cleanup_target_dir_content()
             logger.debug("Fetcher: Fetch failed, cleaning up target directory.")
 
-        logger.debug(f"Fetcher.fetch returning: {fetch_successful}, {is_master_branch_fetched}, {path_to_return}")
+        logger.debug(
+            f"Fetcher.fetch returning: {fetch_successful}, "
+            f"{is_master_branch_fetched}, {path_to_return}"
+        )
         return fetch_successful, is_master_branch_fetched, path_to_return

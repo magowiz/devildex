@@ -2,6 +2,7 @@
 
 import logging
 import threading
+import time
 from typing import Callable, Optional
 
 import wx
@@ -127,7 +128,7 @@ class GenerationTaskManager:
             )
             return
 
-        import time  # Import time for sleep
+
 
         try:
             if not self.core:

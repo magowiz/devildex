@@ -47,7 +47,10 @@ def _install_base_packages_in_venv(
             ", ".join(packages_list),
             project_name,
         )
-        logger.debug(f"pip install command failed for {project_name}. Return code: {ret_code}")
+        logger.debug(
+            f"pip install command failed for {project_name}. "
+            f"Return code: {ret_code}"
+        )
         logger.debug(f"pip install stdout: {stdout.strip()}")
         logger.debug(f"pip install stderr: {stderr.strip()}")
         return False

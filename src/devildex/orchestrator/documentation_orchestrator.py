@@ -80,6 +80,7 @@ class Orchestrator:
         return source_path_candidate
 
     def fetch_repo(self) -> bool:
+        """Fetch the repository sources."""
         logger.debug(f"Orchestrator.fetch_repo called for {self.package_details.name}")
         """Ensure that project sources are available, either from an initial path.
 
@@ -124,8 +125,6 @@ class Orchestrator:
             source_path_candidate = self._fetch_repo_fetch(
                 fetcher_storage_base, package_info_for_fetcher
             )
-            # The _fetch_repo_fetch method now directly returns the source_path_candidate
-            # No unpacking needed here.
             logger.debug(f"_fetch_repo_fetch() returned: {source_path_candidate}")
 
         if (
@@ -138,7 +137,10 @@ class Orchestrator:
                 "Orchestrator: Effective source path set to: "
                 f"{self._effective_source_path}"
             )
-            logger.debug(f"Orchestrator.fetch_repo returning True. Effective path: {self._effective_source_path}")
+            logger.debug(
+                "Orchestrator.fetch_repo returning True. Effective path:"
+                f" {self._effective_source_path}"
+            )
             return True
         else:
             logger.error(
@@ -330,6 +332,7 @@ class Orchestrator:
                 return False
 
     def start_scan(self) -> None:
+        """Start the scanning process."""
         logger.debug(f"Orchestrator.start_scan called for {self.package_details.name}")
         """Start the scanning process."""
         self.detected_doc_type = "unknown"
@@ -348,7 +351,9 @@ class Orchestrator:
             )
 
             sphinx_path = is_sphinx_project(scan_path_str)
-            logger.debug(f"is_sphinx_project('{scan_path_str}') returned: {sphinx_path}")
+            logger.debug(
+                f"is_sphinx_project('{scan_path_str}') returned: {sphinx_path}"
+            )
             if sphinx_path:
                 self.detected_doc_type = "sphinx"
                 self.sphinx_doc_path = sphinx_path

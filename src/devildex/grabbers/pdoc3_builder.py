@@ -93,7 +93,7 @@ class Pdoc3Builder(AbstractGrabber):
 
             env = {"PYTHONPATH": str(pythonpath_parent)}
 
-            stdout, stderr, returncode = execute_command(
+            _, stderr, returncode = execute_command(
                 pdoc_command,
                 cwd=pythonpath_parent,
                 env=env,

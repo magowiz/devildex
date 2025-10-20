@@ -6,7 +6,7 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Optional
+from typing import IO, Optional
 
 import requests
 
@@ -45,7 +45,9 @@ class McpServerManager:
             os.path.abspath("src") + os.pathsep + env.get("PYTHONPATH", "")
         )
 
-        server_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "server.py"))
+        server_file_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "server.py")
+        )
         server_command = [
             sys.executable,
             server_file_path,
@@ -60,7 +62,7 @@ class McpServerManager:
             text=True,
         )
 
-        def log_output(stream, stream_name):
+        def log_output(stream: IO, stream_name: str) -> None:
             if stream:
                 for line in iter(stream.readline, ""):
                     logger.info(f"MCP Server ({stream_name}): {line.strip()}")
@@ -101,7 +103,7 @@ class McpServerManager:
                 return False
             try:
                 response = requests.get(self.health_url, timeout=1)
-                if response.status_code == 200:
+                if response.ok:
                     logger.info("MCP server is running and healthy.")
                     return True
             except requests.exceptions.ConnectionError:
@@ -133,7 +135,9 @@ class McpServerManager:
                     self.server_process.terminate()
                     self.server_process.wait(timeout=5)
                     if self.server_process.poll() is None:
-                        logger.warning("MCP server process did not terminate. Killing...")
+                        logger.warning(
+                            "MCP server process did not terminate. Killing..."
+                        )
                         self.server_process.kill()
 
         self.server_thread = None
