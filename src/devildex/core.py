@@ -130,14 +130,14 @@ class DevilDexCore:
             self._tasks[task_id]["status"] = TaskStatus.FAILED
             return None
 
-        print(
+        logger.info(
             f"Core: Validating generation inputs for {package_name} v{package_version}. "
             f"Force regeneration: {force}"
         )
         existing_docsets = self.search_for_docset(package_name, package_version)
-        print(f"Core: Found existing docsets (status 'COMPLETED'): {existing_docsets}")
+        logger.info(f"Core: Found existing docsets (status 'COMPLETED'): {existing_docsets}")
         if existing_docsets and not force:
-            print(
+            logger.info(
                 f"Core: Docset for {package_name} v{package_version} already exists "
                 "and force is False. Aborting generation."
             )
