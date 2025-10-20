@@ -1,5 +1,5 @@
 [project]
-# Create release 0.2.0
+
 name = "devildex"
 version = "0.2.2"
 description = "A desktop application for discovering, generating, and viewing Python package documentation (docsets). It scans your projects for dependencies, builds their documentation, and provides a unified interface to browse it all locally."
@@ -68,7 +68,6 @@ devildex = "devildex.main:main"
 devildex-register-project = "devildex.utils.companion:main"
 devildex-gemini-setup = "devildex.setup.gemini_cli:main"
 devildex-alembic = "scripts.run_alembic:main"
-devildex-import-recipes = "scripts.import_recipes:main"
 devildex-import-recipes = "scripts.import_recipes:main"
 
 [build-system]
