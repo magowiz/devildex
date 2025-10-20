@@ -147,7 +147,7 @@ class Orchestrator:
                 f"Evaluated path: {source_path_candidate}"
             )
             self._effective_source_path = None
-            logger.debug(f"Orchestrator.fetch_repo returning False.")
+            logger.debug("Orchestrator.fetch_repo returning False.")
             return False
 
     @property
@@ -339,7 +339,7 @@ class Orchestrator:
                 " Scan cannot proceed."
             )
             self.detected_doc_type = "unknown"
-            logger.debug(f"Orchestrator.start_scan returning due to failed fetch_repo.")
+            logger.debug("Orchestrator.start_scan returning due to failed fetch_repo.")
             return
         if self._effective_source_path:
             scan_path_str = str(self._effective_source_path)
@@ -376,7 +376,7 @@ class Orchestrator:
                 "fetch_repo reported success. This should not happen."
             )
             self.detected_doc_type = "unknown"
-            logger.debug(f"Orchestrator.start_scan _effective_source_path is None.")
+            logger.debug("Orchestrator.start_scan _effective_source_path is None.")
 
     def get_detected_doc_type(self) -> str:
         """Get detected document type."""

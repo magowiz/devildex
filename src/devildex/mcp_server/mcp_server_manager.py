@@ -10,7 +10,6 @@ from typing import Optional
 
 import requests
 
-
 from devildex.config_manager import ConfigManager
 
 SERVER_STARTUP_TIMEOUT_SECONDS = 30

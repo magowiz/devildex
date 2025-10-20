@@ -2,18 +2,13 @@ import argparse
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import requests
-
-from devildex.database.db_manager import DatabaseManager, init_db
-
-from devildex.database.models import ProjectDocRequirements, PackageInfo, Base
-
 from sqlalchemy.orm import Session
 
-from sqlalchemy import create_engine
-
-
+from devildex.database.db_manager import DatabaseManager, init_db
+from devildex.database.models import PackageInfo, ProjectDocRequirements
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +23,10 @@ class RecipeImporter:
 
 
     def _load_json_from_path(self, file_path: Path) -> List[Dict[str, Any]] | None:
-
         """Loads JSON data from a local file path."""
-
         try:
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
 
                 return json.load(f)
 
@@ -46,9 +39,7 @@ class RecipeImporter:
 
 
     def _fetch_json_from_url(self, url: str) -> List[Dict[str, Any]] | None:
-
         """Fetches JSON data from a URL."""
-
         try:
 
             response = requests.get(url, timeout=10)
@@ -88,9 +79,7 @@ class RecipeImporter:
         notes: str | None = None
 
     ) -> bool:
-
         """Saves or updates ProjectDocRequirements in the database."""
-
         # Ensure PackageInfo exists
 
         package_info = self.db_session.query(PackageInfo).filter_by(package_name=package_name).first()
@@ -151,7 +140,7 @@ class RecipeImporter:
 
             logger.info(f"Added new ProjectDocRequirements for {package_name} ({builder_type})")
 
-            
+
 
             try:
 
@@ -170,15 +159,11 @@ class RecipeImporter:
 
 
     def import_recipes(self, source: str | Path) -> bool:
-
-        """
-
-        Imports documentation recipes from a local file path or a URL.
+        """Imports documentation recipes from a local file path or a URL.
 
         Recipes are then saved/updated in the database.
 
         """
-
         recipes_data: List[Dict[str, Any]] | None = None
 
 
@@ -291,11 +276,11 @@ def main():
 
     db_manager = DatabaseManager(database_url=args.db_url)
 
-    
+
 
     importer = RecipeImporter(db_session=db_manager.get_session())
 
-    
+
 
     source_path_or_url: str | Path
 
