@@ -1,4 +1,5 @@
 """Recipe importer module."""
+
 import argparse
 import json
 import logging
