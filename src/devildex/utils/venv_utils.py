@@ -103,6 +103,14 @@ def _install_project_editable_in_venv(
         project_name,
         project_root_for_install,
     )
+    install_cmd = [
+        pip_executable,
+        "install",
+        "--disable-pip-version-check",
+        "--no-python-version-warning",
+        "-e",
+        str(project_root_for_install),
+    ]
     _, _, ret_code = execute_command(
         install_cmd,
         f"Editable install of {project_name}",

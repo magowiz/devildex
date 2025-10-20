@@ -129,11 +129,17 @@ def test_perform_generation_in_thread_handles_success(
     package_data = {"id": "pkg-123", "name": "test-package"}
     row_index = 1
     mock_call_after = mocker.patch("wx.CallAfter")
-    mock_core.generate_docset.return_value = (True, "/fake/path")
+    mock_core.generate_docset.return_value = "mock_task_id"
+    mock_core.get_task_status.side_effect = [
+        {"status": "IN_PROGRESS", "result": None}, # First call
+        {"status": "COMPLETED", "result": (True, "/fake/path")}, # Second call
+    ]
 
     task_manager._perform_generation_in_thread(package_data, row_index)
 
     mock_core.generate_docset.assert_called_once_with(package_data)
+    mock_core.get_task_status.assert_called_with("mock_task_id")
+    assert mock_core.get_task_status.call_count == 2 # Called twice due to side_effect
     mock_call_after.assert_called_once_with(
         task_manager._handle_task_completion,
         True,
@@ -151,11 +157,17 @@ def test_perform_generation_in_thread_handles_failure(
     package_data = {"id": "pkg-123", "name": "test-package"}
     row_index = 1
     mock_call_after = mocker.patch("wx.CallAfter")
-    mock_core.generate_docset.return_value = (False, "Explosion!")
+    mock_core.generate_docset.return_value = "mock_task_id_fail"
+    mock_core.get_task_status.side_effect = [
+        {"status": "IN_PROGRESS", "result": None},
+        {"status": "FAILED", "result": (False, "Explosion!")},
+    ]
 
     task_manager._perform_generation_in_thread(package_data, row_index)
 
     mock_core.generate_docset.assert_called_once_with(package_data)
+    mock_core.get_task_status.assert_called_with("mock_task_id_fail")
+    assert mock_core.get_task_status.call_count == 2
     mock_call_after.assert_called_once_with(
         task_manager._handle_task_completion,
         False,
