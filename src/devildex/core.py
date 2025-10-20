@@ -429,13 +429,12 @@ class DevilDexCore:
 
         logger.info("Core: Loading data from database for the grid...")
         with database.get_session() as session:
-            if project_db_name:
-                docsets_to_load_from_db = self._bootstrap_database_read_db(
-                    project_db_name, session
-                )
-                grid_data_to_return = self._bootstrap_database_loop_docsets(
-                    docsets_to_load_from_db
-                )
+            docsets_to_load_from_db = self._bootstrap_database_read_db(
+                project_db_name, session
+            )
+            grid_data_to_return = self._bootstrap_database_loop_docsets(
+                docsets_to_load_from_db
+            )
         return grid_data_to_return
 
     @staticmethod

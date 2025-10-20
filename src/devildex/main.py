@@ -467,18 +467,18 @@ class DevilDexApp(wx.App):
         )
 
         if not project_successfully_set_in_core:
-
             event.Skip()
             return
 
         if not self.core:
-
             event.Skip()
             return
 
+        initial_packages, is_fallback = self._determine_initial_packages_for_view()
+
         self.current_grid_source_data = self.core.bootstrap_database_and_load_data(
-            initial_package_source=[],
-            is_fallback_data=False,
+            initial_package_source=initial_packages,
+            is_fallback_data=is_fallback,
         )
 
         self._update_ui_after_data_load()
@@ -489,7 +489,13 @@ class DevilDexApp(wx.App):
 
     def _can_process_view_change(self) -> bool:
         """Check if the necessary components for the view change are available."""
-        return not self.view_mode_selector or not self.core
+        if not self.view_mode_selector:
+            logger.error("GUI: View mode selector not initialized.")
+            return False
+        if not self.core:
+            logger.error("GUI: Core not initialized.")
+            return False
+        return True
 
     def _handle_core_project_setting(self, selected_view_str: str) -> bool:
         """Set the active project in the core based on the selection."""
