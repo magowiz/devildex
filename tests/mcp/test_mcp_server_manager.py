@@ -1,5 +1,5 @@
 """Test the McpServerManager class."""
-
+import logging
 import os
 import subprocess
 import tempfile
@@ -13,6 +13,7 @@ import requests
 
 from devildex.mcp_server.mcp_server_manager import McpServerManager
 
+logger = logging.getLogger(__name__)
 MOCK_MCP_PORT = 12345
 
 
@@ -42,7 +43,7 @@ def test_mcp_manager_initialization(mcp_manager: McpServerManager) -> None:
 
 
 def test_start_server_success(mcp_manager: McpServerManager) -> None:
-    """Test start server success by actually starting the server and verifying its health."""
+    """Test start server success by starting the server and verifying its health."""
     temp_db_path: Optional[Path] = None
     original_pythonpath: Optional[str] = os.getenv("PYTHONPATH")
     original_db_url_env: Optional[str] = os.getenv("DEVILDEX_MCP_DB_URL")
@@ -62,7 +63,6 @@ def test_start_server_success(mcp_manager: McpServerManager) -> None:
         os.environ["DEVILDEX_MCP_SERVER_PORT"] = str(mcp_manager.mcp_port)
 
         alembic_ini_path = project_root / "src" / "devildex" / "alembic.ini"
-        alembic_script_location = project_root / "src" / "devildex" / "alembic"
 
         alembic_command = [
             "alembic",
@@ -72,7 +72,7 @@ def test_start_server_success(mcp_manager: McpServerManager) -> None:
             "upgrade",
             "head",
         ]
-        print(f"Running alembic command: {' '.join(alembic_command)}")
+        logger.info(f"Running alembic command: {' '.join(alembic_command)}")
         alembic_process = subprocess.run(
             alembic_command,
             env=os.environ,
@@ -80,9 +80,9 @@ def test_start_server_success(mcp_manager: McpServerManager) -> None:
             text=True,
             check=True,
         )
-        print(f"Alembic stdout:\n{alembic_process.stdout}")
+        logger.info(f"Alembic stdout:\n{alembic_process.stdout}")
         if alembic_process.stderr:
-            print(f"Alembic stderr:\n{alembic_process.stderr}")
+            logger.error(f"Alembic stderr:\n{alembic_process.stderr}")
 
         started = mcp_manager.start_server(db_url)
         assert started is True
@@ -96,7 +96,6 @@ def test_start_server_success(mcp_manager: McpServerManager) -> None:
         mcp_manager.stop_server()
         assert mcp_manager.is_server_running() is False
 
-        # 7. Cleanup environment variables
         if original_pythonpath is not None:
             os.environ["PYTHONPATH"] = original_pythonpath
         elif "PYTHONPATH" in os.environ:
