@@ -170,3 +170,55 @@ class Docset(Base):  # type: ignore[valid-type,misc]
             f"<Docset(id={self.id}, name='{self.package_name}', "
             f"version='{self.package_version}')>"
         )
+
+
+class ProjectDocRequirements(Base):  # type: ignore[valid-type,misc]
+    """Model for project-specific documentation build requirements."""
+
+    __tablename__ = "project_doc_requirements"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    package_name = Column(
+        String, ForeignKey("package_info.package_name"), nullable=False, index=True
+    )
+    builder_type = Column(String, nullable=False, index=True)  # e.g., "sphinx", "mkdocs"
+    _requirements_json = Column("requirements_json", Text, nullable=True)
+
+    package_info = relationship("PackageInfo", backref="doc_requirements")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "package_name", "builder_type", name="uq_project_doc_requirements"
+        ),
+    )
+
+    @property
+    def requirements(self) -> list[str]:
+        """Get requirements as a list of strings."""
+        if self._requirements_json:
+            try:
+                return json.loads(self._requirements_json)
+            except json.JSONDecodeError:
+                logger = logging.getLogger(__name__)
+                logger.exception(
+                    f"Error decoding requirements JSON for {self.package_name} "
+                    f"builder {self.builder_type}: {self._requirements_json}"
+                )
+                return []
+        return []
+
+    @requirements.setter
+    def requirements(self, value: list[str]) -> None:
+        """Set requirements, converting it to JSON."""
+        if value:
+            self._requirements_json = json.dumps(value)
+        else:
+            self._requirements_json = None
+
+    def __repr__(self) -> str:
+        """Implement repr method."""
+        return (
+            f"<ProjectDocRequirements(id={self.id}, package_name='{self.package_name}', "
+            f"builder_type='{self.builder_type}')>"
+        )
+

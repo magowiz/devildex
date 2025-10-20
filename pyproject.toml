@@ -68,6 +68,8 @@ devildex = "devildex.main:main"
 devildex-register-project = "devildex.utils.companion:main"
 devildex-gemini-setup = "devildex.setup.gemini_cli:main"
 devildex-alembic = "scripts.run_alembic:main"
+devildex-import-recipes = "scripts.import_recipes:main"
+devildex-import-recipes = "scripts.import_recipes:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
