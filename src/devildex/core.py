@@ -584,7 +584,7 @@ class DevilDexCore:
         with database.get_session() as session:
             query = select(database.Docset).where(
                 database.Docset.package_name == package_name,
-                database.Docset.status == "Completed",
+                database.Docset.status == TaskStatus.COMPLETED.value,
             )
             if version:
                 query = query.where(database.Docset.package_version == version)
