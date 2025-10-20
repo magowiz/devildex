@@ -8,6 +8,9 @@ import threading
 import time
 from typing import Optional
 
+import requests
+
+
 from devildex.config_manager import ConfigManager
 
 SERVER_STARTUP_TIMEOUT_SECONDS = 30
@@ -56,7 +59,28 @@ class McpServerManager:
             stderr=subprocess.PIPE,
             text=True,
         )
+
+        def log_output(stream, stream_name):
+            if stream:
+                for line in iter(stream.readline, ""):
+                    logger.info(f"MCP Server ({stream_name}): {line.strip()}")
+                stream.close()
+
+        stdout_thread = threading.Thread(
+            target=log_output, args=(self.server_process.stdout, "stdout")
+        )
+        stderr_thread = threading.Thread(
+            target=log_output, args=(self.server_process.stderr, "stderr")
+        )
+        stdout_thread.daemon = True
+        stderr_thread.daemon = True
+        stdout_thread.start()
+        stderr_thread.start()
+
         self.server_process.wait()
+
+        stdout_thread.join()
+        stderr_thread.join()
 
     def start_server(self, db_url: str) -> bool:
         """Start the MCP server in a separate thread and waits for it to be ready."""
@@ -71,12 +95,20 @@ class McpServerManager:
 
         start_time = time.time()
         while time.time() - start_time < SERVER_STARTUP_TIMEOUT_SECONDS:
-            if self.server_process and self.server_process.poll() is None:
-                logger.info("MCP server process is running.")
-                return True
+            if self.server_process and self.server_process.poll() is not None:
+                logger.error("MCP server process terminated unexpectedly.")
+                self.stop_server()
+                return False
+            try:
+                response = requests.get(self.health_url, timeout=1)
+                if response.status_code == 200:
+                    logger.info("MCP server is running and healthy.")
+                    return True
+            except requests.exceptions.ConnectionError:
+                logger.debug("MCP server is not yet available. Retrying...")
             time.sleep(0.5)
 
-        logger.error("MCP server process did not start within the timeout period.")
+        logger.error("MCP server did not become healthy within the timeout period.")
         self.stop_server()
         return False
 
@@ -87,19 +119,23 @@ class McpServerManager:
             return
 
         logger.info("Attempting to shut down MCP server gracefully...")
+        try:
+            requests.post(self.shutdown_url, timeout=1)
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Failed to send shutdown request to MCP server: {e}")
 
         if self.server_thread and self.server_thread.is_alive():
-            logger.info("Waiting for MCP server thread to terminate...")
-            if self.server_process and self.server_process.poll() is None:
-                logger.info("Terminating MCP server process...")
-                self.server_process.terminate()
-                self.server_process.wait(timeout=5)
-                if self.server_process.poll() is None:
-                    logger.warning("MCP server process did not terminate. Killing...")
-                    self.server_process.kill()
             self.server_thread.join(timeout=10)
             if self.server_thread.is_alive():
                 logger.warning("MCP server thread did not terminate gracefully.")
+                if self.server_process and self.server_process.poll() is None:
+                    logger.info("Terminating MCP server process...")
+                    self.server_process.terminate()
+                    self.server_process.wait(timeout=5)
+                    if self.server_process.poll() is None:
+                        logger.warning("MCP server process did not terminate. Killing...")
+                        self.server_process.kill()
+
         self.server_thread = None
         self.server_process = None
         logger.info("MCP server stopped.")

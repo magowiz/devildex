@@ -7,6 +7,7 @@ from typing import Any
 
 from fastmcp import FastMCP
 from markdownify import markdownify
+from starlette.requests import Request
 
 from devildex.core import DevilDexCore
 from devildex.database import db_manager as database
@@ -234,6 +235,14 @@ async def generate_docset(
         "status": "PENDING",
         "message": "Docset generation initiated.",
     }
+
+
+@mcp.custom_route("/mcp/health", methods=["GET"])
+async def health_check(request: Request):
+    """Health check endpoint."""
+    from starlette.responses import JSONResponse
+
+    return JSONResponse({"status": "ok"})
 
 
 if __name__ == "__main__":
