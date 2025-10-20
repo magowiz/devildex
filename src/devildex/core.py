@@ -130,8 +130,17 @@ class DevilDexCore:
             self._tasks[task_id]["status"] = TaskStatus.FAILED
             return None
 
+        print(
+            f"Core: Validating generation inputs for {package_name} v{package_version}. "
+            f"Force regeneration: {force}"
+        )
         existing_docsets = self.search_for_docset(package_name, package_version)
+        print(f"Core: Found existing docsets (status 'COMPLETED'): {existing_docsets}")
         if existing_docsets and not force:
+            print(
+                f"Core: Docset for {package_name} v{package_version} already exists "
+                "and force is False. Aborting generation."
+            )
             self._tasks[task_id]["result"] = (
                 False,
                 f"Docset for {package_name} v{package_version} already exists. "
@@ -205,7 +214,7 @@ class DevilDexCore:
                 .first()
             )
             if docset:
-                docset.status = "Completed"
+                docset.status = TaskStatus.COMPLETED.value
             else:
                 package_info = (
                     session.query(database.PackageInfo)
@@ -223,7 +232,7 @@ class DevilDexCore:
                 docset = database.Docset(
                     package_name=package_name,
                     package_version=package_version,
-                    status="Completed",
+                    status=TaskStatus.COMPLETED.value,
                     package_info=package_info,
                 )
                 session.add(docset)
@@ -574,22 +583,25 @@ class DevilDexCore:
         """Search for docsets matching the given package name and optional version."""
         with database.get_session() as session:
             query = select(database.Docset).where(
-                database.Docset.package_name == package_name
+                database.Docset.package_name == package_name,
+                database.Docset.status == "Completed",
             )
             if version:
                 query = query.where(database.Docset.package_version == version)
             docsets = session.scalars(query).all()
-            return [
-                {
-                    "name": d.package_name,
-                    "version": d.package_version,
-                    "path": str(
-                        self.get_docset_path(d.package_name, d.package_version)
-                    ),
-                    "status": d.status,
-                }
-                for d in docsets
-            ]
+            valid_docsets = []
+            for d in docsets:
+                docset_path = self.get_docset_path(d.package_name, d.package_version)
+                if docset_path:
+                    valid_docsets.append(
+                        {
+                            "name": d.package_name,
+                            "version": d.package_version,
+                            "path": str(docset_path),
+                            "status": d.status,
+                        }
+                    )
+            return valid_docsets
 
     def delete_docset(self, package_name: str, version: Optional[str] = None) -> bool:
         """Delete a docset from the database and its corresponding files."""

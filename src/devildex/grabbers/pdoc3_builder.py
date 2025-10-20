@@ -93,15 +93,15 @@ class Pdoc3Builder(AbstractGrabber):
 
             env = {"PYTHONPATH": str(pythonpath_parent)}
 
-            result = execute_command(
+            stdout, stderr, returncode = execute_command(
                 pdoc_command,
                 cwd=pythonpath_parent,
                 env=env,
                 description=f"Generating pdoc3 documentation for {package_name}",
             )
 
-            if result.returncode != 0:
-                logger.error(f"pdoc3 documentation generation failed: {result.stderr}")
+            if returncode != 0:
+                logger.error(f"pdoc3 documentation generation failed: {stderr}")
                 return False
 
             if not any(output_path.rglob("*.html")):

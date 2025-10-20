@@ -127,6 +127,8 @@ class GenerationTaskManager:
             )
             return
 
+        import time  # Import time for sleep
+
         try:
             if not self.core:
                 error_message = "Error in thread: Core instance not available."
@@ -142,13 +144,43 @@ class GenerationTaskManager:
                 return
 
             logger_task_manager.info(
-                f"Thread: Calling core.generate_docset for {package_name_for_msg}"
+                f"Thread: Initiating core.generate_docset for {package_name_for_msg}"
             )
-            success, message = self.core.generate_docset(package_data)
+            task_id = self.core.generate_docset(package_data)
             logger_task_manager.info(
-                f"Thread: core.generate_docset for {package_name_for_msg}"
-                f" completed. Success: {success}"
+                f"Thread: core.generate_docset for {package_name_for_msg} "
+                f"started with task_id: {task_id}"
             )
+
+            # Poll for task status
+            success = False
+            message = "Task did not complete."
+            while True:
+                task_status_info = self.core.get_task_status(task_id)
+                current_status = task_status_info["status"]
+                task_result = task_status_info["result"]
+
+                if current_status == "COMPLETED":
+                    success, message = task_result
+                    logger_task_manager.info(
+                        f"Thread: Task {task_id} for {package_name_for_msg} "
+                        f"completed. Success: {success}, Message: {message}"
+                    )
+                    break
+                elif current_status == "FAILED":
+                    success, message = task_result
+                    logger_task_manager.error(
+                        f"Thread: Task {task_id} for {package_name_for_msg} "
+                        f"failed. Message: {message}"
+                    )
+                    break
+                else:
+                    logger_task_manager.debug(
+                        f"Thread: Task {task_id} for {package_name_for_msg} "
+                        f"is {current_status}. Polling again..."
+                    )
+                    time.sleep(0.5)  # Poll every 500ms
+
             wx.CallAfter(
                 self._handle_task_completion,
                 success,
