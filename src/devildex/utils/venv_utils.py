@@ -38,7 +38,7 @@ def _install_base_packages_in_venv(
         "--no-python-version-warning",
         *packages_list,
     ]
-    _, _, ret_code = execute_command(
+    stdout, stderr, ret_code = execute_command(
         install_cmd, f"Install/Verify base packages for {project_name}"
     )
     if ret_code != 0:
@@ -47,6 +47,9 @@ def _install_base_packages_in_venv(
             ", ".join(packages_list),
             project_name,
         )
+        logger.debug(f"pip install command failed for {project_name}. Return code: {ret_code}")
+        logger.debug(f"pip install stdout: {stdout.strip()}")
+        logger.debug(f"pip install stderr: {stderr.strip()}")
         return False
     logger.info(
         "Base packages (%s) installed/verified successfully for '%s'.",
@@ -100,14 +103,6 @@ def _install_project_editable_in_venv(
         project_name,
         project_root_for_install,
     )
-    install_cmd = [
-        pip_executable,
-        "install",
-        "--disable-pip-version-check",
-        "--no-python-version-warning",
-        "-e",
-        ".",
-    ]
     _, _, ret_code = execute_command(
         install_cmd,
         f"Editable install of {project_name}",

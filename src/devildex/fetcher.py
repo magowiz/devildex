@@ -603,6 +603,7 @@ class PackageSourceFetcher:
         return False
 
     def fetch(self) -> tuple[bool, bool, str | None]:
+        logger.debug(f"Fetcher.fetch called for {self.package_name} v{self.package_version}")
         """Fetch repository.
 
         Returns:
@@ -627,22 +628,29 @@ class PackageSourceFetcher:
             self._cleanup_git_dir_from_path(self.download_target_path)
             fetch_successful = True
             path_to_return = str(self.download_target_path)
+            logger.debug(f"Fetcher: Found existing content at {self.download_target_path}")
         if not fetch_successful and self._fetch_from_pypi():
             fetch_successful = True
             path_to_return = str(self.download_target_path)
+            logger.debug(f"Fetcher: Successfully fetched from PyPI.")
 
         if not fetch_successful:
             vcs_url = self._get_vcs_url()
+            logger.debug(f"Fetcher: Determined VCS URL: {vcs_url}")
             if vcs_url:
                 if self._fetch_from_vcs_tag(vcs_url):
                     fetch_successful = True
                     path_to_return = str(self.download_target_path)
+                    logger.debug(f"Fetcher: Successfully fetched from VCS tag.")
                 elif self._fetch_from_vcs_main(vcs_url):
                     fetch_successful = True
                     is_master_branch_fetched = True
                     path_to_return = str(self.download_target_path)
+                    logger.debug(f"Fetcher: Successfully fetched from VCS main branch.")
 
         if not fetch_successful:
             self._cleanup_target_dir_content()
+            logger.debug(f"Fetcher: Fetch failed, cleaning up target directory.")
 
+        logger.debug(f"Fetcher.fetch returning: {fetch_successful}, {is_master_branch_fetched}, {path_to_return}")
         return fetch_successful, is_master_branch_fetched, path_to_return

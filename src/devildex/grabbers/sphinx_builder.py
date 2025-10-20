@@ -102,6 +102,7 @@ class SphinxBuilder(AbstractGrabber):
     def generate_docset(
         self, source_path: Path, output_path: Path, context: "BuildContext"
     ) -> str | bool:
+        logger.debug(f"SphinxBuilder.generate_docset called for {context.project_slug}")
         """Generate a docset."""
         logger.info(
             "\n--- Starting Isolated Sphinx Build for %s v%s ---",
@@ -126,6 +127,7 @@ class SphinxBuilder(AbstractGrabber):
         should_proceed = True
 
         if not sphinx_build_ctx.conf_py_file.exists():
+            logger.debug(f"Critical Error: conf.py not found in {sphinx_build_ctx.source_dir}.")
             logger.error(
                 "Critical Error: conf.py not found in %s.", sphinx_build_ctx.source_dir
             )
@@ -151,23 +153,31 @@ class SphinxBuilder(AbstractGrabber):
                 should_proceed = False
 
         if should_proceed:
+            logger.debug(f"Entering IsolatedVenvManager for {context.project_slug}")
             try:
                 with IsolatedVenvManager(
                     project_name=f"{sphinx_build_ctx.project_slug}-"
                     f"{sphinx_build_ctx.version_identifier}"
                 ) as venv:
+                    logger.debug(f"IsolatedVenvManager entered. Venv path: {venv.venv_path}")
                     install_success = install_project_and_dependencies_in_venv(
                         pip_executable=venv.pip_executable,
                         project_name=sphinx_build_ctx.project_slug,
                         project_root_for_install=sphinx_build_ctx.project_install_root,
                         doc_requirements_path=sphinx_build_ctx.doc_requirements_file,
                         base_packages_to_install=[
-                            "sphinx",
+                            "sphinx==7.3.7",
+                            "sphinx-autoapi==1.8.4",
+                            "astroid<2.12",
+                            "sphinx-book-theme",
+                            "sphinx-notfound-page",
+                            "sphinx-copybutton",
+                            "sphinx-tabs",
                             "pallets-sphinx-themes",
                             "sphinxcontrib.log-cabinet",
-                            "sphinx-tabs",
                         ],
                     )
+                    logger.debug(f"install_project_and_dependencies_in_venv returned: {install_success}")
                     if not install_success:
                         logger.error(
                             "CRITICAL: Installation of project/dependencies"
@@ -188,6 +198,7 @@ class SphinxBuilder(AbstractGrabber):
                             str(sphinx_build_ctx.final_output_dir),
                         ]
                         sphinx_process_env = {"LC_ALL": "C"}
+                        logger.debug(f"Executing Sphinx command: {' '.join(sphinx_command_list)}")
                         logger.info(
                             "Executing Sphinx: %s", " ".join(sphinx_command_list)
                         )
@@ -197,6 +208,7 @@ class SphinxBuilder(AbstractGrabber):
                             cwd=sphinx_build_ctx.source_dir,
                             env=sphinx_process_env,
                         )
+                        logger.debug(f"Sphinx command returned: return_code={return_code}, stdout={stdout}, stderr={stderr}")
                         if return_code == 0:
                             logger.info(
                                 "Sphinx build for %s completed successfully.",
@@ -230,6 +242,7 @@ class SphinxBuilder(AbstractGrabber):
                     "--- Finished Isolated Sphinx Build for %s ---",
                     sphinx_build_ctx.project_slug,
                 )
+        logger.debug(f"SphinxBuilder.generate_docset returning: {build_result}")
         return build_result
     def can_handle(self, source_path: Path, context: "BuildContext") -> bool:
         """Determine if current grabber can handle a project."""

@@ -80,6 +80,7 @@ class Orchestrator:
         return source_path_candidate
 
     def fetch_repo(self) -> bool:
+        logger.debug(f"Orchestrator.fetch_repo called for {self.package_details.name}")
         """Ensure that project sources are available, either from an initial path.
 
         or by fetching them. Sets self._effective_source_path.
@@ -95,7 +96,7 @@ class Orchestrator:
         if self.package_details.initial_source_path:
             candidate = Path(self.package_details.initial_source_path)
             if candidate.exists() and candidate.is_dir():
-                logger.info(
+                logger.debug(
                     "Orchestrator: Using provided initial_source_path:" f" {candidate}"
                 )
                 source_path_candidate = candidate.resolve()
@@ -123,6 +124,9 @@ class Orchestrator:
             source_path_candidate = self._fetch_repo_fetch(
                 fetcher_storage_base, package_info_for_fetcher
             )
+            # The _fetch_repo_fetch method now directly returns the source_path_candidate
+            # No unpacking needed here.
+            logger.debug(f"_fetch_repo_fetch() returned: {source_path_candidate}")
 
         if (
             source_path_candidate
@@ -130,10 +134,11 @@ class Orchestrator:
             and source_path_candidate.is_dir()
         ):
             self._effective_source_path = source_path_candidate
-            logger.info(
+            logger.debug(
                 "Orchestrator: Effective source path set to: "
                 f"{self._effective_source_path}"
             )
+            logger.debug(f"Orchestrator.fetch_repo returning True. Effective path: {self._effective_source_path}")
             return True
         else:
             logger.error(
@@ -142,6 +147,7 @@ class Orchestrator:
                 f"Evaluated path: {source_path_candidate}"
             )
             self._effective_source_path = None
+            logger.debug(f"Orchestrator.fetch_repo returning False.")
             return False
 
     @property
@@ -324,29 +330,34 @@ class Orchestrator:
                 return False
 
     def start_scan(self) -> None:
+        logger.debug(f"Orchestrator.start_scan called for {self.package_details.name}")
         """Start the scanning process."""
         self.detected_doc_type = "unknown"
         if not self.fetch_repo():
-            logger.error(
+            logger.debug(
                 "Orchestrator: Failed to fetch or find repository sources."
                 " Scan cannot proceed."
             )
             self.detected_doc_type = "unknown"
+            logger.debug(f"Orchestrator.start_scan returning due to failed fetch_repo.")
             return
         if self._effective_source_path:
             scan_path_str = str(self._effective_source_path)
-            logger.info(
+            logger.debug(
                 "Orchestrator: Scanning effective source path: " f"{scan_path_str}"
             )
 
             sphinx_path = is_sphinx_project(scan_path_str)
+            logger.debug(f"is_sphinx_project('{scan_path_str}') returned: {sphinx_path}")
             if sphinx_path:
                 self.detected_doc_type = "sphinx"
                 self.sphinx_doc_path = sphinx_path
             elif is_mkdocs_project(scan_path_str):
                 self.detected_doc_type = "mkdocs"
+                logger.debug(f"is_mkdocs_project('{scan_path_str}') returned True.")
             elif has_docstrings(scan_path_str):
                 self.detected_doc_type = "docstrings"
+                logger.debug(f"has_docstrings('{scan_path_str}') returned True.")
 
             if self.detected_doc_type == "unknown":
                 logger.error(
@@ -354,7 +365,7 @@ class Orchestrator:
                     " a specific doc type (Sphinx, Docstrings)."
                 )
 
-            logger.info(
+            logger.debug(
                 "Orchestrator: Scan complete. Detected doc type"
                 f" from source files: '{self.detected_doc_type}' "
                 f"for path {self._effective_source_path}"
@@ -365,6 +376,7 @@ class Orchestrator:
                 "fetch_repo reported success. This should not happen."
             )
             self.detected_doc_type = "unknown"
+            logger.debug(f"Orchestrator.start_scan _effective_source_path is None.")
 
     def get_detected_doc_type(self) -> str:
         """Get detected document type."""
