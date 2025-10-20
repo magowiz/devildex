@@ -46,9 +46,10 @@ class McpServerManager:
             os.path.abspath("src") + os.pathsep + env.get("PYTHONPATH", "")
         )
 
+        server_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "server.py"))
         server_command = [
             sys.executable,
-            "src/devildex/mcp_server/server.py",
+            server_file_path,
         ]
 
         self.server_process = subprocess.Popen(  # noqa: S603
